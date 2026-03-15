@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <title>722 巴士到站時間查詢</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #111827;
+      color: #e5e7eb;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .card {
+      background: #1f2937;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    label {
+      display: block;
+      margin-top: 0.75rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+    select, input {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      border-radius: 0.5rem;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+    }
+    button {
+      margin-top: 0.8rem;
+      width: 100%;
+      padding: 0.55rem 0.8rem;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #f97316, #ec4899);
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .result {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+    .eta-item {
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.5rem;
+      background: #111827;
+      margin-top: 0.25rem;
+    }
+    .eta-time {
+      font-weight: 600;
+      color: #fbbf24;
+    }
+    .eta-remark {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    .error {
+      margin-top: 0.75rem;
+      color: #fca5a5;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>722 巴士到站時間查詢（示例）</h1>
+    <p style="font-size:0.85rem;color:#9ca3af;margin-top:0;">
+      這個頁面示範如何用 <code>data.gov.hk</code> / 巴士 ETA API 查詢
+      <strong>722 路線</strong> 的到站時間。你需要根據 data.gov.hk 的實際 API 文檔，
+      補上正確的 API URL 和站點編號。
+    </p>
+
+    <label for="stopId">巴士站編號（stop ID）</label>
+    <input id="stopId" placeholder="例如：002345 或 data.gov.hk 提供的 stop_id" />
+
+    <button id="checkBtn">查詢 722 到站時間</button>
+
+    <div id="status" class="result"></div>
+    <div id="etaList" class="result"></div>
+    <div id="error" class="error"></div>
+  </div>
+
+  <script>
+    // ⚠️ 重要說明：
+    // 我現在無法直接查 data.gov.hk 文檔，只能給你一個模板。請你：
+    // 1. 到 https://data.gov.hk 搜尋巴士 ETA API（如 Citybus / NWFB 或 TD Bus ETA）。
+    // 2. 找到對應 722 所屬營運商的 API 格式，例如：
+    //    https://data.etabus.gov.hk/v1/transport/citybus/eta/<company>/<route>/<stopId>
+    //    或其他 JSON 結構（以官方文件為準）。
+    // 3. 更新下面的 buildApiUrl() 令它返回正確的 URL。
+
+    function buildApiUrl(stopId) {
+      const route = '722';
+      // TODO: 按 data.gov.hk / 運輸署 / 巴士公司 API 文檔修改這裡
+      // 下面只是「假設例子」，請你自己替換為正式 URL：
+      // 例如 Citybus:
+      //   const company = 'CTB';
+      //   return `https://data.etabus.gov.hk/v1/transport/citybus/eta/${company}/${route}/${stopId}`;
+
+      // 暫時先用一個 placeholder，避免誤導：
+      return 'https://YOUR_DATA_GOV_HK_ETA_ENDPOINT_HERE';
+    }
+
+    async function fetchEta() {
+      const stopInput = document.getElementById('stopId');
+      const statusEl = document.getElementById('status');
+      const listEl = document.getElementById('etaList');
+      const errEl = document.getElementById('error');
+      const btn = document.getElementById('checkBtn');
+
+      const stopId = stopInput.value.trim();
+      statusEl.textContent = '';
+      listEl.innerHTML = '';
+      errEl.textContent = '';
+
+      if (!stopId) {
+        errEl.textContent = '請先輸入巴士站 stop ID（可在 data.gov.hk / 巴士公司資料中找到）。';
+        return;
+      }
+
+      const url = buildApiUrl(stopId);
+      if (url.includes('YOUR_DATA_GOV_HK_ETA_ENDPOINT_HERE')) {
+        errEl.textContent = '請先在程式裏面把 buildApiUrl() 換成真正的 data.gov.hk ETA API URL。';
+        return;
+      }
+
+      btn.disabled = true;
+      statusEl.textContent = '查詢中…';
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status);
+        }
+        const data = await res.json();
+
+        // 不同 API 結構不一樣，這裏只提供一個常見 JSON 格式的示例：
+        // 假設 data.eta 是一個陣列，每個元素有：eta（ISO 時間）、rmk_tc（中文備註）等。
+
+        const etaItems = data.eta || data.data || [];
+        if (!Array.isArray(etaItems) || etaItems.length === 0) {
+          statusEl.textContent = '暫時沒有到站資料。';
+          return;
+        }
+
+        statusEl.textContent = '即將到站班次：';
+        etaItems
+          .slice(0, 5)
+          .forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'eta-item';
+
+            let timeStr = '';
+            if (item.eta) {
+              const t = new Date(item.eta);
+              if (!isNaN(t)) {
+                const hh = String(t.getHours()).padStart(2, '0');
+                const mm = String(t.getMinutes()).padStart(2, '0');
+                timeStr = `${hh}:${mm}`;
+              } else {
+                timeStr = item.eta;
+              }
+            } else if (item.eta_seq) {
+              timeStr = item.eta_seq;
+            } else {
+              timeStr = '未知時間';
+            }
+
+            const remark = item.rmk_tc || item.remark || '';
+            div.innerHTML = `<div class="eta-time">${timeStr}</div>` +
+                            (remark ? `<div class="eta-remark">${remark}</div>` : '');
+            listEl.appendChild(div);
+          });
+      } catch (err) {
+        console.error(err);
+        errEl.textContent = '查詢失敗：' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('checkBtn').addEventListener('click', fetchEta);
+  </script>
+</body>
+</html>
