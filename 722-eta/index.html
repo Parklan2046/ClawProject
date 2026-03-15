@@ -134,13 +134,10 @@
       //   const company = 'CTB';
       //   return `https://data.etabus.gov.hk/v1/transport/citybus/eta/${company}/${route}/${stopId}`;
 
-      // 暫時先用一個 placeholder，避免誤導：
-      // 快速測試版：透過公開 CORS proxy 轉發到 data.gov.hk ETA API
+      // 使用你自己 VPS 上的 Flask proxy：記得將 YOUR_VPS_HOST_OR_IP 改成實際值
       const company = 'CTB';
-      const base = 'https://rt.data.gov.hk/v1/transport/citybus-nlb/eta';
-      const upstream = `${base}/${company}/${stopId}`;
-      // 使用 isomorphic-git 提供的 CORS proxy（僅用於個人小工具，非正式商用）
-      return `https://cors.isomorphic-git.org/${upstream}`;
+      const host = 'YOUR_VPS_HOST_OR_IP';  // 例如 1.2.3.4 或 bus.yourdomain.com
+      return `http://${host}:5000/eta/${company}/${stopId}`;
     }
 
     async function fetchEta() {
