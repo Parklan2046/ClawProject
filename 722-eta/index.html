@@ -136,7 +136,7 @@
 
       // 直接使用官方 data.gov.hk / HKO HTTPS URL（在新分頁開啟，避免瀏覽器 CORS / mixed-content 問題）
       const company = 'CTB';
-      return `https://rt.data.gov.hk/v1/transport/citybus-nlb/eta/${company}/${stopId}`;
+      return `https://rt.data.gov.hk/v2/transport/citybus/eta/${company}/${stopId}/1`;
     }
 
     function openEta() {
