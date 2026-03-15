@@ -135,9 +135,12 @@
       //   return `https://data.etabus.gov.hk/v1/transport/citybus/eta/${company}/${route}/${stopId}`;
 
       // 暫時先用一個 placeholder，避免誤導：
-      // 使用 data.gov.hk 聚合 API：按巴士公司 + stop_id 查 ETA
+      // 快速測試版：透過公開 CORS proxy 轉發到 data.gov.hk ETA API
       const company = 'CTB';
-      return `https://rt.data.gov.hk/v1/transport/citybus-nlb/eta/${company}/${stopId}`;
+      const base = 'https://rt.data.gov.hk/v1/transport/citybus-nlb/eta';
+      const upstream = `${base}/${company}/${stopId}`;
+      // 使用 isomorphic-git 提供的 CORS proxy（僅用於個人小工具，非正式商用）
+      return `https://cors.isomorphic-git.org/${upstream}`;
     }
 
     async function fetchEta() {
