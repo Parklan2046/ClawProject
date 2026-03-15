@@ -108,7 +108,7 @@
         </tr>
         <tr>
           <td style="padding:4px;">722</td>
-          <td style="padding:4px; cursor:pointer; text-decoration:underline; color:#f97316;" onclick="document.getElementById('stopId').value='001272'; fetchEta();">鰂魚涌街</td>
+          <td style="padding:4px; cursor:pointer; text-decoration:underline; color:#f97316;" onclick="document.getElementById('stopId').value='001272'; openEta();">鰂魚涌街</td>
           <td style="padding:4px;">往中環</td>
           <td style="padding:4px;">001272</td>
         </tr>
@@ -134,18 +134,16 @@
       //   const company = 'CTB';
       //   return `https://data.etabus.gov.hk/v1/transport/citybus/eta/${company}/${route}/${stopId}`;
 
-      // 使用你自己 VPS 上的 Flask proxy：記得將 YOUR_VPS_HOST_OR_IP 改成實際值
+      // 直接使用官方 data.gov.hk / HKO HTTPS URL（在新分頁開啟，避免瀏覽器 CORS / mixed-content 問題）
       const company = 'CTB';
-      const host = '15.204.141.155';  // 公網 VPS IP
-      return `http://${host}:5000/eta/${company}/${stopId}`;
+      return `https://rt.data.gov.hk/v1/transport/citybus-nlb/eta/${company}/${stopId}`;
     }
 
-    async function fetchEta() {
+    function openEta() {
       const stopInput = document.getElementById('stopId');
       const statusEl = document.getElementById('status');
       const listEl = document.getElementById('etaList');
       const errEl = document.getElementById('error');
-      const btn = document.getElementById('checkBtn');
 
       const stopId = stopInput.value.trim();
       statusEl.textContent = '';
@@ -158,67 +156,11 @@
       }
 
       const url = buildApiUrl(stopId);
-      if (url.includes('YOUR_DATA_GOV_HK_ETA_ENDPOINT_HERE')) {
-        errEl.textContent = '請先在程式裏面把 buildApiUrl() 換成真正的 data.gov.hk ETA API URL。';
-        return;
-      }
-
-      btn.disabled = true;
-      statusEl.textContent = '查詢中…';
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error('HTTP ' + res.status);
-        }
-        const data = await res.json();
-
-        // 不同 API 結構不一樣，這裏只提供一個常見 JSON 格式的示例：
-        // 假設 data.eta 是一個陣列，每個元素有：eta（ISO 時間）、rmk_tc（中文備註）等。
-
-        const etaItems = data.eta || data.data || [];
-        if (!Array.isArray(etaItems) || etaItems.length === 0) {
-          statusEl.textContent = '暫時沒有到站資料。';
-          return;
-        }
-
-        statusEl.textContent = '即將到站班次：';
-        etaItems
-          .slice(0, 5)
-          .forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'eta-item';
-
-            let timeStr = '';
-            if (item.eta) {
-              const t = new Date(item.eta);
-              if (!isNaN(t)) {
-                const hh = String(t.getHours()).padStart(2, '0');
-                const mm = String(t.getMinutes()).padStart(2, '0');
-                timeStr = `${hh}:${mm}`;
-              } else {
-                timeStr = item.eta;
-              }
-            } else if (item.eta_seq) {
-              timeStr = item.eta_seq;
-            } else {
-              timeStr = '未知時間';
-            }
-
-            const remark = item.rmk_tc || item.remark || '';
-            div.innerHTML = `<div class="eta-time">${timeStr}</div>` +
-                            (remark ? `<div class="eta-remark">${remark}</div>` : '');
-            listEl.appendChild(div);
-          });
-      } catch (err) {
-        console.error(err);
-        errEl.textContent = '查詢失敗：' + err.message;
-      } finally {
-        btn.disabled = false;
-      }
+      statusEl.innerHTML = '官方 ETA JSON 已準備好：<br><a href="' + url + '" target="_blank" rel="noopener noreferrer" style="color:#fbbf24;word-break:break-all;">' + url + '</a><br><br>我已在新分頁打開官方資料。';
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
 
-    document.getElementById('checkBtn').addEventListener('click', fetchEta);
+    document.getElementById('checkBtn').addEventListener('click', openEta);
   </script>
 </body>
 </html>
