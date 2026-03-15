@@ -10,7 +10,7 @@ CITYBUS_BASE = "https://rt.data.gov.hk/v1/transport/citybus-nlb/eta"
 def add_cors_headers(response: Response):
     """Allow browser frontends (e.g. GitHub Pages) to call this API."""
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"]
+    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 
