@@ -424,6 +424,13 @@ renderOptionPairs(normalizedData)
       return String(v);
     }
 
+    function formatFeedTime(ts) {
+      if (!ts) return 'unknown';
+      const d = new Date(Number(ts) * 1000);
+      if (isNaN(d)) return 'unknown';
+      return d.toLocaleString();
+    }
+
     async function loadQuotes() {
       try {
         const feed = await loadQuotesFeed();
@@ -450,6 +457,8 @@ renderOptionPairs(normalizedData)
         document.getElementById('openMove').textContent = fmtPct(open.price, open.prevClose);
         document.getElementById('openMove').className = 'stat-value ' + ((open.price - open.prevClose) >= 0 ? 'green' : 'red');
         document.getElementById('openVolume').textContent = fmtVol(open.volume);
+        const status = document.getElementById('feedStatus');
+        if (status) status.textContent = 'Auto refresh every 30s · Last feed update: ' + formatFeedTime(feed.updatedAt);
       } catch (err) {
         console.error(err);
         ['spyQuote','qqqQuote','diaQuote','iwmQuote','vixQuote','openPrice','openMove','openVolume'].forEach(id => {
@@ -480,6 +489,7 @@ renderOptionPairs(normalizedData)
     }
 
     loadQuotes();
+    setInterval(loadQuotes, 30000);
   </script>
 </body>
 </html>
