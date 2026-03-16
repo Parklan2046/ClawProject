@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lunch Wallet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111827;
+      --panel2: #1f2937;
+      --line: rgba(255,255,255,0.08);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #22c55e;
+      --accent2: #3b82f6;
+      --danger: #f87171;
+      --gold: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0b1220 0%, #111827 100%);
+      color: var(--text);
+      padding: 16px;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 1.8rem; }
+    .sub { margin-top: 6px; color: var(--muted); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: white;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    button.secondary {
+      background: #334155;
+      color: var(--text);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .card {
+      background: rgba(17,24,39,0.95);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 14px 32px rgba(0,0,0,0.25);
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .stat-label { color: var(--muted); font-size: 0.82rem; }
+    .stat-value { margin-top: 8px; font-size: 1.25rem; font-weight: 900; }
+    .member-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .member {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .member-name { font-weight: 800; }
+    .member-meta { margin-top: 6px; color: var(--muted); font-size: 0.84rem; }
+    .tag {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(34,197,94,0.12);
+      color: #86efac;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      overflow: hidden;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-size: 0.82rem; }
+    .amt-in { color: #86efac; font-weight: 800; }
+    .amt-out { color: #fca5a5; font-weight: 800; }
+    .pill {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(59,130,246,0.14);
+      color: #93c5fd;
+    }
+    .note {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+    .flow-list {
+      display: grid;
+      gap: 10px;
+    }
+    .flow-item {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .flow-title { font-weight: 800; }
+    .flow-desc { color: var(--muted); font-size: 0.84rem; margin-top: 5px; }
+    .small { font-size: 0.82rem; color: var(--muted); }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      body { padding: 10px; }
+      .summary, .member-list { grid-template-columns: 1fr; }
+      .hero { align-items: stretch; }
+      .actions { flex-direction: column; }
+      button { width: 100%; }
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tr {
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      td { border: none; padding: 6px 4px; }
+      td::before {
+        content: attr(data-label) ": ";
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>Lunch Wallet</h1>
+        <div class="sub">Shared wallet draft for <strong>San</strong>, <strong>Jack</strong>, <strong>Arthas</strong>, and <strong>Parklan</strong>.</div>
+      </div>
+      <div class="actions">
+        <button>Add Deposit</button>
+        <button class="secondary">Add Lunch Expense</button>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="stat">
+        <div class="stat-label">Wallet Balance</div>
+        <div class="stat-value">HK$ 1,180</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Deposits</div>
+        <div class="stat-value">HK$ 2,000</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value">HK$ 820</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value">12</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Transaction Feed</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>By</th>
+                <th>Amount</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-label="Date">2026-03-16</td>
+                <td data-label="Type"><span class="pill">Deposit</span></td>
+                <td data-label="By">Parklan</td>
+                <td data-label="Amount" class="amt-in">+ HK$ 500</td>
+                <td data-label="Note">Top up wallet</td>
+              </tr>
+              <tr>
+                <td data-label="Date">2026-03-16</td>
+                <td data-label="Type"><span class="pill">Lunch</span></td>
+                <td data-label="By">Jack</td>
+                <td data-label="Amount" class="amt-out">- HK$ 268</td>
+                <td data-label="Note">4人午餐 · 茶餐廳</td>
+              </tr>
+              <tr>
+                <td data-label="Date">2026-03-15</td>
+                <td data-label="Type"><span class="pill">Deposit</span></td>
+                <td data-label="By">San</td>
+                <td data-label="Amount" class="amt-in">+ HK$ 500</td>
+                <td data-label="Note">Initial funding</td>
+              </tr>
+              <tr>
+                <td data-label="Date">2026-03-15</td>
+                <td data-label="Type"><span class="pill">Deposit</span></td>
+                <td data-label="By">Arthas</td>
+                <td data-label="Amount" class="amt-in">+ HK$ 500</td>
+                <td data-label="Note">Initial funding</td>
+              </tr>
+              <tr>
+                <td data-label="Date">2026-03-15</td>
+                <td data-label="Type"><span class="pill">Deposit</span></td>
+                <td data-label="By">Jack</td>
+                <td data-label="Amount" class="amt-in">+ HK$ 500</td>
+                <td data-label="Note">Initial funding</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Draft Workflow</h2>
+          <div class="flow-list">
+            <div class="flow-item">
+              <div class="flow-title">1. Deposit money</div>
+              <div class="flow-desc">Pick a person → enter amount → add note → wallet total updates instantly.</div>
+            </div>
+            <div class="flow-item">
+              <div class="flow-title">2. Add lunch expense</div>
+              <div class="flow-desc">Enter payer / restaurant / amount / participants → transaction goes into feed and reduces wallet balance.</div>
+            </div>
+            <div class="flow-item">
+              <div class="flow-title">3. Review contributions</div>
+              <div class="flow-desc">See who deposited how much, who recorded lunch spending, and current remaining balance.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Members</h2>
+          <div class="member-list">
+            <div class="member">
+              <div class="member-name">San</div>
+              <div class="member-meta">Deposited: HK$ 500</div>
+              <div class="tag">Wallet member</div>
+            </div>
+            <div class="member">
+              <div class="member-name">Jack</div>
+              <div class="member-meta">Deposited: HK$ 500 · Logged lunch</div>
+              <div class="tag">Wallet member</div>
+            </div>
+            <div class="member">
+              <div class="member-name">Arthas</div>
+              <div class="member-meta">Deposited: HK$ 500</div>
+              <div class="tag">Wallet member</div>
+            </div>
+            <div class="member">
+              <div class="member-name">Parklan</div>
+              <div class="member-meta">Deposited: HK$ 500</div>
+              <div class="tag">Wallet member</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Layout Notes</h2>
+          <div class="note">
+            This is a first draft only. The next step can be turning this into a real app with:
+            <br><br>
+            • add / edit / delete transactions<br>
+            • per-person total contribution summary<br>
+            • lunch participant split view<br>
+            • wallet history filter by date / person / type<br>
+            • localStorage or shared backend sync
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
