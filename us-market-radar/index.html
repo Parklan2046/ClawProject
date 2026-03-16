@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>US Market Radar v2</title>
+  <title>US Market Radar v3</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -158,13 +158,23 @@
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>US Market Radar v2</h1>
-        <div class="sub">Second layout draft focused on US index monitoring, index options flow, and a dedicated OpenDoor options watch.</div>
+        <h1>US Market Radar v3</h1>
+        <div class="sub">Third layout draft with ticker search, live-ready cards, and a dedicated OpenDoor options focus.</div>
       </div>
-      <div class="pill">Draft · Index + OPEN options focus</div>
+      <div class="pill">Draft · Search + live-ready cards + OPEN focus</div>
     </div>
 
-    <div class="summary-grid">
+        <div class="card">
+      <h2>Ticker Search</h2>
+      <div class="note">Draft search block for quick focus names such as <strong>SPY</strong>, <strong>QQQ</strong>, <strong>IWM</strong>, <strong>VIX</strong>, and <strong>OPEN</strong>.</div>
+      <div style="display:grid;grid-template-columns:1fr 160px;gap:10px;margin-top:12px;">
+        <input style="width:100%;background:#0a1020;color:#e5e7eb;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 13px;font-size:0.96rem;outline:none;" value="OPEN" />
+        <button style="border:none;border-radius:999px;padding:12px 16px;font-size:0.95rem;font-weight:800;color:white;background:linear-gradient(135deg,#22c55e,#3b82f6);cursor:pointer;">Search</button>
+      </div>
+      <div class="note" style="margin-top:10px;">v3 先做 layout，之後可接真正 quote / options API。</div>
+    </div>
+
+<div class="summary-grid">
       <div class="stat">
         <div class="stat-label">SPY</div>
         <div class="stat-value green">+1.24%</div>
@@ -255,6 +265,12 @@
 
         <div class="card">
           <h2>OpenDoor Focus (OPEN)</h2>
+          <div class="summary-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+            <div class="stat"><div class="stat-label">OPEN Price</div><div class="stat-value green">$ 2.71</div></div>
+            <div class="stat"><div class="stat-label">Day Move</div><div class="stat-value red">-1.45%</div></div>
+            <div class="stat"><div class="stat-label">Volume</div><div class="stat-value">18.2M</div></div>
+            <div class="stat"><div class="stat-label">Premarket</div><div class="stat-value green">+0.8%</div></div>
+          </div>
           <table>
             <thead>
               <tr>
@@ -264,16 +280,12 @@
             </thead>
             <tbody>
               <tr>
-                <td data-label="Panel">Quick stats</td>
-                <td data-label="Draft Content">Last price, day %, volume, premarket / after-hours move</td>
-              </tr>
-              <tr>
                 <td data-label="Panel">Options pulse</td>
                 <td data-label="Draft Content">Most active calls, most active puts, nearest expiry, put/call bias</td>
               </tr>
               <tr>
                 <td data-label="Panel">Key strikes</td>
-                <td data-label="Draft Content">ATM strike, most crowded call strike, downside hedge strike</td>
+                <td data-label="Draft Content">ATM strike, crowded upside strike, downside hedge strike</td>
               </tr>
               <tr>
                 <td data-label="Panel">What to watch</td>
@@ -340,7 +352,7 @@
         <div class="card">
           <h2>v1 Scope</h2>
           <div class="note">
-            This first layout is intentionally index-first. The next implementation step can focus on:
+            v3 adds a draft ticker search area and live-ready cards. The next implementation step can focus on:
             <br><br>
             • SPY / QQQ / DIA / IWM / VIX live pricing<br>
             • nearest expiry options snapshot<br>
