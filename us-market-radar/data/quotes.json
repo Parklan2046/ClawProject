@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1773694525,
+  "updatedAt": 1773694827,
   "source": "yahoo-finance-server-side",
   "quotes": {
     "OPEN": {
@@ -13,7 +13,7 @@
       "symbol": "SPY",
       "price": 669.03,
       "prevClose": 662.29,
-      "volume": 76340017,
+      "volume": 81253874,
       "marketTime": 1773691200
     },
     "QQQ": {
@@ -27,7 +27,7 @@
       "symbol": "DIA",
       "price": 470.3,
       "prevClose": 466.41,
-      "volume": 6632718,
+      "volume": 6740012,
       "marketTime": 1773691200
     },
     "IWM": {
