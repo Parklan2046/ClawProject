@@ -139,6 +139,23 @@
       return `https://rt.data.gov.hk/v2/transport/citybus/eta/${company}/${stopId}/722`;
     }
 
+    let refreshTimer = null;
+
+    function clearRefreshTimer() {
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+      }
+    }
+
+    function formatEtaTime(eta) {
+      const t = new Date(eta);
+      if (isNaN(t)) return eta || '未知時間';
+      const hh = String(t.getHours()).padStart(2, '0');
+      const mm = String(t.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+
     async function openEta() {
       const stopInput = document.getElementById('stopId');
       const statusEl = document.getElementById('status');
@@ -150,6 +167,7 @@
       statusEl.textContent = '';
       listEl.innerHTML = '';
       errEl.textContent = '';
+      clearRefreshTimer();
 
       if (!stopId) {
         errEl.textContent = '請先輸入巴士站 stop ID（可在 data.gov.hk / 巴士公司資料中找到）。';
@@ -161,40 +179,33 @@
       statusEl.textContent = '查詢中…';
 
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) {
           throw new Error('HTTP ' + res.status);
         }
         const data = await res.json();
-        const etaItems = Array.isArray(data.data) ? data.data : [];
+        const etaItems = (Array.isArray(data.data) ? data.data : [])
+          .filter(item => item && item.eta)
+          .sort((a, b) => new Date(a.eta) - new Date(b.eta));
 
         if (etaItems.length === 0) {
           statusEl.textContent = '暫時冇 ETA 資料。可能未開服務、未有即將到站班次，或者官方暫時未提供資料。';
+          refreshTimer = setTimeout(openEta, 10000);
           return;
         }
 
-        statusEl.textContent = '722（鰂魚涌街 → 往中環）即將到站：';
+        statusEl.textContent = '722（鰂魚涌街 → 往中環）即將到站：每 10 秒自動更新';
         etaItems.slice(0, 3).forEach(item => {
           const div = document.createElement('div');
           div.className = 'eta-item';
-
-          let timeStr = '未知時間';
-          if (item.eta) {
-            const t = new Date(item.eta);
-            if (!isNaN(t)) {
-              const hh = String(t.getHours()).padStart(2, '0');
-              const mm = String(t.getMinutes()).padStart(2, '0');
-              timeStr = `${hh}:${mm}`;
-            } else {
-              timeStr = item.eta;
-            }
-          }
-
+          const timeStr = formatEtaTime(item.eta);
           const remark = item.rmk_tc || '';
           div.innerHTML = `<div class="eta-time">${timeStr}</div>` +
                           (remark ? `<div class="eta-remark">${remark}</div>` : '');
           listEl.appendChild(div);
         });
+
+        refreshTimer = setTimeout(openEta, 10000);
       } catch (err) {
         console.error(err);
         errEl.textContent = '查詢失敗：' + err.message;
