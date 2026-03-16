@@ -393,63 +393,158 @@
 
   <div id="toast" class="toast"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const MEMBERS = ['San', 'Jack', 'Arthas', 'Parklan'];
     const STORAGE_KEY = 'lunch_wallet_v2';
+    const SUPABASE_URL = 'https://aqqsoknyudecizmfbpbq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxcXNva255dWRlY2l6bWZicGJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTY5NTgsImV4cCI6MjA4OTIzMjk1OH0.trIY67Ho3LwHDUY6Hd-Y-xHvD9Ql14snJkLY1wKT4B8';
+    const TRANSACTIONS_TABLE = 'lunch_wallet_transactions';
+    const META_TABLE = 'lunch_wallet_meta';
     const DEFAULT_PLACE_OPTIONS = {
       lunch: ['茶餐廳', '米線', '麥當勞', '大家樂', 'Other'],
       taxi: ['Office → MTR', 'Office → Home', 'Client Site → Office', 'Other']
     };
 
     const defaultState = {
-      transactions: [
-        { id: 't1', type: 'deposit', by: 'San', amount: 500, date: '2026-03-15', note: 'Initial funding' },
-        { id: 't2', type: 'deposit', by: 'Jack', amount: 500, date: '2026-03-15', note: 'Initial funding' },
-        { id: 't3', type: 'deposit', by: 'Arthas', amount: 500, date: '2026-03-15', note: 'Initial funding' },
-        { id: 't4', type: 'deposit', by: 'Parklan', amount: 500, date: '2026-03-15', note: 'Initial funding' },
-        { id: 't5', type: 'lunch', by: 'Jack', amount: 268, date: '2026-03-16', place: '茶餐廳', note: '4人午餐', participants: ['San', 'Jack', 'Arthas', 'Parklan'] }
-      ],
+      transactions: [],
       savedPlaces: {
         lunch: [],
         taxi: []
       }
     };
 
-    let state = loadState();
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let state = structuredClone(defaultState);
+
+    function normalizeState(input = {}) {
+      const next = {
+        transactions: Array.isArray(input.transactions) ? input.transactions : [],
+        savedPlaces: input.savedPlaces && !Array.isArray(input.savedPlaces)
+          ? input.savedPlaces
+          : { lunch: [], taxi: [] }
+      };
+      if (!Array.isArray(next.savedPlaces.lunch)) next.savedPlaces.lunch = [];
+      if (!Array.isArray(next.savedPlaces.taxi)) next.savedPlaces.taxi = [];
+      return next;
+    }
 
     function showToast(message) {
       const el = document.getElementById('toast');
       el.textContent = message;
       el.classList.add('show');
       clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => el.classList.remove('show'), 2200);
+      showToast._t = setTimeout(() => el.classList.remove('show'), 2600);
     }
 
-    function loadState() {
+    function loadLegacyState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        const loaded = raw ? JSON.parse(raw) : structuredClone(defaultState);
-        if (!loaded.savedPlaces || Array.isArray(loaded.savedPlaces)) {
-          loaded.savedPlaces = { lunch: [], taxi: [] };
-        }
-        if (!Array.isArray(loaded.savedPlaces.lunch)) loaded.savedPlaces.lunch = [];
-        if (!Array.isArray(loaded.savedPlaces.taxi)) loaded.savedPlaces.taxi = [];
-        return loaded;
+        return raw ? normalizeState(JSON.parse(raw)) : normalizeState(defaultState);
       } catch {
-        const fallback = structuredClone(defaultState);
-        fallback.savedPlaces = { lunch: [], taxi: [] };
-        return fallback;
+        return normalizeState(defaultState);
       }
-    }
-
-    function saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch {}
     }
 
     function money(n) {
       return `HK$ ${Number(n || 0).toFixed(2)}`;
+    }
+
+    async function fetchTransactions() {
+      const { data, error } = await supabaseClient
+        .from(TRANSACTIONS_TABLE)
+        .select('*')
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(row => ({
+        id: row.id,
+        type: row.type,
+        by: row.by_name,
+        amount: Number(row.amount || 0),
+        date: row.date,
+        place: row.place || '',
+        note: row.note || '',
+        participants: Array.isArray(row.participants) ? row.participants : []
+      }));
+    }
+
+    async function fetchSavedPlaces() {
+      const { data, error } = await supabaseClient
+        .from(META_TABLE)
+        .select('value')
+        .eq('key', 'saved_places')
+        .maybeSingle();
+      if (error) throw error;
+      return normalizeState({ savedPlaces: data?.value || { lunch: [], taxi: [] } }).savedPlaces;
+    }
+
+    async function saveSavedPlacesRemote() {
+      const { error } = await supabaseClient
+        .from(META_TABLE)
+        .upsert({ key: 'saved_places', value: state.savedPlaces, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (error) throw error;
+    }
+
+    async function insertTransactionRemote(tx) {
+      const payload = {
+        type: tx.type,
+        by_name: tx.by,
+        amount: tx.amount,
+        date: tx.date,
+        place: tx.place || null,
+        note: tx.note || null,
+        participants: tx.participants || []
+      };
+      const { data, error } = await supabaseClient
+        .from(TRANSACTIONS_TABLE)
+        .insert(payload)
+        .select('*')
+        .single();
+      if (error) throw error;
+      return {
+        id: data.id,
+        type: data.type,
+        by: data.by_name,
+        amount: Number(data.amount || 0),
+        date: data.date,
+        place: data.place || '',
+        note: data.note || '',
+        participants: Array.isArray(data.participants) ? data.participants : []
+      };
+    }
+
+    async function bootstrapFromLegacyIfNeeded(remoteTransactions, remoteSavedPlaces) {
+      const legacy = loadLegacyState();
+      const hasLegacy = legacy.transactions.length > 0 || legacy.savedPlaces.lunch.length > 0 || legacy.savedPlaces.taxi.length > 0;
+      const hasRemote = remoteTransactions.length > 0 || remoteSavedPlaces.lunch.length > 0 || remoteSavedPlaces.taxi.length > 0;
+      if (!hasLegacy || hasRemote) return { transactions: remoteTransactions, savedPlaces: remoteSavedPlaces, imported: false };
+
+      for (const tx of legacy.transactions) {
+        await insertTransactionRemote(tx);
+      }
+      state.savedPlaces = legacy.savedPlaces;
+      await saveSavedPlacesRemote();
+      return {
+        transactions: legacy.transactions,
+        savedPlaces: legacy.savedPlaces,
+        imported: true
+      };
+    }
+
+    async function loadRemoteState() {
+      const [remoteTransactions, remoteSavedPlaces] = await Promise.all([
+        fetchTransactions(),
+        fetchSavedPlaces()
+      ]);
+      return bootstrapFromLegacyIfNeeded(remoteTransactions, remoteSavedPlaces);
+    }
+
+    async function refreshState() {
+      const loaded = await loadRemoteState();
+      state = normalizeState(loaded);
+      renderAll();
+      if (loaded.imported) showToast('已將舊有本機資料匯入雲端同步');
     }
 
     function computeSummary() {
@@ -518,7 +613,10 @@
 
     function renderRecords() {
       const wrap = document.getElementById('txWrap');
-      const items = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const items = [...state.transactions].sort((a, b) => {
+        const dateCompare = new Date(b.date) - new Date(a.date);
+        return dateCompare || String(b.id).localeCompare(String(a.id));
+      });
       if (!items.length) {
         wrap.innerHTML = '<div class="empty">暫時未有交易記錄。</div>';
         return;
@@ -533,11 +631,11 @@
           : '已加入 shared wallet pool';
         return `
           <tr>
-            <td data-label="Date">${t.date}</td>
-            <td data-label="Type"><span class="type-pill">${typeLabel}</span></td>
-            <td data-label="By">${t.by}</td>
-            <td data-label="Amount" class="${amtClass}">${sign} ${money(t.amount)}</td>
-            <td data-label="Details">${extra}${t.note ? `<br><span class="note">${t.note}</span>` : ''}</td>
+            <td data-label="日期">${t.date}</td>
+            <td data-label="類型"><span class="type-pill">${typeLabel}</span></td>
+            <td data-label="記錄人">${t.by}</td>
+            <td data-label="金額" class="${amtClass}">${sign} ${money(t.amount)}</td>
+            <td data-label="詳情">${extra}${t.note ? `<br><span class="note">${t.note}</span>` : ''}</td>
           </tr>
         `;
       }).join('');
@@ -561,7 +659,6 @@
       renderSummary();
       renderMembers();
       renderRecords();
-      saveState();
     }
 
     function populateMemberSelects() {
@@ -598,6 +695,9 @@
       select.innerHTML = options.map(place => `<option value="${place}">${place}</option>`).join('');
       if (options.includes(current)) {
         select.value = current;
+      }
+      if (!select.value && options.length) {
+        select.value = options[0];
       }
       updateExpenseLabels();
       toggleCustomPlace();
@@ -647,40 +747,46 @@
       const amount = Number(document.getElementById('lunchAmount').value || 0);
       const participants = [...document.querySelectorAll('.participant-checkbox:checked')].map(i => i.value);
       const el = document.getElementById('sharePreview');
-      const typeLabel = currentExpenseType() === 'taxi' ? 'Taxi' : 'Expense';
+      const typeLabel = currentExpenseType() === 'taxi' ? '的士' : '開支';
       if (!amount || participants.length === 0) {
-        el.textContent = `請先輸入金額並勾選參與者。${typeLabel} 金額會先由 pool 扣。`;
+        el.textContent = `請先輸入金額並勾選參與者。${typeLabel}金額會先由 pool 扣。`;
         return;
       }
       const perHead = amount / participants.length;
       el.textContent = `${participants.length} 人參與，每人分攤 ${money(perHead)}，但總數會先由 pool 扣。`;
     }
 
-    function saveDeposit() {
+    async function saveDeposit() {
       const by = document.getElementById('depositBy').value;
       const amount = Number(document.getElementById('depositAmount').value || 0);
       const date = document.getElementById('depositDate').value;
       const note = document.getElementById('depositNote').value.trim();
       if (!by || amount <= 0 || !date) {
-        showToast('請填好 deposit 資料');
+        showToast('請填好入數資料');
         return;
       }
-      state.transactions.push({
-        id: `d-${Date.now()}`,
-        type: 'deposit',
-        by,
-        amount,
-        date,
-        note
-      });
-      renderAll();
-      closeModal('depositModal');
-      document.getElementById('depositAmount').value = '';
-      document.getElementById('depositNote').value = '';
-      showToast('入數已加入');
+      try {
+        const inserted = await insertTransactionRemote({
+          type: 'deposit',
+          by,
+          amount,
+          date,
+          note,
+          participants: []
+        });
+        state.transactions.unshift(inserted);
+        renderAll();
+        closeModal('depositModal');
+        document.getElementById('depositAmount').value = '';
+        document.getElementById('depositNote').value = '';
+        showToast('入數已同步到雲端');
+      } catch (error) {
+        console.error(error);
+        showToast('入數同步失敗，請先完成 Supabase setup');
+      }
     }
 
-    function saveLunch() {
+    async function saveLunch() {
       const type = currentExpenseType();
       const by = document.getElementById('lunchPaidBy').value;
       const amount = Number(document.getElementById('lunchAmount').value || 0);
@@ -691,49 +797,63 @@
       const note = document.getElementById('lunchNote').value.trim();
       const participants = [...document.querySelectorAll('.participant-checkbox:checked')].map(i => i.value);
       if (!by || amount <= 0 || !date || participants.length === 0) {
-        showToast('請填好 expense 資料並勾選參與者');
+        showToast('請填好開支資料並勾選參與者');
         return;
       }
       if (selectedPlace === 'Other' && !customPlace) {
         showToast(type === 'taxi' ? '請輸入的士路線' : '請輸入餐廳名稱');
         return;
       }
-      const defaults = DEFAULT_PLACE_OPTIONS[type] || ['Other'];
-      if (place && !defaults.includes(place) && !state.savedPlaces[type].includes(place)) {
-        state.savedPlaces[type].unshift(place);
-        state.savedPlaces[type] = [...new Set(state.savedPlaces[type])].slice(0, 12);
+      try {
+        const defaults = DEFAULT_PLACE_OPTIONS[type] || ['Other'];
+        if (place && !defaults.includes(place) && !state.savedPlaces[type].includes(place)) {
+          state.savedPlaces[type].unshift(place);
+          state.savedPlaces[type] = [...new Set(state.savedPlaces[type])].slice(0, 12);
+          await saveSavedPlacesRemote();
+        }
+        const inserted = await insertTransactionRemote({
+          type,
+          by,
+          amount,
+          date,
+          place,
+          note,
+          participants
+        });
+        state.transactions.unshift(inserted);
+        renderPlaceOptions();
+        renderAll();
+        closeModal('lunchModal');
+        document.getElementById('expenseType').value = 'lunch';
+        document.getElementById('lunchAmount').value = '';
+        renderPlaceOptions();
+        document.getElementById('lunchPlaceSelect').value = getPlaceOptions('lunch')[0] || '茶餐廳';
+        document.getElementById('lunchPlaceCustom').value = '';
+        document.getElementById('lunchNote').value = '';
+        document.querySelectorAll('.participant-checkbox').forEach(i => i.checked = true);
+        toggleCustomPlace();
+        updateSharePreview();
+        showToast(type === 'taxi' ? '的士開支已同步到雲端' : '午餐開支已同步到雲端');
+      } catch (error) {
+        console.error(error);
+        showToast('開支同步失敗，請先完成 Supabase setup');
       }
-      state.transactions.push({
-        id: `${type}-${Date.now()}`,
-        type,
-        by,
-        amount,
-        date,
-        place,
-        note,
-        participants
-      });
-      renderPlaceOptions();
-      renderAll();
-      closeModal('lunchModal');
-      document.getElementById('expenseType').value = 'lunch';
-      document.getElementById('lunchAmount').value = '';
-      renderPlaceOptions();
-      document.getElementById('lunchPlaceSelect').value = getPlaceOptions('lunch')[0] || '茶餐廳';
-      document.getElementById('lunchPlaceCustom').value = '';
-      document.getElementById('lunchNote').value = '';
-      document.querySelectorAll('.participant-checkbox').forEach(i => i.checked = true);
-      toggleCustomPlace();
-      updateSharePreview();
-      showToast(type === 'taxi' ? '的士開支已加入' : '午餐開支已加入');
     }
 
-    function showToast(message) {
-      const el = document.getElementById('toast');
-      el.textContent = message;
-      el.classList.add('show');
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => el.classList.remove('show'), 2200);
+    async function initApp() {
+      populateMemberSelects();
+      document.getElementById('depositDate').value = todayStr();
+      document.getElementById('lunchDate').value = todayStr();
+      document.querySelectorAll('.participant-checkbox').forEach(el => el.addEventListener('change', updateSharePreview));
+      updateSharePreview();
+      renderAll();
+      try {
+        await refreshState();
+        showToast('Lunch Wallet 已連接 Supabase 雲端同步');
+      } catch (error) {
+        console.error(error);
+        showToast('未連接到 Supabase。請先執行 lunch-wallet/supabase-setup.sql');
+      }
     }
 
     document.getElementById('openDepositBtn').addEventListener('click', () => openModal('depositModal'));
@@ -749,12 +869,7 @@
       updateSharePreview();
     });
 
-    populateMemberSelects();
-    document.getElementById('depositDate').value = todayStr();
-    document.getElementById('lunchDate').value = todayStr();
-    document.querySelectorAll('.participant-checkbox').forEach(el => el.addEventListener('change', updateSharePreview));
-    updateSharePreview();
-    renderAll();
+    initApp();
   </script>
 </body>
 </html>
