@@ -276,11 +276,11 @@
     <div class="hero">
       <div>
         <h1>Lunch Wallet</h1>
-        <div class="sub">All lunch spending is deducted from the <strong>shared wallet pool</strong> for San, Jack, Arthas, and Parklan.</div>
+        <div class="sub">All shared spending is deducted from the <strong>shared wallet pool</strong> for San, Jack, Arthas, and Parklan.</div>
       </div>
       <div class="actions">
         <button id="openDepositBtn">Add Deposit</button>
-        <button id="openLunchBtn" class="secondary">Add Lunch Expense (deduct from pool)</button>
+        <button id="openLunchBtn" class="secondary">Add Expense (deduct from pool)</button>
       </div>
     </div>
 
@@ -303,10 +303,10 @@
         <div class="card">
           <h2>How splitting works</h2>
           <div class="note">
-            每次 lunch 都係先由 <strong>shared pool</strong> 扣數；participants 只係用嚟記錄今餐由邊幾個人分攤。<br><br>
-            例如 lunch HK$240，得 3 個人 join：<br>
+            每次 shared expense 都係先由 <strong>shared pool</strong> 扣數；participants 只係用嚟記錄嗰筆消費由邊幾個人分攤。<br><br>
+            例如 Lunch / Taxi HK$240，得 3 個人 join：<br>
             每人 share = HK$80。<br><br>
-            Every lunch record deducts from the shared pool first. Participants are only used to calculate who consumed that lunch. Pool balance = total deposits - total lunch expenses。
+            Every expense record deducts from the shared pool first. Participants are only used to calculate who consumed that expense. Pool balance = total deposits - total shared expenses。
           </div>
         </div>
       </div>
@@ -342,40 +342,51 @@
   <div id="lunchModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
-        <h2 style="margin:0;">Add Lunch Expense (deduct from pool)</h2>
+        <h2 style="margin:0;">Add Expense (deduct from pool)</h2>
         <button class="ghost" data-close="lunch">Close</button>
       </div>
       <div class="row">
         <div>
-          <label for="lunchPaidBy">Paid / Recorded by</label>
-          <select id="lunchPaidBy"></select>
+          <label for="expenseType">Expense Type</label>
+          <select id="expenseType">
+            <option value="lunch">Lunch</option>
+            <option value="taxi">Taxi</option>
+          </select>
         </div>
         <div>
-          <label for="lunchAmount">Total Cost (HK$)</label>
-          <input id="lunchAmount" type="number" min="1" step="0.01" placeholder="例如：268" />
+          <label for="lunchPaidBy">Paid / Recorded by</label>
+          <select id="lunchPaidBy"></select>
         </div>
       </div>
       <div class="row">
         <div>
+          <label for="lunchAmount">Total Cost (HK$)</label>
+          <input id="lunchAmount" type="number" min="1" step="0.01" placeholder="例如：268" />
+        </div>
+        <div>
           <label for="lunchDate">Date</label>
           <input id="lunchDate" type="date" />
         </div>
+      </div>
+      <div class="row">
         <div>
-          <label for="lunchPlaceSelect">Restaurant / Place</label>
+          <label id="placeLabel" for="lunchPlaceSelect">Restaurant / Place</label>
           <select id="lunchPlaceSelect"></select>
+        </div>
+        <div>
+          <label for="lunchNote">Note</label>
+          <textarea id="lunchNote" placeholder="例如：today lunch / company canteen / special meal"></textarea>
         </div>
       </div>
       <div id="customPlaceWrap" style="display:none;">
-        <label for="lunchPlaceCustom">Custom restaurant / place</label>
+        <label id="customPlaceLabel" for="lunchPlaceCustom">Custom restaurant / place</label>
         <input id="lunchPlaceCustom" placeholder="例如：茶餐廳 / 米線" />
       </div>
-      <label>Who joined this lunch? (share record only)</label>
+      <label id="participantsLabel">Who joined this expense? (share record only)</label>
       <div id="participantsBox" class="check-grid"></div>
-      <div id="sharePreview" class="helper">請先輸入金額並勾選參與者。Lunch 金額會先由 pool 扣。</div>
-      <label for="lunchNote">Note</label>
-      <textarea id="lunchNote" placeholder="例如：today lunch / company canteen / special meal"></textarea>
+      <div id="sharePreview" class="helper">請先輸入金額並勾選參與者。Expense 金額會先由 pool 扣。</div>
       <div class="actions">
-        <button id="saveLunchBtn">Save Lunch Expense</button>
+        <button id="saveLunchBtn">Save Expense</button>
       </div>
     </div>
   </div>
@@ -385,7 +396,10 @@
   <script>
     const MEMBERS = ['San', 'Jack', 'Arthas', 'Parklan'];
     const STORAGE_KEY = 'lunch_wallet_v2';
-    const DEFAULT_PLACES = ['茶餐廳', '米線', '麥當勞', '大家樂', 'Other'];
+    const DEFAULT_PLACE_OPTIONS = {
+      lunch: ['茶餐廳', '米線', '麥當勞', '大家樂', 'Other'],
+      taxi: ['Office → MTR', 'Office → Home', 'Client Site → Office', 'Other']
+    };
 
     const defaultState = {
       transactions: [
@@ -394,7 +408,11 @@
         { id: 't3', type: 'deposit', by: 'Arthas', amount: 500, date: '2026-03-15', note: 'Initial funding' },
         { id: 't4', type: 'deposit', by: 'Parklan', amount: 500, date: '2026-03-15', note: 'Initial funding' },
         { id: 't5', type: 'lunch', by: 'Jack', amount: 268, date: '2026-03-16', place: '茶餐廳', note: '4人午餐', participants: ['San', 'Jack', 'Arthas', 'Parklan'] }
-      ]
+      ],
+      savedPlaces: {
+        lunch: [],
+        taxi: []
+      }
     };
 
     let state = loadState();
@@ -411,11 +429,15 @@
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const loaded = raw ? JSON.parse(raw) : structuredClone(defaultState);
-        if (!Array.isArray(loaded.savedPlaces)) loaded.savedPlaces = [];
+        if (!loaded.savedPlaces || Array.isArray(loaded.savedPlaces)) {
+          loaded.savedPlaces = { lunch: [], taxi: [] };
+        }
+        if (!Array.isArray(loaded.savedPlaces.lunch)) loaded.savedPlaces.lunch = [];
+        if (!Array.isArray(loaded.savedPlaces.taxi)) loaded.savedPlaces.taxi = [];
         return loaded;
       } catch {
         const fallback = structuredClone(defaultState);
-        fallback.savedPlaces = [];
+        fallback.savedPlaces = { lunch: [], taxi: [] };
         return fallback;
       }
     }
@@ -432,22 +454,22 @@
 
     function computeSummary() {
       const deposits = state.transactions.filter(t => t.type === 'deposit');
-      const lunches = state.transactions.filter(t => t.type === 'lunch');
+      const expenses = state.transactions.filter(t => t.type !== 'deposit');
       const totalDeposits = deposits.reduce((s, t) => s + Number(t.amount || 0), 0);
-      const totalSpent = lunches.reduce((s, t) => s + Number(t.amount || 0), 0);
+      const totalSpent = expenses.reduce((s, t) => s + Number(t.amount || 0), 0);
       const balance = totalDeposits - totalSpent;
 
       const memberSummary = MEMBERS.map(name => {
         const deposited = deposits.filter(t => t.by === name).reduce((s, t) => s + Number(t.amount || 0), 0);
-        const joinedLunches = lunches.filter(t => Array.isArray(t.participants) && t.participants.includes(name));
-        const share = joinedLunches.reduce((sum, t) => {
+        const joinedExpenses = expenses.filter(t => Array.isArray(t.participants) && t.participants.includes(name));
+        const share = joinedExpenses.reduce((sum, t) => {
           const count = t.participants.length || 1;
           return sum + Number(t.amount || 0) / count;
         }, 0);
         return {
           name,
           deposited,
-          joinedCount: joinedLunches.length,
+          joinedCount: joinedExpenses.length,
           share,
           net: deposited - share
         };
@@ -467,7 +489,7 @@
       document.getElementById('summaryGrid').innerHTML = `
         <div class="stat"><div class="stat-label">Pool Balance</div><div class="stat-value">${money(s.balance)}</div></div>
         <div class="stat"><div class="stat-label">Total Deposits</div><div class="stat-value">${money(s.totalDeposits)}</div></div>
-        <div class="stat"><div class="stat-label">Pool Used</div><div class="stat-value">${money(s.totalSpent)}</div></div>
+        <div class="stat"><div class="stat-label">Total Shared Expenses</div><div class="stat-value">${money(s.totalSpent)}</div></div>
         <div class="stat"><div class="stat-label">Records</div><div class="stat-value">${s.txCount}</div></div>
       `;
     }
@@ -482,7 +504,7 @@
         div.innerHTML = `
           <div class="member-head">
             <div class="member-name">${m.name}</div>
-            <div class="chip">${m.joinedCount} lunches</div>
+            <div class="chip">${m.joinedCount} shared expenses</div>
           </div>
           <div class="member-meta">
             Deposited: <strong>${money(m.deposited)}</strong><br>
@@ -502,11 +524,12 @@
         return;
       }
       const rows = items.map(t => {
-        const typeLabel = t.type === 'deposit' ? 'Deposit' : 'Lunch';
+        const typeLabel = t.type === 'deposit' ? 'Deposit' : t.type === 'taxi' ? 'Taxi' : 'Lunch';
         const amtClass = t.type === 'deposit' ? 'amt-in' : 'amt-out';
         const sign = t.type === 'deposit' ? '+' : '-';
-        const extra = t.type === 'lunch'
-          ? `Deducted from shared wallet pool<br>Participants: ${(t.participants || []).join(', ') || '-'}${t.place ? `<br>Place: ${t.place}` : ''}`
+        const placeLabel = t.type === 'taxi' ? 'Route' : 'Place';
+        const extra = t.type !== 'deposit'
+          ? `Deducted from shared wallet pool<br>Participants: ${(t.participants || []).join(', ') || '-'}${t.place ? `<br>${placeLabel}: ${t.place}` : ''}`
           : 'Added to shared wallet pool';
         return `
           <tr>
@@ -556,19 +579,47 @@
       renderPlaceOptions();
     }
 
-    function getPlaceOptions() {
-      const combined = [...DEFAULT_PLACES.slice(0, -1), ...(state.savedPlaces || []), 'Other'];
+    function currentExpenseType() {
+      return document.getElementById('expenseType').value || 'lunch';
+    }
+
+    function getPlaceOptions(type = currentExpenseType()) {
+      const defaults = DEFAULT_PLACE_OPTIONS[type] || ['Other'];
+      const base = defaults.filter(place => place !== 'Other');
+      const saved = (state.savedPlaces && state.savedPlaces[type]) || [];
+      const combined = [...base, ...saved, 'Other'];
       return [...new Set(combined.filter(Boolean))];
     }
 
     function renderPlaceOptions() {
       const select = document.getElementById('lunchPlaceSelect');
       const current = select.value;
-      select.innerHTML = getPlaceOptions().map(place => `<option value="${place}">${place}</option>`).join('');
-      if (getPlaceOptions().includes(current)) {
+      const options = getPlaceOptions();
+      select.innerHTML = options.map(place => `<option value="${place}">${place}</option>`).join('');
+      if (options.includes(current)) {
         select.value = current;
       }
+      updateExpenseLabels();
       toggleCustomPlace();
+    }
+
+    function updateExpenseLabels() {
+      const type = currentExpenseType();
+      const placeLabel = document.getElementById('placeLabel');
+      const customPlaceLabel = document.getElementById('customPlaceLabel');
+      const participantsLabel = document.getElementById('participantsLabel');
+      const customInput = document.getElementById('lunchPlaceCustom');
+      if (type === 'taxi') {
+        placeLabel.textContent = 'Taxi route';
+        customPlaceLabel.textContent = 'Custom taxi route';
+        participantsLabel.textContent = 'Who joined this taxi? (share record only)';
+        customInput.placeholder = '例如：Office → Home';
+      } else {
+        placeLabel.textContent = 'Restaurant / Place';
+        customPlaceLabel.textContent = 'Custom restaurant / place';
+        participantsLabel.textContent = 'Who joined this expense? (share record only)';
+        customInput.placeholder = '例如：茶餐廳 / 米線';
+      }
     }
 
     function toggleCustomPlace() {
@@ -596,8 +647,9 @@
       const amount = Number(document.getElementById('lunchAmount').value || 0);
       const participants = [...document.querySelectorAll('.participant-checkbox:checked')].map(i => i.value);
       const el = document.getElementById('sharePreview');
+      const typeLabel = currentExpenseType() === 'taxi' ? 'Taxi' : 'Expense';
       if (!amount || participants.length === 0) {
-        el.textContent = '請先輸入金額並勾選參與者。Lunch 金額會先由 pool 扣。';
+        el.textContent = `請先輸入金額並勾選參與者。${typeLabel} 金額會先由 pool 扣。`;
         return;
       }
       const perHead = amount / participants.length;
@@ -629,6 +681,7 @@
     }
 
     function saveLunch() {
+      const type = currentExpenseType();
       const by = document.getElementById('lunchPaidBy').value;
       const amount = Number(document.getElementById('lunchAmount').value || 0);
       const date = document.getElementById('lunchDate').value;
@@ -638,20 +691,21 @@
       const note = document.getElementById('lunchNote').value.trim();
       const participants = [...document.querySelectorAll('.participant-checkbox:checked')].map(i => i.value);
       if (!by || amount <= 0 || !date || participants.length === 0) {
-        showToast('請填好 lunch 資料並勾選參與者');
+        showToast('請填好 expense 資料並勾選參與者');
         return;
       }
       if (selectedPlace === 'Other' && !customPlace) {
-        showToast('請輸入餐廳名稱');
+        showToast(type === 'taxi' ? '請輸入的士路線' : '請輸入餐廳名稱');
         return;
       }
-      if (place && !DEFAULT_PLACES.includes(place) && !state.savedPlaces.includes(place)) {
-        state.savedPlaces.unshift(place);
-        state.savedPlaces = [...new Set(state.savedPlaces)].slice(0, 12);
+      const defaults = DEFAULT_PLACE_OPTIONS[type] || ['Other'];
+      if (place && !defaults.includes(place) && !state.savedPlaces[type].includes(place)) {
+        state.savedPlaces[type].unshift(place);
+        state.savedPlaces[type] = [...new Set(state.savedPlaces[type])].slice(0, 12);
       }
       state.transactions.push({
-        id: `l-${Date.now()}`,
-        type: 'lunch',
+        id: `${type}-${Date.now()}`,
+        type,
         by,
         amount,
         date,
@@ -662,14 +716,16 @@
       renderPlaceOptions();
       renderAll();
       closeModal('lunchModal');
+      document.getElementById('expenseType').value = 'lunch';
       document.getElementById('lunchAmount').value = '';
-      document.getElementById('lunchPlaceSelect').value = getPlaceOptions()[0] || '茶餐廳';
+      renderPlaceOptions();
+      document.getElementById('lunchPlaceSelect').value = getPlaceOptions('lunch')[0] || '茶餐廳';
       document.getElementById('lunchPlaceCustom').value = '';
       document.getElementById('lunchNote').value = '';
       document.querySelectorAll('.participant-checkbox').forEach(i => i.checked = true);
       toggleCustomPlace();
       updateSharePreview();
-      showToast('Lunch expense 已加入');
+      showToast(type === 'taxi' ? 'Taxi expense 已加入' : 'Lunch expense 已加入');
     }
 
     function showToast(message) {
@@ -688,6 +744,10 @@
     document.getElementById('saveLunchBtn').addEventListener('click', saveLunch);
     document.getElementById('lunchAmount').addEventListener('input', updateSharePreview);
     document.getElementById('lunchPlaceSelect').addEventListener('change', toggleCustomPlace);
+    document.getElementById('expenseType').addEventListener('change', () => {
+      renderPlaceOptions();
+      updateSharePreview();
+    });
 
     populateMemberSelects();
     document.getElementById('depositDate').value = todayStr();
