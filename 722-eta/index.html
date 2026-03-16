@@ -35,9 +35,9 @@
       background: rgba(15, 23, 42, 0.95);
       border: 1px solid var(--line);
       border-radius: 22px;
-      padding: 16px;
+      padding: 12px;
       box-shadow: 0 14px 40px rgba(0,0,0,0.28);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .sticky-top {
       position: sticky;
@@ -116,7 +116,7 @@
       scroll-snap-type: x mandatory;
     }
     .bookmark-chip {
-      min-width: 270px;
+      min-width: 220px;
       background: linear-gradient(180deg, rgba(249,115,22,0.09), rgba(236,72,153,0.05));
       border: 1px solid rgba(249,115,22,0.18);
       border-radius: 20px;
@@ -141,10 +141,10 @@
       font-size: 0.72rem;
       font-weight: 800;
     }
-    .bookmark-name { font-weight: 900; font-size: 1rem; line-height: 1.2; padding-right: 48px; }
-    .bookmark-meta { margin-top: 6px; color: var(--muted); font-size: 0.84rem; }
-    .bookmark-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .bookmark-tools { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .bookmark-name { font-weight: 900; font-size: 0.95rem; line-height: 1.15; padding-right: 0; }
+    .bookmark-meta { margin-top: 4px; color: var(--muted); font-size: 0.78rem; }
+    .bookmark-actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+    .bookmark-tools { display: none; }
 
     .eta-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
     .eta-card {
@@ -177,7 +177,7 @@
       border: 1px solid var(--line);
       border-top-left-radius: 24px;
       border-top-right-radius: 24px;
-      padding: 16px;
+      padding: 14px;
       box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
     }
     .modal-head {
@@ -223,8 +223,8 @@
       .actions { flex-direction: column; }
       button { width: 100%; }
       .top-head, .section-head { flex-direction: column; align-items: stretch; }
-      .bookmark-chip { min-width: 82vw; }
-      .sticky-top { top: 2px; }
+      .bookmark-chip { min-width: 72vw; }
+      .sticky-top { position: static; }
     }
   </style>
 </head>
@@ -234,14 +234,12 @@
       <div class="top-head">
         <div>
           <h1>Citybus ETA Checker</h1>
-          <div class="sub">Bookmark 置頂、可 swipe；搜尋站位放入設定 dialog。</div>
-        </div>
-        <div class="pill">Pinned Bookmark + Search Dialog</div>
+            </div>
       </div>
 
       <div class="section-head">
         <h2>收藏站位</h2>
-        <button id="openConfigBtn" class="secondary small">搜尋站位 / 管理收藏</button>
+        <button id="openConfigBtn" class="secondary small">管理收藏</button>
       </div>
       <div id="bookmarkList" class="bookmark-scroll"></div>
     </section>
@@ -403,16 +401,10 @@
         const div = document.createElement('div');
         div.className = 'bookmark-chip' + (item.pinned ? ' primary' : '');
         div.innerHTML = `
-          ${item.pinned ? '<div class="pin-badge">PINNED</div>' : ''}
           <div class="bookmark-name">${name}</div>
           <div class="bookmark-meta">${item.route} ・ ${item.directionLabel || ''} ・ stop_id ${item.stop_id}</div>
           <div class="bookmark-actions">
             <button class="small" data-action="use">查 ETA</button>
-            <button class="small secondary" data-action="remove">刪除</button>
-          </div>
-          <div class="bookmark-tools">
-            <button class="small ghost" data-action="pin">設為主收藏</button>
-            <button class="small ghost" data-action="rename">改名</button>
           </div>
         `;
         div.querySelector('[data-action="use"]').addEventListener('click', () => {
@@ -420,9 +412,6 @@
           document.getElementById('stopId').value = item.stop_id;
           openEta();
         });
-        div.querySelector('[data-action="remove"]').addEventListener('click', () => removeBookmark(index));
-        div.querySelector('[data-action="pin"]').addEventListener('click', () => pinBookmark(index));
-        div.querySelector('[data-action="rename"]').addEventListener('click', () => renameBookmark(index));
         listEl.appendChild(div);
       });
     }
@@ -526,6 +515,9 @@
             pinned: false
           });
           document.getElementById('searchStatus').textContent = added ? `已收藏：${nameTc}` : `已存在收藏：${nameTc}`;
+          if (added) {
+            closeConfig();
+          }
         });
         resultEl.appendChild(div);
       });
