@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>US Market Radar v7</title>
+  <title>US Market Radar v8</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -228,10 +228,10 @@
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>US Market Radar v7</h1>
-        <div class="sub">Yahoo Finance real quote prototype for index and OPEN monitoring, with options section still in draft mode.</div>
+        <h1>US Market Radar v8</h1>
+        <div class="sub">JSON feed version: the page now reads a local quotes.json file generated from Yahoo data on the server side.</div>
       </div>
-      <div class="pill">Yahoo real quotes · options draft</div>
+      <div class="pill">JSON feed · Yahoo server-side quote snapshot</div>
     </div>
 
     <div class="summary-grid">
@@ -246,7 +246,7 @@
       <div>
         <div class="card">
           <h2>Ticker Search</h2>
-          <div class="note">Prototype search area. Later this can call a real Yahoo connector for quick focus names like <strong>SPY</strong>, <strong>QQQ</strong>, <strong>IWM</strong>, <strong>VIX</strong>, and <strong>OPEN</strong>.</div>
+          <div class="note">This page now reads a local JSON quote feed instead of calling Yahoo directly from the browser. Search area remains a draft for later expansion.</div>
           <div class="search-row">
             <input value="OPEN" />
             <button>Search</button>
@@ -353,7 +353,7 @@ renderOptionPairs(normalizedData)
           <div class="source-grid">
             <div class="source-item">
               <div class="source-title">Prices / ETFs</div>
-              <div class="source-desc">Yahoo Finance is now used for the first live quote prototype on this page. Later swap to Futu OpenD / broker feed for stronger live monitoring.</div>
+              <div class="source-desc">Yahoo Finance is now used server-side to generate a local quote snapshot JSON. Later swap to Futu OpenD / broker feed for stronger live monitoring.</div>
             </div>
             <div class="source-item">
               <div class="source-title">Options chains</div>
@@ -369,7 +369,9 @@ renderOptionPairs(normalizedData)
         <div class="card">
           <h2>Yahoo Prototype Notes</h2>
           <div class="note">
-            In this version, Yahoo Finance is the first source to consider for:
+            In this version, the browser reads a local quotes.json file generated from Yahoo Finance data. This avoids direct browser-to-Yahoo fetch failures.
+            <br><br>
+            The current feed covers:
             <br><br>
             • SPY / QQQ / DIA / IWM / OPEN basic prices<br>
             • simple market snapshot<br>
@@ -382,7 +384,7 @@ renderOptionPairs(normalizedData)
         <div class="card">
           <h2>v6 Scope</h2>
           <div class="note">
-            v6 adds a connector skeleton so the UI can later be fed by a normalized data shape.
+            v8 switches from direct browser Yahoo fetch to a local JSON feed model.
             <br><br>
             Next step:
             <br>
@@ -397,18 +399,10 @@ renderOptionPairs(normalizedData)
 
   <script>
 
-    async function loadYahooQuote(symbol) {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1m`;
-      const res = await fetch(url);
+    async function loadQuotesFeed() {
+      const res = await fetch('./data/quotes.json?v=1', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const meta = data.chart.result[0].meta;
-      return {
-        symbol,
-        price: meta.regularMarketPrice,
-        prevClose: meta.previousClose,
-        volume: meta.regularMarketVolume || 0
-      };
+      return await res.json();
     }
 
     function fmtPct(price, prev) {
@@ -432,14 +426,13 @@ renderOptionPairs(normalizedData)
 
     async function loadQuotes() {
       try {
-        const [open, spy, qqq, dia, iwm, vix] = await Promise.all([
-          loadYahooQuote('OPEN'),
-          loadYahooQuote('SPY'),
-          loadYahooQuote('QQQ'),
-          loadYahooQuote('DIA'),
-          loadYahooQuote('IWM'),
-          loadYahooQuote('^VIX')
-        ]);
+        const feed = await loadQuotesFeed();
+        const open = feed.quotes['OPEN'];
+        const spy = feed.quotes['SPY'];
+        const qqq = feed.quotes['QQQ'];
+        const dia = feed.quotes['DIA'];
+        const iwm = feed.quotes['IWM'];
+        const vix = feed.quotes['^VIX'];
 
         document.getElementById('spyQuote').textContent = fmtPct(spy.price, spy.prevClose);
         document.getElementById('spyQuote').className = 'stat-value ' + ((spy.price - spy.prevClose) >= 0 ? 'green' : 'red');
@@ -461,7 +454,7 @@ renderOptionPairs(normalizedData)
         console.error(err);
         ['spyQuote','qqqQuote','diaQuote','iwmQuote','vixQuote','openPrice','openMove','openVolume'].forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.textContent = 'Fetch failed';
+          if (el) el.textContent = 'Feed failed';
         });
       }
     }

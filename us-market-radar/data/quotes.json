@@ -1,0 +1,41 @@
+{
+  "updatedAt": 1773676941,
+  "quotes": {
+    "OPEN": {
+      "symbol": "OPEN",
+      "price": 5.079,
+      "prevClose": 4.95,
+      "volume": 26594550
+    },
+    "SPY": {
+      "symbol": "SPY",
+      "price": 668.5,
+      "prevClose": 662.29,
+      "volume": 32468382
+    },
+    "QQQ": {
+      "symbol": "QQQ",
+      "price": 600.431,
+      "prevClose": 593.72,
+      "volume": 21331150
+    },
+    "DIA": {
+      "symbol": "DIA",
+      "price": 470.08,
+      "prevClose": 466.41,
+      "volume": 3491564
+    },
+    "IWM": {
+      "symbol": "IWM",
+      "price": 248.925,
+      "prevClose": 246.59,
+      "volume": 21284983
+    },
+    "^VIX": {
+      "symbol": "^VIX",
+      "price": 23.74,
+      "prevClose": 27.19,
+      "volume": 0
+    }
+  }
+}
