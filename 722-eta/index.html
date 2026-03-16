@@ -89,6 +89,22 @@
     }
     button.small { padding: 10px 12px; min-height: 38px; font-size: 0.86rem; font-weight: 700; }
     .error { margin-top: 8px; color: var(--danger); font-size: 0.88rem; }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(15,23,42,0.96);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.86rem;
+      z-index: 200;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .toast.show { display: block; }
 
     .bookmark-scroll {
       display: flex;
@@ -289,11 +305,33 @@
     </div>
   </div>
 
+  <div id="toast" class="toast"></div>
+
   <script>
     const COMPANY = 'CTB';
     const BOOKMARKS_KEY = 'citybus_eta_bookmarks_v5';
     let refreshTimer = null;
     let searchCache = [];
+    let memoryBookmarks = [];
+
+    function showToast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function storageAvailable() {
+      try {
+        const key = '__eta_test__';
+        localStorage.setItem(key, '1');
+        localStorage.removeItem(key);
+        return true;
+      } catch {
+        return false;
+      }
+    }
 
     function buildEtaUrl(route, stopId) {
       return `https://rt.data.gov.hk/v2/transport/citybus/eta/${COMPANY}/${stopId}/${encodeURIComponent(route)}`;
@@ -326,14 +364,25 @@
     }
     function getBookmarks() {
       try {
+        if (!storageAvailable()) return memoryBookmarks;
         const raw = localStorage.getItem(BOOKMARKS_KEY);
         return raw ? JSON.parse(raw) : [];
       } catch {
-        return [];
+        return memoryBookmarks;
       }
     }
     function saveBookmarks(list) {
-      localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(list));
+      try {
+        if (!storageAvailable()) {
+          memoryBookmarks = list;
+          return true;
+        }
+        localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(list));
+        return true;
+      } catch {
+        memoryBookmarks = list;
+        return false;
+      }
     }
     function normaliseBookmarks(list) {
       return [...list].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
@@ -341,10 +390,14 @@
     function addBookmark(item) {
       const bookmarks = getBookmarks();
       const exists = bookmarks.some(b => b.route === item.route && b.stop_id === item.stop_id);
-      if (exists) return false;
+      if (exists) {
+        showToast('收藏已存在');
+        return false;
+      }
       const next = normaliseBookmarks([item, ...bookmarks]);
-      saveBookmarks(next);
+      const persisted = saveBookmarks(next);
       renderBookmarks();
+      showToast(persisted ? '已加入收藏' : '已加入收藏（暫存模式）');
       return true;
     }
 
