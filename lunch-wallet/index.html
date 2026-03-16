@@ -361,9 +361,13 @@
           <input id="lunchDate" type="date" />
         </div>
         <div>
-          <label for="lunchPlace">Restaurant / Place</label>
-          <input id="lunchPlace" placeholder="例如：茶餐廳 / 米線" />
+          <label for="lunchPlaceSelect">Restaurant / Place</label>
+          <select id="lunchPlaceSelect"></select>
         </div>
+      </div>
+      <div id="customPlaceWrap" style="display:none;">
+        <label for="lunchPlaceCustom">Custom restaurant / place</label>
+        <input id="lunchPlaceCustom" placeholder="例如：茶餐廳 / 米線" />
       </div>
       <label>Who joined this lunch? (share record only)</label>
       <div id="participantsBox" class="check-grid"></div>
@@ -381,6 +385,7 @@
   <script>
     const MEMBERS = ['San', 'Jack', 'Arthas', 'Parklan'];
     const STORAGE_KEY = 'lunch_wallet_v2';
+    const DEFAULT_PLACES = ['茶餐廳', '米線', '麥當勞', '大家樂', 'Other'];
 
     const defaultState = {
       transactions: [
@@ -405,9 +410,13 @@
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : structuredClone(defaultState);
+        const loaded = raw ? JSON.parse(raw) : structuredClone(defaultState);
+        if (!Array.isArray(loaded.savedPlaces)) loaded.savedPlaces = [];
+        return loaded;
       } catch {
-        return structuredClone(defaultState);
+        const fallback = structuredClone(defaultState);
+        fallback.savedPlaces = [];
+        return fallback;
       }
     }
 
@@ -544,6 +553,28 @@
           <span>${name}</span>
         </label>
       `).join('');
+      renderPlaceOptions();
+    }
+
+    function getPlaceOptions() {
+      const combined = [...DEFAULT_PLACES.slice(0, -1), ...(state.savedPlaces || []), 'Other'];
+      return [...new Set(combined.filter(Boolean))];
+    }
+
+    function renderPlaceOptions() {
+      const select = document.getElementById('lunchPlaceSelect');
+      const current = select.value;
+      select.innerHTML = getPlaceOptions().map(place => `<option value="${place}">${place}</option>`).join('');
+      if (getPlaceOptions().includes(current)) {
+        select.value = current;
+      }
+      toggleCustomPlace();
+    }
+
+    function toggleCustomPlace() {
+      const select = document.getElementById('lunchPlaceSelect');
+      const wrap = document.getElementById('customPlaceWrap');
+      wrap.style.display = select.value === 'Other' ? 'block' : 'none';
     }
 
     function openModal(id) {
@@ -601,12 +632,22 @@
       const by = document.getElementById('lunchPaidBy').value;
       const amount = Number(document.getElementById('lunchAmount').value || 0);
       const date = document.getElementById('lunchDate').value;
-      const place = document.getElementById('lunchPlace').value.trim();
+      const selectedPlace = document.getElementById('lunchPlaceSelect').value;
+      const customPlace = document.getElementById('lunchPlaceCustom').value.trim();
+      const place = selectedPlace === 'Other' ? customPlace : selectedPlace;
       const note = document.getElementById('lunchNote').value.trim();
       const participants = [...document.querySelectorAll('.participant-checkbox:checked')].map(i => i.value);
       if (!by || amount <= 0 || !date || participants.length === 0) {
         showToast('請填好 lunch 資料並勾選參與者');
         return;
+      }
+      if (selectedPlace === 'Other' && !customPlace) {
+        showToast('請輸入餐廳名稱');
+        return;
+      }
+      if (place && !DEFAULT_PLACES.includes(place) && !state.savedPlaces.includes(place)) {
+        state.savedPlaces.unshift(place);
+        state.savedPlaces = [...new Set(state.savedPlaces)].slice(0, 12);
       }
       state.transactions.push({
         id: `l-${Date.now()}`,
@@ -618,12 +659,15 @@
         note,
         participants
       });
+      renderPlaceOptions();
       renderAll();
       closeModal('lunchModal');
       document.getElementById('lunchAmount').value = '';
-      document.getElementById('lunchPlace').value = '';
+      document.getElementById('lunchPlaceSelect').value = getPlaceOptions()[0] || '茶餐廳';
+      document.getElementById('lunchPlaceCustom').value = '';
       document.getElementById('lunchNote').value = '';
       document.querySelectorAll('.participant-checkbox').forEach(i => i.checked = true);
+      toggleCustomPlace();
       updateSharePreview();
       showToast('Lunch expense 已加入');
     }
@@ -643,6 +687,7 @@
     document.getElementById('saveDepositBtn').addEventListener('click', saveDeposit);
     document.getElementById('saveLunchBtn').addEventListener('click', saveLunch);
     document.getElementById('lunchAmount').addEventListener('input', updateSharePreview);
+    document.getElementById('lunchPlaceSelect').addEventListener('change', toggleCustomPlace);
 
     populateMemberSelects();
     document.getElementById('depositDate').value = todayStr();
