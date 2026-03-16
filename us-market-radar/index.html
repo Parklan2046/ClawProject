@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>US Market Radar v1</title>
+  <title>US Market Radar v2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -158,10 +158,10 @@
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>US Market Radar v1</h1>
-        <div class="sub">First layout draft focused on US index monitoring and index options flow.</div>
+        <h1>US Market Radar v2</h1>
+        <div class="sub">Second layout draft focused on US index monitoring, index options flow, and a dedicated OpenDoor options watch.</div>
       </div>
-      <div class="pill">Draft · Index-first · Options monitor</div>
+      <div class="pill">Draft · Index + OPEN options focus</div>
     </div>
 
     <div class="summary-grid">
@@ -254,6 +254,36 @@
         </div>
 
         <div class="card">
+          <h2>OpenDoor Focus (OPEN)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Panel</th>
+                <th>Draft Content</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-label="Panel">Quick stats</td>
+                <td data-label="Draft Content">Last price, day %, volume, premarket / after-hours move</td>
+              </tr>
+              <tr>
+                <td data-label="Panel">Options pulse</td>
+                <td data-label="Draft Content">Most active calls, most active puts, nearest expiry, put/call bias</td>
+              </tr>
+              <tr>
+                <td data-label="Panel">Key strikes</td>
+                <td data-label="Draft Content">ATM strike, most crowded call strike, downside hedge strike</td>
+              </tr>
+              <tr>
+                <td data-label="Panel">What to watch</td>
+                <td data-label="Draft Content">Unusual options activity, squeeze risk, sentiment shift, volume spike</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
           <h2>Active Strikes Draft</h2>
           <table>
             <thead>
@@ -321,19 +351,19 @@
         </div>
 
         <div class="card">
-          <h2>Future blocks</h2>
+          <h2>Real-time data plan</h2>
           <div class="idea-list">
             <div class="idea-item">
-              <div class="idea-title">Unusual options activity feed</div>
-              <div class="idea-desc">Track large or abnormal SPY / QQQ / IWM contract bursts.</div>
+              <div class="idea-title">Index / ETF prices</div>
+              <div class="idea-desc">Use Yahoo Finance / Futu / broker feed for SPY, QQQ, DIA, IWM, VIX (or VIX-related quote source).</div>
             </div>
             <div class="idea-item">
-              <div class="idea-title">Gamma / OI walls</div>
-              <div class="idea-desc">Visualize the strikes that may pin or accelerate index moves.</div>
+              <div class="idea-title">Index + OPEN options data</div>
+              <div class="idea-desc">Preferred sources: Futu OpenD if US options coverage is available; otherwise dedicated options APIs like Tradier / Polygon / broker data.</div>
             </div>
             <div class="idea-item">
-              <div class="idea-title">Alert panel</div>
-              <div class="idea-desc">Trigger notes like: QQQ call flow surge, VIX breakout, SPY put hedge spike.</div>
+              <div class="idea-title">Signal layer</div>
+              <div class="idea-desc">OpenClaw can later summarize unusual options flow and send watch notes / alerts to chat.</div>
             </div>
           </div>
         </div>
