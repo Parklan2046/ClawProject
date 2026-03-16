@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>US Market Radar v4</title>
+  <title>US Market Radar v5</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -218,10 +218,10 @@
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>US Market Radar v4</h1>
-        <div class="sub">Index monitor + OpenDoor options focus + data source plan + clickable option pair draft.</div>
+        <h1>US Market Radar v5</h1>
+        <div class="sub">Yahoo Finance prototype version for index and OPEN monitoring, with upgrade path for richer options APIs later.</div>
       </div>
-      <div class="pill">Draft · Clickable option pairs · Source mapped</div>
+      <div class="pill">Yahoo prototype · upgrade-ready</div>
     </div>
 
     <div class="summary-grid">
@@ -320,27 +320,41 @@
         </div>
 
         <div class="card">
-          <h2>Data Sources</h2>
+          <h2>Data Sources (Yahoo first)</h2>
           <div class="source-grid">
             <div class="source-item">
               <div class="source-title">Prices / ETFs</div>
-              <div class="source-desc">Yahoo Finance for basic layout prototyping, or Futu OpenD / broker quote feed for live monitored prices.</div>
+              <div class="source-desc">Yahoo Finance first for prototype quotes and basic market snapshot. Later swap to Futu OpenD / broker feed for stronger live monitoring.</div>
             </div>
             <div class="source-item">
               <div class="source-title">Options chains</div>
-              <div class="source-desc">Preferred: Futu OpenD if US options coverage works. Fallback: Tradier / Polygon / broker options APIs.</div>
+              <div class="source-desc">Yahoo Finance can cover basic options chain prototyping first. Later upgrade to Futu OpenD, Tradier, Polygon, or broker options APIs for deeper options monitoring.</div>
             </div>
             <div class="source-item">
               <div class="source-title">AI / alerts layer</div>
-              <div class="source-desc">OpenClaw can summarize unusual options flow and post alerts to chat after data ingestion is connected.</div>
+              <div class="source-desc">OpenClaw can summarize Yahoo-based prototype data first, then later post richer alerts once deeper options data is connected.</div>
             </div>
           </div>
         </div>
 
         <div class="card">
+          <h2>Yahoo Prototype Notes</h2>
+          <div class="note">
+            In this version, Yahoo Finance is the first source to consider for:
+            <br><br>
+            • SPY / QQQ / DIA / IWM / OPEN basic prices<br>
+            • simple market snapshot<br>
+            • basic options chain prototyping
+            <br><br>
+            Limitation: Yahoo is fine for a first prototype, but not ideal for serious long-term options flow monitoring or unusual activity scanning.
+          </div>
+        </div>
+        <div class="card">
           <h2>v4 Scope</h2>
           <div class="note">
-            v4 adds:
+            v5 uses Yahoo Finance as the first prototype source and keeps the layout upgrade-ready for stronger options feeds later.
+            <br><br>
+            v5 adds:
             <br><br>
             • data source plan<br>
             • clickable option pair cards<br>
