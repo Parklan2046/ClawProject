@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>US Market Radar v5</title>
+  <title>US Market Radar v6</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -16,7 +16,6 @@
       --red: #f87171;
       --blue: #60a5fa;
       --gold: #fbbf24;
-      --orange: #fb923c;
     }
     * { box-sizing: border-box; }
     body {
@@ -202,6 +201,17 @@
     }
     .detail-label { color: var(--muted); font-size: 0.78rem; }
     .detail-value { margin-top: 6px; font-weight: 800; }
+    .code {
+      background: #0a1020;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
     @media (max-width: 1000px) {
       .grid { grid-template-columns: 1fr; }
       .summary-grid { grid-template-columns: repeat(2, 1fr); }
@@ -218,10 +228,10 @@
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>US Market Radar v5</h1>
-        <div class="sub">Yahoo Finance prototype version for index and OPEN monitoring, with upgrade path for richer options APIs later.</div>
+        <h1>US Market Radar v6</h1>
+        <div class="sub">Yahoo Finance connector skeleton draft for index and OPEN monitoring, with a future upgrade path to stronger options feeds.</div>
       </div>
-      <div class="pill">Yahoo prototype · upgrade-ready</div>
+      <div class="pill">Yahoo prototype · connector skeleton</div>
     </div>
 
     <div class="summary-grid">
@@ -236,11 +246,30 @@
       <div>
         <div class="card">
           <h2>Ticker Search</h2>
-          <div class="note">Use this area later for quick focus names like <strong>SPY</strong>, <strong>QQQ</strong>, <strong>IWM</strong>, <strong>VIX</strong>, and <strong>OPEN</strong>.</div>
+          <div class="note">Prototype search area. Later this can call a real Yahoo connector for quick focus names like <strong>SPY</strong>, <strong>QQQ</strong>, <strong>IWM</strong>, <strong>VIX</strong>, and <strong>OPEN</strong>.</div>
           <div class="search-row">
             <input value="OPEN" />
             <button>Search</button>
           </div>
+        </div>
+
+        <div class="card">
+          <h2>Yahoo Connector Skeleton</h2>
+          <div class="note">Suggested first implementation structure for the prototype:</div>
+          <div class="code">getQuoteData(ticker)
+  -> returns { price, dayChangePct, volume, premarket }
+
+getIndexSnapshot([SPY, QQQ, DIA, IWM, VIX])
+  -> fills top cards
+
+getBasicOptionsChain(ticker, expiry)
+  -> returns calls / puts with strike, bid, ask, volume, oi, iv
+
+normalizeOptionsData(sourceData)
+  -> converts Yahoo shape into internal UI format
+
+renderOptionPairs(normalizedData)
+  -> fills call / put cards + detail panel</div>
         </div>
 
         <div class="card">
@@ -264,7 +293,7 @@
 
           <div class="pair-grid">
             <div class="pair-col">
-              <div class="pair-head"><h2 style="margin:0;">Calls</h2><span class="tag">Nearest expiry</span></div>
+              <div class="pair-head"><h2 style="margin:0;">Calls</h2><span class="tag">Yahoo prototype</span></div>
               <div class="option-list">
                 <div class="option-card active" onclick="selectOption('OPEN 3C', 'Call', 'This Friday', '$0.18 x $0.22', '15.4k', '28.6k', 'Most active upside strike, possible momentum chase if OPEN squeezes.')">
                   <div class="option-top"><div class="option-strike">OPEN 3C</div><div class="green">Bullish</div></div>
@@ -282,7 +311,7 @@
             </div>
 
             <div class="pair-col">
-              <div class="pair-head"><h2 style="margin:0;">Puts</h2><span class="tag">Nearest expiry</span></div>
+              <div class="pair-head"><h2 style="margin:0;">Puts</h2><span class="tag">Yahoo prototype</span></div>
               <div class="option-list">
                 <div class="option-card" onclick="selectOption('OPEN 2P', 'Put', 'This Friday', '$0.12 x $0.15', '9.8k', '20.3k', 'Main downside hedge strike; watch if volume expands on weakness.')">
                   <div class="option-top"><div class="option-strike">OPEN 2P</div><div class="red">Defensive</div></div>
@@ -349,19 +378,17 @@
             Limitation: Yahoo is fine for a first prototype, but not ideal for serious long-term options flow monitoring or unusual activity scanning.
           </div>
         </div>
+
         <div class="card">
-          <h2>v4 Scope</h2>
+          <h2>v6 Scope</h2>
           <div class="note">
-            v5 uses Yahoo Finance as the first prototype source and keeps the layout upgrade-ready for stronger options feeds later.
+            v6 adds a connector skeleton so the UI can later be fed by a normalized data shape.
             <br><br>
-            v5 adds:
-            <br><br>
-            • data source plan<br>
-            • clickable option pair cards<br>
-            • OPEN focus with draft strikes<br>
-            • selected option detail panel
-            <br><br>
-            Next step: connect real price data first, then real options chain data.
+            Next step:
+            <br>
+            • implement `getQuoteData()` and `getBasicOptionsChain()` using Yahoo-first logic<br>
+            • normalize the payload into a stable internal format<br>
+            • later swap Yahoo with Futu / Tradier / Polygon without redoing the UI
           </div>
         </div>
       </div>
