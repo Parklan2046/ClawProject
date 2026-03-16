@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>US Market Radar v3</title>
+  <title>US Market Radar v4</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -16,6 +16,7 @@
       --red: #f87171;
       --blue: #60a5fa;
       --gold: #fbbf24;
+      --orange: #fb923c;
     }
     * { box-sizing: border-box; }
     body {
@@ -25,7 +26,7 @@
       color: var(--text);
       padding: 18px;
     }
-    .wrap { max-width: 1200px; margin: 0 auto; }
+    .wrap { max-width: 1280px; margin: 0 auto; }
     .hero {
       display: flex;
       justify-content: space-between;
@@ -45,21 +46,6 @@
       font-size: 0.82rem;
       background: rgba(255,255,255,0.03);
     }
-    .grid {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 16px;
-      align-items: start;
-    }
-    .card {
-      background: rgba(17,24,39,0.95);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: 0 14px 32px rgba(0,0,0,0.24);
-      margin-bottom: 16px;
-    }
-    .card h2 { margin: 0 0 12px; font-size: 1rem; }
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -76,6 +62,49 @@
     .stat-value { margin-top: 8px; font-size: 1.15rem; font-weight: 900; }
     .green { color: var(--green); }
     .red { color: var(--red); }
+    .gold { color: var(--gold); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .card {
+      background: rgba(17,24,39,0.95);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 14px 32px rgba(0,0,0,0.24);
+      margin-bottom: 16px;
+    }
+    .card h2 { margin: 0 0 12px; font-size: 1rem; }
+    .note { color: var(--muted); font-size: 0.85rem; line-height: 1.55; }
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    input {
+      width: 100%;
+      background: #0a1020;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 12px 13px;
+      font-size: 0.96rem;
+      outline: none;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: white;
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+      cursor: pointer;
+    }
     .watchlist {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -90,18 +119,36 @@
     .watch-symbol { font-weight: 900; font-size: 1rem; }
     .watch-name { color: var(--muted); font-size: 0.8rem; margin-top: 3px; }
     .watch-move { margin-top: 8px; font-weight: 800; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
     }
-    th, td {
-      text-align: left;
-      padding: 11px 9px;
-      border-bottom: 1px solid var(--line);
-      vertical-align: top;
+    .source-item {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
     }
-    th { color: var(--muted); font-size: 0.8rem; }
+    .source-title { font-weight: 800; }
+    .source-desc { margin-top: 5px; color: var(--muted); font-size: 0.84rem; line-height: 1.5; }
+    .pair-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .pair-col {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 14px;
+    }
+    .pair-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
     .tag {
       display: inline-block;
       padding: 5px 8px;
@@ -111,46 +158,59 @@
       background: rgba(96,165,250,0.14);
       color: #93c5fd;
     }
-    .note {
-      color: var(--muted);
-      font-size: 0.85rem;
-      line-height: 1.6;
+    .option-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
-    .idea-list {
-      display: grid;
+    .option-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    .option-card:hover { border-color: rgba(251,191,36,0.25); }
+    .option-card.active { border-color: rgba(251,191,36,0.35); box-shadow: inset 0 0 0 1px rgba(251,191,36,0.15); }
+    .option-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       gap: 10px;
     }
-    .idea-item {
+    .option-strike { font-weight: 900; }
+    .option-meta { margin-top: 4px; color: var(--muted); font-size: 0.8rem; }
+    .detail-box {
       background: var(--panel-2);
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 14px;
     }
-    .idea-title { font-weight: 800; }
-    .idea-desc { margin-top: 5px; color: var(--muted); font-size: 0.84rem; }
-    @media (max-width: 980px) {
+    .detail-title { font-weight: 900; font-size: 1rem; }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .detail-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .detail-label { color: var(--muted); font-size: 0.78rem; }
+    .detail-value { margin-top: 6px; font-weight: 800; }
+    @media (max-width: 1000px) {
       .grid { grid-template-columns: 1fr; }
       .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .source-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
       body { padding: 10px; }
-      .summary-grid, .watchlist { grid-template-columns: 1fr; }
-      table, thead, tbody, tr, th, td { display: block; }
-      thead { display: none; }
-      tr {
-        background: var(--panel-2);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 10px;
-        margin-bottom: 10px;
-      }
-      td { border: none; padding: 6px 4px; }
-      td::before {
-        content: attr(data-label) ": ";
-        color: var(--muted);
-        font-size: 0.78rem;
-        font-weight: 700;
-      }
+      .summary-grid, .watchlist, .pair-grid, .detail-grid { grid-template-columns: 1fr; }
+      .search-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -158,109 +218,39 @@
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>US Market Radar v3</h1>
-        <div class="sub">Third layout draft with ticker search, live-ready cards, and a dedicated OpenDoor options focus.</div>
+        <h1>US Market Radar v4</h1>
+        <div class="sub">Index monitor + OpenDoor options focus + data source plan + clickable option pair draft.</div>
       </div>
-      <div class="pill">Draft · Search + live-ready cards + OPEN focus</div>
+      <div class="pill">Draft · Clickable option pairs · Source mapped</div>
     </div>
 
-        <div class="card">
-      <h2>Ticker Search</h2>
-      <div class="note">Draft search block for quick focus names such as <strong>SPY</strong>, <strong>QQQ</strong>, <strong>IWM</strong>, <strong>VIX</strong>, and <strong>OPEN</strong>.</div>
-      <div style="display:grid;grid-template-columns:1fr 160px;gap:10px;margin-top:12px;">
-        <input style="width:100%;background:#0a1020;color:#e5e7eb;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 13px;font-size:0.96rem;outline:none;" value="OPEN" />
-        <button style="border:none;border-radius:999px;padding:12px 16px;font-size:0.95rem;font-weight:800;color:white;background:linear-gradient(135deg,#22c55e,#3b82f6);cursor:pointer;">Search</button>
-      </div>
-      <div class="note" style="margin-top:10px;">v3 先做 layout，之後可接真正 quote / options API。</div>
-    </div>
-
-<div class="summary-grid">
-      <div class="stat">
-        <div class="stat-label">SPY</div>
-        <div class="stat-value green">+1.24%</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">QQQ</div>
-        <div class="stat-value green">+1.68%</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">DIA</div>
-        <div class="stat-value green">+0.52%</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">IWM</div>
-        <div class="stat-value red">-0.34%</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">VIX</div>
-        <div class="stat-value gold">14.82</div>
-      </div>
+    <div class="summary-grid">
+      <div class="stat"><div class="stat-label">SPY</div><div class="stat-value green">+1.24%</div></div>
+      <div class="stat"><div class="stat-label">QQQ</div><div class="stat-value green">+1.68%</div></div>
+      <div class="stat"><div class="stat-label">DIA</div><div class="stat-value green">+0.52%</div></div>
+      <div class="stat"><div class="stat-label">IWM</div><div class="stat-value red">-0.34%</div></div>
+      <div class="stat"><div class="stat-label">VIX</div><div class="stat-value gold">14.82</div></div>
     </div>
 
     <div class="grid">
       <div>
         <div class="card">
-          <h2>Index Snapshot</h2>
-          <div class="watchlist">
-            <div class="watch-item">
-              <div class="watch-symbol">SPY</div>
-              <div class="watch-name">S&P 500 ETF</div>
-              <div class="watch-move green">Bullish bias · Call flow stronger</div>
-            </div>
-            <div class="watch-item">
-              <div class="watch-symbol">QQQ</div>
-              <div class="watch-name">Nasdaq 100 ETF</div>
-              <div class="watch-move green">Tech-led momentum</div>
-            </div>
-            <div class="watch-item">
-              <div class="watch-symbol">DIA</div>
-              <div class="watch-name">Dow Jones ETF</div>
-              <div class="watch-move green">Slow grind higher</div>
-            </div>
-            <div class="watch-item">
-              <div class="watch-symbol">IWM</div>
-              <div class="watch-name">Russell 2000 ETF</div>
-              <div class="watch-move red">Small caps lagging</div>
-            </div>
+          <h2>Ticker Search</h2>
+          <div class="note">Use this area later for quick focus names like <strong>SPY</strong>, <strong>QQQ</strong>, <strong>IWM</strong>, <strong>VIX</strong>, and <strong>OPEN</strong>.</div>
+          <div class="search-row">
+            <input value="OPEN" />
+            <button>Search</button>
           </div>
         </div>
 
         <div class="card">
-          <h2>Index Options Focus</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Expiry</th>
-                <th>Call Activity</th>
-                <th>Put Activity</th>
-                <th>Key Note</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td data-label="Ticker">SPY</td>
-                <td data-label="Expiry">This Friday</td>
-                <td data-label="Call Activity">0DTE call volume heavy near upper strikes</td>
-                <td data-label="Put Activity">Protective puts active below spot</td>
-                <td data-label="Key Note">Watch intraday gamma squeeze / fade zones</td>
-              </tr>
-              <tr>
-                <td data-label="Ticker">QQQ</td>
-                <td data-label="Expiry">This Friday</td>
-                <td data-label="Call Activity">Tech momentum calls dominate</td>
-                <td data-label="Put Activity">Put hedging remains moderate</td>
-                <td data-label="Key Note">Use Nasdaq strength as sentiment driver</td>
-              </tr>
-              <tr>
-                <td data-label="Ticker">IWM</td>
-                <td data-label="Expiry">This Friday</td>
-                <td data-label="Call Activity">Light speculative calls</td>
-                <td data-label="Put Activity">More defensive flow than QQQ/SPY</td>
-                <td data-label="Key Note">Risk-off signal if lag worsens</td>
-              </tr>
-            </tbody>
-          </table>
+          <h2>Index Snapshot</h2>
+          <div class="watchlist">
+            <div class="watch-item"><div class="watch-symbol">SPY</div><div class="watch-name">S&P 500 ETF</div><div class="watch-move green">Bullish bias · Call flow stronger</div></div>
+            <div class="watch-item"><div class="watch-symbol">QQQ</div><div class="watch-name">Nasdaq 100 ETF</div><div class="watch-move green">Tech-led momentum</div></div>
+            <div class="watch-item"><div class="watch-symbol">DIA</div><div class="watch-name">Dow Jones ETF</div><div class="watch-move green">Slow grind higher</div></div>
+            <div class="watch-item"><div class="watch-symbol">IWM</div><div class="watch-name">Russell 2000 ETF</div><div class="watch-move red">Small caps lagging</div></div>
+          </div>
         </div>
 
         <div class="card">
@@ -271,116 +261,119 @@
             <div class="stat"><div class="stat-label">Volume</div><div class="stat-value">18.2M</div></div>
             <div class="stat"><div class="stat-label">Premarket</div><div class="stat-value green">+0.8%</div></div>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Panel</th>
-                <th>Draft Content</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td data-label="Panel">Options pulse</td>
-                <td data-label="Draft Content">Most active calls, most active puts, nearest expiry, put/call bias</td>
-              </tr>
-              <tr>
-                <td data-label="Panel">Key strikes</td>
-                <td data-label="Draft Content">ATM strike, crowded upside strike, downside hedge strike</td>
-              </tr>
-              <tr>
-                <td data-label="Panel">What to watch</td>
-                <td data-label="Draft Content">Unusual options activity, squeeze risk, sentiment shift, volume spike</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
 
-        <div class="card">
-          <h2>Active Strikes Draft</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Most Active Calls</th>
-                <th>Most Active Puts</th>
-                <th>What to Watch</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td data-label="Ticker">SPY</td>
-                <td data-label="Most Active Calls">ATM + 1–2 strikes above</td>
-                <td data-label="Most Active Puts">Nearest support strike</td>
-                <td data-label="What to Watch">Potential 0DTE battle zone</td>
-              </tr>
-              <tr>
-                <td data-label="Ticker">QQQ</td>
-                <td data-label="Most Active Calls">Momentum breakout strikes</td>
-                <td data-label="Most Active Puts">Pullback hedge strikes</td>
-                <td data-label="What to Watch">Semis / NVDA sympathy impact</td>
-              </tr>
-              <tr>
-                <td data-label="Ticker">DIA</td>
-                <td data-label="Most Active Calls">Conservative upside strikes</td>
-                <td data-label="Most Active Puts">Lower vol downside hedge</td>
-                <td data-label="What to Watch">Rotation signal</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="pair-grid">
+            <div class="pair-col">
+              <div class="pair-head"><h2 style="margin:0;">Calls</h2><span class="tag">Nearest expiry</span></div>
+              <div class="option-list">
+                <div class="option-card active" onclick="selectOption('OPEN 3C', 'Call', 'This Friday', '$0.18 x $0.22', '15.4k', '28.6k', 'Most active upside strike, possible momentum chase if OPEN squeezes.')">
+                  <div class="option-top"><div class="option-strike">OPEN 3C</div><div class="green">Bullish</div></div>
+                  <div class="option-meta">Volume 15.4k · OI 28.6k</div>
+                </div>
+                <div class="option-card" onclick="selectOption('OPEN 2.5C', 'Call', 'This Friday', '$0.31 x $0.36', '11.2k', '22.1k', 'Closer-to-money call; useful to watch if OPEN reclaims strength.')">
+                  <div class="option-top"><div class="option-strike">OPEN 2.5C</div><div class="green">Bullish</div></div>
+                  <div class="option-meta">Volume 11.2k · OI 22.1k</div>
+                </div>
+                <div class="option-card" onclick="selectOption('OPEN 4C', 'Call', 'This Friday', '$0.05 x $0.07', '6.1k', '18.0k', 'Higher strike speculative call; useful for squeeze watch only.')">
+                  <div class="option-top"><div class="option-strike">OPEN 4C</div><div class="green">Spec call</div></div>
+                  <div class="option-meta">Volume 6.1k · OI 18.0k</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pair-col">
+              <div class="pair-head"><h2 style="margin:0;">Puts</h2><span class="tag">Nearest expiry</span></div>
+              <div class="option-list">
+                <div class="option-card" onclick="selectOption('OPEN 2P', 'Put', 'This Friday', '$0.12 x $0.15', '9.8k', '20.3k', 'Main downside hedge strike; watch if volume expands on weakness.')">
+                  <div class="option-top"><div class="option-strike">OPEN 2P</div><div class="red">Defensive</div></div>
+                  <div class="option-meta">Volume 9.8k · OI 20.3k</div>
+                </div>
+                <div class="option-card" onclick="selectOption('OPEN 1.5P', 'Put', 'This Friday', '$0.05 x $0.08', '5.4k', '14.7k', 'Tail-risk put; useful only if sentiment turns ugly.')">
+                  <div class="option-top"><div class="option-strike">OPEN 1.5P</div><div class="red">Tail hedge</div></div>
+                  <div class="option-meta">Volume 5.4k · OI 14.7k</div>
+                </div>
+                <div class="option-card" onclick="selectOption('OPEN 2.5P', 'Put', 'This Friday', '$0.27 x $0.32', '4.2k', '10.5k', 'Closer downside protection; watch if price loses support fast.')">
+                  <div class="option-top"><div class="option-strike">OPEN 2.5P</div><div class="red">Near hedge</div></div>
+                  <div class="option-meta">Volume 4.2k · OI 10.5k</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div>
         <div class="card">
-          <h2>Radar Notes</h2>
-          <div class="idea-list">
-            <div class="idea-item">
-              <div class="idea-title">Market tone</div>
-              <div class="idea-desc">Draft area for AI summary: bullish / neutral / defensive.</div>
-            </div>
-            <div class="idea-item">
-              <div class="idea-title">Options sentiment</div>
-              <div class="idea-desc">Call / put skew, notable expiry pressure, and 0DTE heat.</div>
-            </div>
-            <div class="idea-item">
-              <div class="idea-title">Tonight’s focus</div>
-              <div class="idea-desc">Which index or ETF should get the most attention into the next session.</div>
+          <h2>Selected Option Detail</h2>
+          <div id="optionDetail" class="detail-box">
+            <div class="detail-title">OPEN 3C</div>
+            <div class="note" style="margin-top:6px;">Most active upside strike, possible momentum chase if OPEN squeezes.</div>
+            <div class="detail-grid">
+              <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">Call</div></div>
+              <div class="detail-item"><div class="detail-label">Expiry</div><div class="detail-value">This Friday</div></div>
+              <div class="detail-item"><div class="detail-label">Bid / Ask</div><div class="detail-value">$0.18 x $0.22</div></div>
+              <div class="detail-item"><div class="detail-label">Volume</div><div class="detail-value">15.4k</div></div>
+              <div class="detail-item"><div class="detail-label">Open Interest</div><div class="detail-value">28.6k</div></div>
+              <div class="detail-item"><div class="detail-label">Why it matters</div><div class="detail-value">Most active upside strike</div></div>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <h2>v1 Scope</h2>
+          <h2>Data Sources</h2>
+          <div class="source-grid">
+            <div class="source-item">
+              <div class="source-title">Prices / ETFs</div>
+              <div class="source-desc">Yahoo Finance for basic layout prototyping, or Futu OpenD / broker quote feed for live monitored prices.</div>
+            </div>
+            <div class="source-item">
+              <div class="source-title">Options chains</div>
+              <div class="source-desc">Preferred: Futu OpenD if US options coverage works. Fallback: Tradier / Polygon / broker options APIs.</div>
+            </div>
+            <div class="source-item">
+              <div class="source-title">AI / alerts layer</div>
+              <div class="source-desc">OpenClaw can summarize unusual options flow and post alerts to chat after data ingestion is connected.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>v4 Scope</h2>
           <div class="note">
-            v3 adds a draft ticker search area and live-ready cards. The next implementation step can focus on:
+            v4 adds:
             <br><br>
-            • SPY / QQQ / DIA / IWM / VIX live pricing<br>
-            • nearest expiry options snapshot<br>
-            • top call / put strikes by activity<br>
-            • put/call ratio for index ETFs<br>
-            • AI note block for premarket / intraday / after-hours tone
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>Real-time data plan</h2>
-          <div class="idea-list">
-            <div class="idea-item">
-              <div class="idea-title">Index / ETF prices</div>
-              <div class="idea-desc">Use Yahoo Finance / Futu / broker feed for SPY, QQQ, DIA, IWM, VIX (or VIX-related quote source).</div>
-            </div>
-            <div class="idea-item">
-              <div class="idea-title">Index + OPEN options data</div>
-              <div class="idea-desc">Preferred sources: Futu OpenD if US options coverage is available; otherwise dedicated options APIs like Tradier / Polygon / broker data.</div>
-            </div>
-            <div class="idea-item">
-              <div class="idea-title">Signal layer</div>
-              <div class="idea-desc">OpenClaw can later summarize unusual options flow and send watch notes / alerts to chat.</div>
-            </div>
+            • data source plan<br>
+            • clickable option pair cards<br>
+            • OPEN focus with draft strikes<br>
+            • selected option detail panel
+            <br><br>
+            Next step: connect real price data first, then real options chain data.
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    function selectOption(name, type, expiry, bidAsk, volume, oi, note) {
+      document.querySelectorAll('.option-card').forEach(el => el.classList.remove('active'));
+      const cards = [...document.querySelectorAll('.option-card')];
+      const active = cards.find(c => c.textContent.includes(name));
+      if (active) active.classList.add('active');
+
+      document.getElementById('optionDetail').innerHTML = `
+        <div class="detail-title">${name}</div>
+        <div class="note" style="margin-top:6px;">${note}</div>
+        <div class="detail-grid">
+          <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${type}</div></div>
+          <div class="detail-item"><div class="detail-label">Expiry</div><div class="detail-value">${expiry}</div></div>
+          <div class="detail-item"><div class="detail-label">Bid / Ask</div><div class="detail-value">${bidAsk}</div></div>
+          <div class="detail-item"><div class="detail-label">Volume</div><div class="detail-value">${volume}</div></div>
+          <div class="detail-item"><div class="detail-label">Open Interest</div><div class="detail-value">${oi}</div></div>
+          <div class="detail-item"><div class="detail-label">Why it matters</div><div class="detail-value">${note}</div></div>
+        </div>
+      `;
+    }
+  </script>
 </body>
 </html>
