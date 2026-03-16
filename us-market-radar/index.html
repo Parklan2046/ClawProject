@@ -458,7 +458,9 @@ renderOptionPairs(normalizedData)
         document.getElementById('openMove').className = 'stat-value ' + ((open.price - open.prevClose) >= 0 ? 'green' : 'red');
         document.getElementById('openVolume').textContent = fmtVol(open.volume);
         const status = document.getElementById('feedStatus');
-        if (status) status.textContent = 'Auto refresh every 30s · Last feed update: ' + formatFeedTime(feed.updatedAt);
+        if (status) status.textContent = 'Auto refresh every 30s';
+        const pageUpdated = document.getElementById('pageUpdated');
+        if (pageUpdated) pageUpdated.textContent = 'Last updated: ' + formatFeedTime(feed.updatedAt);
       } catch (err) {
         console.error(err);
         ['spyQuote','qqqQuote','diaQuote','iwmQuote','vixQuote','openPrice','openMove','openVolume'].forEach(id => {
