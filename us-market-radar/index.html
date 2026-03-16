@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>US Market Radar v6</title>
+  <title>US Market Radar v7</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -228,18 +228,18 @@
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>US Market Radar v6</h1>
-        <div class="sub">Yahoo Finance connector skeleton draft for index and OPEN monitoring, with a future upgrade path to stronger options feeds.</div>
+        <h1>US Market Radar v7</h1>
+        <div class="sub">Yahoo Finance real quote prototype for index and OPEN monitoring, with options section still in draft mode.</div>
       </div>
-      <div class="pill">Yahoo prototype · connector skeleton</div>
+      <div class="pill">Yahoo real quotes · options draft</div>
     </div>
 
     <div class="summary-grid">
-      <div class="stat"><div class="stat-label">SPY</div><div class="stat-value green">+1.24%</div></div>
-      <div class="stat"><div class="stat-label">QQQ</div><div class="stat-value green">+1.68%</div></div>
-      <div class="stat"><div class="stat-label">DIA</div><div class="stat-value green">+0.52%</div></div>
-      <div class="stat"><div class="stat-label">IWM</div><div class="stat-value red">-0.34%</div></div>
-      <div class="stat"><div class="stat-label">VIX</div><div class="stat-value gold">14.82</div></div>
+      <div class="stat"><div class="stat-label">SPY</div><div id="spyQuote" class="stat-value">Loading…</div></div>
+      <div class="stat"><div class="stat-label">QQQ</div><div id="qqqQuote" class="stat-value">Loading…</div></div>
+      <div class="stat"><div class="stat-label">DIA</div><div id="diaQuote" class="stat-value">Loading…</div></div>
+      <div class="stat"><div class="stat-label">IWM</div><div id="iwmQuote" class="stat-value">Loading…</div></div>
+      <div class="stat"><div class="stat-label">VIX</div><div id="vixQuote" class="stat-value">Loading…</div></div>
     </div>
 
     <div class="grid">
@@ -285,10 +285,10 @@ renderOptionPairs(normalizedData)
         <div class="card">
           <h2>OpenDoor Focus (OPEN)</h2>
           <div class="summary-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
-            <div class="stat"><div class="stat-label">OPEN Price</div><div class="stat-value green">$ 2.71</div></div>
-            <div class="stat"><div class="stat-label">Day Move</div><div class="stat-value red">-1.45%</div></div>
-            <div class="stat"><div class="stat-label">Volume</div><div class="stat-value">18.2M</div></div>
-            <div class="stat"><div class="stat-label">Premarket</div><div class="stat-value green">+0.8%</div></div>
+            <div class="stat"><div class="stat-label">OPEN Price</div><div id="openPrice" class="stat-value">Loading…</div></div>
+            <div class="stat"><div class="stat-label">Day Move</div><div id="openMove" class="stat-value">Loading…</div></div>
+            <div class="stat"><div class="stat-label">Volume</div><div id="openVolume" class="stat-value">Loading…</div></div>
+            <div class="stat"><div class="stat-label">Premarket</div><div id="openPremarket" class="stat-value">Draft</div></div>
           </div>
 
           <div class="pair-grid">
@@ -353,7 +353,7 @@ renderOptionPairs(normalizedData)
           <div class="source-grid">
             <div class="source-item">
               <div class="source-title">Prices / ETFs</div>
-              <div class="source-desc">Yahoo Finance first for prototype quotes and basic market snapshot. Later swap to Futu OpenD / broker feed for stronger live monitoring.</div>
+              <div class="source-desc">Yahoo Finance is now used for the first live quote prototype on this page. Later swap to Futu OpenD / broker feed for stronger live monitoring.</div>
             </div>
             <div class="source-item">
               <div class="source-title">Options chains</div>
@@ -396,6 +396,76 @@ renderOptionPairs(normalizedData)
   </div>
 
   <script>
+
+    async function loadYahooQuote(symbol) {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1m`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const meta = data.chart.result[0].meta;
+      return {
+        symbol,
+        price: meta.regularMarketPrice,
+        prevClose: meta.previousClose,
+        volume: meta.regularMarketVolume || 0
+      };
+    }
+
+    function fmtPct(price, prev) {
+      if (!price || !prev) return '—';
+      const pct = ((price - prev) / prev) * 100;
+      const sign = pct >= 0 ? '+' : '';
+      return `${sign}${pct.toFixed(2)}%`;
+    }
+
+    function fmtMoney(price) {
+      if (price == null) return '—';
+      return `$ ${Number(price).toFixed(2)}`;
+    }
+
+    function fmtVol(v) {
+      if (!v && v !== 0) return '—';
+      if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+      if (v >= 1000) return (v / 1000).toFixed(1) + 'K';
+      return String(v);
+    }
+
+    async function loadQuotes() {
+      try {
+        const [open, spy, qqq, dia, iwm, vix] = await Promise.all([
+          loadYahooQuote('OPEN'),
+          loadYahooQuote('SPY'),
+          loadYahooQuote('QQQ'),
+          loadYahooQuote('DIA'),
+          loadYahooQuote('IWM'),
+          loadYahooQuote('^VIX')
+        ]);
+
+        document.getElementById('spyQuote').textContent = fmtPct(spy.price, spy.prevClose);
+        document.getElementById('spyQuote').className = 'stat-value ' + ((spy.price - spy.prevClose) >= 0 ? 'green' : 'red');
+        document.getElementById('qqqQuote').textContent = fmtPct(qqq.price, qqq.prevClose);
+        document.getElementById('qqqQuote').className = 'stat-value ' + ((qqq.price - qqq.prevClose) >= 0 ? 'green' : 'red');
+        document.getElementById('diaQuote').textContent = fmtPct(dia.price, dia.prevClose);
+        document.getElementById('diaQuote').className = 'stat-value ' + ((dia.price - dia.prevClose) >= 0 ? 'green' : 'red');
+        document.getElementById('iwmQuote').textContent = fmtPct(iwm.price, iwm.prevClose);
+        document.getElementById('iwmQuote').className = 'stat-value ' + ((iwm.price - iwm.prevClose) >= 0 ? 'green' : 'red');
+        document.getElementById('vixQuote').textContent = Number(vix.price).toFixed(2);
+        document.getElementById('vixQuote').className = 'stat-value gold';
+
+        document.getElementById('openPrice').textContent = fmtMoney(open.price);
+        document.getElementById('openPrice').className = 'stat-value ' + ((open.price - open.prevClose) >= 0 ? 'green' : 'red');
+        document.getElementById('openMove').textContent = fmtPct(open.price, open.prevClose);
+        document.getElementById('openMove').className = 'stat-value ' + ((open.price - open.prevClose) >= 0 ? 'green' : 'red');
+        document.getElementById('openVolume').textContent = fmtVol(open.volume);
+      } catch (err) {
+        console.error(err);
+        ['spyQuote','qqqQuote','diaQuote','iwmQuote','vixQuote','openPrice','openMove','openVolume'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = 'Fetch failed';
+        });
+      }
+    }
+
     function selectOption(name, type, expiry, bidAsk, volume, oi, note) {
       document.querySelectorAll('.option-card').forEach(el => el.classList.remove('active'));
       const cards = [...document.querySelectorAll('.option-card')];
@@ -415,6 +485,8 @@ renderOptionPairs(normalizedData)
         </div>
       `;
     }
+
+    loadQuotes();
   </script>
 </body>
 </html>
