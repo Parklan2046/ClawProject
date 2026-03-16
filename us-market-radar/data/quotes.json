@@ -1,48 +1,48 @@
 {
-  "updatedAt": 1773689983,
+  "updatedAt": 1773690288,
   "source": "yahoo-finance-server-side",
   "quotes": {
     "OPEN": {
       "symbol": "OPEN",
-      "price": 5.15,
+      "price": 5.14,
       "prevClose": 4.95,
-      "volume": 53520993,
-      "marketTime": 1773689978
+      "volume": 54058608,
+      "marketTime": 1773690286
     },
     "SPY": {
       "symbol": "SPY",
-      "price": 669.0,
+      "price": 668.56,
       "prevClose": 662.29,
-      "volume": 68008270,
-      "marketTime": 1773689987
+      "volume": 68992926,
+      "marketTime": 1773690294
     },
     "QQQ": {
       "symbol": "QQQ",
-      "price": 600.42,
+      "price": 600.02,
       "prevClose": 593.72,
-      "volume": 42161928,
-      "marketTime": 1773689987
+      "volume": 42738358,
+      "marketTime": 1773690295
     },
     "DIA": {
       "symbol": "DIA",
-      "price": 470.31,
+      "price": 469.96,
       "prevClose": 466.41,
-      "volume": 5924002,
-      "marketTime": 1773689979
+      "volume": 6021568,
+      "marketTime": 1773690295
     },
     "IWM": {
       "symbol": "IWM",
       "price": 248.93,
       "prevClose": 246.59,
-      "volume": 42177307,
-      "marketTime": 1773689985
+      "volume": 42509892,
+      "marketTime": 1773690291
     },
     "^VIX": {
       "symbol": "^VIX",
-      "price": 23.92,
+      "price": 23.95,
       "prevClose": 27.19,
       "volume": 0,
-      "marketTime": 1773689086
+      "marketTime": 1773689386
     }
   }
 }
