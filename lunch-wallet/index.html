@@ -276,11 +276,11 @@
     <div class="hero">
       <div>
         <h1>Lunch Wallet</h1>
-        <div class="sub">Shared lunch wallet for <strong>San</strong>, <strong>Jack</strong>, <strong>Arthas</strong>, and <strong>Parklan</strong>.</div>
+        <div class="sub">Shared lunch pool for <strong>San</strong>, <strong>Jack</strong>, <strong>Arthas</strong>, and <strong>Parklan</strong>.</div>
       </div>
       <div class="actions">
         <button id="openDepositBtn">Add Deposit</button>
-        <button id="openLunchBtn" class="secondary">Add Lunch Expense</button>
+        <button id="openLunchBtn" class="secondary">Add Lunch Expense (from pool)</button>
       </div>
     </div>
 
@@ -303,10 +303,10 @@
         <div class="card">
           <h2>How splitting works</h2>
           <div class="note">
-            每次 lunch 只會向 <strong>participants</strong> 入面有勾選的人分攤。<br><br>
+            每次 lunch 都係先由 <strong>shared pool</strong> 扣數；participants 只係用嚟記錄今餐由邊幾個人分攤。<br><br>
             例如 lunch HK$240，得 3 個人 join：<br>
             每人 share = HK$80。<br><br>
-            Wallet balance = total deposits - total lunch expenses。
+            Pool balance = total deposits - total lunch expenses。
           </div>
         </div>
       </div>
@@ -342,7 +342,7 @@
   <div id="lunchModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
-        <h2 style="margin:0;">Add Lunch Expense</h2>
+        <h2 style="margin:0;">Add Lunch Expense (from pool)</h2>
         <button class="ghost" data-close="lunch">Close</button>
       </div>
       <div class="row">
@@ -456,10 +456,10 @@
     function renderSummary() {
       const s = computeSummary();
       document.getElementById('summaryGrid').innerHTML = `
-        <div class="stat"><div class="stat-label">Wallet Balance</div><div class="stat-value">${money(s.balance)}</div></div>
+        <div class="stat"><div class="stat-label">Pool Balance</div><div class="stat-value">${money(s.balance)}</div></div>
         <div class="stat"><div class="stat-label">Total Deposits</div><div class="stat-value">${money(s.totalDeposits)}</div></div>
-        <div class="stat"><div class="stat-label">Total Spent</div><div class="stat-value">${money(s.totalSpent)}</div></div>
-        <div class="stat"><div class="stat-label">Transactions</div><div class="stat-value">${s.txCount}</div></div>
+        <div class="stat"><div class="stat-label">Pool Used</div><div class="stat-value">${money(s.totalSpent)}</div></div>
+        <div class="stat"><div class="stat-label">Records</div><div class="stat-value">${s.txCount}</div></div>
       `;
     }
 
@@ -477,15 +477,15 @@
           </div>
           <div class="member-meta">
             Deposited: <strong>${money(m.deposited)}</strong><br>
-            Lunch share: <strong>${money(m.share)}</strong><br>
-            Net position: <strong>${money(m.net)}</strong>
+            Used from pool: <strong>${money(m.share)}</strong><br>
+            Deposit - used from pool: <strong>${money(m.net)}</strong>
           </div>
         `;
         el.appendChild(div);
       });
     }
 
-    function renderTransactions() {
+    function renderRecords() {
       const wrap = document.getElementById('txWrap');
       const items = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
       if (!items.length) {
@@ -528,7 +528,7 @@
     function renderAll() {
       renderSummary();
       renderMembers();
-      renderTransactions();
+      renderRecords();
       saveState();
     }
 
