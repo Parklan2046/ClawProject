@@ -276,11 +276,11 @@
     <div class="hero">
       <div>
         <h1>Lunch Wallet</h1>
-        <div class="sub">Shared lunch pool for <strong>San</strong>, <strong>Jack</strong>, <strong>Arthas</strong>, and <strong>Parklan</strong>.</div>
+        <div class="sub">All lunch spending is deducted from the <strong>shared wallet pool</strong> for San, Jack, Arthas, and Parklan.</div>
       </div>
       <div class="actions">
         <button id="openDepositBtn">Add Deposit</button>
-        <button id="openLunchBtn" class="secondary">Add Lunch Expense (from pool)</button>
+        <button id="openLunchBtn" class="secondary">Add Lunch Expense (deduct from pool)</button>
       </div>
     </div>
 
@@ -306,7 +306,7 @@
             每次 lunch 都係先由 <strong>shared pool</strong> 扣數；participants 只係用嚟記錄今餐由邊幾個人分攤。<br><br>
             例如 lunch HK$240，得 3 個人 join：<br>
             每人 share = HK$80。<br><br>
-            Pool balance = total deposits - total lunch expenses。
+            Every lunch record deducts from the shared pool first. Participants are only used to calculate who consumed that lunch. Pool balance = total deposits - total lunch expenses。
           </div>
         </div>
       </div>
@@ -342,7 +342,7 @@
   <div id="lunchModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
-        <h2 style="margin:0;">Add Lunch Expense (from pool)</h2>
+        <h2 style="margin:0;">Add Lunch Expense (deduct from pool)</h2>
         <button class="ghost" data-close="lunch">Close</button>
       </div>
       <div class="row">
@@ -365,9 +365,9 @@
           <input id="lunchPlace" placeholder="例如：茶餐廳 / 米線" />
         </div>
       </div>
-      <label>Who joined this lunch?</label>
+      <label>Who joined this lunch? (share record only)</label>
       <div id="participantsBox" class="check-grid"></div>
-      <div id="sharePreview" class="helper">請先輸入金額並勾選參與者。</div>
+      <div id="sharePreview" class="helper">請先輸入金額並勾選參與者。Lunch 金額會先由 pool 扣。</div>
       <label for="lunchNote">Note</label>
       <textarea id="lunchNote" placeholder="例如：today lunch / company canteen / special meal"></textarea>
       <div class="actions">
@@ -477,8 +477,8 @@
           </div>
           <div class="member-meta">
             Deposited: <strong>${money(m.deposited)}</strong><br>
-            Used from pool: <strong>${money(m.share)}</strong><br>
-            Deposit - used from pool: <strong>${money(m.net)}</strong>
+            Consumed from pool: <strong>${money(m.share)}</strong><br>
+            Deposit minus consumed from pool: <strong>${money(m.net)}</strong>
           </div>
         `;
         el.appendChild(div);
@@ -497,8 +497,8 @@
         const amtClass = t.type === 'deposit' ? 'amt-in' : 'amt-out';
         const sign = t.type === 'deposit' ? '+' : '-';
         const extra = t.type === 'lunch'
-          ? `Participants: ${(t.participants || []).join(', ') || '-'}${t.place ? `<br>Place: ${t.place}` : ''}`
-          : '-';
+          ? `Deducted from shared wallet pool<br>Participants: ${(t.participants || []).join(', ') || '-'}${t.place ? `<br>Place: ${t.place}` : ''}`
+          : 'Added to shared wallet pool';
         return `
           <tr>
             <td data-label="Date">${t.date}</td>
@@ -517,7 +517,7 @@
               <th>Type</th>
               <th>By</th>
               <th>Amount</th>
-              <th>Details</th>
+              <th>Pool / Details</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -566,11 +566,11 @@
       const participants = [...document.querySelectorAll('.participant-checkbox:checked')].map(i => i.value);
       const el = document.getElementById('sharePreview');
       if (!amount || participants.length === 0) {
-        el.textContent = '請先輸入金額並勾選參與者。';
+        el.textContent = '請先輸入金額並勾選參與者。Lunch 金額會先由 pool 扣。';
         return;
       }
       const perHead = amount / participants.length;
-      el.textContent = `${participants.length} 人 join，每人分攤 ${money(perHead)}。`;
+      el.textContent = `${participants.length} 人 join，每人分攤 ${money(perHead)}，但總數會先由 pool 扣。`;
     }
 
     function saveDeposit() {
