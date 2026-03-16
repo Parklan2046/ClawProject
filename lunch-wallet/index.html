@@ -12,10 +12,12 @@
       --line: rgba(255,255,255,0.08);
       --text: #e5e7eb;
       --muted: #94a3b8;
-      --accent: #22c55e;
-      --accent2: #3b82f6;
-      --danger: #f87171;
+      --green: #22c55e;
+      --blue: #3b82f6;
       --gold: #fbbf24;
+      --danger: #f87171;
+      --accent: #f97316;
+      --accent2: #ec4899;
     }
     * { box-sizing: border-box; }
     body {
@@ -25,16 +27,16 @@
       color: var(--text);
       padding: 16px;
     }
-    .wrap { max-width: 1100px; margin: 0 auto; }
+    .wrap { max-width: 1120px; margin: 0 auto; }
     .hero {
       display: flex;
       justify-content: space-between;
       align-items: end;
       gap: 16px;
-      margin-bottom: 18px;
       flex-wrap: wrap;
+      margin-bottom: 16px;
     }
-    h1 { margin: 0; font-size: 1.8rem; }
+    h1 { margin: 0; font-size: 1.75rem; }
     .sub { margin-top: 6px; color: var(--muted); }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; }
     button {
@@ -51,9 +53,14 @@
       background: #334155;
       color: var(--text);
     }
+    button.ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
     .grid {
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-columns: 1.1fr 0.9fr;
       gap: 16px;
       align-items: start;
     }
@@ -82,35 +89,40 @@
       padding: 14px;
     }
     .stat-label { color: var(--muted); font-size: 0.82rem; }
-    .stat-value { margin-top: 8px; font-size: 1.25rem; font-weight: 900; }
-    .member-list {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
+    .stat-value { margin-top: 8px; font-size: 1.2rem; font-weight: 900; }
+    .member-list { display: grid; gap: 10px; }
     .member {
       background: var(--panel2);
       border: 1px solid var(--line);
       border-radius: 18px;
       padding: 14px;
     }
+    .member-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
     .member-name { font-weight: 800; }
-    .member-meta { margin-top: 6px; color: var(--muted); font-size: 0.84rem; }
-    .tag {
+    .chip {
       display: inline-block;
-      margin-top: 10px;
-      padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(34,197,94,0.12);
-      color: #86efac;
-      font-size: 0.78rem;
+      padding: 5px 8px;
+      font-size: 0.74rem;
       font-weight: 700;
+      background: rgba(59,130,246,0.14);
+      color: #93c5fd;
+    }
+    .member-meta {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.6;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.92rem;
-      overflow: hidden;
     }
     th, td {
       text-align: left;
@@ -121,7 +133,7 @@
     th { color: var(--muted); font-size: 0.82rem; }
     .amt-in { color: #86efac; font-weight: 800; }
     .amt-out { color: #fca5a5; font-weight: 800; }
-    .pill {
+    .type-pill {
       display: inline-block;
       padding: 5px 9px;
       border-radius: 999px;
@@ -135,26 +147,108 @@
       font-size: 0.84rem;
       line-height: 1.55;
     }
-    .flow-list {
-      display: grid;
-      gap: 10px;
+    .empty {
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 20px 10px;
+      border: 1px dashed var(--line);
+      border-radius: 16px;
     }
-    .flow-item {
-      background: var(--panel2);
-      border: 1px solid var(--line);
-      border-radius: 18px;
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3,7,18,0.68);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
       padding: 14px;
     }
-    .flow-title { font-weight: 800; }
-    .flow-desc { color: var(--muted); font-size: 0.84rem; margin-top: 5px; }
-    .small { font-size: 0.82rem; color: var(--muted); }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      width: min(640px, 100%);
+      max-height: 90vh;
+      overflow: auto;
+      background: #0f172a;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin: 10px 0 6px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+    input, select, textarea {
+      width: 100%;
+      background: #0a1020;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 12px 13px;
+      font-size: 0.96rem;
+      outline: none;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .check-item input { width: auto; margin: 0; }
+    .helper {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(15,23,42,0.96);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.86rem;
+      z-index: 200;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .toast.show { display: block; }
     @media (max-width: 900px) {
       .grid { grid-template-columns: 1fr; }
       .summary { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 560px) {
       body { padding: 10px; }
-      .summary, .member-list { grid-template-columns: 1fr; }
+      .summary, .row, .check-grid { grid-template-columns: 1fr; }
       .hero { align-items: stretch; }
       .actions { flex-direction: column; }
       button { width: 100%; }
@@ -182,147 +276,380 @@
     <div class="hero">
       <div>
         <h1>Lunch Wallet</h1>
-        <div class="sub">Shared wallet draft for <strong>San</strong>, <strong>Jack</strong>, <strong>Arthas</strong>, and <strong>Parklan</strong>.</div>
+        <div class="sub">Shared lunch wallet for <strong>San</strong>, <strong>Jack</strong>, <strong>Arthas</strong>, and <strong>Parklan</strong>.</div>
       </div>
       <div class="actions">
-        <button>Add Deposit</button>
-        <button class="secondary">Add Lunch Expense</button>
+        <button id="openDepositBtn">Add Deposit</button>
+        <button id="openLunchBtn" class="secondary">Add Lunch Expense</button>
       </div>
     </div>
 
-    <div class="summary">
-      <div class="stat">
-        <div class="stat-label">Wallet Balance</div>
-        <div class="stat-value">HK$ 1,180</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Total Deposits</div>
-        <div class="stat-value">HK$ 2,000</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Total Spent</div>
-        <div class="stat-value">HK$ 820</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Transactions</div>
-        <div class="stat-value">12</div>
-      </div>
-    </div>
+    <div id="summaryGrid" class="summary"></div>
 
     <div class="grid">
       <div>
         <div class="card">
           <h2>Transaction Feed</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>By</th>
-                <th>Amount</th>
-                <th>Note</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td data-label="Date">2026-03-16</td>
-                <td data-label="Type"><span class="pill">Deposit</span></td>
-                <td data-label="By">Parklan</td>
-                <td data-label="Amount" class="amt-in">+ HK$ 500</td>
-                <td data-label="Note">Top up wallet</td>
-              </tr>
-              <tr>
-                <td data-label="Date">2026-03-16</td>
-                <td data-label="Type"><span class="pill">Lunch</span></td>
-                <td data-label="By">Jack</td>
-                <td data-label="Amount" class="amt-out">- HK$ 268</td>
-                <td data-label="Note">4人午餐 · 茶餐廳</td>
-              </tr>
-              <tr>
-                <td data-label="Date">2026-03-15</td>
-                <td data-label="Type"><span class="pill">Deposit</span></td>
-                <td data-label="By">San</td>
-                <td data-label="Amount" class="amt-in">+ HK$ 500</td>
-                <td data-label="Note">Initial funding</td>
-              </tr>
-              <tr>
-                <td data-label="Date">2026-03-15</td>
-                <td data-label="Type"><span class="pill">Deposit</span></td>
-                <td data-label="By">Arthas</td>
-                <td data-label="Amount" class="amt-in">+ HK$ 500</td>
-                <td data-label="Note">Initial funding</td>
-              </tr>
-              <tr>
-                <td data-label="Date">2026-03-15</td>
-                <td data-label="Type"><span class="pill">Deposit</span></td>
-                <td data-label="By">Jack</td>
-                <td data-label="Amount" class="amt-in">+ HK$ 500</td>
-                <td data-label="Note">Initial funding</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h2>Draft Workflow</h2>
-          <div class="flow-list">
-            <div class="flow-item">
-              <div class="flow-title">1. Deposit money</div>
-              <div class="flow-desc">Pick a person → enter amount → add note → wallet total updates instantly.</div>
-            </div>
-            <div class="flow-item">
-              <div class="flow-title">2. Add lunch expense</div>
-              <div class="flow-desc">Enter payer / restaurant / amount / participants → transaction goes into feed and reduces wallet balance.</div>
-            </div>
-            <div class="flow-item">
-              <div class="flow-title">3. Review contributions</div>
-              <div class="flow-desc">See who deposited how much, who recorded lunch spending, and current remaining balance.</div>
-            </div>
-          </div>
+          <div id="txWrap"></div>
         </div>
       </div>
 
       <div>
         <div class="card">
           <h2>Members</h2>
-          <div class="member-list">
-            <div class="member">
-              <div class="member-name">San</div>
-              <div class="member-meta">Deposited: HK$ 500</div>
-              <div class="tag">Wallet member</div>
-            </div>
-            <div class="member">
-              <div class="member-name">Jack</div>
-              <div class="member-meta">Deposited: HK$ 500 · Logged lunch</div>
-              <div class="tag">Wallet member</div>
-            </div>
-            <div class="member">
-              <div class="member-name">Arthas</div>
-              <div class="member-meta">Deposited: HK$ 500</div>
-              <div class="tag">Wallet member</div>
-            </div>
-            <div class="member">
-              <div class="member-name">Parklan</div>
-              <div class="member-meta">Deposited: HK$ 500</div>
-              <div class="tag">Wallet member</div>
-            </div>
-          </div>
+          <div id="memberList" class="member-list"></div>
         </div>
 
         <div class="card">
-          <h2>Layout Notes</h2>
+          <h2>How splitting works</h2>
           <div class="note">
-            This is a first draft only. The next step can be turning this into a real app with:
-            <br><br>
-            • add / edit / delete transactions<br>
-            • per-person total contribution summary<br>
-            • lunch participant split view<br>
-            • wallet history filter by date / person / type<br>
-            • localStorage or shared backend sync
+            每次 lunch 只會向 <strong>participants</strong> 入面有勾選的人分攤。<br><br>
+            例如 lunch HK$240，得 3 個人 join：<br>
+            每人 share = HK$80。<br><br>
+            Wallet balance = total deposits - total lunch expenses。
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <div id="depositModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 style="margin:0;">Add Deposit</h2>
+        <button class="ghost" data-close="deposit">Close</button>
+      </div>
+      <div class="row">
+        <div>
+          <label for="depositBy">By</label>
+          <select id="depositBy"></select>
+        </div>
+        <div>
+          <label for="depositAmount">Amount (HK$)</label>
+          <input id="depositAmount" type="number" min="1" step="0.01" placeholder="例如：500" />
+        </div>
+      </div>
+      <label for="depositDate">Date</label>
+      <input id="depositDate" type="date" />
+      <label for="depositNote">Note</label>
+      <input id="depositNote" placeholder="例如：Initial funding / top up" />
+      <div class="actions">
+        <button id="saveDepositBtn">Save Deposit</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="lunchModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 style="margin:0;">Add Lunch Expense</h2>
+        <button class="ghost" data-close="lunch">Close</button>
+      </div>
+      <div class="row">
+        <div>
+          <label for="lunchPaidBy">Paid / Recorded by</label>
+          <select id="lunchPaidBy"></select>
+        </div>
+        <div>
+          <label for="lunchAmount">Total Cost (HK$)</label>
+          <input id="lunchAmount" type="number" min="1" step="0.01" placeholder="例如：268" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="lunchDate">Date</label>
+          <input id="lunchDate" type="date" />
+        </div>
+        <div>
+          <label for="lunchPlace">Restaurant / Place</label>
+          <input id="lunchPlace" placeholder="例如：茶餐廳 / 米線" />
+        </div>
+      </div>
+      <label>Who joined this lunch?</label>
+      <div id="participantsBox" class="check-grid"></div>
+      <div id="sharePreview" class="helper">請先輸入金額並勾選參與者。</div>
+      <label for="lunchNote">Note</label>
+      <textarea id="lunchNote" placeholder="例如：today lunch / company canteen / special meal"></textarea>
+      <div class="actions">
+        <button id="saveLunchBtn">Save Lunch Expense</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const MEMBERS = ['San', 'Jack', 'Arthas', 'Parklan'];
+    const STORAGE_KEY = 'lunch_wallet_v2';
+
+    const defaultState = {
+      transactions: [
+        { id: 't1', type: 'deposit', by: 'San', amount: 500, date: '2026-03-15', note: 'Initial funding' },
+        { id: 't2', type: 'deposit', by: 'Jack', amount: 500, date: '2026-03-15', note: 'Initial funding' },
+        { id: 't3', type: 'deposit', by: 'Arthas', amount: 500, date: '2026-03-15', note: 'Initial funding' },
+        { id: 't4', type: 'deposit', by: 'Parklan', amount: 500, date: '2026-03-15', note: 'Initial funding' },
+        { id: 't5', type: 'lunch', by: 'Jack', amount: 268, date: '2026-03-16', place: '茶餐廳', note: '4人午餐', participants: ['San', 'Jack', 'Arthas', 'Parklan'] }
+      ]
+    };
+
+    let state = loadState();
+
+    function showToast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : structuredClone(defaultState);
+      } catch {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch {}
+    }
+
+    function money(n) {
+      return `HK$ ${Number(n || 0).toFixed(2)}`;
+    }
+
+    function computeSummary() {
+      const deposits = state.transactions.filter(t => t.type === 'deposit');
+      const lunches = state.transactions.filter(t => t.type === 'lunch');
+      const totalDeposits = deposits.reduce((s, t) => s + Number(t.amount || 0), 0);
+      const totalSpent = lunches.reduce((s, t) => s + Number(t.amount || 0), 0);
+      const balance = totalDeposits - totalSpent;
+
+      const memberSummary = MEMBERS.map(name => {
+        const deposited = deposits.filter(t => t.by === name).reduce((s, t) => s + Number(t.amount || 0), 0);
+        const joinedLunches = lunches.filter(t => Array.isArray(t.participants) && t.participants.includes(name));
+        const share = joinedLunches.reduce((sum, t) => {
+          const count = t.participants.length || 1;
+          return sum + Number(t.amount || 0) / count;
+        }, 0);
+        return {
+          name,
+          deposited,
+          joinedCount: joinedLunches.length,
+          share,
+          net: deposited - share
+        };
+      });
+
+      return {
+        totalDeposits,
+        totalSpent,
+        balance,
+        txCount: state.transactions.length,
+        memberSummary
+      };
+    }
+
+    function renderSummary() {
+      const s = computeSummary();
+      document.getElementById('summaryGrid').innerHTML = `
+        <div class="stat"><div class="stat-label">Wallet Balance</div><div class="stat-value">${money(s.balance)}</div></div>
+        <div class="stat"><div class="stat-label">Total Deposits</div><div class="stat-value">${money(s.totalDeposits)}</div></div>
+        <div class="stat"><div class="stat-label">Total Spent</div><div class="stat-value">${money(s.totalSpent)}</div></div>
+        <div class="stat"><div class="stat-label">Transactions</div><div class="stat-value">${s.txCount}</div></div>
+      `;
+    }
+
+    function renderMembers() {
+      const s = computeSummary();
+      const el = document.getElementById('memberList');
+      el.innerHTML = '';
+      s.memberSummary.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'member';
+        div.innerHTML = `
+          <div class="member-head">
+            <div class="member-name">${m.name}</div>
+            <div class="chip">${m.joinedCount} lunches</div>
+          </div>
+          <div class="member-meta">
+            Deposited: <strong>${money(m.deposited)}</strong><br>
+            Lunch share: <strong>${money(m.share)}</strong><br>
+            Net position: <strong>${money(m.net)}</strong>
+          </div>
+        `;
+        el.appendChild(div);
+      });
+    }
+
+    function renderTransactions() {
+      const wrap = document.getElementById('txWrap');
+      const items = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (!items.length) {
+        wrap.innerHTML = '<div class="empty">No transactions yet.</div>';
+        return;
+      }
+      const rows = items.map(t => {
+        const typeLabel = t.type === 'deposit' ? 'Deposit' : 'Lunch';
+        const amtClass = t.type === 'deposit' ? 'amt-in' : 'amt-out';
+        const sign = t.type === 'deposit' ? '+' : '-';
+        const extra = t.type === 'lunch'
+          ? `Participants: ${(t.participants || []).join(', ') || '-'}${t.place ? `<br>Place: ${t.place}` : ''}`
+          : '-';
+        return `
+          <tr>
+            <td data-label="Date">${t.date}</td>
+            <td data-label="Type"><span class="type-pill">${typeLabel}</span></td>
+            <td data-label="By">${t.by}</td>
+            <td data-label="Amount" class="${amtClass}">${sign} ${money(t.amount)}</td>
+            <td data-label="Details">${extra}${t.note ? `<br><span class="note">${t.note}</span>` : ''}</td>
+          </tr>
+        `;
+      }).join('');
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>By</th>
+              <th>Amount</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderMembers();
+      renderTransactions();
+      saveState();
+    }
+
+    function populateMemberSelects() {
+      ['depositBy', 'lunchPaidBy'].forEach(id => {
+        const el = document.getElementById(id);
+        el.innerHTML = MEMBERS.map(name => `<option value="${name}">${name}</option>`).join('');
+      });
+      const box = document.getElementById('participantsBox');
+      box.innerHTML = MEMBERS.map(name => `
+        <label class="check-item">
+          <input type="checkbox" value="${name}" class="participant-checkbox" checked />
+          <span>${name}</span>
+        </label>
+      `).join('');
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('show');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    function todayStr() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function updateSharePreview() {
+      const amount = Number(document.getElementById('lunchAmount').value || 0);
+      const participants = [...document.querySelectorAll('.participant-checkbox:checked')].map(i => i.value);
+      const el = document.getElementById('sharePreview');
+      if (!amount || participants.length === 0) {
+        el.textContent = '請先輸入金額並勾選參與者。';
+        return;
+      }
+      const perHead = amount / participants.length;
+      el.textContent = `${participants.length} 人 join，每人分攤 ${money(perHead)}。`;
+    }
+
+    function saveDeposit() {
+      const by = document.getElementById('depositBy').value;
+      const amount = Number(document.getElementById('depositAmount').value || 0);
+      const date = document.getElementById('depositDate').value;
+      const note = document.getElementById('depositNote').value.trim();
+      if (!by || amount <= 0 || !date) {
+        showToast('請填好 deposit 資料');
+        return;
+      }
+      state.transactions.push({
+        id: `d-${Date.now()}`,
+        type: 'deposit',
+        by,
+        amount,
+        date,
+        note
+      });
+      renderAll();
+      closeModal('depositModal');
+      document.getElementById('depositAmount').value = '';
+      document.getElementById('depositNote').value = '';
+      showToast('Deposit 已加入');
+    }
+
+    function saveLunch() {
+      const by = document.getElementById('lunchPaidBy').value;
+      const amount = Number(document.getElementById('lunchAmount').value || 0);
+      const date = document.getElementById('lunchDate').value;
+      const place = document.getElementById('lunchPlace').value.trim();
+      const note = document.getElementById('lunchNote').value.trim();
+      const participants = [...document.querySelectorAll('.participant-checkbox:checked')].map(i => i.value);
+      if (!by || amount <= 0 || !date || participants.length === 0) {
+        showToast('請填好 lunch 資料並勾選參與者');
+        return;
+      }
+      state.transactions.push({
+        id: `l-${Date.now()}`,
+        type: 'lunch',
+        by,
+        amount,
+        date,
+        place,
+        note,
+        participants
+      });
+      renderAll();
+      closeModal('lunchModal');
+      document.getElementById('lunchAmount').value = '';
+      document.getElementById('lunchPlace').value = '';
+      document.getElementById('lunchNote').value = '';
+      document.querySelectorAll('.participant-checkbox').forEach(i => i.checked = true);
+      updateSharePreview();
+      showToast('Lunch expense 已加入');
+    }
+
+    function showToast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    document.getElementById('openDepositBtn').addEventListener('click', () => openModal('depositModal'));
+    document.getElementById('openLunchBtn').addEventListener('click', () => openModal('lunchModal'));
+    document.querySelectorAll('[data-close="deposit"]').forEach(el => el.addEventListener('click', () => closeModal('depositModal')));
+    document.querySelectorAll('[data-close="lunch"]').forEach(el => el.addEventListener('click', () => closeModal('lunchModal')));
+    document.getElementById('saveDepositBtn').addEventListener('click', saveDeposit);
+    document.getElementById('saveLunchBtn').addEventListener('click', saveLunch);
+    document.getElementById('lunchAmount').addEventListener('input', updateSharePreview);
+
+    populateMemberSelects();
+    document.getElementById('depositDate').value = todayStr();
+    document.getElementById('lunchDate').value = todayStr();
+    document.querySelectorAll('.participant-checkbox').forEach(el => el.addEventListener('change', updateSharePreview));
+    updateSharePreview();
+    renderAll();
+  </script>
 </body>
 </html>
