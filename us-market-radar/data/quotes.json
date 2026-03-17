@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1773748121,
+  "updatedAt": 1773748422,
   "source": "yahoo-finance-server-side",
   "quotes": {
     "OPEN": {
@@ -39,10 +39,10 @@
     },
     "^VIX": {
       "symbol": "^VIX",
-      "price": 23.47,
+      "price": 23.4,
       "prevClose": 27.19,
       "volume": 0,
-      "marketTime": 1773747211
+      "marketTime": 1773747511
     }
   }
 }
