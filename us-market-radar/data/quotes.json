@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1773752638,
+  "updatedAt": 1773752940,
   "source": "yahoo-finance-server-side",
   "quotes": {
     "OPEN": {
@@ -42,7 +42,7 @@
       "price": 22.73,
       "prevClose": 27.19,
       "volume": 0,
-      "marketTime": 1773751726
+      "marketTime": 1773752026
     }
   }
 }
