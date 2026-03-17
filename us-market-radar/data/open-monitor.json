@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-03-17T14:15:37.963948+00:00",
+  "price": 5.465,
+  "prevClose": 5.18,
+  "dayHigh": 5.505,
+  "dayLow": 5.2,
+  "volume": 11015757,
+  "thresholds": [
+    5.0,
+    5.22,
+    5.3,
+    5.4
+  ],
+  "analysis": {
+    "change_pct": 5.501930501930505,
+    "sma5": 5.4621199607849125,
+    "sma10": 5.442060041427612,
+    "volume_comment": "最新 bar 量能偏弱",
+    "trend_comment": "價位企喺短線均線之上；短線結構仍偏強",
+    "location_comment": "現價接近日內高位區",
+    "option_comment": "對你 OPEN 5C 有利，已高過 break-even 5.22"
+  },
+  "alerts": []
+}

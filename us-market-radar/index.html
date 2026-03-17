@@ -392,6 +392,15 @@ renderOptionPairs(normalizedData)
           </table>
         </div>
 
+
+        <div class="card">
+          <h2>OPEN Smart Monitor</h2>
+          <div id="openMonitorBox" class="detail-box">
+            <div class="detail-title">Loading monitor…</div>
+            <div class="note" style="margin-top:6px;">Waiting for latest OPEN analysis feed.</div>
+          </div>
+        </div>
+
         <div class="card">
           <h2>Selected Option Detail</h2>
           <div id="optionDetail" class="detail-box">
@@ -530,6 +539,41 @@ renderOptionPairs(normalizedData)
       }
     }
 
+
+    function fmtIso(s) {
+      if (!s) return 'unknown';
+      const d = new Date(s);
+      if (isNaN(d)) return s;
+      return d.toLocaleString();
+    }
+
+    async function loadOpenMonitor() {
+      try {
+        const res = await fetch('./data/open-monitor.json?v=1', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const a = data.analysis || {};
+        const alerts = Array.isArray(data.alerts) && data.alerts.length
+          ? '<ul style="margin:8px 0 0 18px; padding:0;">' + data.alerts.map(x => `<li>${x}</li>`).join('') + '</ul>'
+          : '<div class="note" style="margin-top:8px;">暫時冇新 alert。</div>';
+        document.getElementById('openMonitorBox').innerHTML = `
+          <div class="detail-title">OPEN Smart Monitor</div>
+          <div class="note" style="margin-top:6px;">Last checked: ${fmtIso(data.checkedAt)}</div>
+          <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Price</div><div class="detail-value">$${Number(data.price || 0).toFixed(3)}</div></div>
+            <div class="detail-item"><div class="detail-label">Prev Close</div><div class="detail-value">$${Number(data.prevClose || 0).toFixed(2)}</div></div>
+            <div class="detail-item"><div class="detail-label">Day High / Low</div><div class="detail-value">$${Number(data.dayHigh || 0).toFixed(2)} / $${Number(data.dayLow || 0).toFixed(2)}</div></div>
+            <div class="detail-item"><div class="detail-label">Volume</div><div class="detail-value">${Number(data.volume || 0).toLocaleString()}</div></div>
+          </div>
+          <div class="note" style="margin-top:10px;">${a.volume_comment || ''}。${a.trend_comment || ''}。${a.location_comment || ''}。${a.option_comment || ''}</div>
+          ${alerts}
+        `;
+      } catch (err) {
+        console.error(err);
+        document.getElementById('openMonitorBox').innerHTML = '<div class="detail-title">OPEN Smart Monitor</div><div class="note" style="margin-top:6px;">Monitor feed failed.</div>';
+      }
+    }
+
     function selectOption(name, type, expiry, bidAsk, volume, oi, note) {
       document.querySelectorAll('.option-card').forEach(el => el.classList.remove('active'));
       const cards = [...document.querySelectorAll('.option-card')];
@@ -551,7 +595,9 @@ renderOptionPairs(normalizedData)
     }
 
     loadQuotes();
+    loadOpenMonitor();
     setInterval(loadQuotes, 30000);
+    setInterval(loadOpenMonitor, 60000);
   </script>
 </body>
 </html>
