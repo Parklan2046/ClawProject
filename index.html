@@ -405,6 +405,21 @@
     }
 
     .card a:hover { text-decoration: underline; }
+    .card.hidden-card { display: none; }
+    .card.hidden-card.show { display: block; }
+
+    .private-note {
+      margin-top: 10px;
+      color: #92a2c3;
+      font-size: 0.8rem;
+    }
+
+    .private-error {
+      margin-top: 10px;
+      color: #ffb4b4;
+      font-size: 0.84rem;
+      display: none;
+    }
 
     .footer {
       margin-top: 32px;
@@ -434,11 +449,12 @@
         <div class="private-dialog-title">Private Access</div>
         <button class="private-dialog-close" id="privateDialogClose" aria-label="Close">✕</button>
       </div>
-      <div class="private-dialog-sub">Mockup only — enter a password to access your private project area.</div>
-      <form class="private-dialog-form" method="post" action="/lunch-login">
+      <div class="private-dialog-sub">Enter the password to reveal your private project on this page.</div>
+      <form class="private-dialog-form" id="privateRevealForm">
         <input type="password" name="password" placeholder="Enter password" aria-label="Password" />
-        <button type="submit">Enter</button>
+        <button type="submit">Reveal</button>
       </form>
+      <div class="private-error" id="privateError">Wrong password. Try again.</div>
     </div>
   </dialog>
 
@@ -501,8 +517,20 @@
       const dialog = document.getElementById('privateDialog');
       const launch = document.getElementById('privateLaunch');
       const closeBtn = document.getElementById('privateDialogClose');
+      const revealForm = document.getElementById('privateRevealForm');
+      const revealInput = revealForm?.querySelector('input[name="password"]');
+      const errorEl = document.getElementById('privateError');
+      const lunchCard = document.getElementById('lunchWalletCard');
+      const expectedHash = 'cb69775effd93fc34ef38dfbfcdc4c593b1a3d8e7ab70c0f05d627dbc5cbd298';
+
+      function setLunchVisible() {
+        lunchCard?.classList.add('show');
+        sessionStorage.setItem('clawhub_lunch_unlocked', '1');
+      }
+      if (sessionStorage.getItem('clawhub_lunch_unlocked') === '1') setLunchVisible();
 
       launch?.addEventListener('click', () => {
+        errorEl && (errorEl.style.display = 'none');
         if (typeof dialog.showModal === 'function') dialog.showModal();
       });
       closeBtn?.addEventListener('click', () => dialog.close());
@@ -510,6 +538,21 @@
         const rect = dialog.getBoundingClientRect();
         const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
         if (!inside) dialog.close();
+      });
+
+      revealForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const value = revealInput?.value || '';
+        const data = new TextEncoder().encode(value);
+        const digest = await crypto.subtle.digest('SHA-256', data);
+        const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+        if (hash === expectedHash) {
+          setLunchVisible();
+          dialog.close();
+          lunchCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (errorEl) {
+          errorEl.style.display = 'block';
+        }
       });
 
       if (!isTouch) {
