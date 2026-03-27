@@ -404,10 +404,12 @@
 
 
     .chatbot-panel.fullscreen {
+      top: max(12px, env(safe-area-inset-top));
+      left: 12px;
       right: 12px;
-      bottom: 12px;
-      width: calc(100vw - 24px);
-      height: calc(100vh - 24px);
+      bottom: max(12px, env(safe-area-inset-bottom));
+      width: auto !important;
+      height: auto !important;
       max-width: none;
       border-radius: 26px;
     }
@@ -657,7 +659,13 @@
       }
       chatbotLaunch?.addEventListener('click', openChatbot);
       chatbotTease?.addEventListener('click', openChatbot);
-      chatbotClose?.addEventListener('click', () => { chatbotPanel?.classList.remove('show'); scheduleTease(); });
+      chatbotClose?.addEventListener('click', () => { chatbotPanel?.classList.remove('show'); chatbotPanel?.classList.remove('fullscreen'); document.body.style.overflow = ''; if (chatbotExpand) chatbotExpand.textContent = '⤢'; scheduleTease(); });
+      chatbotExpand?.addEventListener('click', () => {
+        chatbotPanel?.classList.toggle('fullscreen');
+        const expanded = chatbotPanel?.classList.contains('fullscreen');
+        chatbotExpand.textContent = expanded ? '⤡' : '⤢';
+        document.body.style.overflow = expanded ? 'hidden' : '';
+      });
       scheduleTease();
 
       chatbotForm?.addEventListener('submit', async (e) => {
