@@ -3,110 +3,294 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>on9claw · Project Hub</title>
-  <meta name="description" content="A small hub for Parklan's projects: 722 ETA, Lunch Wallet, ebook Cantonese narration, and more." />
+  <title>Parklan Clawhub</title>
+  <meta name="description" content="Parklan Clawhub — a premium dark project hub for tools, experiments, and useful apps." />
   <style>
     :root {
       color-scheme: dark;
-      --bg: #07111f;
-      --bg2: #0d1729;
-      --card: rgba(17, 25, 40, 0.82);
-      --border: rgba(148, 163, 184, 0.18);
-      --text: #edf3ff;
-      --muted: #9fb0d9;
-      --accent: #7c9cff;
-      --accent2: #47d7ac;
-      --shadow: 0 18px 60px rgba(0,0,0,.35);
+      --bg: #050816;
+      --bg2: #0a1022;
+      --panel: rgba(12, 18, 38, 0.72);
+      --panel-strong: rgba(16, 24, 48, 0.88);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #eef4ff;
+      --muted: #9ca9c9;
+      --blue: #7c8cff;
+      --cyan: #46d7ff;
+      --green: #4de8b4;
+      --pink: #b96eff;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
     }
 
     * { box-sizing: border-box; }
-    body {
+
+    html, body {
       margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(71, 215, 172, 0.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(124, 156, 255, 0.16), transparent 26%),
-        linear-gradient(180deg, var(--bg), #050b15 60%);
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0d1630 0%, var(--bg) 40%, #02040b 100%);
       color: var(--text);
-      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      width: 42vw;
+      height: 42vw;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.18;
+      z-index: 0;
+      pointer-events: none;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+
+    body::before {
+      top: -10vw;
+      left: -8vw;
+      background: radial-gradient(circle, var(--cyan), transparent 60%);
+    }
+
+    body::after {
+      bottom: -14vw;
+      right: -10vw;
+      background: radial-gradient(circle, var(--pink), transparent 60%);
+      animation-duration: 20s;
+    }
+
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 38px 38px;
+      mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+      opacity: 0.35;
+      animation: floatGrid 22s linear infinite;
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(4vw, 2vw, 0) scale(1.12); }
+    }
+
+    @keyframes floatGrid {
+      from { transform: translateY(0px); }
+      to { transform: translateY(38px); }
     }
 
     .wrap {
-      max-width: 1120px;
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 32px 20px 56px;
+      padding: 28px 20px 64px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: rgba(9, 15, 32, 0.48);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      box-shadow: 0 10px 30px rgba(94, 129, 255, 0.35);
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-top: 2px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      color: #d7e3ff;
+      text-decoration: none;
+      padding: 9px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      font-size: 0.92rem;
     }
 
     .hero {
-      padding: 28px 0 18px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero-main,
+    .hero-side {
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(18,28,58,0.75), rgba(9,14,28,0.84));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-main {
+      padding: 34px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -40px auto;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(77,232,180,0.2), transparent 66%);
+      filter: blur(12px);
+      pointer-events: none;
     }
 
     .eyebrow {
-      display: inline-block;
-      padding: 6px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(124, 156, 255, 0.14);
-      color: #bfd0ff;
+      background: rgba(124,140,255,0.14);
+      border: 1px solid rgba(124,140,255,0.2);
+      color: #cad5ff;
       font-size: 12px;
-      letter-spacing: .08em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      border: 1px solid rgba(124, 156, 255, 0.22);
+      margin-bottom: 18px;
     }
 
     h1 {
-      font-size: clamp(2.2rem, 6vw, 4.5rem);
-      line-height: 1.02;
-      margin: 16px 0 14px;
-      letter-spacing: -0.04em;
+      margin: 0;
+      font-size: clamp(2.5rem, 6vw, 5.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      max-width: 760px;
     }
 
     .lead {
-      max-width: 740px;
-      font-size: 1.05rem;
-      line-height: 1.75;
+      margin-top: 20px;
+      max-width: 700px;
       color: var(--muted);
-      margin: 0;
+      font-size: 1.04rem;
+      line-height: 1.8;
     }
 
-    .actions {
+    .hero-actions {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
-      margin-top: 24px;
+      margin-top: 28px;
     }
 
     .btn {
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      text-decoration: none;
-      font-weight: 600;
-      border: 1px solid transparent;
-      transition: transform .18s ease, opacity .18s ease, border-color .18s ease;
+      padding: 13px 18px;
+      border-radius: 14px;
+      font-weight: 700;
+      transition: transform .16s ease, opacity .16s ease;
     }
 
-    .btn:hover { transform: translateY(-1px); opacity: .96; }
+    .btn:hover { transform: translateY(-1px); opacity: 0.98; }
+
     .btn.primary {
-      background: linear-gradient(135deg, var(--accent), #5f79ff);
+      background: linear-gradient(135deg, var(--blue), #5976ff);
       color: white;
-      box-shadow: 0 12px 34px rgba(92, 118, 255, .28);
+      box-shadow: 0 14px 34px rgba(88, 114, 255, 0.28);
     }
+
     .btn.secondary {
-      background: rgba(255,255,255,.03);
-      color: #dce7ff;
-      border-color: rgba(255,255,255,.1);
+      color: #d9e4ff;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .hero-side {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
     }
 
     .section-title {
-      margin: 34px 0 16px;
-      font-size: 1.2rem;
-      color: #dce7ff;
+      margin: 28px 0 14px;
+      font-size: 1.15rem;
+      color: #dfe7ff;
     }
 
-    .grid {
+    .cards {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
       gap: 16px;
@@ -114,138 +298,170 @@
 
     .card {
       grid-column: span 6;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
       position: relative;
+      padding: 22px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(18,27,55,0.78), rgba(9,14,28,0.88));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       overflow: hidden;
+      backdrop-filter: blur(14px);
     }
 
     .card::before {
       content: "";
       position: absolute;
-      inset: 0 auto auto 0;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 1px;
-      background: linear-gradient(90deg, rgba(255,255,255,.22), transparent 65%);
+      background: linear-gradient(90deg, rgba(255,255,255,0.35), transparent 70%);
+    }
+
+    .card-tag {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(71, 215, 255, 0.12);
+      color: #aeefff;
+      border: 1px solid rgba(71,215,255,0.15);
+      font-size: 12px;
+      margin-bottom: 10px;
     }
 
     .card h3 {
-      margin: 8px 0 8px;
-      font-size: 1.2rem;
+      margin: 0 0 8px;
+      font-size: 1.24rem;
     }
 
     .card p {
-      margin: 0 0 16px;
+      margin: 0 0 18px;
       color: var(--muted);
-      line-height: 1.7;
-      font-size: 0.96rem;
+      line-height: 1.75;
+      font-size: 0.97rem;
     }
 
-    .tag {
-      display: inline-block;
-      font-size: 12px;
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: rgba(71, 215, 172, 0.12);
-      color: #9ef0d1;
-      border: 1px solid rgba(71, 215, 172, 0.18);
-    }
-
-    .links {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .link {
-      color: #bfd0ff;
+    .card a {
+      color: #dce7ff;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 700;
     }
 
-    .link:hover { text-decoration: underline; }
+    .card a:hover { text-decoration: underline; }
 
     .footer {
-      margin-top: 34px;
-      color: #7f90b8;
-      font-size: .92rem;
+      margin-top: 30px;
+      text-align: center;
+      color: #7f8fb3;
+      font-size: 0.92rem;
     }
 
-    @media (max-width: 860px) {
-      .card { grid-column: span 12; }
-      .wrap { padding-left: 16px; padding-right: 16px; }
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+      .card {
+        grid-column: span 12;
+      }
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="grid-bg"></div>
+
   <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">🦞</div>
+        <div class="brand-text">
+          <div class="brand-title">Parklan Clawhub</div>
+          <div class="brand-sub">Dark premium home for apps, experiments, and useful little tools.</div>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="722-eta/">722 ETA</a>
+        <a href="lunch-wallet/">Lunch Wallet</a>
+        <a href="ebook-canto-poc/">Ebook Demo</a>
+        <a href="us-market-radar/">US Market Radar</a>
+      </div>
+    </div>
+
     <section class="hero">
-      <span class="eyebrow">on9claw · Parklan Project Hub</span>
-      <h1>Small useful apps, weird ideas, and personal tools.</h1>
-      <p class="lead">
-        A simple home for projects built around daily utility and experimentation — transport lookup, shared tools,
-        market dashboards, and a new AI ebook Cantonese narration prototype.
-      </p>
-      <div class="actions">
-        <a class="btn primary" href="ebook-canto-poc/">Try ebook narration demo</a>
-        <a class="btn secondary" href="722-eta/">Open 722 ETA</a>
+      <div class="hero-main">
+        <div class="eyebrow">Premium dark hub · on9claw</div>
+        <h1>Builds, tools, and odd experiments — all in one place.</h1>
+        <p class="lead">
+          Welcome to <strong>Parklan Clawhub</strong>: a cleaner, darker, more premium landing page for your projects.
+          It brings together transport tools, personal utilities, market dashboards, and your new AI storytelling demo
+          into one simple navigation hub.
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="ebook-canto-poc/">Try ebook narration</a>
+          <a class="btn secondary" href="722-eta/">Open 722 ETA</a>
+        </div>
+      </div>
+
+      <div class="hero-side">
+        <div class="stat">
+          <div class="stat-label">Brand</div>
+          <div class="stat-value">Parklan Clawhub</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Style</div>
+          <div class="stat-value">Premium / Dark / Animated</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Hub goal</div>
+          <div class="stat-value">One entry point for all projects</div>
+        </div>
       </div>
     </section>
 
     <h2 class="section-title">Projects</h2>
-    <section class="grid">
+    <section class="cards">
       <article class="card">
-        <span class="tag">Transport</span>
+        <div class="card-tag">Transport</div>
         <h3>722 ETA</h3>
         <p>
-          Quick Citybus ETA lookup page for route 722. Built for fast checking with a lightweight mobile-friendly UI.
+          A fast Citybus route lookup page built for quick access and lightweight mobile checking.
         </p>
-        <div class="links">
-          <a class="link" href="722-eta/">Open project →</a>
-        </div>
+        <a href="722-eta/">Open project →</a>
       </article>
 
       <article class="card">
-        <span class="tag">Utility</span>
+        <div class="card-tag">Utility</div>
         <h3>Lunch Wallet</h3>
         <p>
-          A shared lunch wallet tool for tracking spending and balancing simple group meal costs.
+          A simple shared wallet tool for lunch spending, balances, and lightweight group cost tracking.
         </p>
-        <div class="links">
-          <a class="link" href="lunch-wallet/">Open project →</a>
-        </div>
+        <a href="lunch-wallet/">Open project →</a>
       </article>
 
       <article class="card">
-        <span class="tag">AI / Storytelling</span>
+        <div class="card-tag">AI Storytelling</div>
         <h3>Ebook Cantonese Narration</h3>
         <p>
-          Proof of concept for importing text or EPUB content, rewriting it into natural spoken Cantonese, and testing
-          playback for story-style reading.
+          Import text or EPUB content, rewrite it into spoken Cantonese style, and test playback in a story-reading demo.
         </p>
-        <div class="links">
-          <a class="link" href="ebook-canto-poc/">Open project →</a>
-        </div>
+        <a href="ebook-canto-poc/">Open project →</a>
       </article>
 
       <article class="card">
-        <span class="tag">Market</span>
+        <div class="card-tag">Market</div>
         <h3>US Market Radar</h3>
         <p>
-          A compact market dashboard experiment for watching index and options-related market context in one place.
+          A compact dashboard experiment for tracking market context, structure, and quick-glance signals.
         </p>
-        <div class="links">
-          <a class="link" href="us-market-radar/">Open project →</a>
-        </div>
+        <a href="us-market-radar/">Open project →</a>
       </article>
     </section>
 
     <div class="footer">
-      Built as an evolving project hub for Parklan — simple, direct, and easy to navigate.
+      Parklan Clawhub · dark mode by default · built as a living project portal.
     </div>
   </div>
 </body>
