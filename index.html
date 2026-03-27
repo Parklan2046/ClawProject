@@ -4,83 +4,82 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Parklan Clawhub</title>
-  <meta name="description" content="Parklan Clawhub — a darker glass landing page for apps, tools, experiments, and sudden surprise drops." />
+  <meta name="description" content="Parklan Clawhub — a retro-futuristic techno landing page for tools, experiments, and dashboards." />
   <style>
     :root {
       color-scheme: dark;
-      --bg-1: #050816;
-      --bg-2: #0a1020;
-      --bg-3: #0d1630;
-      --text: #edf4ff;
-      --muted: #9aa8c8;
-      --line: rgba(255,255,255,0.16);
-      --line-strong: rgba(255,255,255,0.28);
-      --glass: rgba(18, 25, 48, 0.44);
-      --glass-strong: rgba(16, 22, 42, 0.62);
-      --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
-      --blue: #7da1ff;
-      --cyan: #67d9ff;
-      --green: #58e2b8;
-      --pink: #d58cff;
-      --mini-cyan: #00f3ff;
-      --mini-pink: #ff00ea;
-      --mini-gold: #ffd700;
-      --mini-glass: rgba(15, 23, 42, 0.8);
+      --bg-top: #1a0630;
+      --bg-bottom: #070312;
+      --panel: rgba(18, 10, 40, 0.72);
+      --panel-2: rgba(25, 10, 50, 0.84);
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #f8ecff;
+      --muted: #d0a9d9;
+      --pink: #ff3ea5;
+      --hotpink: #ff00d4;
+      --cyan: #33e6ff;
+      --purple: #8b5cf6;
+      --gold: #ffd166;
+      --shadow: 0 24px 80px rgba(0,0,0,0.42);
     }
 
     * { box-sizing: border-box; }
-    html { cursor: auto; }
 
     html, body {
       margin: 0;
       min-height: 100%;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: Inter, system-ui, sans-serif;
       color: var(--text);
       overflow-x: hidden;
       background:
-        radial-gradient(circle at 12% 10%, rgba(103,217,255,0.18), transparent 22%),
-        radial-gradient(circle at 88% 18%, rgba(213,140,255,0.14), transparent 20%),
-        radial-gradient(circle at 18% 90%, rgba(88,226,184,0.12), transparent 24%),
-        linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 34%, var(--bg-1) 100%);
+        radial-gradient(circle at top, rgba(255, 62, 165, 0.12), transparent 18%),
+        radial-gradient(circle at 75% 10%, rgba(51, 230, 255, 0.12), transparent 16%),
+        linear-gradient(180deg, #2a0845 0%, #140321 42%, #070312 100%);
     }
 
-
-    .ambient {
+    .bg {
       position: fixed;
       inset: 0;
-      pointer-events: none;
       z-index: 0;
+      pointer-events: none;
       overflow: hidden;
     }
 
-    .orb {
+    .sun {
       position: absolute;
+      width: 460px;
+      height: 460px;
+      left: 50%;
+      top: 110px;
+      transform: translateX(-50%);
       border-radius: 50%;
-      filter: blur(78px);
+      background: radial-gradient(circle at center, rgba(255,93,177,0.95), rgba(255,26,131,0.8) 45%, rgba(120,0,80,0.15) 70%, transparent 74%);
+      filter: blur(4px);
       opacity: 0.22;
-      animation: float 18s ease-in-out infinite alternate;
     }
 
-    .orb.one {
-      width: 320px;
-      height: 320px;
-      top: -70px;
-      left: -50px;
-      background: rgba(103,217,255,0.32);
+    .grid-floor {
+      position: absolute;
+      left: -10%;
+      right: -10%;
+      bottom: -8vh;
+      height: 48vh;
+      background:
+        linear-gradient(to top, rgba(255,0,212,0.14), transparent 30%),
+        repeating-linear-gradient(to right, rgba(51,230,255,0.18) 0 2px, transparent 2px 80px),
+        repeating-linear-gradient(to top, rgba(51,230,255,0.16) 0 2px, transparent 2px 60px);
+      transform: perspective(700px) rotateX(74deg);
+      transform-origin: bottom center;
+      opacity: 0.5;
+      mask-image: linear-gradient(to top, black 35%, transparent 100%);
     }
 
-    .orb.two {
-      width: 260px;
-      height: 260px;
-      top: 22%;
-      right: -60px;
-      background: rgba(213,140,255,0.22);
-      animation-duration: 24s;
-    }
-
-    @keyframes float {
-      from { transform: translate3d(0,0,0) scale(1); }
-      to { transform: translate3d(26px,-16px,0) scale(1.08); }
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.03) 0 1px, transparent 1px 4px);
+      opacity: 0.1;
+      mix-blend-mode: screen;
     }
 
     .wrap {
@@ -91,153 +90,59 @@
       padding: 26px 20px 72px;
     }
 
-    .glass {
-      background: linear-gradient(180deg, rgba(20,28,52,0.58), rgba(14,19,36,0.34));
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(20px) saturate(140%);
-      -webkit-backdrop-filter: blur(20px) saturate(140%);
-      background-color: rgba(18, 25, 48, 0.42);
-    }
-
     .private-launch {
       position: fixed;
       top: 18px;
       right: 18px;
       z-index: 20;
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       border-radius: 999px;
       display: grid;
       place-items: center;
-      border: 1px solid rgba(125,161,255,0.26);
-      background: linear-gradient(135deg, rgba(125,161,255,0.18), rgba(103,217,255,0.12));
+      border: 1px solid rgba(255,62,165,0.32);
+      background: linear-gradient(135deg, rgba(255,62,165,0.18), rgba(51,230,255,0.12));
       color: var(--text);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 12px 28px rgba(64,98,173,0.16);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 0 22px rgba(255,0,212,0.18);
       cursor: pointer;
       font-size: 16px;
     }
 
-    .private-launch:hover {
-      transform: translateY(-1px);
-      background: linear-gradient(135deg, rgba(125,161,255,0.24), rgba(103,217,255,0.16));
-    }
+    .private-launch:hover { transform: translateY(-1px); }
 
     .private-dialog {
-      border: 1px solid rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.14);
       border-radius: 24px;
       padding: 0;
       width: min(380px, calc(100vw - 28px));
       background: transparent;
       color: var(--text);
     }
-
-    .private-dialog::backdrop {
-      background: rgba(3, 8, 18, 0.55);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
+    .private-dialog::backdrop { background: rgba(4,0,12,0.6); backdrop-filter: blur(8px); }
     .private-dialog-panel {
       padding: 18px;
       border-radius: 24px;
+      background: linear-gradient(180deg, rgba(28,12,52,.92), rgba(12,5,22,.92));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 24px 80px rgba(0,0,0,.45), 0 0 30px rgba(255,0,212,.12);
     }
-
-    .private-dialog-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .private-dialog-title {
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-    }
-
+    .private-dialog-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+    .private-dialog-title { font-size:1rem; font-weight:900; letter-spacing:-.02em; }
     .private-dialog-close {
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.06);
-      color: var(--text);
-      cursor: pointer;
+      width: 34px; height: 34px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06); color: var(--text); cursor: pointer;
     }
-
-    .private-dialog-sub {
-      color: var(--muted);
-      font-size: 0.88rem;
-      line-height: 1.55;
-      margin-bottom: 14px;
-    }
-
-    .private-dialog-form {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: center;
-    }
-
+    .private-dialog-sub, .private-error { color: var(--muted); font-size:.88rem; line-height:1.55; margin-bottom:14px; }
+    .private-error { color:#ffb4ce; display:none; margin-top:10px; }
+    .private-dialog-form { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; }
     .private-dialog-form input {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.06);
-      color: var(--text);
-      padding: 10px 12px;
-      font: inherit;
-      outline: none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+      width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:var(--text);
+      padding:12px 14px; font:inherit; outline:none; box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
     }
-
-    .private-dialog-form input::placeholder {
-      color: #92a2c3;
-    }
-
     .private-dialog-form button {
-      border: 1px solid rgba(125,161,255,0.28);
-      background: linear-gradient(135deg, rgba(125,161,255,0.18), rgba(103,217,255,0.12));
-      color: var(--text);
-      border-radius: 12px;
-      padding: 10px 14px;
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-    }
-    .hero-mark {
-      width: 62px;
-      height: 62px;
-      border-radius: 22px;
-      display: grid;
-      place-items: center;
-      position: relative;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, rgba(91,133,255,0.24), rgba(103,217,255,0.14));
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 18px 42px rgba(91,133,255,0.18), inset 0 1px 0 rgba(255,255,255,0.1);
-      overflow: hidden;
-    }
-
-    .hero-mark::before {
-      content: "";
-      position: absolute;
-      inset: 8px;
-      border-radius: 18px;
-      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.34), transparent 36%),
-                  linear-gradient(135deg, rgba(125,161,255,0.28), rgba(103,217,255,0.08));
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .hero-mark span {
-      position: relative;
-      z-index: 1;
-      font-size: 20px;
-      color: #dff4ff;
-      text-shadow: 0 0 14px rgba(103,217,255,0.35);
+      border:1px solid rgba(255,62,165,.28); background:linear-gradient(135deg, rgba(255,62,165,.2), rgba(51,230,255,.12)); color:var(--text);
+      border-radius:14px; padding:12px 14px; font:inherit; font-weight:900; cursor:pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
     }
 
     .hero {
@@ -246,17 +151,35 @@
       overflow: hidden;
       position: relative;
       margin-bottom: 26px;
+      background: linear-gradient(180deg, rgba(25,10,50,0.74), rgba(9,5,18,0.58));
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: var(--shadow), 0 0 40px rgba(255,0,212,0.08);
+      backdrop-filter: blur(16px) saturate(130%);
+      -webkit-backdrop-filter: blur(16px) saturate(130%);
     }
 
     .hero::before {
       content: "";
       position: absolute;
       inset: 0;
-      background:
-        radial-gradient(circle at 82% 16%, rgba(255,255,255,0.12), transparent 22%),
-        linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+      background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent 45%);
       pointer-events: none;
     }
+
+    .hero-mark {
+      width: 86px;
+      height: 86px;
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 18px 40px rgba(255,0,212,0.12);
+      margin-bottom: 18px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .hero-mark img { width: 100%; height: 100%; object-fit: cover; }
 
     .eyebrow {
       display: inline-flex;
@@ -264,101 +187,43 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.14);
-      color: var(--blue);
-      font-weight: 700;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--cyan);
+      font-weight: 800;
       font-size: 12px;
-      letter-spacing: .08em;
+      letter-spacing: .12em;
       text-transform: uppercase;
       margin-bottom: 16px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 20px rgba(51,230,255,0.08);
     }
-
 
     h1 {
       margin: 0;
-      font-size: clamp(2rem, 4.6vw, 3.8rem);
-      line-height: .94;
-      letter-spacing: -0.055em;
-      max-width: 840px;
+      font-size: clamp(2.2rem, 4.8vw, 4.1rem);
+      line-height: .92;
+      letter-spacing: -0.05em;
+      max-width: 860px;
+      text-transform: uppercase;
+      text-shadow: 0 0 12px rgba(255,62,165,0.22), 0 0 24px rgba(51,230,255,0.1);
     }
 
     .lead {
       margin-top: 18px;
       max-width: 760px;
       color: var(--muted);
-      font-size: 1.05rem;
+      font-size: 1.02rem;
       line-height: 1.82;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 28px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      text-decoration: none;
-      padding: 13px 18px;
-      border-radius: 16px;
-      font-weight: 800;
-      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn:hover { transform: translateY(-1px); opacity: 0.98; }
-
-    .btn.primary {
-      color: #fff;
-      background: linear-gradient(135deg, #5b85ff, #7da1ff);
-      box-shadow: 0 14px 36px rgba(91,133,255,0.24);
-    }
-
-    .btn.secondary {
-      color: var(--text);
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-    }
-
-    .private-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 999px;
-      display: inline-grid;
-      place-items: center;
-      text-decoration: none;
-      color: #f3f8ff;
-      font-size: 16px;
-      background: linear-gradient(135deg, rgba(125,161,255,0.18), rgba(103,217,255,0.12));
-      border: 1px solid rgba(125,161,255,0.26);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.12),
-        0 10px 28px rgba(64, 98, 173, 0.16),
-        0 0 0 1px rgba(255,255,255,0.04);
-      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
-    }
-
-    .private-icon:hover {
-      transform: translateY(-1px);
-      background: linear-gradient(135deg, rgba(125,161,255,0.24), rgba(103,217,255,0.16));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.14),
-        0 14px 34px rgba(64, 98, 173, 0.2);
     }
 
     .section-title {
       margin: 30px 0 14px;
-      font-size: 1.12rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
+      font-size: 1.05rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      text-shadow: 0 0 10px rgba(51,230,255,0.18);
     }
 
     .cards {
@@ -371,9 +236,12 @@
       grid-column: span 6;
       position: relative;
       padding: 22px;
-      border-radius: 28px;
-      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      border-radius: 24px;
       overflow: hidden;
+      background: linear-gradient(180deg, rgba(26,9,48,0.72), rgba(10,5,22,0.72));
+      border: 1px solid rgba(255,255,255,0.09);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
       transform-style: preserve-3d;
       will-change: transform;
     }
@@ -382,32 +250,34 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent 50%);
+      background: linear-gradient(135deg, rgba(255,255,255,0.06), transparent 45%);
       pointer-events: none;
     }
 
     .card:hover {
-      box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
-      background: linear-gradient(180deg, rgba(22,30,56,0.56), rgba(14,19,36,0.3));
+      box-shadow: 0 26px 70px rgba(0,0,0,0.45), 0 0 28px rgba(255,0,212,0.08);
+      border-color: rgba(255,62,165,0.18);
     }
 
     .card-tag {
       display: inline-flex;
       padding: 6px 10px;
       border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 10px;
-      color: var(--blue);
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: var(--cyan);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      text-transform: uppercase;
+      letter-spacing: .08em;
     }
 
     .card h3 {
       margin: 0 0 8px;
-      font-size: 1.24rem;
+      font-size: 1.28rem;
       letter-spacing: -0.02em;
+      text-transform: uppercase;
     }
 
     .card p {
@@ -419,51 +289,36 @@
 
     .card a {
       text-decoration: none;
-      color: var(--blue);
-      font-weight: 800;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: 0.02em;
     }
 
     .card a:hover { text-decoration: underline; }
+
     .card.hidden-card { display: none; }
     .card.hidden-card.show { display: block; }
-
-    .private-note {
-      margin-top: 10px;
-      color: #92a2c3;
-      font-size: 0.8rem;
-    }
-
-    .private-error {
-      margin-top: 10px;
-      color: #ffb4b4;
-      font-size: 0.84rem;
-      display: none;
-    }
 
     .footer {
       margin-top: 32px;
       text-align: center;
-      color: #7d8ca8;
-      font-size: 0.92rem;
+      color: #9e7aaa;
+      font-size: 0.88rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
     @media (max-width: 920px) {
       .card { grid-column: span 12; }
       .hero { padding: 28px 22px; }
-      .miniclawhub-inner { padding: 28px 22px; }
-      .mini-drop-badge {
-        position: static;
-        display: inline-flex;
-        margin-bottom: 12px;
-      }
     }
   </style>
 </head>
 <body>
-  <button class="private-launch glass" id="privateLaunch" aria-label="Private Access" title="Private Access">🔒</button>
+  <button class="private-launch" id="privateLaunch" aria-label="Private Access" title="Private Access">🔒</button>
 
   <dialog class="private-dialog" id="privateDialog">
-    <div class="private-dialog-panel glass">
+    <div class="private-dialog-panel">
       <div class="private-dialog-header">
         <div class="private-dialog-title">Private Access</div>
         <button class="private-dialog-close" id="privateDialogClose" aria-label="Close">✕</button>
@@ -477,53 +332,53 @@
     </div>
   </dialog>
 
-  <div class="ambient">
-    <div class="orb one"></div>
-    <div class="orb two"></div>
+  <div class="bg">
+    <div class="sun"></div>
+    <div class="grid-floor"></div>
+    <div class="scanlines"></div>
   </div>
 
   <div class="wrap">
-
-    <section class="hero glass">
-      <div class="hero-mark" aria-hidden="true"><span>✦</span></div>
+    <section class="hero">
+      <div class="hero-mark"><img src="assets/claw-icon.jpg" alt="Claw icon" /></div>
       <div class="eyebrow">Parklan Clawhub</div>
-      <h1>Quiet tools, clear experiments, one polished home.</h1>
+      <h1>Quiet tools. Neon experiments. One polished system.</h1>
       <p class="lead">
-        A curated hub for practical tools, playful experiments, and small AI ideas — designed to feel calm, clear, and quietly premium.
+        A curated hub for practical tools, playful experiments, dashboards, and small AI projects — rebuilt with a retro-futuristic pulse.
       </p>
-      <div class="hero-actions"></div>
     </section>
 
     <h2 id="projects" class="section-title">Projects</h2>
     <section class="cards">
-      <article class="card glass tilt-card">
+      <article class="card tilt-card">
         <div class="card-tag">Transport</div>
         <h3>722 ETA</h3>
         <p>A fast Citybus route lookup page for quick checking with a lightweight mobile-first interface.</p>
         <a href="722-eta/">Open project →</a>
       </article>
 
-      <article class="card glass tilt-card hidden-card" id="lunchWalletCard">
+      <article class="card tilt-card hidden-card" id="lunchWalletCard">
         <div class="card-tag">Private Utility</div>
         <h3>Lunch Wallet 🔒</h3>
         <p>A simple shared wallet tool for lunch spending, balances, and lightweight group cost tracking.</p>
         <a href="lunch-wallet/">Private access →</a>
       </article>
 
-      <article class="card glass tilt-card">
+      <article class="card tilt-card">
         <div class="card-tag">AI Storytelling</div>
         <h3>Ebook Cantonese Narration</h3>
         <p>Import text or EPUB content, rewrite it into spoken Cantonese, and test playback in a live narration demo.</p>
         <a href="ebook-canto-poc/">Open project →</a>
       </article>
 
-      <article class="card glass tilt-card">
+      <article class="card tilt-card">
         <div class="card-tag">AI Music</div>
         <h3>Spotify AI Dashboard</h3>
         <p>A polished dashboard for now playing, queue intelligence, device status, and private Spotify controls.</p>
         <a href="spotify-dashboard/">Open project →</a>
       </article>
-      <article class="card glass tilt-card">
+
+      <article class="card tilt-card">
         <div class="card-tag">Market</div>
         <h3>US Market Radar</h3>
         <p>A compact dashboard experiment for tracking market context, structure, and quick-glance signals.</p>
@@ -531,9 +386,7 @@
       </article>
     </section>
 
-    <div class="footer">
-      Parklan Clawhub · darker glass landing page.
-    </div>
+    <div class="footer">Parklan Clawhub · retro techno edition</div>
   </div>
 
   <script>
@@ -555,7 +408,7 @@
       if (sessionStorage.getItem('clawhub_lunch_unlocked') === '1') setLunchVisible();
 
       launch?.addEventListener('click', () => {
-        errorEl && (errorEl.style.display = 'none');
+        if (errorEl) errorEl.style.display = 'none';
         if (typeof dialog.showModal === 'function') dialog.showModal();
       });
       closeBtn?.addEventListener('click', () => dialog.close());
@@ -589,9 +442,9 @@
               const rect = card.getBoundingClientRect();
               const px = (e.clientX - rect.left) / rect.width;
               const py = (e.clientY - rect.top) / rect.height;
-              const rotY = (px - 0.5) * 3;
-              const rotX = (0.5 - py) * 3;
-              card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-2px)`;
+              const rotY = (px - 0.5) * 4;
+              const rotX = (0.5 - py) * 4;
+              card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-3px)`;
               raf = null;
             });
           });
