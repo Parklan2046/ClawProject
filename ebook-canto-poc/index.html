@@ -81,6 +81,7 @@
             <option value="male-qn-qingse">MiniMax · male-qn-qingse</option>
           </select>
           <button id="minimaxSpeakBtn">Generate MiniMax speech</button>
+          <button id="minimaxSegmentsBtn" class="secondary">Generate segment audio</button>
           <audio id="minimaxAudio" controls style="max-width:100%;"></audio>
         </div>
         <div class="status" id="ttsStatus">Browser TTS note: quality depends on the voices installed on your browser/device. On desktop Chrome/Safari with Cantonese voices, this is enough for a first proof of concept.</div>
@@ -101,6 +102,7 @@
     const ttsStatus = document.getElementById('ttsStatus');
 
     let lastSegments = [];
+    let lastMiniMaxSegments = [];
     let voices = [];
 
     async function api(path, body) {
@@ -167,17 +169,28 @@
       segments.forEach((seg, idx) => {
         const div = document.createElement('div');
         div.className = 'seg';
+        const hasMiniMax = !!lastMiniMaxSegments[idx]?.audio_base64;
         div.innerHTML = `
           <div class="emotion">${seg.emotion || 'calm'}</div>
           <div>${escapeHtml(seg.text || '')}</div>
           <div class="controls">
             <span class="pill">segment ${idx + 1}</span>
             <button data-speak-index="${idx}">Speak this</button>
+            <button data-minimax-index="${idx}" class="secondary">MiniMax this</button>
+            ${hasMiniMax ? `<audio controls src="data:${lastMiniMaxSegments[idx].mime_type};base64,${lastMiniMaxSegments[idx].audio_base64}" style="max-width:100%;"></audio>` : ''}
           </div>`;
         segmentsEl.appendChild(div);
       });
       document.querySelectorAll('[data-speak-index]').forEach(btn => {
         btn.onclick = () => speakText(lastSegments[Number(btn.dataset.speakIndex)]?.text || '');
+      });
+      document.querySelectorAll('[data-minimax-index]').forEach(btn => {
+        btn.onclick = async () => {
+          const i = Number(btn.dataset.minimaxIndex);
+          const seg = lastSegments[i];
+          if (!seg) return;
+          await generateMiniMaxSpeech(seg.text || '', seg.emotion || 'calm');
+        };
       });
     }
 
@@ -237,9 +250,31 @@
         });
         minimaxAudio.src = `data:${j.mime_type};base64,${j.audio_base64}`;
         minimaxAudio.play().catch(() => {});
-        ttsStatus.textContent = `MiniMax speech ready · ${j.voice_id} · ${j.model}`;
+        ttsStatus.textContent = `MiniMax speech ready · ${j.voice_id} · ${j.model} · emotion ${j.emotion}`;
       } catch (e) {
         ttsStatus.textContent = 'MiniMax speech failed: ' + e.message;
+      }
+    }
+
+    async function generateMiniMaxSegmentAudio() {
+      if (!lastSegments.length) {
+        ttsStatus.textContent = 'No narration segments yet. Rewrite text first.';
+        return;
+      }
+      ttsStatus.textContent = 'Generating MiniMax audio for each segment...';
+      try {
+        const j = await api('api/tts_segments', {
+          segments: lastSegments,
+          voice_id: minimaxVoiceSelect.value
+        });
+        lastMiniMaxSegments = j.segments || [];
+        renderSegments(lastSegments);
+        if (lastMiniMaxSegments[0]?.audio_base64) {
+          minimaxAudio.src = `data:${lastMiniMaxSegments[0].mime_type};base64,${lastMiniMaxSegments[0].audio_base64}`;
+        }
+        ttsStatus.textContent = `MiniMax segment audio ready · ${lastMiniMaxSegments.length} segments · ${j.voice_id}`;
+      } catch (e) {
+        ttsStatus.textContent = 'MiniMax segment audio failed: ' + e.message;
       }
     }
 
@@ -251,6 +286,7 @@
       const emotion = lastSegments[0]?.emotion || 'calm';
       generateMiniMaxSpeech(text, emotion);
     };
+    document.getElementById('minimaxSegmentsBtn').onclick = () => generateMiniMaxSegmentAudio();
     speechSynthesis.onvoiceschanged = loadVoices;
 
     loadHealth();

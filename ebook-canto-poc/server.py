@@ -212,12 +212,27 @@ def minimax_tts(text: str, voice_id: str = "female-shaonv", emotion: str = "calm
 
     speed = 0.96
     pitch = 0
-    if emotion in ("excited", "dialogue"):
-        speed = 1.03
-    elif emotion in ("mysterious", "sad"):
-        speed = 0.9
+    volume = 1.0
+    if emotion == "excited":
+        speed = 1.06
+        pitch = 1
+        volume = 1.05
+    elif emotion == "dialogue":
+        speed = 1.02
+        pitch = 1
+    elif emotion == "mysterious":
+        speed = 0.88
+        pitch = -1
+    elif emotion == "sad":
+        speed = 0.87
+        pitch = -1
+        volume = 0.96
     elif emotion == "tense":
-        speed = 0.98
+        speed = 1.0
+        pitch = -1
+    elif emotion == "warm":
+        speed = 0.93
+        pitch = 1
 
     payload = {
         "model": MINIMAX_TTS_MODEL,
@@ -225,7 +240,7 @@ def minimax_tts(text: str, voice_id: str = "female-shaonv", emotion: str = "calm
         "voice_setting": {
             "voice_id": voice_id,
             "speed": speed,
-            "vol": 1.0,
+            "vol": volume,
             "pitch": pitch,
         },
         "audio_setting": {
@@ -269,8 +284,30 @@ def minimax_tts(text: str, voice_id: str = "female-shaonv", emotion: str = "calm
         "mime_type": "audio/mpeg",
         "audio_base64": audio_b64,
         "voice_id": voice_id,
+        "emotion": emotion,
         "model": MINIMAX_TTS_MODEL,
     }
+
+
+def minimax_tts_segments(segments, voice_id: str = "female-shaonv"):
+    out = []
+    for idx, seg in enumerate(segments, 1):
+        if not isinstance(seg, dict):
+            continue
+        text = str(seg.get("text", "")).strip()
+        emotion = str(seg.get("emotion", "calm")).strip().lower() or "calm"
+        if not text:
+            continue
+        audio = minimax_tts(text, voice_id=voice_id, emotion=emotion)
+        out.append({
+            "index": idx,
+            "text": text,
+            "emotion": emotion,
+            **audio,
+        })
+    if not out:
+        raise RuntimeError("No usable segments provided for speech synthesis.")
+    return out
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -337,6 +374,16 @@ class Handler(BaseHTTPRequestHandler):
                 emotion = str(payload.get("emotion", "calm")).strip().lower() or "calm"
                 result = minimax_tts(text, voice_id=voice_id, emotion=emotion)
                 return json_response(self, {"ok": True, **result})
+            except Exception as e:
+                return json_response(self, {"ok": False, "error": str(e)}, 400)
+
+        if self.path == "/api/tts_segments":
+            try:
+                payload = read_json(self)
+                voice_id = str(payload.get("voice_id", "female-shaonv")).strip() or "female-shaonv"
+                segments = payload.get("segments") or []
+                result = minimax_tts_segments(segments, voice_id=voice_id)
+                return json_response(self, {"ok": True, "segments": result, "voice_id": voice_id, "model": MINIMAX_TTS_MODEL})
             except Exception as e:
                 return json_response(self, {"ok": False, "error": str(e)}, 400)
 
