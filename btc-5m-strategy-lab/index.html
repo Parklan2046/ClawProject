@@ -63,7 +63,7 @@
         <div class="sub">Set your current hypothesis. This first version is for testing and journaling, not auto-betting.</div>
 
         <label for="marketUrl">Polymarket URL</label>
-        <input id="marketUrl" value="https://polymarket.com/zh-hant/event/btc-updown-5m-1774629600" />
+        <input id="marketUrl" value="current-btc-5m" />
 
         <div class="row3">
           <div>
@@ -117,6 +117,7 @@
         </div>
         <div class="actions">
           <button class="primary" id="fetchMarketBtn">Fetch Real Data</button>
+          <button id="useCurrentBtn">Use Current BTC 5m</button>
           <button id="toggleAutoBtn">Auto Refresh: Off</button>
         </div>
         <div class="hint" id="marketStatus">No live market data loaded yet.</div>
@@ -394,6 +395,7 @@
       setRule({ marketUrl: $('marketUrl').defaultValue, side:'YES', entryPrice:0.35, stake:1, takeProfitPct:25, stopLossPct:15, maxTrades:8, notes:'' });
     };
     $('fetchMarketBtn').onclick = fetchMarket;
+    $('useCurrentBtn').onclick = () => { $('marketUrl').value = 'current-btc-5m'; fetchMarket(); };
     $('toggleAutoBtn').onclick = () => {
       if (autoTimer) {
         clearInterval(autoTimer);

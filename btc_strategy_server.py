@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import re
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse, request, error
 
@@ -23,6 +24,27 @@ def extract_slug(url_or_slug: str) -> str:
         return m.group(1)
     return value.strip('/ ')
 
+
+
+
+def candidate_btc_5m_slugs():
+    now = int(time.time())
+    base = now - (now % 300)
+    candidates = [base, base - 300, base + 300, base - 600, base + 600]
+    return [f'btc-updown-5m-{ts}' for ts in candidates]
+
+
+def resolve_market_slug(raw: str) -> str:
+    slug = extract_slug(raw)
+    if slug and slug not in ('current-btc-5m', 'auto', 'btc-5m-current'):
+        return slug
+    for cand in candidate_btc_5m_slugs():
+        try:
+            fetch_json(f'https://gamma-api.polymarket.com/events/slug/{parse.quote(cand)}')
+            return cand
+        except Exception:
+            continue
+    return candidate_btc_5m_slugs()[0]
 
 def fetch_json(url: str):
     req = request.Request(url, headers=HEADERS)
