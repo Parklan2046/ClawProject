@@ -224,7 +224,7 @@ Source passage:
     }
 
 
-def minimax_tts(text: str, voice_id: str = "Cantonese_GentleLady", emotion: str = "calm", model: str | None = None):
+def minimax_tts(text: str, voice_id: str = "Cantonese_ProfessionalHost（F)", emotion: str = "calm", model: str | None = None):
     if not MINIMAX_API_KEY:
         raise RuntimeError("MINIMAX_API_KEY is missing on this machine.")
     text = chunk_source_text(text, MAX_TTS_CHARS)
@@ -311,7 +311,7 @@ def minimax_tts(text: str, voice_id: str = "Cantonese_GentleLady", emotion: str 
     }
 
 
-def minimax_tts_segments(segments, voice_id: str = "Cantonese_GentleLady", model: str | None = None):
+def minimax_tts_segments(segments, voice_id: str = "Cantonese_ProfessionalHost（F)", model: str | None = None):
     out = []
     for idx, seg in enumerate(segments, 1):
         if not isinstance(seg, dict):
@@ -392,7 +392,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 payload = read_json(self)
                 text = str(payload.get("text", "")).strip()
-                voice_id = str(payload.get("voice_id", "Cantonese_GentleLady")).strip() or "Cantonese_GentleLady"
+                voice_id = str(payload.get("voice_id", "Cantonese_ProfessionalHost（F)")).strip() or "Cantonese_ProfessionalHost（F)"
                 emotion = str(payload.get("emotion", "calm")).strip().lower() or "calm"
                 model = str(payload.get("model", MINIMAX_TTS_MODEL)).strip() or MINIMAX_TTS_MODEL
                 result = minimax_tts(text, voice_id=voice_id, emotion=emotion, model=model)
@@ -403,7 +403,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/tts_segments":
             try:
                 payload = read_json(self)
-                voice_id = str(payload.get("voice_id", "Cantonese_GentleLady")).strip() or "Cantonese_GentleLady"
+                voice_id = str(payload.get("voice_id", "Cantonese_ProfessionalHost（F)")).strip() or "Cantonese_ProfessionalHost（F)"
                 model = str(payload.get("model", MINIMAX_TTS_MODEL)).strip() or MINIMAX_TTS_MODEL
                 segments = payload.get("segments") or []
                 result = minimax_tts_segments(segments, voice_id=voice_id, model=model)
