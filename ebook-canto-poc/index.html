@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ebook Cantonese POC</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: Inter, system-ui, sans-serif; margin: 0; background:#0b1020; color:#e8eefc; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    .sub { color:#9fb0d9; margin-bottom: 20px; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .card { background:#121933; border:1px solid #263052; border-radius:16px; padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+    textarea { width:100%; min-height:220px; background:#0c1329; color:#edf3ff; border:1px solid #30406b; border-radius:12px; padding:12px; box-sizing:border-box; font: 15px/1.45 system-ui, sans-serif; }
+    input, select, button { font: inherit; }
+    input[type=file] { width:100%; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    button { background:#4b7cff; color:white; border:none; border-radius:10px; padding:10px 14px; cursor:pointer; }
+    button.secondary { background:#24345f; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .status { margin-top:10px; color:#9fb0d9; font-size:14px; white-space:pre-wrap; }
+    .segments { display:grid; gap:10px; margin-top:12px; }
+    .seg { border:1px solid #2e3b62; border-radius:12px; padding:12px; background:#0d1430; }
+    .emotion { display:inline-block; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#8ab4ff; margin-bottom:8px; }
+    .controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .pill { display:inline-block; padding:3px 8px; border-radius:999px; background:#223156; color:#b9caf2; font-size:12px; }
+    .full { grid-column: 1 / -1; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Ebook → Spoken Cantonese POC</h1>
+    <div class="sub">Proof of concept: import text/EPUB, rewrite into natural Cantonese narration with MiniMax, then read it aloud with browser speech synthesis.</div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>1. Import book text</h3>
+        <div class="row">
+          <input id="fileInput" type="file" accept=".txt,.md,.epub" />
+          <button id="extractBtn" class="secondary">Extract</button>
+        </div>
+        <div class="status" id="health"></div>
+        <div style="margin-top:12px;">
+          <label for="sourceText">Or paste text</label>
+          <textarea id="sourceText" placeholder="Paste a passage from an ebook here..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>2. Rewrite for Cantonese listening</h3>
+        <div class="row">
+          <label>Style</label>
+          <select id="styleSelect">
+            <option value="story">Storytelling</option>
+            <option value="gentle">Gentle bedtime</option>
+            <option value="dramatic">More dramatic</option>
+          </select>
+          <button id="rewriteBtn">Rewrite to Cantonese</button>
+        </div>
+        <div class="status" id="rewriteStatus"></div>
+        <div style="margin-top:12px;">
+          <label for="narrationText">Combined narration</label>
+          <textarea id="narrationText" placeholder="MiniMax Cantonese narration will appear here..."></textarea>
+        </div>
+      </div>
+
+      <div class="card full">
+        <h3>3. TTS test</h3>
+        <div class="row">
+          <button id="loadVoicesBtn" class="secondary">Load voices</button>
+          <select id="voiceSelect"></select>
+          <button id="speakBtn">Speak selected / full text</button>
+          <button id="stopBtn" class="secondary">Stop</button>
+        </div>
+        <div class="status" id="ttsStatus">Browser TTS note: quality depends on the voices installed on your browser/device. On desktop Chrome/Safari with Cantonese voices, this is enough for a first proof of concept.</div>
+        <div class="segments" id="segments"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const healthEl = document.getElementById('health');
+    const sourceText = document.getElementById('sourceText');
+    const narrationText = document.getElementById('narrationText');
+    const rewriteStatus = document.getElementById('rewriteStatus');
+    const segmentsEl = document.getElementById('segments');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const ttsStatus = document.getElementById('ttsStatus');
+
+    let lastSegments = [];
+    let voices = [];
+
+    async function api(path, body) {
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Request failed');
+      return json;
+    }
+
+    async function loadHealth() {
+      const res = await fetch('/api/health');
+      const j = await res.json();
+      healthEl.textContent = `MiniMax configured: ${j.minimax_configured ? 'yes' : 'no'} · model: ${j.model} · max chars: ${j.max_source_chars}`;
+    }
+
+    async function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const out = String(reader.result || '');
+          const comma = out.indexOf(',');
+          resolve(comma >= 0 ? out.slice(comma + 1) : out);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    document.getElementById('extractBtn').onclick = async () => {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return alert('Choose a .txt, .md, or .epub file first.');
+      try {
+        healthEl.textContent = 'Extracting file...';
+        const b64 = await fileToBase64(file);
+        const j = await api('/api/extract', { filename: file.name, file_base64: b64 });
+        sourceText.value = j.text;
+        healthEl.textContent = `Loaded ${file.name} · ${j.text.length} chars extracted`;
+      } catch (e) {
+        healthEl.textContent = 'Extract failed: ' + e.message;
+      }
+    };
+
+    document.getElementById('rewriteBtn').onclick = async () => {
+      const text = sourceText.value.trim();
+      if (!text) return alert('Paste text or extract a file first.');
+      try {
+        rewriteStatus.textContent = 'Rewriting into spoken Cantonese...';
+        const j = await api('/api/rewrite', { text, style: document.getElementById('styleSelect').value });
+        lastSegments = j.segments || [];
+        narrationText.value = lastSegments.map(s => s.text).join('\n\n');
+        renderSegments(lastSegments);
+        rewriteStatus.textContent = `Done · ${j.title} · source model ${j.model}`;
+      } catch (e) {
+        rewriteStatus.textContent = 'Rewrite failed: ' + e.message;
+      }
+    };
+
+    function renderSegments(segments) {
+      segmentsEl.innerHTML = '';
+      segments.forEach((seg, idx) => {
+        const div = document.createElement('div');
+        div.className = 'seg';
+        div.innerHTML = `
+          <div class="emotion">${seg.emotion || 'calm'}</div>
+          <div>${escapeHtml(seg.text || '')}</div>
+          <div class="controls">
+            <span class="pill">segment ${idx + 1}</span>
+            <button data-speak-index="${idx}">Speak this</button>
+          </div>`;
+        segmentsEl.appendChild(div);
+      });
+      document.querySelectorAll('[data-speak-index]').forEach(btn => {
+        btn.onclick = () => speakText(lastSegments[Number(btn.dataset.speakIndex)]?.text || '');
+      });
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      voiceSelect.innerHTML = '';
+      const preferred = voices.filter(v => {
+        const t = `${v.name} ${v.lang}`.toLowerCase();
+        return t.includes('yue') || t.includes('zh-hk') || t.includes('canton');
+      });
+      const shown = preferred.length ? preferred : voices;
+      shown.forEach((v, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = `${v.name} · ${v.lang}`;
+        voiceSelect.appendChild(opt);
+      });
+      ttsStatus.textContent = preferred.length
+        ? `Found ${preferred.length} Cantonese-ish browser voices.`
+        : `No obvious Cantonese voice found; showing all ${voices.length} browser voices.`;
+    }
+
+    function pickVoice() {
+      const shown = Array.from(voiceSelect.options).map(opt => opt.textContent);
+      const preferred = voices.filter(v => {
+        const t = `${v.name} ${v.lang}`.toLowerCase();
+        return t.includes('yue') || t.includes('zh-hk') || t.includes('canton');
+      });
+      const list = preferred.length ? preferred : voices;
+      return list[Number(voiceSelect.value) || 0] || null;
+    }
+
+    function speakText(text) {
+      if (!text.trim()) return;
+      speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      const v = pickVoice();
+      if (v) { utt.voice = v; utt.lang = v.lang; }
+      else { utt.lang = 'zh-HK'; }
+      utt.rate = 0.95;
+      utt.pitch = 1.0;
+      speechSynthesis.speak(utt);
+    }
+
+    document.getElementById('loadVoicesBtn').onclick = loadVoices;
+    document.getElementById('speakBtn').onclick = () => speakText(narrationText.value.trim());
+    document.getElementById('stopBtn').onclick = () => speechSynthesis.cancel();
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    loadHealth();
+    loadVoices();
+  </script>
+</body>
+</html>
