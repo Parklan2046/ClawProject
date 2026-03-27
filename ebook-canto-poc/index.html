@@ -69,10 +69,19 @@
       <div class="card full">
         <h3>3. TTS test</h3>
         <div class="row">
-          <button id="loadVoicesBtn" class="secondary">Load voices</button>
+          <button id="loadVoicesBtn" class="secondary">Load browser voices</button>
           <select id="voiceSelect"></select>
-          <button id="speakBtn">Speak selected / full text</button>
+          <button id="speakBtn">Speak with browser TTS</button>
           <button id="stopBtn" class="secondary">Stop</button>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <select id="minimaxVoiceSelect">
+            <option value="female-shaonv">MiniMax · female-shaonv</option>
+            <option value="female-tianmei">MiniMax · female-tianmei</option>
+            <option value="male-qn-qingse">MiniMax · male-qn-qingse</option>
+          </select>
+          <button id="minimaxSpeakBtn">Generate MiniMax speech</button>
+          <audio id="minimaxAudio" controls style="max-width:100%;"></audio>
         </div>
         <div class="status" id="ttsStatus">Browser TTS note: quality depends on the voices installed on your browser/device. On desktop Chrome/Safari with Cantonese voices, this is enough for a first proof of concept.</div>
         <div class="segments" id="segments"></div>
@@ -87,12 +96,12 @@
     const rewriteStatus = document.getElementById('rewriteStatus');
     const segmentsEl = document.getElementById('segments');
     const voiceSelect = document.getElementById('voiceSelect');
+    const minimaxVoiceSelect = document.getElementById('minimaxVoiceSelect');
+    const minimaxAudio = document.getElementById('minimaxAudio');
     const ttsStatus = document.getElementById('ttsStatus');
 
     let lastSegments = [];
     let voices = [];
-
-    let backendAvailable = false;
 
     async function api(path, body) {
       const res = await fetch(path, {
@@ -106,15 +115,9 @@
     }
 
     async function loadHealth() {
-      try {
-        const res = await fetch('/api/health');
-        const j = await res.json();
-        backendAvailable = !!j.ok;
-        healthEl.textContent = `MiniMax configured: ${j.minimax_configured ? 'yes' : 'no'} · model: ${j.model} · max chars: ${j.max_source_chars}`;
-      } catch (e) {
-        backendAvailable = false;
-        healthEl.textContent = 'GitHub Pages demo mode: backend is not running here, so AI rewrite is disabled on the public page. You can still paste Cantonese text and test browser TTS, or use local mode for full MiniMax rewrite.';
-      }
+      const res = await fetch('api/health');
+      const j = await res.json();
+      healthEl.textContent = `MiniMax configured: ${j.minimax_configured ? 'yes' : 'no'} · model: ${j.model} · max chars: ${j.max_source_chars}`;
     }
 
     async function fileToBase64(file) {
@@ -134,20 +137,11 @@
       const file = document.getElementById('fileInput').files[0];
       if (!file) return alert('Choose a .txt, .md, or .epub file first.');
       try {
-        if (backendAvailable) {
-          healthEl.textContent = 'Extracting file...';
-          const b64 = await fileToBase64(file);
-          const j = await api('/api/extract', { filename: file.name, file_base64: b64 });
-          sourceText.value = j.text;
-          healthEl.textContent = `Loaded ${file.name} · ${j.text.length} chars extracted`;
-        } else {
-          if (!file.name.toLowerCase().match(/\.(txt|md)$/)) {
-            throw new Error('Public GitHub Pages demo can only read .txt or .md directly in-browser. Use local mode for EPUB extraction.');
-          }
-          const text = await file.text();
-          sourceText.value = text;
-          healthEl.textContent = `Loaded ${file.name} in browser-only demo mode.`;
-        }
+        healthEl.textContent = 'Extracting file...';
+        const b64 = await fileToBase64(file);
+        const j = await api('api/extract', { filename: file.name, file_base64: b64 });
+        sourceText.value = j.text;
+        healthEl.textContent = `Loaded ${file.name} · ${j.text.length} chars extracted`;
       } catch (e) {
         healthEl.textContent = 'Extract failed: ' + e.message;
       }
@@ -157,20 +151,12 @@
       const text = sourceText.value.trim();
       if (!text) return alert('Paste text or extract a file first.');
       try {
-        if (backendAvailable) {
-          rewriteStatus.textContent = 'Rewriting into spoken Cantonese...';
-          const j = await api('/api/rewrite', { text, style: document.getElementById('styleSelect').value });
-          lastSegments = j.segments || [];
-          narrationText.value = lastSegments.map(s => s.text).join('\n\n');
-          renderSegments(lastSegments);
-          rewriteStatus.textContent = `Done · ${j.title} · source model ${j.model}`;
-        } else {
-          // public fallback: no AI rewrite on Pages, just treat input as narration text
-          lastSegments = [{ emotion: 'calm', text }];
-          narrationText.value = text;
-          renderSegments(lastSegments);
-          rewriteStatus.textContent = 'Public demo fallback: backend unavailable here, so raw text is used directly for TTS playback.';
-        }
+        rewriteStatus.textContent = 'Rewriting into spoken Cantonese...';
+        const j = await api('api/rewrite', { text, style: document.getElementById('styleSelect').value });
+        lastSegments = j.segments || [];
+        narrationText.value = lastSegments.map(s => s.text).join('\n\n');
+        renderSegments(lastSegments);
+        rewriteStatus.textContent = `Done · ${j.title} · source model ${j.model}`;
       } catch (e) {
         rewriteStatus.textContent = 'Rewrite failed: ' + e.message;
       }
@@ -240,9 +226,31 @@
       speechSynthesis.speak(utt);
     }
 
+    async function generateMiniMaxSpeech(text, emotion='calm') {
+      if (!text.trim()) return;
+      ttsStatus.textContent = 'Generating MiniMax speech...';
+      try {
+        const j = await api('api/tts', {
+          text,
+          emotion,
+          voice_id: minimaxVoiceSelect.value
+        });
+        minimaxAudio.src = `data:${j.mime_type};base64,${j.audio_base64}`;
+        minimaxAudio.play().catch(() => {});
+        ttsStatus.textContent = `MiniMax speech ready · ${j.voice_id} · ${j.model}`;
+      } catch (e) {
+        ttsStatus.textContent = 'MiniMax speech failed: ' + e.message;
+      }
+    }
+
     document.getElementById('loadVoicesBtn').onclick = loadVoices;
     document.getElementById('speakBtn').onclick = () => speakText(narrationText.value.trim());
     document.getElementById('stopBtn').onclick = () => speechSynthesis.cancel();
+    document.getElementById('minimaxSpeakBtn').onclick = () => {
+      const text = narrationText.value.trim() || (lastSegments[0]?.text || '');
+      const emotion = lastSegments[0]?.emotion || 'calm';
+      generateMiniMaxSpeech(text, emotion);
+    };
     speechSynthesis.onvoiceschanged = loadVoices;
 
     loadHealth();

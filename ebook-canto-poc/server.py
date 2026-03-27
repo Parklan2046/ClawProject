@@ -15,8 +15,11 @@ HOST = os.getenv("EBOOK_POC_HOST", "127.0.0.1")
 PORT = int(os.getenv("EBOOK_POC_PORT", "8765"))
 MINIMAX_URL = "https://api.minimax.io/anthropic/v1/messages"
 MINIMAX_MODEL = os.getenv("EBOOK_POC_MODEL", "MiniMax-M2.5")
+MINIMAX_TTS_URL = "https://api.minimax.io/v1/t2a_v2"
+MINIMAX_TTS_MODEL = os.getenv("EBOOK_POC_TTS_MODEL", "speech-02-hd")
 MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY", "")
 MAX_SOURCE_CHARS = 6000
+MAX_TTS_CHARS = 2500
 
 
 def json_response(handler, payload, status=200):
@@ -200,6 +203,76 @@ Source passage:
     }
 
 
+def minimax_tts(text: str, voice_id: str = "female-shaonv", emotion: str = "calm"):
+    if not MINIMAX_API_KEY:
+        raise RuntimeError("MINIMAX_API_KEY is missing on this machine.")
+    text = chunk_source_text(text, MAX_TTS_CHARS)
+    if not text:
+        raise RuntimeError("No text provided for speech synthesis.")
+
+    speed = 0.96
+    pitch = 0
+    if emotion in ("excited", "dialogue"):
+        speed = 1.03
+    elif emotion in ("mysterious", "sad"):
+        speed = 0.9
+    elif emotion == "tense":
+        speed = 0.98
+
+    payload = {
+        "model": MINIMAX_TTS_MODEL,
+        "text": text,
+        "voice_setting": {
+            "voice_id": voice_id,
+            "speed": speed,
+            "vol": 1.0,
+            "pitch": pitch,
+        },
+        "audio_setting": {
+            "sample_rate": 32000,
+            "bitrate": 128000,
+            "format": "mp3",
+        },
+    }
+    body = json.dumps(payload).encode("utf-8")
+    req = request.Request(
+        MINIMAX_TTS_URL,
+        data=body,
+        method="POST",
+        headers={
+            "content-type": "application/json",
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
+        },
+    )
+    try:
+        with request.urlopen(req, timeout=90) as resp:
+            raw = resp.read().decode("utf-8", "ignore")
+    except error.HTTPError as e:
+        detail = e.read().decode("utf-8", "ignore")[:4000]
+        raise RuntimeError(f"MiniMax TTS API error {e.code}: {detail}")
+    except Exception as e:
+        raise RuntimeError(f"MiniMax TTS request failed: {e}")
+
+    parsed = json.loads(raw)
+    base_resp = parsed.get("base_resp") or {}
+    if base_resp.get("status_code") not in (0, None):
+        raise RuntimeError(f"MiniMax TTS failed: {base_resp.get('status_msg', 'unknown error')}")
+    audio_hex = ((parsed.get("data") or {}).get("audio") or "").strip()
+    if not audio_hex:
+        raise RuntimeError("MiniMax TTS returned no audio data.")
+    try:
+        audio_bytes = bytes.fromhex(audio_hex)
+    except Exception:
+        raise RuntimeError("MiniMax TTS returned invalid audio encoding.")
+    audio_b64 = base64.b64encode(audio_bytes).decode("ascii")
+    return {
+        "mime_type": "audio/mpeg",
+        "audio_base64": audio_b64,
+        "voice_id": voice_id,
+        "model": MINIMAX_TTS_MODEL,
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send_index(self):
         content = INDEX_HTML.read_bytes()
@@ -224,6 +297,7 @@ class Handler(BaseHTTPRequestHandler):
                 "ok": True,
                 "minimax_configured": bool(MINIMAX_API_KEY),
                 "model": MINIMAX_MODEL,
+                "tts_model": MINIMAX_TTS_MODEL,
                 "max_source_chars": MAX_SOURCE_CHARS,
             })
         self.send_response(404)
@@ -251,6 +325,17 @@ class Handler(BaseHTTPRequestHandler):
                 if not source_text:
                     raise ValueError("Please provide some source text first.")
                 result = minimax_rewrite_to_cantonese(source_text, style=style)
+                return json_response(self, {"ok": True, **result})
+            except Exception as e:
+                return json_response(self, {"ok": False, "error": str(e)}, 400)
+
+        if self.path == "/api/tts":
+            try:
+                payload = read_json(self)
+                text = str(payload.get("text", "")).strip()
+                voice_id = str(payload.get("voice_id", "female-shaonv")).strip() or "female-shaonv"
+                emotion = str(payload.get("emotion", "calm")).strip().lower() or "calm"
+                result = minimax_tts(text, voice_id=voice_id, emotion=emotion)
                 return json_response(self, {"ok": True, **result})
             except Exception as e:
                 return json_response(self, {"ok": False, "error": str(e)}, 400)
