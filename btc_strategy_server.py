@@ -36,15 +36,20 @@ def candidate_btc_5m_slugs():
 
 def resolve_market_slug(raw: str) -> str:
     slug = extract_slug(raw)
-    if slug and slug not in ('current-btc-5m', 'auto', 'btc-5m-current'):
-        return slug
-    for cand in candidate_btc_5m_slugs():
-        try:
-            fetch_json(f'https://gamma-api.polymarket.com/events/slug/{parse.quote(cand)}')
-            return cand
-        except Exception:
-            continue
-    return candidate_btc_5m_slugs()[0]
+    is_btc_5m = (not slug) or slug in ('current-btc-5m', 'auto', 'btc-5m-current') or slug.startswith('btc-updown-5m-')
+    if is_btc_5m:
+        now = int(time.time())
+        base = now - (now % 300)
+        candidates = [base + d for d in range(-7200, 7201, 300)]
+        candidates.sort(key=lambda ts: abs(ts - base))
+        for ts in candidates:
+            cand = f'btc-updown-5m-{ts}'
+            try:
+                fetch_json(f'https://gamma-api.polymarket.com/events/slug/{parse.quote(cand)}')
+                return cand
+            except Exception:
+                continue
+    return slug
 
 def fetch_json(url: str):
     req = request.Request(url, headers=HEADERS)
