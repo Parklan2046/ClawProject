@@ -105,6 +105,22 @@
         </div>
       </div>
 
+
+      <div class="panel glass">
+        <div class="section-title">Live Market Feed</div>
+        <div class="sub">Real Polymarket data via server-side fetch with browser-like headers.</div>
+        <div class="stat-grid">
+          <div class="stat"><div class="k">YES</div><div class="v mono" id="liveYes">-</div></div>
+          <div class="stat"><div class="k">NO</div><div class="v mono" id="liveNo">-</div></div>
+          <div class="stat"><div class="k">Best Bid</div><div class="v mono" id="liveBid">-</div></div>
+          <div class="stat"><div class="k">Best Ask</div><div class="v mono" id="liveAsk">-</div></div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="fetchMarketBtn">Fetch Real Data</button>
+        </div>
+        <div class="hint" id="marketStatus">No live market data loaded yet.</div>
+      </div>
+
       <div class="panel glass">
         <div class="section-title">Expectancy Snapshot</div>
         <div class="sub">This shows whether your reward structure even has a chance before you test it live.</div>
@@ -285,6 +301,7 @@
       });
       saveJournal(journal);
       renderJournal();
+    fetchMarket();
     }
 
     function renderJournal() {
@@ -315,12 +332,36 @@
       $('sumAvg').textContent = money(avg);
     }
 
+
+    async function fetchMarket() {
+      const raw = $('marketUrl').value.trim();
+      const url = '/strategy-api/polymarket?url=' + encodeURIComponent(raw);
+      $('marketStatus').textContent = 'Loading real market data...';
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Unable to fetch market');
+        $('liveYes').textContent = data.prices?.Up != null ? Number(data.prices.Up).toFixed(2) : '-';
+        $('liveNo').textContent = data.prices?.Down != null ? Number(data.prices.Down).toFixed(2) : '-';
+        $('liveBid').textContent = data.bestBid != null ? Number(data.bestBid).toFixed(2) : '-';
+        $('liveAsk').textContent = data.bestAsk != null ? Number(data.bestAsk).toFixed(2) : '-';
+        const yes = data.prices?.Up != null ? Number(data.prices.Up) : null;
+        const no = data.prices?.Down != null ? Number(data.prices.Down) : null;
+        const current = $('side').value === 'YES' ? yes : no;
+        if (current != null) $('livePrice').value = current.toFixed(2);
+        $('marketStatus').innerHTML = `<strong>${data.title || data.slug}</strong><br>${data.closed ? 'Closed' : 'Active'} · last ${data.lastTradePrice ?? '-'} · end ${data.endDate || '-'}`;
+      } catch (e) {
+        $('marketStatus').textContent = e.message;
+      }
+    }
+
     $('saveRuleBtn').onclick = () => { saveRule(); renderExpectancy(); };
     $('loadRuleBtn').onclick = () => { loadRule(); renderExpectancy(); };
     $('resetRuleBtn').onclick = () => {
       localStorage.removeItem(RULE_KEY);
       setRule({ marketUrl: $('marketUrl').defaultValue, side:'YES', entryPrice:0.35, stake:1, takeProfitPct:25, stopLossPct:15, maxTrades:8, notes:'' });
     };
+    $('fetchMarketBtn').onclick = fetchMarket;
     $('decisionBtn').onclick = evaluateEntry;
     $('logTradeBtn').onclick = logTrade;
     $('clearLogBtn').onclick = () => { localStorage.removeItem(JOURNAL_KEY); renderJournal(); };
@@ -330,6 +371,7 @@
     loadRule();
     renderExpectancy();
     renderJournal();
+    fetchMarket();
   </script>
 </body>
 </html>
