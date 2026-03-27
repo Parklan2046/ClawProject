@@ -91,6 +91,16 @@ class Handler(BaseHTTPRequestHandler):
             market = markets[0] if isinstance(markets, list) and markets else {}
             outcomes = market.get('outcomes') or []
             outcome_prices = market.get('outcomePrices') or []
+            if isinstance(outcomes, str):
+                try:
+                    outcomes = json.loads(outcomes)
+                except Exception:
+                    outcomes = [outcomes]
+            if isinstance(outcome_prices, str):
+                try:
+                    outcome_prices = json.loads(outcome_prices)
+                except Exception:
+                    outcome_prices = [outcome_prices]
             prices = {}
             for idx, out in enumerate(outcomes):
                 try:
