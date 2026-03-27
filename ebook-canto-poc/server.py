@@ -16,7 +16,7 @@ PORT = int(os.getenv("EBOOK_POC_PORT", "8765"))
 MINIMAX_URL = "https://api.minimax.io/anthropic/v1/messages"
 MINIMAX_MODEL = os.getenv("EBOOK_POC_MODEL", "MiniMax-M2.5")
 MINIMAX_TTS_URL = "https://api.minimax.io/v1/t2a_v2"
-MINIMAX_TTS_MODEL = os.getenv("EBOOK_POC_TTS_MODEL", "speech-02-hd")
+MINIMAX_TTS_MODEL = os.getenv("EBOOK_POC_TTS_MODEL", "speech-2.8-hd")
 MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY", "")
 MAX_SOURCE_CHARS = 6000
 MAX_TTS_CHARS = 2500
@@ -203,7 +203,7 @@ Source passage:
     }
 
 
-def minimax_tts(text: str, voice_id: str = "Cantonese_GentleLady", emotion: str = "calm"):
+def minimax_tts(text: str, voice_id: str = "Cantonese_GentleLady", emotion: str = "calm", model: str | None = None):
     if not MINIMAX_API_KEY:
         raise RuntimeError("MINIMAX_API_KEY is missing on this machine.")
     text = chunk_source_text(text, MAX_TTS_CHARS)
@@ -234,8 +234,9 @@ def minimax_tts(text: str, voice_id: str = "Cantonese_GentleLady", emotion: str 
         speed = 0.93
         pitch = 1
 
+    resolved_model = (model or MINIMAX_TTS_MODEL).strip() or MINIMAX_TTS_MODEL
     payload = {
-        "model": MINIMAX_TTS_MODEL,
+        "model": resolved_model,
         "text": text,
         "voice_setting": {
             "voice_id": voice_id,
@@ -285,11 +286,11 @@ def minimax_tts(text: str, voice_id: str = "Cantonese_GentleLady", emotion: str 
         "audio_base64": audio_b64,
         "voice_id": voice_id,
         "emotion": emotion,
-        "model": MINIMAX_TTS_MODEL,
+        "model": resolved_model,
     }
 
 
-def minimax_tts_segments(segments, voice_id: str = "Cantonese_GentleLady"):
+def minimax_tts_segments(segments, voice_id: str = "Cantonese_GentleLady", model: str | None = None):
     out = []
     for idx, seg in enumerate(segments, 1):
         if not isinstance(seg, dict):
@@ -298,7 +299,7 @@ def minimax_tts_segments(segments, voice_id: str = "Cantonese_GentleLady"):
         emotion = str(seg.get("emotion", "calm")).strip().lower() or "calm"
         if not text:
             continue
-        audio = minimax_tts(text, voice_id=voice_id, emotion=emotion)
+        audio = minimax_tts(text, voice_id=voice_id, emotion=emotion, model=model)
         out.append({
             "index": idx,
             "text": text,
@@ -372,7 +373,8 @@ class Handler(BaseHTTPRequestHandler):
                 text = str(payload.get("text", "")).strip()
                 voice_id = str(payload.get("voice_id", "Cantonese_GentleLady")).strip() or "Cantonese_GentleLady"
                 emotion = str(payload.get("emotion", "calm")).strip().lower() or "calm"
-                result = minimax_tts(text, voice_id=voice_id, emotion=emotion)
+                model = str(payload.get("model", MINIMAX_TTS_MODEL)).strip() or MINIMAX_TTS_MODEL
+                result = minimax_tts(text, voice_id=voice_id, emotion=emotion, model=model)
                 return json_response(self, {"ok": True, **result})
             except Exception as e:
                 return json_response(self, {"ok": False, "error": str(e)}, 400)
@@ -381,9 +383,10 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 payload = read_json(self)
                 voice_id = str(payload.get("voice_id", "Cantonese_GentleLady")).strip() or "Cantonese_GentleLady"
+                model = str(payload.get("model", MINIMAX_TTS_MODEL)).strip() or MINIMAX_TTS_MODEL
                 segments = payload.get("segments") or []
-                result = minimax_tts_segments(segments, voice_id=voice_id)
-                return json_response(self, {"ok": True, "segments": result, "voice_id": voice_id, "model": MINIMAX_TTS_MODEL})
+                result = minimax_tts_segments(segments, voice_id=voice_id, model=model)
+                return json_response(self, {"ok": True, "segments": result, "voice_id": voice_id, "model": model})
             except Exception as e:
                 return json_response(self, {"ok": False, "error": str(e)}, 400)
 

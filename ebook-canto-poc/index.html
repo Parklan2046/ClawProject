@@ -75,6 +75,12 @@
           <button id="stopBtn" class="secondary">Stop</button>
         </div>
         <div class="row" style="margin-top:10px;">
+          <select id="minimaxModelSelect">
+            <option value="speech-2.8-hd">MiniMax speech-2.8-hd</option>
+            <option value="speech-2.8-turbo">MiniMax speech-2.8-turbo</option>
+            <option value="speech-02-hd">MiniMax speech-02-hd</option>
+            <option value="speech-02-turbo">MiniMax speech-02-turbo</option>
+          </select>
           <select id="minimaxVoiceSelect">
             <optgroup label="Native Cantonese voices">
               <option value="Cantonese_GentleLady">Gentle Lady · calm female</option>
@@ -104,6 +110,7 @@
     const rewriteStatus = document.getElementById('rewriteStatus');
     const segmentsEl = document.getElementById('segments');
     const voiceSelect = document.getElementById('voiceSelect');
+    const minimaxModelSelect = document.getElementById('minimaxModelSelect');
     const minimaxVoiceSelect = document.getElementById('minimaxVoiceSelect');
     const minimaxAudio = document.getElementById('minimaxAudio');
     const ttsStatus = document.getElementById('ttsStatus');
@@ -253,7 +260,8 @@
         const j = await api('api/tts', {
           text,
           emotion,
-          voice_id: minimaxVoiceSelect.value
+          voice_id: minimaxVoiceSelect.value,
+          model: minimaxModelSelect.value
         });
         minimaxAudio.src = `data:${j.mime_type};base64,${j.audio_base64}`;
         minimaxAudio.play().catch(() => {});
@@ -272,7 +280,8 @@
       try {
         const j = await api('api/tts_segments', {
           segments: lastSegments,
-          voice_id: minimaxVoiceSelect.value
+          voice_id: minimaxVoiceSelect.value,
+          model: minimaxModelSelect.value
         });
         lastMiniMaxSegments = j.segments || [];
         renderSegments(lastSegments);
@@ -302,7 +311,7 @@
       const blocks = [];
       for (const [voiceId, label] of voices) {
         try {
-          const j = await api('api/tts', { text, emotion, voice_id: voiceId });
+          const j = await api('api/tts', { text, emotion, voice_id: voiceId, model: minimaxModelSelect.value });
           blocks.push(`
             <div class="seg">
               <div class="emotion">${label}</div>
