@@ -203,7 +203,7 @@ Source passage:
     }
 
 
-def minimax_tts(text: str, voice_id: str = "female-shaonv", emotion: str = "calm"):
+def minimax_tts(text: str, voice_id: str = "cantonese_female", emotion: str = "calm"):
     if not MINIMAX_API_KEY:
         raise RuntimeError("MINIMAX_API_KEY is missing on this machine.")
     text = chunk_source_text(text, MAX_TTS_CHARS)
@@ -289,7 +289,7 @@ def minimax_tts(text: str, voice_id: str = "female-shaonv", emotion: str = "calm
     }
 
 
-def minimax_tts_segments(segments, voice_id: str = "female-shaonv"):
+def minimax_tts_segments(segments, voice_id: str = "cantonese_female"):
     out = []
     for idx, seg in enumerate(segments, 1):
         if not isinstance(seg, dict):
@@ -370,7 +370,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 payload = read_json(self)
                 text = str(payload.get("text", "")).strip()
-                voice_id = str(payload.get("voice_id", "female-shaonv")).strip() or "female-shaonv"
+                voice_id = str(payload.get("voice_id", "cantonese_female")).strip() or "cantonese_female"
                 emotion = str(payload.get("emotion", "calm")).strip().lower() or "calm"
                 result = minimax_tts(text, voice_id=voice_id, emotion=emotion)
                 return json_response(self, {"ok": True, **result})
@@ -380,7 +380,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/tts_segments":
             try:
                 payload = read_json(self)
-                voice_id = str(payload.get("voice_id", "female-shaonv")).strip() or "female-shaonv"
+                voice_id = str(payload.get("voice_id", "cantonese_female")).strip() or "cantonese_female"
                 segments = payload.get("segments") or []
                 result = minimax_tts_segments(segments, voice_id=voice_id)
                 return json_response(self, {"ok": True, "segments": result, "voice_id": voice_id, "model": MINIMAX_TTS_MODEL})
