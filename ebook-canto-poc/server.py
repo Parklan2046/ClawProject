@@ -108,10 +108,18 @@ You are helping build a proof-of-concept Cantonese story-reading app.
 Task:
 Transform the input passage into natural SPOKEN Cantonese narration suitable for listening.
 Do not summarize away important plot details, but you may lightly rewrite for listening flow.
-Keep names and story meaning intact.
+Keep names, plot meaning, and character intent intact.
 Use Traditional Chinese characters.
 
-Return STRICT JSON only in this shape:
+Output contract:
+- Return JSON only.
+- No markdown fences.
+- No commentary before or after JSON.
+- JSON must be valid and parseable.
+- Every object in the segments array must be comma-separated.
+- Escape any double quotes inside text values.
+
+Return exactly this schema:
 {{
   "title": "short title",
   "summary": "one sentence in Cantonese",
@@ -122,17 +130,20 @@ Return STRICT JSON only in this shape:
 }}
 
 Rules:
-- emotions allowed: calm, warm, mysterious, excited, sad, tense, dialogue
-- each segment should be short enough for TTS, around 1-3 sentences
-- write natural Hong Kong style spoken Cantonese
-- avoid markdown
-- no explanation outside JSON
+- emotions allowed only: calm, warm, mysterious, excited, sad, tense, dialogue
+- each segment should be short enough for TTS, around 1-2 sentences preferred
+- write natural Hong Kong spoken Cantonese, not Mandarin-style written Chinese
+- avoid JSON-breaking punctuation habits
+- do not include stage directions or labels outside the JSON fields
 - if there is dialogue, make it sound natural in spoken Cantonese
+- keep sentences smooth for read-aloud pacing
 
 Style preference: {style}
 
 Source passage:
+<source>
 {text}
+</source>
 """.strip()
 
     payload = {
