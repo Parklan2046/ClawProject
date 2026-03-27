@@ -402,6 +402,30 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+
+    .chatbot-panel.fullscreen {
+      right: 12px;
+      bottom: 12px;
+      width: calc(100vw - 24px);
+      height: calc(100vh - 24px);
+      max-width: none;
+      border-radius: 26px;
+    }
+    .chatbot-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chatbot-expand {
+      border: none;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
     @media (max-width: 920px) {
       .card { grid-column: span 12; }
       .hero { padding: 28px 22px; }
@@ -498,7 +522,10 @@
             <div class="chatbot-sub">MiniMax M2.7 · 廣東話角色聊天</div>
           </div>
         </div>
-        <button class="chatbot-close" id="chatbotClose">✕</button>
+        <div class="chatbot-head-actions">
+          <button class="chatbot-expand" id="chatbotExpand" title="Expand">⤢</button>
+          <button class="chatbot-close" id="chatbotClose">✕</button>
+        </div>
       </div>
       <div class="chatbot-toolbar">
         <select id="chatbotRole">
@@ -586,6 +613,7 @@
       const chatbotLaunch = document.getElementById('chatbotLaunch');
       const chatbotPanel = document.getElementById('chatbotPanel');
       const chatbotClose = document.getElementById('chatbotClose');
+      const chatbotExpand = document.getElementById('chatbotExpand');
       const chatbotForm = document.getElementById('chatbotForm');
       const chatbotInput = document.getElementById('chatbotInput');
       const chatbotMessages = document.getElementById('chatbotMessages');
