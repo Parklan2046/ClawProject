@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Parklan Clawhub</title>
-  <meta name="description" content="Parklan Clawhub — a dark glass landing page for apps, tools, and experiments." />
+  <meta name="description" content="Parklan Clawhub — a darker glass landing page for apps, tools, experiments, and sudden surprise drops." />
   <style>
     :root {
       color-scheme: dark;
@@ -22,9 +22,14 @@
       --cyan: #67d9ff;
       --green: #58e2b8;
       --pink: #d58cff;
+      --mini-cyan: #00f3ff;
+      --mini-pink: #ff00ea;
+      --mini-gold: #ffd700;
+      --mini-glass: rgba(15, 23, 42, 0.8);
     }
 
     * { box-sizing: border-box; }
+    html { cursor: none; }
 
     html, body {
       margin: 0;
@@ -38,6 +43,8 @@
         radial-gradient(circle at 18% 90%, rgba(88,226,184,0.12), transparent 24%),
         linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 34%, var(--bg-1) 100%);
     }
+
+    a, button, .tilt-card { cursor: none; }
 
     .ambient {
       position: fixed;
@@ -72,12 +79,10 @@
       animation-duration: 24s;
     }
 
-
     @keyframes float {
       from { transform: translate3d(0,0,0) scale(1); }
       to { transform: translate3d(26px,-16px,0) scale(1.08); }
     }
-
 
     .wrap {
       position: relative;
@@ -93,6 +98,7 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(28px) saturate(150%);
       -webkit-backdrop-filter: blur(28px) saturate(150%);
+      background-color: rgba(18, 25, 48, 0.42);
     }
 
     .topbar {
@@ -196,6 +202,28 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
     }
 
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #09121f;
+      background: linear-gradient(135deg, var(--mini-gold), #ffe88a);
+      box-shadow: 0 0 0 1px rgba(255,215,0,0.15), 0 0 18px rgba(255,215,0,0.35);
+      margin-bottom: 16px;
+      animation: pulseDrop 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseDrop {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 1px rgba(255,215,0,0.15), 0 0 18px rgba(255,215,0,0.25); }
+      50% { transform: scale(1.03); box-shadow: 0 0 0 1px rgba(255,215,0,0.22), 0 0 28px rgba(255,215,0,0.45); }
+    }
+
     h1 {
       margin: 0;
       font-size: clamp(2.6rem, 6vw, 5.4rem);
@@ -229,12 +257,11 @@
       border-radius: 16px;
       font-weight: 800;
       transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+      position: relative;
+      overflow: hidden;
     }
 
-    .btn:hover {
-      transform: translateY(-1px);
-      opacity: 0.98;
-    }
+    .btn:hover { transform: translateY(-1px); opacity: 0.98; }
 
     .btn.primary {
       color: #fff;
@@ -256,6 +283,137 @@
       letter-spacing: -0.01em;
     }
 
+    .miniclawhub {
+      position: relative;
+      margin: 0 0 28px;
+      border-radius: 30px;
+      overflow: hidden;
+      padding: 1px;
+      background: conic-gradient(from 0deg, var(--mini-cyan), var(--mini-pink), var(--mini-gold), var(--mini-cyan));
+      animation: rotateBorder 10s linear infinite;
+      box-shadow: 0 0 40px rgba(0,243,255,0.08), 0 0 50px rgba(255,0,234,0.08);
+    }
+
+    .miniclawhub-inner {
+      position: relative;
+      border-radius: 29px;
+      background: var(--mini-glass);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      overflow: hidden;
+      min-height: 320px;
+      padding: 34px 30px;
+    }
+
+    @keyframes rotateBorder {
+      from { filter: hue-rotate(0deg); }
+      to { filter: hue-rotate(360deg); }
+    }
+
+    #sparkle-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+
+    .miniclawhub-content {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      gap: 12px;
+      justify-items: start;
+      max-width: 720px;
+      animation: miniReveal .7s cubic-bezier(.2,.9,.2,1) both;
+      transform-origin: center;
+    }
+
+    @keyframes miniReveal {
+      0% { opacity: 0; transform: translateY(18px) scale(.97); filter: blur(6px); }
+      100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+
+    .mini-drop-badge {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 3;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #09121f;
+      background: linear-gradient(135deg, var(--mini-gold), #fff0a8);
+      box-shadow: 0 0 20px rgba(255,215,0,0.35);
+      animation: pulseDrop 2.2s ease-in-out infinite;
+    }
+
+    .mini-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0,243,255,0.12);
+      border: 1px solid rgba(0,243,255,0.28);
+      color: var(--mini-cyan);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 0 18px rgba(0,243,255,0.16);
+    }
+
+    .mini-title {
+      margin: 0;
+      font-size: clamp(2rem, 4.5vw, 3.3rem);
+      line-height: .98;
+      letter-spacing: -0.04em;
+      color: #dffcff;
+      text-shadow: 0 0 8px rgba(0,243,255,0.72), 0 0 15px rgba(0,243,255,0.52);
+    }
+
+    .mini-desc {
+      margin: 0;
+      max-width: 620px;
+      color: #c6d6f5;
+      font-size: 1rem;
+      line-height: 1.8;
+    }
+
+    .mini-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .magnetic-btn {
+      border-radius: 999px;
+      padding: 14px 22px;
+      color: var(--mini-cyan);
+      border: 1px solid rgba(0,243,255,0.5);
+      background: rgba(255,255,255,0.03);
+      box-shadow: 0 0 0 1px rgba(0,243,255,0.12), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 20px rgba(0,243,255,0.12);
+    }
+
+    .magnetic-btn::after {
+      content: "";
+      position: absolute;
+      top: -20%;
+      left: -40%;
+      width: 40%;
+      height: 140%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.68), transparent);
+      transform: skewX(-24deg);
+      transition: left .6s ease;
+    }
+
+    .magnetic-btn:hover::after { left: 120%; }
+
     .cards {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
@@ -269,6 +427,8 @@
       border-radius: 28px;
       transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
       overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform;
     }
 
     .card::before {
@@ -280,7 +440,6 @@
     }
 
     .card:hover {
-      transform: translateY(-3px);
       box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
       background: linear-gradient(180deg, rgba(22,30,56,0.56), rgba(14,19,36,0.3));
     }
@@ -319,6 +478,38 @@
 
     .card a:hover { text-decoration: underline; }
 
+    .cursor-dot,
+    .cursor-ring {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1000;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width .18s ease, height .18s ease, border-color .18s ease, opacity .18s ease, background .18s ease;
+    }
+
+    .cursor-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--mini-cyan);
+      box-shadow: 0 0 12px rgba(0,243,255,0.8);
+    }
+
+    .cursor-ring {
+      width: 18px;
+      height: 18px;
+      border: 1px solid rgba(0,243,255,0.45);
+      box-shadow: 0 0 24px rgba(0,243,255,0.14);
+    }
+
+    .cursor-ring.active {
+      width: 30px;
+      height: 30px;
+      border-color: rgba(0,243,255,0.8);
+    }
+
     .footer {
       margin-top: 32px;
       text-align: center;
@@ -327,12 +518,20 @@
     }
 
     @media (max-width: 920px) {
+      html, a, button, .tilt-card { cursor: auto; }
+      .cursor-dot, .cursor-ring { display: none; }
       .topbar {
         flex-direction: column;
         align-items: flex-start;
       }
       .card { grid-column: span 12; }
       .hero { padding: 28px 22px; }
+      .miniclawhub-inner { padding: 28px 22px; }
+      .mini-drop-badge {
+        position: static;
+        display: inline-flex;
+        margin-bottom: 12px;
+      }
     }
   </style>
 </head>
@@ -341,6 +540,9 @@
     <div class="orb one"></div>
     <div class="orb two"></div>
   </div>
+
+  <div class="cursor-dot"></div>
+  <div class="cursor-ring"></div>
 
   <div class="wrap">
     <div class="topbar glass">
@@ -360,11 +562,12 @@
     </div>
 
     <section class="hero glass">
+      <div class="hero-badge">✨ Surprise Drop</div>
       <div class="eyebrow">Parklan Clawhub</div>
       <h1>A darker, softer glassy place for all your projects.</h1>
       <p class="lead">
         A clean home for your transport tools, shared utilities, AI storytelling demo, and market experiments — all kept
-        easy to browse in one polished hub.
+        easy to browse in one polished hub... now featuring the sudden spark of the Miniclawhub.
       </p>
       <div class="hero-actions">
         <a class="btn primary" href="ebook-canto-poc/">Open ebook narration</a>
@@ -372,30 +575,47 @@
       </div>
     </section>
 
-    <h2 class="section-title">Projects</h2>
+    <section id="miniclawhub" class="miniclawhub">
+      <div class="miniclawhub-inner">
+        <canvas id="sparkle-canvas"></canvas>
+        <div class="mini-drop-badge">✨ SURPRISE DROP</div>
+        <div class="miniclawhub-content">
+          <div class="mini-eyebrow">⚡ SUDDEN EVENT</div>
+          <h2 class="mini-title">The Miniclawhub: Sparkling Sudden Project</h2>
+          <p class="mini-desc">
+            A limited-time, high-energy experimental zone. Step into the Miniclawhub to discover our latest sparkling surprise.
+          </p>
+          <div class="mini-actions">
+            <a class="btn magnetic-btn" href="#projects">Unbox the Project 🎁</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2 id="projects" class="section-title">Projects</h2>
     <section class="cards">
-      <article class="card glass">
+      <article class="card glass tilt-card">
         <div class="card-tag">Transport</div>
         <h3>722 ETA</h3>
         <p>A fast Citybus route lookup page for quick checking with a lightweight mobile-first interface.</p>
         <a href="722-eta/">Open project →</a>
       </article>
 
-      <article class="card glass">
+      <article class="card glass tilt-card">
         <div class="card-tag">Utility</div>
         <h3>Lunch Wallet</h3>
         <p>A simple shared wallet tool for lunch spending, balances, and lightweight group cost tracking.</p>
         <a href="lunch-wallet/">Open project →</a>
       </article>
 
-      <article class="card glass">
+      <article class="card glass tilt-card">
         <div class="card-tag">AI Storytelling</div>
         <h3>Ebook Cantonese Narration</h3>
         <p>Import text or EPUB content, rewrite it into spoken Cantonese, and test playback in a live narration demo.</p>
         <a href="ebook-canto-poc/">Open project →</a>
       </article>
 
-      <article class="card glass">
+      <article class="card glass tilt-card">
         <div class="card-tag">Market</div>
         <h3>US Market Radar</h3>
         <p>A compact dashboard experiment for tracking market context, structure, and quick-glance signals.</p>
@@ -407,5 +627,154 @@
       Parklan Clawhub · darker glass landing page.
     </div>
   </div>
+
+  <script>
+    (() => {
+      const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+      if (!isTouch) {
+        const dot = document.querySelector('.cursor-dot');
+        const ring = document.querySelector('.cursor-ring');
+        let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+        let rx = mx, ry = my;
+
+        window.addEventListener('mousemove', (e) => {
+          mx = e.clientX;
+          my = e.clientY;
+          dot.style.left = mx + 'px';
+          dot.style.top = my + 'px';
+        });
+
+        function animateCursor() {
+          rx += (mx - rx) * 0.18;
+          ry += (my - ry) * 0.18;
+          ring.style.left = rx + 'px';
+          ring.style.top = ry + 'px';
+          requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        document.querySelectorAll('a, button, .magnetic-btn, .tilt-card').forEach(el => {
+          el.addEventListener('mouseenter', () => ring.classList.add('active'));
+          el.addEventListener('mouseleave', () => ring.classList.remove('active'));
+        });
+
+        document.querySelectorAll('.tilt-card').forEach(card => {
+          card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const px = (e.clientX - rect.left) / rect.width;
+            const py = (e.clientY - rect.top) / rect.height;
+            const rotY = (px - 0.5) * 10;
+            const rotX = (0.5 - py) * 10;
+            card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-3px)`;
+          });
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+          });
+        });
+
+        document.querySelectorAll('.magnetic-btn').forEach(btn => {
+          btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+          });
+          btn.addEventListener('mouseleave', () => {
+            btn.style.transform = '';
+          });
+        });
+      }
+
+      const canvas = document.getElementById('sparkle-canvas');
+      const section = document.getElementById('miniclawhub');
+      const ctx = canvas.getContext('2d');
+      const particles = [];
+      const particleCount = isTouch ? 40 : 68;
+      const colors = ['#00f3ff', '#ff00ea', '#ffd700'];
+      let mouse = { x: -9999, y: -9999 };
+      let width = 0, height = 0, dpr = 1;
+
+      function resizeCanvas() {
+        const rect = section.getBoundingClientRect();
+        width = rect.width;
+        height = rect.height;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function resetParticle(p) {
+        p.x = Math.random() * width;
+        p.y = Math.random() * height;
+        p.vx = (Math.random() - 0.5) * 0.25;
+        p.vy = -(0.25 + Math.random() * 0.55);
+        p.r = 1 + Math.random() * 2;
+        p.color = colors[(Math.random() * colors.length) | 0];
+        p.alpha = 0.45 + Math.random() * 0.5;
+      }
+
+      function initParticles() {
+        particles.length = 0;
+        for (let i = 0; i < particleCount; i++) {
+          const p = {};
+          resetParticle(p);
+          particles.push(p);
+        }
+      }
+
+      section.addEventListener('mousemove', (e) => {
+        const rect = section.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+      });
+      section.addEventListener('mouseleave', () => {
+        mouse.x = -9999;
+        mouse.y = -9999;
+      });
+
+      function animateParticles() {
+        ctx.clearRect(0, 0, width, height);
+        for (const p of particles) {
+          const dx = p.x - mouse.x;
+          const dy = p.y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          if (dist < 90) {
+            const force = (90 - dist) / 90;
+            p.x += (dx / dist) * force * 1.6;
+            p.y += (dy / dist) * force * 1.6;
+          }
+
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.y < -10) {
+            p.y = height + 10;
+            p.x = Math.random() * width;
+          }
+          if (p.x < -10) p.x = width + 10;
+          if (p.x > width + 10) p.x = -10;
+
+          ctx.beginPath();
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        requestAnimationFrame(animateParticles);
+      }
+
+      resizeCanvas();
+      initParticles();
+      animateParticles();
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        initParticles();
+      });
+    })();
+  </script>
 </body>
 </html>
