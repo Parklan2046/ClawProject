@@ -2,36 +2,251 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ClawProject · Parklan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>on9claw · Project Hub</title>
+  <meta name="description" content="A small hub for Parklan's projects: 722 ETA, Lunch Wallet, ebook Cantonese narration, and more." />
   <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --bg2: #0d1729;
+      --card: rgba(17, 25, 40, 0.82);
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #edf3ff;
+      --muted: #9fb0d9;
+      --accent: #7c9cff;
+      --accent2: #47d7ac;
+      --shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
-      padding: 1.5rem;
-      background: #0f172a;
-      color: #e5e7eb;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(71, 215, 172, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(124, 156, 255, 0.16), transparent 26%),
+        linear-gradient(180deg, var(--bg), #050b15 60%);
+      color: var(--text);
+      min-height: 100vh;
     }
-    h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
-    p  { font-size: 0.9rem; color: #9ca3af; }
-    ul { margin-top: 1rem; padding-left: 1.1rem; }
-    li { margin-bottom: 0.5rem; }
-    a {
-      color: #fb923c;
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+
+    .hero {
+      padding: 28px 0 18px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(124, 156, 255, 0.14);
+      color: #bfd0ff;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(124, 156, 255, 0.22);
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4.5rem);
+      line-height: 1.02;
+      margin: 16px 0 14px;
+      letter-spacing: -0.04em;
+    }
+
+    .lead {
+      max-width: 740px;
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 12px;
       text-decoration: none;
+      font-weight: 600;
+      border: 1px solid transparent;
+      transition: transform .18s ease, opacity .18s ease, border-color .18s ease;
     }
-    a:hover { text-decoration: underline; }
+
+    .btn:hover { transform: translateY(-1px); opacity: .96; }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #5f79ff);
+      color: white;
+      box-shadow: 0 12px 34px rgba(92, 118, 255, .28);
+    }
+    .btn.secondary {
+      background: rgba(255,255,255,.03);
+      color: #dce7ff;
+      border-color: rgba(255,255,255,.1);
+    }
+
+    .section-title {
+      margin: 34px 0 16px;
+      font-size: 1.2rem;
+      color: #dce7ff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      grid-column: span 6;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,.22), transparent 65%);
+    }
+
+    .card h3 {
+      margin: 8px 0 8px;
+      font-size: 1.2rem;
+    }
+
+    .card p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.96rem;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(71, 215, 172, 0.12);
+      color: #9ef0d1;
+      border: 1px solid rgba(71, 215, 172, 0.18);
+    }
+
+    .links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .link {
+      color: #bfd0ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .link:hover { text-decoration: underline; }
+
+    .footer {
+      margin-top: 34px;
+      color: #7f90b8;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 860px) {
+      .card { grid-column: span 12; }
+      .wrap { padding-left: 16px; padding-right: 16px; }
+    }
   </style>
 </head>
 <body>
-  <h1>ClawProject</h1>
-  <p>Small tools & pages built with OpenClaw.</p>
+  <div class="wrap">
+    <section class="hero">
+      <span class="eyebrow">on9claw · Parklan Project Hub</span>
+      <h1>Small useful apps, weird ideas, and personal tools.</h1>
+      <p class="lead">
+        A simple home for projects built around daily utility and experimentation — transport lookup, shared tools,
+        market dashboards, and a new AI ebook Cantonese narration prototype.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="ebook-canto-poc/">Try ebook narration demo</a>
+        <a class="btn secondary" href="722-eta/">Open 722 ETA</a>
+      </div>
+    </section>
 
-  <h2>Projects</h2>
-  <ul>
-    <li><a href="722-eta/">Citybus 巴士到站時間查詢</a></li>
-    <li><a href="lunch-wallet/">Lunch Wallet（shared wallet）</a></li>
-    <li><a href="us-market-radar/">US Market Radar v1（index + options layout）</a></li>
-  </ul>
+    <h2 class="section-title">Projects</h2>
+    <section class="grid">
+      <article class="card">
+        <span class="tag">Transport</span>
+        <h3>722 ETA</h3>
+        <p>
+          Quick Citybus ETA lookup page for route 722. Built for fast checking with a lightweight mobile-friendly UI.
+        </p>
+        <div class="links">
+          <a class="link" href="722-eta/">Open project →</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="tag">Utility</span>
+        <h3>Lunch Wallet</h3>
+        <p>
+          A shared lunch wallet tool for tracking spending and balancing simple group meal costs.
+        </p>
+        <div class="links">
+          <a class="link" href="lunch-wallet/">Open project →</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="tag">AI / Storytelling</span>
+        <h3>Ebook Cantonese Narration</h3>
+        <p>
+          Proof of concept for importing text or EPUB content, rewriting it into natural spoken Cantonese, and testing
+          playback for story-style reading.
+        </p>
+        <div class="links">
+          <a class="link" href="ebook-canto-poc/">Open project →</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="tag">Market</span>
+        <h3>US Market Radar</h3>
+        <p>
+          A compact market dashboard experiment for watching index and options-related market context in one place.
+        </p>
+        <div class="links">
+          <a class="link" href="us-market-radar/">Open project →</a>
+        </div>
+      </article>
+    </section>
+
+    <div class="footer">
+      Built as an evolving project hub for Parklan — simple, direct, and easy to navigate.
+    </div>
+  </div>
 </body>
 </html>
