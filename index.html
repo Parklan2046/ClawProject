@@ -366,6 +366,42 @@
     .chatbot-form button { border:none; border-radius:14px; padding:12px 16px; font:inherit; font-weight:900; color:#fff; background:linear-gradient(135deg, rgba(255,62,165,0.9), rgba(51,230,255,0.75)); cursor:pointer; }
     .chatbot-status { padding:0 14px 10px; color:var(--muted); font-size:.8rem; }
 
+
+    .chatbot-tease {
+      position: fixed;
+      right: 96px;
+      bottom: 28px;
+      z-index: 29;
+      max-width: min(260px, calc(100vw - 120px));
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(28,12,52,0.92), rgba(12,5,22,0.92));
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.34), 0 0 20px rgba(255,0,212,0.12);
+      color: var(--text);
+      font-size: 0.9rem;
+      line-height: 1.55;
+      cursor: pointer;
+      display: none;
+    }
+    .chatbot-tease.show { display: block; animation: teasePop .35s ease; }
+    .chatbot-tease::after {
+      content: "";
+      position: absolute;
+      right: -6px;
+      bottom: 16px;
+      width: 12px;
+      height: 12px;
+      background: inherit;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      transform: rotate(-45deg);
+    }
+    @keyframes teasePop {
+      from { opacity: 0; transform: translateY(6px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     @media (max-width: 920px) {
       .card { grid-column: span 12; }
       .hero { padding: 28px 22px; }
@@ -447,7 +483,9 @@
     <div class="footer">Parklan Clawhub · retro techno edition</div>
   </div>
 
-    <button class="chatbot-launch" id="chatbotLaunch" aria-label="Open chatbot" title="Open chatbot">
+  
+  <div class="chatbot-tease" id="chatbotTease">想搵我傾兩句？</div>
+  <button class="chatbot-launch" id="chatbotLaunch" aria-label="Open chatbot" title="Open chatbot">
       <img src="assets/chatbot-avatar.jpg" alt="Chatbot avatar" />
     </button>
 
@@ -553,6 +591,15 @@
       const chatbotMessages = document.getElementById('chatbotMessages');
       const chatbotStatus = document.getElementById('chatbotStatus');
       const chatbotRole = document.getElementById('chatbotRole');
+      const chatbotTease = document.getElementById('chatbotTease');
+      const teaseLines = [
+        '想搵我傾兩句？',
+        '我可以陪你用廣東話傾偈呀。',
+        '試下叫我做 Laura？',
+        '想 role play 定問項目都得。',
+        '有冇咩想我幫你？'
+      ];
+      let teaseTimer = null;
       const chatHistory = [
         { role: 'assistant', content: '你好呀，我喺度。你可以用廣東話同我傾偈，亦可以叫我做 Laura 陪你 role play。' }
       ];
@@ -565,8 +612,25 @@
         chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
       }
 
-      chatbotLaunch?.addEventListener('click', () => chatbotPanel?.classList.add('show'));
-      chatbotClose?.addEventListener('click', () => chatbotPanel?.classList.remove('show'));
+      function openChatbot() {
+        chatbotPanel?.classList.add('show');
+        if (chatbotTease) chatbotTease.classList.remove('show');
+      }
+      function scheduleTease() {
+        if (!chatbotTease || chatbotPanel?.classList.contains('show')) return;
+        clearTimeout(teaseTimer);
+        teaseTimer = setTimeout(() => {
+          const line = teaseLines[Math.floor(Math.random() * teaseLines.length)];
+          chatbotTease.textContent = line;
+          chatbotTease.classList.add('show');
+          setTimeout(() => chatbotTease.classList.remove('show'), 7000);
+          scheduleTease();
+        }, 9000 + Math.random() * 8000);
+      }
+      chatbotLaunch?.addEventListener('click', openChatbot);
+      chatbotTease?.addEventListener('click', openChatbot);
+      chatbotClose?.addEventListener('click', () => { chatbotPanel?.classList.remove('show'); scheduleTease(); });
+      scheduleTease();
 
       chatbotForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
