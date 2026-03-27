@@ -92,6 +92,8 @@
     let lastSegments = [];
     let voices = [];
 
+    let backendAvailable = false;
+
     async function api(path, body) {
       const res = await fetch(path, {
         method: 'POST',
@@ -104,9 +106,15 @@
     }
 
     async function loadHealth() {
-      const res = await fetch('/api/health');
-      const j = await res.json();
-      healthEl.textContent = `MiniMax configured: ${j.minimax_configured ? 'yes' : 'no'} · model: ${j.model} · max chars: ${j.max_source_chars}`;
+      try {
+        const res = await fetch('/api/health');
+        const j = await res.json();
+        backendAvailable = !!j.ok;
+        healthEl.textContent = `MiniMax configured: ${j.minimax_configured ? 'yes' : 'no'} · model: ${j.model} · max chars: ${j.max_source_chars}`;
+      } catch (e) {
+        backendAvailable = false;
+        healthEl.textContent = 'GitHub Pages demo mode: backend is not running here, so AI rewrite is disabled on the public page. You can still paste Cantonese text and test browser TTS, or use local mode for full MiniMax rewrite.';
+      }
     }
 
     async function fileToBase64(file) {
@@ -126,11 +134,20 @@
       const file = document.getElementById('fileInput').files[0];
       if (!file) return alert('Choose a .txt, .md, or .epub file first.');
       try {
-        healthEl.textContent = 'Extracting file...';
-        const b64 = await fileToBase64(file);
-        const j = await api('/api/extract', { filename: file.name, file_base64: b64 });
-        sourceText.value = j.text;
-        healthEl.textContent = `Loaded ${file.name} · ${j.text.length} chars extracted`;
+        if (backendAvailable) {
+          healthEl.textContent = 'Extracting file...';
+          const b64 = await fileToBase64(file);
+          const j = await api('/api/extract', { filename: file.name, file_base64: b64 });
+          sourceText.value = j.text;
+          healthEl.textContent = `Loaded ${file.name} · ${j.text.length} chars extracted`;
+        } else {
+          if (!file.name.toLowerCase().match(/\.(txt|md)$/)) {
+            throw new Error('Public GitHub Pages demo can only read .txt or .md directly in-browser. Use local mode for EPUB extraction.');
+          }
+          const text = await file.text();
+          sourceText.value = text;
+          healthEl.textContent = `Loaded ${file.name} in browser-only demo mode.`;
+        }
       } catch (e) {
         healthEl.textContent = 'Extract failed: ' + e.message;
       }
@@ -140,12 +157,20 @@
       const text = sourceText.value.trim();
       if (!text) return alert('Paste text or extract a file first.');
       try {
-        rewriteStatus.textContent = 'Rewriting into spoken Cantonese...';
-        const j = await api('/api/rewrite', { text, style: document.getElementById('styleSelect').value });
-        lastSegments = j.segments || [];
-        narrationText.value = lastSegments.map(s => s.text).join('\n\n');
-        renderSegments(lastSegments);
-        rewriteStatus.textContent = `Done · ${j.title} · source model ${j.model}`;
+        if (backendAvailable) {
+          rewriteStatus.textContent = 'Rewriting into spoken Cantonese...';
+          const j = await api('/api/rewrite', { text, style: document.getElementById('styleSelect').value });
+          lastSegments = j.segments || [];
+          narrationText.value = lastSegments.map(s => s.text).join('\n\n');
+          renderSegments(lastSegments);
+          rewriteStatus.textContent = `Done · ${j.title} · source model ${j.model}`;
+        } else {
+          // public fallback: no AI rewrite on Pages, just treat input as narration text
+          lastSegments = [{ emotion: 'calm', text }];
+          narrationText.value = text;
+          renderSegments(lastSegments);
+          rewriteStatus.textContent = 'Public demo fallback: backend unavailable here, so raw text is used directly for TTS playback.';
+        }
       } catch (e) {
         rewriteStatus.textContent = 'Rewrite failed: ' + e.message;
       }
