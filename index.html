@@ -29,7 +29,7 @@
     }
 
     * { box-sizing: border-box; }
-    html { cursor: none; }
+    html { cursor: auto; }
 
     html, body {
       margin: 0;
@@ -44,7 +44,6 @@
         linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 34%, var(--bg-1) 100%);
     }
 
-    a, button, .tilt-card { cursor: none; }
 
     .ambient {
       position: fixed;
@@ -96,8 +95,8 @@
       background: linear-gradient(180deg, rgba(20,28,52,0.58), rgba(14,19,36,0.34));
       border: 1px solid var(--line);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(28px) saturate(150%);
-      -webkit-backdrop-filter: blur(28px) saturate(150%);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
       background-color: rgba(18, 25, 48, 0.42);
     }
 
@@ -299,8 +298,8 @@
       border-radius: 29px;
       background: var(--mini-glass);
       border: 1px solid rgba(255,255,255,0.08);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       overflow: hidden;
       min-height: 320px;
       padding: 34px 30px;
@@ -478,38 +477,6 @@
 
     .card a:hover { text-decoration: underline; }
 
-    .cursor-dot,
-    .cursor-ring {
-      position: fixed;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 1000;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: width .18s ease, height .18s ease, border-color .18s ease, opacity .18s ease, background .18s ease;
-    }
-
-    .cursor-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--mini-cyan);
-      box-shadow: 0 0 12px rgba(0,243,255,0.8);
-    }
-
-    .cursor-ring {
-      width: 18px;
-      height: 18px;
-      border: 1px solid rgba(0,243,255,0.45);
-      box-shadow: 0 0 24px rgba(0,243,255,0.14);
-    }
-
-    .cursor-ring.active {
-      width: 30px;
-      height: 30px;
-      border-color: rgba(0,243,255,0.8);
-    }
-
     .footer {
       margin-top: 32px;
       text-align: center;
@@ -518,8 +485,6 @@
     }
 
     @media (max-width: 920px) {
-      html, a, button, .tilt-card { cursor: auto; }
-      .cursor-dot, .cursor-ring { display: none; }
       .topbar {
         flex-direction: column;
         align-items: flex-start;
@@ -540,9 +505,6 @@
     <div class="orb one"></div>
     <div class="orb two"></div>
   </div>
-
-  <div class="cursor-dot"></div>
-  <div class="cursor-ring"></div>
 
   <div class="wrap">
     <div class="topbar glass">
@@ -633,40 +595,19 @@
       const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
 
       if (!isTouch) {
-        const dot = document.querySelector('.cursor-dot');
-        const ring = document.querySelector('.cursor-ring');
-        let mx = window.innerWidth / 2, my = window.innerHeight / 2;
-        let rx = mx, ry = my;
-
-        window.addEventListener('mousemove', (e) => {
-          mx = e.clientX;
-          my = e.clientY;
-          dot.style.left = mx + 'px';
-          dot.style.top = my + 'px';
-        });
-
-        function animateCursor() {
-          rx += (mx - rx) * 0.18;
-          ry += (my - ry) * 0.18;
-          ring.style.left = rx + 'px';
-          ring.style.top = ry + 'px';
-          requestAnimationFrame(animateCursor);
-        }
-        animateCursor();
-
-        document.querySelectorAll('a, button, .magnetic-btn, .tilt-card').forEach(el => {
-          el.addEventListener('mouseenter', () => ring.classList.add('active'));
-          el.addEventListener('mouseleave', () => ring.classList.remove('active'));
-        });
-
         document.querySelectorAll('.tilt-card').forEach(card => {
+          let raf = null;
           card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const px = (e.clientX - rect.left) / rect.width;
-            const py = (e.clientY - rect.top) / rect.height;
-            const rotY = (px - 0.5) * 10;
-            const rotX = (0.5 - py) * 10;
-            card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-3px)`;
+            if (raf) return;
+            raf = requestAnimationFrame(() => {
+              const rect = card.getBoundingClientRect();
+              const px = (e.clientX - rect.left) / rect.width;
+              const py = (e.clientY - rect.top) / rect.height;
+              const rotY = (px - 0.5) * 5;
+              const rotX = (0.5 - py) * 5;
+              card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-2px)`;
+              raf = null;
+            });
           });
           card.addEventListener('mouseleave', () => {
             card.style.transform = '';
@@ -674,11 +615,16 @@
         });
 
         document.querySelectorAll('.magnetic-btn').forEach(btn => {
+          let raf = null;
           btn.addEventListener('mousemove', (e) => {
-            const rect = btn.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+            if (raf) return;
+            raf = requestAnimationFrame(() => {
+              const rect = btn.getBoundingClientRect();
+              const x = e.clientX - rect.left - rect.width / 2;
+              const y = e.clientY - rect.top - rect.height / 2;
+              btn.style.transform = `translate(${x * 0.08}px, ${y * 0.08}px)`;
+              raf = null;
+            });
           });
           btn.addEventListener('mouseleave', () => {
             btn.style.transform = '';
@@ -690,7 +636,7 @@
       const section = document.getElementById('miniclawhub');
       const ctx = canvas.getContext('2d');
       const particles = [];
-      const particleCount = isTouch ? 40 : 68;
+      const particleCount = isTouch ? 24 : 36;
       const colors = ['#00f3ff', '#ff00ea', '#ffd700'];
       let mouse = { x: -9999, y: -9999 };
       let width = 0, height = 0, dpr = 1;
@@ -710,8 +656,8 @@
       function resetParticle(p) {
         p.x = Math.random() * width;
         p.y = Math.random() * height;
-        p.vx = (Math.random() - 0.5) * 0.25;
-        p.vy = -(0.25 + Math.random() * 0.55);
+        p.vx = (Math.random() - 0.5) * 0.18;
+        p.vy = -(0.18 + Math.random() * 0.38);
         p.r = 1 + Math.random() * 2;
         p.color = colors[(Math.random() * colors.length) | 0];
         p.alpha = 0.45 + Math.random() * 0.5;
@@ -736,7 +682,10 @@
         mouse.y = -9999;
       });
 
-      function animateParticles() {
+      let lastTs = 0;
+      function animateParticles(ts = 0) {
+        if (ts - lastTs < 33) { requestAnimationFrame(animateParticles); return; }
+        lastTs = ts;
         ctx.clearRect(0, 0, width, height);
         for (const p of particles) {
           const dx = p.x - mouse.x;
@@ -744,8 +693,8 @@
           const dist = Math.sqrt(dx * dx + dy * dy) || 1;
           if (dist < 90) {
             const force = (90 - dist) / 90;
-            p.x += (dx / dist) * force * 1.6;
-            p.y += (dy / dist) * force * 1.6;
+            p.x += (dx / dist) * force * 1.0;
+            p.y += (dy / dist) * force * 1.0;
           }
 
           p.x += p.vx;
