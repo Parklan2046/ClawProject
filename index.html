@@ -72,29 +72,12 @@
       animation-duration: 24s;
     }
 
-    .glass-block {
-      position: absolute;
-      border-radius: 30px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
-      backdrop-filter: blur(18px) saturate(130%);
-      -webkit-backdrop-filter: blur(18px) saturate(130%);
-      animation: drift 22s ease-in-out infinite alternate;
-    }
-
-    .glass-block.a { width: 150px; height: 150px; top: 10%; left: 9%; }
-    .glass-block.b { width: 96px; height: 96px; top: 32%; right: 12%; animation-duration: 18s; }
 
     @keyframes float {
       from { transform: translate3d(0,0,0) scale(1); }
       to { transform: translate3d(26px,-16px,0) scale(1.08); }
     }
 
-    @keyframes drift {
-      from { transform: translate3d(0,0,0) rotate(0deg); }
-      to { transform: translate3d(18px,-24px,0) rotate(8deg); }
-    }
 
     .wrap {
       position: relative;
@@ -357,8 +340,6 @@
   <div class="ambient">
     <div class="orb one"></div>
     <div class="orb two"></div>
-    <div class="glass-block a"></div>
-    <div class="glass-block b"></div>
   </div>
 
   <div class="wrap">
