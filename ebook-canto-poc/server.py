@@ -11,8 +11,8 @@ from urllib import request, error
 
 ROOT = Path(__file__).resolve().parent
 INDEX_HTML = ROOT / "index.html"
-HOST = "127.0.0.1"
-PORT = 8765
+HOST = os.getenv("EBOOK_POC_HOST", "127.0.0.1")
+PORT = int(os.getenv("EBOOK_POC_PORT", "8765"))
 MINIMAX_URL = "https://api.minimax.io/anthropic/v1/messages"
 MINIMAX_MODEL = os.getenv("EBOOK_POC_MODEL", "MiniMax-M2.5")
 MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY", "")
