@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spotify AI Dashboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg1:#060914; --bg2:#0c1222; --panel:rgba(18,24,44,.74); --line:rgba(255,255,255,.1);
+      --text:#eef5ff; --muted:#9caac9; --green:#1ed760; --cyan:#67d9ff; --pink:#d58cff; --blue:#7da1ff;
+      --shadow:0 24px 80px rgba(0,0,0,.34);
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--text);overflow-x:hidden;
+      background:radial-gradient(circle at top left, rgba(30,215,96,.12), transparent 22%),
+                 radial-gradient(circle at top right, rgba(103,217,255,.12), transparent 20%),
+                 linear-gradient(180deg, var(--bg2), var(--bg1));}
+    .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px;position:relative;z-index:1}
+    .glass{background:linear-gradient(180deg, rgba(20,28,52,.62), rgba(14,19,36,.36));border:1px solid var(--line);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);box-shadow:var(--shadow)}
+    .hero{padding:30px;border-radius:30px;position:relative;overflow:hidden;margin-bottom:22px}
+    .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 15%, rgba(30,215,96,.16), transparent 22%),linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.01));pointer-events:none}
+    .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(30,215,96,.12);border:1px solid rgba(30,215,96,.22);color:#b9ffcf;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    h1{margin:14px 0 10px;font-size:clamp(2.3rem, 6vw, 4.8rem);line-height:.94;letter-spacing:-.05em;max-width:820px}
+    .lead{max-width:760px;color:var(--muted);font-size:1.02rem;line-height:1.8}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:18px}
+    .panel{padding:20px;border-radius:24px}
+    .now-card{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center}
+    .cover{width:160px;height:160px;border-radius:22px;background:linear-gradient(135deg,#1ed76033,#67d9ff22);border:1px solid rgba(255,255,255,.08);overflow:hidden;display:grid;place-items:center;font-size:46px}
+    .cover img{width:100%;height:100%;object-fit:cover}
+    .eyebrow{color:var(--green);font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .track{font-size:1.6rem;font-weight:900;letter-spacing:-.03em;margin-top:6px}
+    .artist,.meta{color:var(--muted);margin-top:6px;line-height:1.6}
+    .queue-list,.device-list{display:grid;gap:10px;margin-top:14px}
+    .item{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+    .item strong{display:block}
+    .section-title{font-size:1rem;font-weight:800;margin:0 0 10px}
+    .private-card{position:relative;overflow:hidden}
+    .private-card::before{content:"";position:absolute;inset:auto -40px -40px auto;width:180px;height:180px;background:radial-gradient(circle, rgba(103,217,255,.14), transparent 68%);filter:blur(8px)}
+    .controls{display:grid;gap:10px}
+    .control-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    button,input{font:inherit}
+    button{border:none;border-radius:14px;padding:12px 14px;background:rgba(255,255,255,.08);color:var(--text);cursor:pointer;font-weight:800;border:1px solid rgba(255,255,255,.08)}
+    button.primary{background:linear-gradient(135deg, rgba(30,215,96,.22), rgba(103,217,255,.14));border-color:rgba(30,215,96,.22)}
+    input{width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:var(--text);padding:12px 14px;outline:none}
+    .status{color:var(--muted);font-size:.9rem;line-height:1.6;margin-top:8px;white-space:pre-wrap}
+    .hidden{display:none}
+    .results{display:grid;gap:10px;margin-top:12px}
+    .result-item{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .subtle{color:var(--muted);font-size:.86rem}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+    @media (max-width: 920px){.grid{grid-template-columns:1fr}.now-card{grid-template-columns:1fr}.cover{width:100%;max-width:260px;height:auto;aspect-ratio:1/1}.control-row{grid-template-columns:1fr}.hero{padding:22px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero glass">
+      <div class="badge">Spotify AI Dashboard</div>
+      <h1>Your listening, your queue, your control surface.</h1>
+      <div class="lead">A polished dashboard for now playing, queue intelligence, device status, and private Spotify control — with the controls locked behind your personal access code.</div>
+      <div class="hero-actions">
+        <button id="refreshBtn" class="primary">Refresh Status</button>
+        <button id="privateBtn">Unlock Private Controls</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel glass">
+        <div class="section-title">Now Playing</div>
+        <div class="now-card">
+          <div class="cover" id="coverBox">♪</div>
+          <div>
+            <div class="eyebrow">Live Spotify Status</div>
+            <div class="track" id="trackName">Nothing playing</div>
+            <div class="artist" id="artistName">Open Spotify on your device to begin.</div>
+            <div class="meta" id="albumMeta">Queue and device info will appear here.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <div class="section-title">Devices</div>
+        <div id="deviceList" class="device-list"></div>
+      </div>
+
+      <div class="panel glass">
+        <div class="section-title">Up Next</div>
+        <div id="queueList" class="queue-list"></div>
+      </div>
+
+      <div class="panel glass private-card">
+        <div class="section-title">Private Controls</div>
+        <div id="privateGate">
+          <div class="subtle">Enter your access code to unlock Spotify controls.</div>
+          <div class="controls" style="margin-top:12px;">
+            <input id="passwordInput" type="password" placeholder="Enter access code" />
+            <button id="unlockBtn" class="primary">Unlock Controls</button>
+          </div>
+          <div class="status" id="loginStatus"></div>
+        </div>
+
+        <div id="privateControls" class="hidden">
+          <div class="controls">
+            <div class="control-row">
+              <button data-action="previous">⏮ Previous</button>
+              <button data-action="pause">⏸ Pause</button>
+              <button data-action="next">⏭ Next</button>
+            </div>
+            <input id="searchInput" type="text" placeholder="Search a track, artist, or mood" />
+            <div class="control-row">
+              <button id="searchBtn">Search</button>
+              <button id="playBtn" class="primary">Play First Result</button>
+              <button id="queueBtn">Queue First Result</button>
+            </div>
+          </div>
+          <div class="status" id="actionStatus"></div>
+          <div id="searchResults" class="results"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const trackName = document.getElementById('trackName');
+    const artistName = document.getElementById('artistName');
+    const albumMeta = document.getElementById('albumMeta');
+    const coverBox = document.getElementById('coverBox');
+    const queueList = document.getElementById('queueList');
+    const deviceList = document.getElementById('deviceList');
+    const loginStatus = document.getElementById('loginStatus');
+    const actionStatus = document.getElementById('actionStatus');
+    const privateGate = document.getElementById('privateGate');
+    const privateControls = document.getElementById('privateControls');
+    const searchResults = document.getElementById('searchResults');
+    let lastResults = [];
+
+    async function getStatus() {
+      const res = await fetch('/spotify-api/status');
+      return res.json();
+    }
+
+    function renderStatus(data) {
+      const now = data.currently_playing || {};
+      trackName.textContent = now.name || 'Nothing playing';
+      artistName.textContent = now.artists || 'Open Spotify on your device to begin.';
+      albumMeta.textContent = now.album || (data.devices?.length ? 'Device found. Queue loaded below.' : 'No active device found.');
+      coverBox.innerHTML = now.image ? `<img src="${now.image}" alt="cover" />` : '♪';
+
+      queueList.innerHTML = (data.queue || []).length
+        ? data.queue.map(item => `<div class="item"><strong>${item.name || 'Unknown track'}</strong><div class="subtle">${item.artists || ''}</div></div>`).join('')
+        : '<div class="item subtle">Queue is empty.</div>';
+
+      deviceList.innerHTML = (data.devices || []).length
+        ? data.devices.map(d => `<div class="item"><strong>${d.name}</strong><div class="subtle">${d.type} · ${d.is_active ? 'Active' : 'Available'}${d.volume_percent != null ? ` · ${d.volume_percent}%` : ''}</div></div>`).join('')
+        : '<div class="item subtle">No Spotify device found. Open Spotify on your phone or desktop first.</div>';
+    }
+
+    async function refreshStatus() {
+      try {
+        const data = await getStatus();
+        if (!data.ok) throw new Error(data.error || 'Unable to load status');
+        renderStatus(data);
+      } catch (e) {
+        queueList.innerHTML = `<div class="item subtle">${e.message}</div>`;
+        deviceList.innerHTML = `<div class="item subtle">${e.message}</div>`;
+      }
+    }
+
+    async function login() {
+      loginStatus.textContent = 'Unlocking...';
+      try {
+        const res = await fetch('/spotify-api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: document.getElementById('passwordInput').value })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Wrong password');
+        privateGate.classList.add('hidden');
+        privateControls.classList.remove('hidden');
+        loginStatus.textContent = '';
+      } catch (e) {
+        loginStatus.textContent = e.message;
+      }
+    }
+
+    async function action(action, query='') {
+      actionStatus.textContent = `Running ${action}...`;
+      try {
+        const res = await fetch('/spotify-api/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, query })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Action failed');
+        if (action === 'search') {
+          lastResults = data.results || [];
+          searchResults.innerHTML = lastResults.length
+            ? lastResults.map((item, idx) => `<div class="result-item"><div><strong>${item.name}</strong><div class="subtle">${item.artists || ''}</div></div><div class="subtle">#${idx + 1}</div></div>`).join('')
+            : '<div class="item subtle">No results found.</div>';
+          actionStatus.textContent = `${lastResults.length} result(s) found.`;
+        } else {
+          actionStatus.textContent = `Done: ${action}`;
+          await refreshStatus();
+        }
+      } catch (e) {
+        actionStatus.textContent = e.message;
+      }
+    }
+
+    document.getElementById('refreshBtn').onclick = refreshStatus;
+    document.getElementById('privateBtn').onclick = () => document.getElementById('passwordInput').focus();
+    document.getElementById('unlockBtn').onclick = login;
+    document.querySelectorAll('[data-action]').forEach(btn => btn.onclick = () => action(btn.dataset.action));
+    document.getElementById('searchBtn').onclick = () => action('search', document.getElementById('searchInput').value.trim());
+    document.getElementById('playBtn').onclick = async () => {
+      const q = document.getElementById('searchInput').value.trim();
+      await action('play', q);
+    };
+    document.getElementById('queueBtn').onclick = async () => {
+      const q = document.getElementById('searchInput').value.trim();
+      await action('queue', q);
+    };
+
+    refreshStatus();
+  </script>
+</body>
+</html>
