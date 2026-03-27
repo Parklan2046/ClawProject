@@ -175,12 +175,22 @@ Source passage:
     try:
         result = json.loads(cleaned)
     except Exception:
-        # fallback if model didn't obey JSON perfectly
-        result = {
-            "title": "Prototype narration",
-            "summary": "已轉成廣東話旁白。",
-            "segments": [{"emotion": "calm", "text": cleaned}],
-        }
+        repaired = cleaned
+        repaired = re.sub(r"}\s*{", "},{", repaired)
+        repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
+        try:
+            result = json.loads(repaired)
+        except Exception:
+            segments = []
+            for emotion, text_val in re.findall(r'"emotion"\s*:\s*"([^"]+)"\s*,\s*"text"\s*:\s*"([^"]+)"', repaired):
+                segments.append({"emotion": emotion.strip().lower() or "calm", "text": text_val.strip()})
+            title_match = re.search(r'"title"\s*:\s*"([^"]+)"', repaired)
+            summary_match = re.search(r'"summary"\s*:\s*"([^"]+)"', repaired)
+            result = {
+                "title": title_match.group(1).strip() if title_match else "Prototype narration",
+                "summary": summary_match.group(1).strip() if summary_match else "已轉成廣東話旁白。",
+                "segments": segments if segments else [{"emotion": "calm", "text": cleaned}],
+            }
 
     segments = result.get("segments") or []
     safe_segments = []
