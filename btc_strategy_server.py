@@ -82,7 +82,7 @@ class Handler(BaseHTTPRequestHandler):
         if parts.path != '/strategy-api/polymarket':
             return send_json(self, {'ok': False, 'error': 'Not found'}, 404)
         q = parse.parse_qs(parts.query)
-        slug = extract_slug((q.get('slug') or q.get('url') or [''])[0])
+        slug = resolve_market_slug((q.get('slug') or q.get('url') or [''])[0])
         if not slug:
             return send_json(self, {'ok': False, 'error': 'Missing slug/url'}, 400)
         try:
