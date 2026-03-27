@@ -76,14 +76,22 @@
         </div>
         <div class="row" style="margin-top:10px;">
           <select id="minimaxVoiceSelect">
-            <option value="cantonese_female">MiniMax · cantonese_female</option>
-            <option value="female-tianmei">MiniMax · female-tianmei</option>
-            <option value="male-qn-qingse">MiniMax · male-qn-qingse</option>
+            <optgroup label="Verified Cantonese">
+              <option value="cantonese_female">Cantonese Female · native Cantonese</option>
+            </optgroup>
+            <optgroup label="Experimental voices for Cantonese text">
+              <option value="female-yujie">Female Yujie · warmer alt</option>
+              <option value="female-tianmei">Female Tianmei · softer alt</option>
+              <option value="female-shaonv">Female Shaonv · brighter alt</option>
+              <option value="male-qn-jingying">Male Jingying · male alt</option>
+            </optgroup>
           </select>
           <button id="minimaxSpeakBtn">Generate MiniMax speech</button>
           <button id="minimaxSegmentsBtn" class="secondary">Generate segment audio</button>
+          <button id="compareVoicesBtn" class="secondary">Compare voices</button>
           <audio id="minimaxAudio" controls style="max-width:100%;"></audio>
         </div>
+        <div class="status" id="voiceHelp">Tip: only <strong>cantonese_female</strong> is currently verified as a real Cantonese voice on your account. The others are optional experimental voices for reading Cantonese text.</div>
         <div class="status" id="ttsStatus">Browser TTS note: quality depends on the voices installed on your browser/device. On desktop Chrome/Safari with Cantonese voices, this is enough for a first proof of concept.</div>
         <div class="segments" id="segments"></div>
       </div>
@@ -278,6 +286,47 @@
       }
     }
 
+    async function compareVoices() {
+      const text = narrationText.value.trim() || (lastSegments[0]?.text || sourceText.value.trim());
+      const emotion = lastSegments[0]?.emotion || 'calm';
+      if (!text) {
+        ttsStatus.textContent = 'Add or rewrite some text first.';
+        return;
+      }
+      const voices = [
+        ['cantonese_female', 'Cantonese Female'],
+        ['female-yujie', 'Female Yujie'],
+        ['female-tianmei', 'Female Tianmei'],
+        ['female-shaonv', 'Female Shaonv']
+      ];
+      ttsStatus.textContent = 'Comparing voices...';
+      const blocks = [];
+      for (const [voiceId, label] of voices) {
+        try {
+          const j = await api('api/tts', { text, emotion, voice_id: voiceId });
+          blocks.push(`
+            <div class="seg">
+              <div class="emotion">${label}</div>
+              <div>${escapeHtml(text.slice(0, 140))}${text.length > 140 ? '…' : ''}</div>
+              <div class="controls">
+                <span class="pill">${voiceId}</span>
+                <audio controls src="data:${j.mime_type};base64,${j.audio_base64}" style="max-width:100%;"></audio>
+              </div>
+            </div>
+          `);
+        } catch (e) {
+          blocks.push(`
+            <div class="seg">
+              <div class="emotion">${label}</div>
+              <div>Failed: ${escapeHtml(e.message)}</div>
+            </div>
+          `);
+        }
+      }
+      segmentsEl.innerHTML = blocks.join('');
+      ttsStatus.textContent = 'Voice comparison ready.';
+    }
+
     document.getElementById('loadVoicesBtn').onclick = loadVoices;
     document.getElementById('speakBtn').onclick = () => speakText(narrationText.value.trim());
     document.getElementById('stopBtn').onclick = () => speechSynthesis.cancel();
@@ -287,6 +336,7 @@
       generateMiniMaxSpeech(text, emotion);
     };
     document.getElementById('minimaxSegmentsBtn').onclick = () => generateMiniMaxSegmentAudio();
+    document.getElementById('compareVoicesBtn').onclick = () => compareVoices();
     speechSynthesis.onvoiceschanged = loadVoices;
 
     loadHealth();
