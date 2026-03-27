@@ -435,8 +435,8 @@
         <button class="private-dialog-close" id="privateDialogClose" aria-label="Close">✕</button>
       </div>
       <div class="private-dialog-sub">Mockup only — enter a password to access your private project area.</div>
-      <form class="private-dialog-form" method="dialog">
-        <input type="password" placeholder="Enter password" aria-label="Password mockup" />
+      <form class="private-dialog-form" method="get" action="/lunch-login">
+        <input type="password" name="password" placeholder="Enter password" aria-label="Password" />
         <button type="submit">Enter</button>
       </form>
     </div>
