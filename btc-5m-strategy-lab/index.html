@@ -117,8 +117,10 @@
         </div>
         <div class="actions">
           <button class="primary" id="fetchMarketBtn">Fetch Real Data</button>
+          <button id="toggleAutoBtn">Auto Refresh: Off</button>
         </div>
         <div class="hint" id="marketStatus">No live market data loaded yet.</div>
+        <div class="hint" id="entrySignal">No signal yet.</div>
       </div>
 
       <div class="panel glass">
@@ -250,6 +252,32 @@
       return 0;
     }
 
+    let autoTimer = null;
+    let lastMarket = null;
+
+    function slugFromInput(raw) {
+      const m = raw.match(/\/event\/([^/?#]+)/);
+      return m ? m[1] : raw.trim();
+    }
+
+    function updateEntrySignal() {
+      const r = getRule();
+      const current = num($('livePrice').value, r.entryPrice);
+      const thresholdHi = r.entryPrice + 0.02;
+      const thresholdLo = Math.max(0, r.entryPrice - 0.03);
+      let text = `WAIT · current ${current.toFixed(2)} is not in your preferred zone.`;
+      if (current <= thresholdHi && current >= thresholdLo) {
+        text = `WATCH · current ${current.toFixed(2)} is near the entry zone around ${r.entryPrice.toFixed(2)}.`;
+      }
+      if (current <= r.entryPrice) {
+        text = `ENTRY AREA · current ${current.toFixed(2)} meets your target price condition.`;
+      }
+      if (lastMarket?.closed) {
+        text = `MARKET CLOSED · this round already ended at ${lastMarket.endDate || '-'}.`;
+      }
+      $('entrySignal').textContent = text;
+    }
+
     function renderExpectancy() {
       const r = getRule();
       const tpPrice = r.entryPrice * (1 + r.takeProfitPct / 100);
@@ -301,6 +329,7 @@
       });
       saveJournal(journal);
       renderJournal();
+    updateEntrySignal();
     fetchMarket();
     }
 
@@ -349,9 +378,12 @@
         const no = data.prices?.Down != null ? Number(data.prices.Down) : null;
         const current = $('side').value === 'YES' ? yes : no;
         if (current != null) $('livePrice').value = current.toFixed(2);
+        lastMarket = data;
         $('marketStatus').innerHTML = `<strong>${data.title || data.slug}</strong><br>${data.closed ? 'Closed' : 'Active'} · last ${data.lastTradePrice ?? '-'} · end ${data.endDate || '-'}`;
+        updateEntrySignal();
       } catch (e) {
         $('marketStatus').textContent = e.message;
+        $('entrySignal').textContent = 'No signal available.';
       }
     }
 
@@ -362,15 +394,27 @@
       setRule({ marketUrl: $('marketUrl').defaultValue, side:'YES', entryPrice:0.35, stake:1, takeProfitPct:25, stopLossPct:15, maxTrades:8, notes:'' });
     };
     $('fetchMarketBtn').onclick = fetchMarket;
-    $('decisionBtn').onclick = evaluateEntry;
+    $('toggleAutoBtn').onclick = () => {
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        $('toggleAutoBtn').textContent = 'Auto Refresh: Off';
+      } else {
+        fetchMarket();
+        autoTimer = setInterval(fetchMarket, 10000);
+        $('toggleAutoBtn').textContent = 'Auto Refresh: On';
+      }
+    };
+    $('decisionBtn').onclick = () => { evaluateEntry(); updateEntrySignal(); };
     $('logTradeBtn').onclick = logTrade;
     $('clearLogBtn').onclick = () => { localStorage.removeItem(JOURNAL_KEY); renderJournal(); };
 
-    ['entryPrice','stake','takeProfitPct','stopLossPct'].forEach(id => $(id).addEventListener('input', renderExpectancy));
+    ['entryPrice','stake','takeProfitPct','stopLossPct'].forEach(id => $(id).addEventListener('input', () => { renderExpectancy(); updateEntrySignal(); }));
 
     loadRule();
     renderExpectancy();
     renderJournal();
+    updateEntrySignal();
     fetchMarket();
   </script>
 </body>
