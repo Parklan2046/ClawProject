@@ -4,23 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Parklan Clawhub</title>
-  <meta name="description" content="Parklan Clawhub — a polished project hub for useful tools, experiments, and apps." />
+  <meta name="description" content="Parklan Clawhub — an iOS-inspired glass landing page for apps, tools, and experiments." />
   <style>
     :root {
       color-scheme: light;
-      --bg: #f4f7fb;
-      --bg-soft: #edf2f9;
-      --panel: rgba(255, 255, 255, 0.72);
-      --panel-strong: rgba(255, 255, 255, 0.92);
-      --border: rgba(80, 98, 130, 0.12);
-      --text: #162033;
-      --muted: #5f6f8f;
-      --blue: #4f7cff;
-      --blue-soft: #dde7ff;
-      --cyan: #59d7ff;
-      --mint: #61e1b6;
-      --peach: #ffd6b2;
-      --shadow: 0 20px 60px rgba(42, 66, 118, 0.12);
+      --bg-1: #eef4ff;
+      --bg-2: #f8fbff;
+      --text: #142033;
+      --muted: #5d6c89;
+      --line: rgba(255,255,255,0.62);
+      --line-soft: rgba(148, 163, 184, 0.18);
+      --glass: rgba(255,255,255,0.42);
+      --glass-strong: rgba(255,255,255,0.58);
+      --shadow: 0 20px 60px rgba(72, 101, 163, 0.14);
+      --blue: #3f7cff;
+      --blue-soft: rgba(63,124,255,0.12);
+      --green: #34d399;
+      --pink: #f472b6;
+      --cyan: #56ccf2;
+      --orange: #f7b267;
     }
 
     * { box-sizing: border-box; }
@@ -29,15 +31,16 @@
       margin: 0;
       min-height: 100%;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(89, 215, 255, 0.18), transparent 24%),
-        radial-gradient(circle at bottom right, rgba(97, 225, 182, 0.16), transparent 28%),
-        linear-gradient(180deg, #fbfdff 0%, var(--bg) 48%, #eef3fb 100%);
       color: var(--text);
       overflow-x: hidden;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(86,204,242,0.28), transparent 28%),
+        radial-gradient(circle at 90% 18%, rgba(244,114,182,0.18), transparent 24%),
+        radial-gradient(circle at 20% 88%, rgba(52,211,153,0.18), transparent 26%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 54%, #eef3ff 100%);
     }
 
-    .bg-canvas {
+    .ambient {
       position: fixed;
       inset: 0;
       pointer-events: none;
@@ -45,44 +48,80 @@
       overflow: hidden;
     }
 
-    .bg-grid {
+    .orb {
       position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(74, 105, 160, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(74, 105, 160, 0.06) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: radial-gradient(circle at center, black 32%, transparent 85%);
-      opacity: 0.45;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.35;
+      animation: float 18s ease-in-out infinite alternate;
     }
 
-    .block {
-      position: absolute;
-      border-radius: 22px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.78), rgba(221,231,255,0.55));
-      border: 1px solid rgba(255,255,255,0.75);
-      box-shadow: 0 16px 44px rgba(91, 118, 175, 0.16);
-      backdrop-filter: blur(10px);
-      animation: drift linear infinite alternate;
+    .orb.one {
+      width: 320px;
+      height: 320px;
+      top: -60px;
+      left: -40px;
+      background: rgba(86,204,242,0.45);
     }
 
-    .block.a { width: 180px; height: 180px; top: 8%; left: 6%; animation-duration: 16s; }
-    .block.b { width: 120px; height: 120px; top: 18%; right: 10%; animation-duration: 18s; animation-delay: -5s; }
-    .block.c { width: 220px; height: 220px; bottom: 12%; left: 10%; animation-duration: 20s; animation-delay: -8s; }
-    .block.d { width: 140px; height: 140px; bottom: 20%; right: 12%; animation-duration: 14s; animation-delay: -2s; }
-    .block.e { width: 80px; height: 80px; top: 44%; left: 50%; animation-duration: 12s; animation-delay: -4s; }
+    .orb.two {
+      width: 280px;
+      height: 280px;
+      top: 12%;
+      right: -70px;
+      background: rgba(244,114,182,0.28);
+      animation-duration: 22s;
+    }
+
+    .orb.three {
+      width: 260px;
+      height: 260px;
+      bottom: -80px;
+      left: 14%;
+      background: rgba(52,211,153,0.26);
+      animation-duration: 20s;
+    }
+
+    .glass-block {
+      position: absolute;
+      border-radius: 30px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.48), rgba(255,255,255,0.18));
+      border: 1px solid rgba(255,255,255,0.55);
+      box-shadow: 0 18px 48px rgba(102, 126, 184, 0.14);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+
+    .glass-block.a { width: 180px; height: 180px; top: 8%; left: 7%; }
+    .glass-block.b { width: 110px; height: 110px; top: 24%; right: 10%; animation-duration: 16s; }
+    .glass-block.c { width: 220px; height: 220px; bottom: 10%; right: 12%; animation-duration: 24s; }
+    .glass-block.d { width: 80px; height: 80px; bottom: 26%; left: 50%; animation-duration: 14s; }
+
+    @keyframes float {
+      from { transform: translate3d(0,0,0) scale(1); }
+      to { transform: translate3d(28px,-16px,0) scale(1.08); }
+    }
 
     @keyframes drift {
-      from { transform: translate3d(0, 0, 0) rotate(0deg); }
-      to { transform: translate3d(22px, -28px, 0) rotate(8deg); }
+      from { transform: translate3d(0,0,0) rotate(0deg); }
+      to { transform: translate3d(18px,-24px,0) rotate(8deg); }
     }
 
     .wrap {
       position: relative;
       z-index: 1;
-      max-width: 1180px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 26px 20px 68px;
+      padding: 26px 20px 72px;
+    }
+
+    .glass {
+      background: linear-gradient(180deg, var(--glass-strong), var(--glass));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px) saturate(160%);
+      -webkit-backdrop-filter: blur(22px) saturate(160%);
     }
 
     .topbar {
@@ -92,11 +131,7 @@
       gap: 16px;
       margin-bottom: 26px;
       padding: 14px 18px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.62);
-      border: 1px solid rgba(255,255,255,0.65);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
+      border-radius: 24px;
     }
 
     .brand {
@@ -107,21 +142,21 @@
     }
 
     .brand-mark {
-      width: 44px;
-      height: 44px;
+      width: 46px;
+      height: 46px;
       border-radius: 16px;
       display: grid;
       place-items: center;
-      font-size: 21px;
-      background: linear-gradient(135deg, var(--blue), var(--cyan));
-      color: white;
-      box-shadow: 0 14px 34px rgba(79, 124, 255, 0.26);
+      font-size: 22px;
+      color: #fff;
+      background: linear-gradient(135deg, #4f7cff, #56ccf2);
+      box-shadow: 0 12px 34px rgba(79,124,255,0.24);
     }
 
     .brand-title {
       font-size: 1rem;
       font-weight: 800;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
     }
 
     .brand-sub {
@@ -137,44 +172,40 @@
     }
 
     .nav-links a {
-      color: var(--text);
       text-decoration: none;
-      padding: 9px 12px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.6);
-      border: 1px solid rgba(90, 116, 168, 0.1);
-      font-size: 0.92rem;
+      color: var(--text);
       font-weight: 600;
-      transition: transform .16s ease, background .16s ease;
+      font-size: 0.92rem;
+      padding: 9px 13px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(255,255,255,0.55);
+      transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
     }
 
     .nav-links a:hover {
       transform: translateY(-1px);
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.74);
+      box-shadow: 0 10px 24px rgba(104, 132, 195, 0.12);
     }
 
     .hero {
-      padding: 36px 34px;
-      border-radius: 30px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(250,252,255,0.7));
-      border: 1px solid rgba(255,255,255,0.7);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(16px);
-      position: relative;
+      padding: 34px 30px;
+      border-radius: 34px;
       overflow: hidden;
+      position: relative;
+      margin-bottom: 26px;
     }
 
-    .hero::after {
+    .hero::before {
       content: "";
       position: absolute;
-      right: -60px;
-      top: -40px;
-      width: 220px;
-      height: 220px;
-      border-radius: 40px;
-      background: linear-gradient(135deg, rgba(89, 215, 255, 0.22), rgba(79, 124, 255, 0.16));
-      transform: rotate(18deg);
-      filter: blur(8px);
+      inset: 0;
+      background:
+        radial-gradient(circle at 82% 16%, rgba(255,255,255,0.6), transparent 22%),
+        linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02));
+      pointer-events: none;
     }
 
     .eyebrow {
@@ -183,29 +214,30 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(79,124,255,0.1);
-      border: 1px solid rgba(79,124,255,0.16);
+      background: rgba(255,255,255,0.42);
+      border: 1px solid rgba(255,255,255,0.65);
       color: var(--blue);
-      font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      font-size: 12px;
+      letter-spacing: .08em;
       text-transform: uppercase;
       margin-bottom: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(2.4rem, 6vw, 5rem);
-      line-height: 0.96;
-      letter-spacing: -0.05em;
-      max-width: 820px;
+      font-size: clamp(2.6rem, 6vw, 5.4rem);
+      line-height: .94;
+      letter-spacing: -0.055em;
+      max-width: 840px;
     }
 
     .lead {
       margin-top: 18px;
       max-width: 760px;
       color: var(--muted);
-      font-size: 1.04rem;
+      font-size: 1.05rem;
       line-height: 1.82;
     }
 
@@ -217,35 +249,39 @@
     }
 
     .btn {
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      text-decoration: none;
       padding: 13px 18px;
-      border-radius: 14px;
+      border-radius: 16px;
       font-weight: 800;
-      transition: transform .16s ease, opacity .16s ease;
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
     }
 
-    .btn:hover { transform: translateY(-1px); opacity: 0.98; }
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.98;
+    }
 
     .btn.primary {
-      background: linear-gradient(135deg, var(--blue), #6288ff);
-      color: white;
-      box-shadow: 0 14px 36px rgba(79, 124, 255, 0.24);
+      color: #fff;
+      background: linear-gradient(135deg, #4f7cff, #6798ff);
+      box-shadow: 0 14px 36px rgba(79,124,255,0.26);
     }
 
     .btn.secondary {
       color: var(--text);
-      background: rgba(255,255,255,0.72);
-      border: 1px solid rgba(90, 116, 168, 0.1);
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.65);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
     }
 
     .section-title {
       margin: 30px 0 14px;
-      font-size: 1.15rem;
-      color: var(--text);
+      font-size: 1.12rem;
+      font-weight: 700;
       letter-spacing: -0.01em;
     }
 
@@ -259,40 +295,36 @@
       grid-column: span 6;
       position: relative;
       padding: 22px;
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.84), rgba(248,250,255,0.72));
-      border: 1px solid rgba(255,255,255,0.75);
-      box-shadow: var(--shadow);
+      border-radius: 28px;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
       overflow: hidden;
-      backdrop-filter: blur(14px);
-      transition: transform .18s ease, box-shadow .18s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 24px 70px rgba(42, 66, 118, 0.16);
     }
 
     .card::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.95), transparent 70%);
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.22), transparent 50%);
+      pointer-events: none;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 26px 70px rgba(72, 101, 163, 0.16);
+      background: linear-gradient(180deg, rgba(255,255,255,0.64), rgba(255,255,255,0.44));
     }
 
     .card-tag {
       display: inline-flex;
       padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(79,124,255,0.08);
-      color: var(--blue);
-      border: 1px solid rgba(79,124,255,0.1);
       font-size: 12px;
       font-weight: 700;
       margin-bottom: 10px;
+      color: var(--blue);
+      background: rgba(255,255,255,0.42);
+      border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
     }
 
     .card h3 {
@@ -304,13 +336,13 @@
     .card p {
       margin: 0 0 18px;
       color: var(--muted);
-      line-height: 1.75;
       font-size: 0.97rem;
+      line-height: 1.75;
     }
 
     .card a {
-      color: var(--blue);
       text-decoration: none;
+      color: var(--blue);
       font-weight: 800;
     }
 
@@ -319,39 +351,38 @@
     .footer {
       margin-top: 32px;
       text-align: center;
-      color: #7a89a6;
+      color: #7a88a4;
       font-size: 0.92rem;
     }
 
     @media (max-width: 920px) {
-      .card { grid-column: span 12; }
       .topbar {
         flex-direction: column;
         align-items: flex-start;
       }
-      .hero {
-        padding: 28px 22px;
-      }
+      .card { grid-column: span 12; }
+      .hero { padding: 28px 22px; }
     }
   </style>
 </head>
 <body>
-  <div class="bg-canvas">
-    <div class="bg-grid"></div>
-    <div class="block a"></div>
-    <div class="block b"></div>
-    <div class="block c"></div>
-    <div class="block d"></div>
-    <div class="block e"></div>
+  <div class="ambient">
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+    <div class="orb three"></div>
+    <div class="glass-block a"></div>
+    <div class="glass-block b"></div>
+    <div class="glass-block c"></div>
+    <div class="glass-block d"></div>
   </div>
 
   <div class="wrap">
-    <div class="topbar">
+    <div class="topbar glass">
       <div class="brand">
         <div class="brand-mark">🦞</div>
         <div>
           <div class="brand-title">Parklan Clawhub</div>
-          <div class="brand-sub">A cleaner home for apps, experiments, and useful tools.</div>
+          <div class="brand-sub">A glass-inspired home for apps, tools, and experiments.</div>
         </div>
       </div>
       <div class="nav-links">
@@ -362,12 +393,12 @@
       </div>
     </div>
 
-    <section class="hero">
-      <div class="eyebrow">Parklan Clawhub</div>
-      <h1>Useful projects, small tools, and AI experiments — in one polished place.</h1>
+    <section class="hero glass">
+      <div class="eyebrow">iOS-inspired glass style</div>
+      <h1>Parklan Clawhub — a softer, glassy place for all your projects.</h1>
       <p class="lead">
-        Welcome to your project hub. This page keeps everything easy to navigate: transport tools, shared utilities,
-        the Cantonese ebook narration demo, and market experiments — all in a lighter, more premium layout.
+        Inspired by the layered translucency and floating feel of modern mobile glass UI, this landing page keeps your
+        projects easy to browse while feeling lighter, smoother, and more premium.
       </p>
       <div class="hero-actions">
         <a class="btn primary" href="ebook-canto-poc/">Open ebook narration</a>
@@ -377,45 +408,37 @@
 
     <h2 class="section-title">Projects</h2>
     <section class="cards">
-      <article class="card">
+      <article class="card glass">
         <div class="card-tag">Transport</div>
         <h3>722 ETA</h3>
-        <p>
-          A fast Citybus route lookup page built for quick checking with a lightweight mobile-first interface.
-        </p>
+        <p>A fast Citybus route lookup page for quick checking with a lightweight mobile-first interface.</p>
         <a href="722-eta/">Open project →</a>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <div class="card-tag">Utility</div>
         <h3>Lunch Wallet</h3>
-        <p>
-          A simple shared wallet tool for lunch spending, balances, and lightweight group cost tracking.
-        </p>
+        <p>A simple shared wallet tool for lunch spending, balances, and lightweight group cost tracking.</p>
         <a href="lunch-wallet/">Open project →</a>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <div class="card-tag">AI Storytelling</div>
         <h3>Ebook Cantonese Narration</h3>
-        <p>
-          Import text or EPUB content, rewrite it into spoken Cantonese, and test playback in a live narration demo.
-        </p>
+        <p>Import text or EPUB content, rewrite it into spoken Cantonese, and test playback in a live narration demo.</p>
         <a href="ebook-canto-poc/">Open project →</a>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <div class="card-tag">Market</div>
         <h3>US Market Radar</h3>
-        <p>
-          A compact dashboard experiment for tracking market context, structure, and quick-glance signals.
-        </p>
+        <p>A compact dashboard experiment for tracking market context, structure, and quick-glance signals.</p>
         <a href="us-market-radar/">Open project →</a>
       </article>
     </section>
 
     <div class="footer">
-      Parklan Clawhub · refined landing page with animated block background.
+      Parklan Clawhub · iOS-inspired glass landing page with soft floating motion.
     </div>
   </div>
 </body>
