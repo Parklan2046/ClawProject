@@ -99,78 +99,17 @@
       -webkit-backdrop-filter: blur(20px) saturate(140%);
       background-color: rgba(18, 25, 48, 0.42);
     }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 26px;
-      padding: 14px 18px;
-      border-radius: 24px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .brand-mark {
-      width: 46px;
-      height: 46px;
-      border-radius: 16px;
+    .hero-mark {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
       display: grid;
       place-items: center;
-      font-size: 22px;
+      font-size: 26px;
       color: #fff;
       background: linear-gradient(135deg, #5b85ff, #67d9ff);
       box-shadow: 0 14px 36px rgba(91, 133, 255, 0.28);
-    }
-
-    .brand-title {
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: 0.01em;
-    }
-
-    .brand-sub {
-      color: var(--muted);
-      font-size: 0.88rem;
-      margin-top: 2px;
-    }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .nav-links a {
-      text-decoration: none;
-      color: var(--text);
-      font-weight: 600;
-      font-size: 0.92rem;
-      padding: 9px 13px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-    }
-
-    .nav-links a:hover {
-      transform: translateY(-1px);
-      background: rgba(255,255,255,0.12);
-      box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+      margin-bottom: 16px;
     }
 
     .hero {
@@ -366,10 +305,6 @@
     }
 
     @media (max-width: 920px) {
-      .topbar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
       .card { grid-column: span 12; }
       .hero { padding: 28px 22px; }
       .miniclawhub-inner { padding: 28px 22px; }
@@ -388,26 +323,9 @@
   </div>
 
   <div class="wrap">
-    <div class="topbar glass">
-      <div class="brand">
-        <div class="brand-mark">🦞</div>
-        <div>
-          <div class="brand-title">Parklan Clawhub</div>
-          <div class="brand-sub">A calm home for tools, experiments, and useful ideas.</div>
-        </div>
-      </div>
-      <div class="topbar-right">
-        <div class="nav-links">
-          <a href="722-eta/">722 ETA</a>
-          <a href="lunch-wallet/">Lunch Wallet</a>
-          <a href="ebook-canto-poc/">Ebook Demo</a>
-          <a href="us-market-radar/">US Market Radar</a>
-        </div>
-        <a class="private-icon" href="#" aria-label="Private Access" title="Private Access">🔒</a>
-      </div>
-    </div>
 
     <section class="hero glass">
+      <div class="hero-mark">🦞</div>
       <div class="eyebrow">Parklan Clawhub</div>
       <h1>Quiet tools, clear experiments, one polished home.</h1>
       <p class="lead">
