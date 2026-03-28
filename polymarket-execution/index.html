@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Polymarket Execution Dashboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg1:#070913; --bg2:#0d1222; --panel:rgba(18,24,44,.8); --line:rgba(255,255,255,.1);
+      --text:#eef5ff; --muted:#9caac9; --cyan:#66e3ff; --pink:#ff4db8; --green:#34d399; --gold:#ffd166; --red:#fb7185;
+      --shadow:0 24px 80px rgba(0,0,0,.38);
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--text);
+      background:radial-gradient(circle at top left, rgba(102,227,255,.08), transparent 22%), radial-gradient(circle at top right, rgba(255,77,184,.08), transparent 18%), linear-gradient(180deg,var(--bg2),var(--bg1));}
+    .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+    .glass{background:linear-gradient(180deg, rgba(20,28,52,.62), rgba(14,19,36,.4));border:1px solid var(--line);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);box-shadow:var(--shadow)}
+    .hero,.panel{border-radius:26px;padding:22px}.hero{margin-bottom:16px;position:relative;overflow:hidden}.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg, rgba(255,255,255,.06), transparent 45%),radial-gradient(circle at 85% 15%, rgba(102,227,255,.10), transparent 20%);pointer-events:none}
+    .badge{display:inline-flex;padding:7px 11px;border-radius:999px;background:rgba(255,77,184,.10);border:1px solid rgba(255,77,184,.22);color:#ffc7ea;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    h1{margin:14px 0 10px;font-size:clamp(2.1rem,5vw,4rem);line-height:.94;letter-spacing:-.05em;max-width:840px}
+    .lead{max-width:760px;color:var(--muted);line-height:1.8}.hint{color:var(--muted);font-size:.82rem;line-height:1.6;margin-top:10px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.section-title{margin:0 0 12px;font-size:1rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan)}
+    .sub{color:var(--muted);font-size:.9rem;line-height:1.6}.row,.row3{display:grid;gap:10px}.row{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr 1fr 1fr}
+    label{display:block;color:var(--muted);font-size:.84rem;margin:10px 0 6px} input,select,textarea{width:100%;background:rgba(255,255,255,.05);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:11px 12px;font:inherit;outline:none} textarea{min-height:90px;resize:vertical}
+    button{border:none;border-radius:14px;padding:12px 14px;background:rgba(255,255,255,.08);color:var(--text);font:inherit;font-weight:900;cursor:pointer;border:1px solid rgba(255,255,255,.08)} button.primary{background:linear-gradient(135deg, rgba(102,227,255,.18), rgba(255,77,184,.14));border-color:rgba(102,227,255,.22)} button.green{background:linear-gradient(135deg, rgba(52,211,153,.18), rgba(102,227,255,.12));border-color:rgba(52,211,153,.22)} button.red{background:linear-gradient(135deg, rgba(251,113,133,.18), rgba(255,77,184,.12));border-color:rgba(251,113,133,.22)} button[disabled]{opacity:.45;cursor:not-allowed}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.status{margin-top:10px;color:var(--muted);font-size:.9rem;white-space:pre-wrap;line-height:1.6}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{padding:14px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)} .k{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em}.v{margin-top:6px;font-weight:900;font-size:1.15rem}
+    .mode-pill{display:inline-flex;padding:7px 10px;border-radius:999px;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.mode-paper{background:rgba(102,227,255,.10);border:1px solid rgba(102,227,255,.22);color:var(--cyan)} .mode-preview{background:rgba(255,209,102,.10);border:1px solid rgba(255,209,102,.22);color:var(--gold)} .mode-live{background:rgba(251,113,133,.10);border:1px solid rgba(251,113,133,.22);color:var(--red)}
+    .log{display:grid;gap:10px;margin-top:12px}.log-item{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    @media (max-width: 920px){.grid,.row,.row3,.stat-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero glass">
+      <div class="badge">Phase 1 · Execution-ready private dashboard</div>
+      <h1>Polymarket Execution Dashboard</h1>
+      <div class="lead">A safer control surface for moving from paper strategy to execution. This phase is about connection, order preview, rule settings, and kill-switch design — not unattended live betting.</div>
+      <div class="hint">Live auto trading remains intentionally off by default. Start in <strong>Paper</strong> or <strong>Preview</strong> mode first.</div>
+    </section>
+
+    <section class="grid">
+      <div class="panel glass">
+        <div class="section-title">Account Connection</div>
+        <div class="sub">Private execution plumbing starts here. This page is prepared for wallet/API connection, but no live credentials are stored in this first version.</div>
+        <div class="row">
+          <div>
+            <label for="walletAddress">Wallet / Address</label>
+            <input id="walletAddress" placeholder="0x... or connection profile" />
+          </div>
+          <div>
+            <label for="authMode">Auth Method</label>
+            <select id="authMode">
+              <option value="wallet">Wallet signing</option>
+              <option value="api">API / server key</option>
+              <option value="manual">Manual later</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="saveConnBtn">Save Connection Notes</button>
+          <button id="testConnBtn">Test Placeholder</button>
+        </div>
+        <div class="status" id="connStatus">No live account connected yet.</div>
+      </div>
+
+      <div class="panel glass">
+        <div class="section-title">Execution Mode</div>
+        <div class="sub">Use paper or preview until your strategy survives enough rounds.</div>
+        <div class="row3">
+          <div>
+            <label for="execMode">Mode</label>
+            <select id="execMode">
+              <option value="paper">Paper</option>
+              <option value="preview">Preview only</option>
+              <option value="live">Live (disabled)</option>
+            </select>
+          </div>
+          <div>
+            <label for="killSwitch">Kill Switch</label>
+            <select id="killSwitch">
+              <option value="on">ON</option>
+              <option value="off">OFF</option>
+            </select>
+          </div>
+          <div>
+            <label>Current State</label>
+            <div class="mode-pill mode-paper" id="modeBadge">Paper</div>
+          </div>
+        </div>
+        <div class="hint">Live mode is intentionally not active in Phase 1.</div>
+      </div>
+
+      <div class="panel glass">
+        <div class="section-title">Risk Controls</div>
+        <div class="row3">
+          <div>
+            <label for="stake">Stake ($)</label>
+            <input id="stake" type="number" step="0.01" value="1.00" />
+          </div>
+          <div>
+            <label for="takeProfit">Take Profit %</label>
+            <input id="takeProfit" type="number" step="1" value="25" />
+          </div>
+          <div>
+            <label for="stopLoss">Stop Loss %</label>
+            <input id="stopLoss" type="number" step="1" value="20" />
+          </div>
+        </div>
+        <div class="row3">
+          <div>
+            <label for="maxDailyLoss">Max Daily Loss ($)</label>
+            <input id="maxDailyLoss" type="number" step="0.01" value="10" />
+          </div>
+          <div>
+            <label for="maxConLoss">Max Consecutive Losses</label>
+            <input id="maxConLoss" type="number" step="1" value="3" />
+          </div>
+          <div>
+            <label for="maxTrades">Max Trades / Session</label>
+            <input id="maxTrades" type="number" step="1" value="8" />
+          </div>
+        </div>
+        <div class="hint">Default stop loss is set to <strong>20%</strong>, not 80%, because 80% behaves too much like near-full loss.</div>
+      </div>
+
+      <div class="panel glass">
+        <div class="section-title">Live Market Snapshot</div>
+        <div class="sub">Pulls real Polymarket data through the existing backend. Useful for previewing whether an order would be placed.</div>
+        <div class="row">
+          <div>
+            <label for="marketUrl">Market URL / current-btc-5m</label>
+            <input id="marketUrl" value="current-btc-5m" />
+          </div>
+          <div>
+            <label for="side">Side</label>
+            <select id="side"><option value="Up">YES / Up</option><option value="Down">NO / Down</option></select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="fetchBtn">Fetch Current Market</button>
+          <button id="previewBtn">Build Order Preview</button>
+        </div>
+        <div class="stat-grid" style="margin-top:12px;">
+          <div class="stat"><div class="k">Current Price</div><div class="v mono" id="currentPrice">-</div></div>
+          <div class="stat"><div class="k">Best Bid</div><div class="v mono" id="bestBid">-</div></div>
+          <div class="stat"><div class="k">Best Ask</div><div class="v mono" id="bestAsk">-</div></div>
+          <div class="stat"><div class="k">Spread</div><div class="v mono" id="spread">-</div></div>
+        </div>
+        <div class="status" id="marketStatus">No market data loaded.</div>
+      </div>
+    </section>
+
+    <section class="grid" style="margin-top:16px;">
+      <div class="panel glass">
+        <div class="section-title">Order Preview</div>
+        <div class="sub">What the engine would do if execution were enabled.</div>
+        <div class="status" id="orderPreview">No preview built yet.</div>
+      </div>
+
+      <div class="panel glass">
+        <div class="section-title">Execution Log</div>
+        <div class="sub">Preview log only in Phase 1.</div>
+        <div class="log" id="execLog"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const KEY = 'poly_exec_phase1_v1';
+    let lastMarket = null;
+
+    function $(id){ return document.getElementById(id); }
+    function num(v, d=0){ const n = parseFloat(v); return Number.isFinite(n) ? n : d; }
+    function money(v){ return `$${v.toFixed(2)}`; }
+
+    function saveState() {
+      const state = {
+        walletAddress: $('walletAddress').value.trim(),
+        authMode: $('authMode').value,
+        execMode: $('execMode').value,
+        killSwitch: $('killSwitch').value,
+        stake: $('stake').value,
+        takeProfit: $('takeProfit').value,
+        stopLoss: $('stopLoss').value,
+        maxDailyLoss: $('maxDailyLoss').value,
+        maxConLoss: $('maxConLoss').value,
+        maxTrades: $('maxTrades').value,
+        marketUrl: $('marketUrl').value.trim(),
+        side: $('side').value,
+      };
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        Object.entries(s).forEach(([k,v]) => { if ($(k)) $(k).value = v; });
+      } catch {}
+    }
+
+    function renderMode() {
+      const mode = $('execMode').value;
+      const badge = $('modeBadge');
+      badge.textContent = mode === 'live' ? 'Live Disabled' : mode[0].toUpperCase() + mode.slice(1);
+      badge.className = 'mode-pill ' + (mode === 'paper' ? 'mode-paper' : mode === 'preview' ? 'mode-preview' : 'mode-live');
+    }
+
+    async function fetchMarket() {
+      $('marketStatus').textContent = 'Loading real market data...';
+      try {
+        const url = '/strategy-api/polymarket?url=' + encodeURIComponent($('marketUrl').value.trim());
+        const res = await fetch(url, { cache: 'no-store' });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Unable to fetch market');
+        lastMarket = data;
+        const side = $('side').value;
+        $('currentPrice').textContent = data.prices?.[side] != null ? Number(data.prices[side]).toFixed(3) : '-';
+        $('bestBid').textContent = data.bestBid != null ? Number(data.bestBid).toFixed(3) : '-';
+        $('bestAsk').textContent = data.bestAsk != null ? Number(data.bestAsk).toFixed(3) : '-';
+        $('spread').textContent = data.spread != null ? Number(data.spread).toFixed(3) : '-';
+        $('marketStatus').innerHTML = `<strong>${data.title || data.slug}</strong><br>${data.closed ? 'Closed' : 'Active'} · ${data.slug}<br>end ${data.endDate || '-'} · last ${data.lastTradePrice ?? '-'}`;
+      } catch (e) {
+        $('marketStatus').textContent = e.message;
+      }
+    }
+
+    function appendLog(text) {
+      const list = $('execLog');
+      const div = document.createElement('div');
+      div.className = 'log-item';
+      div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong><div class="sub">${text}</div>`;
+      list.prepend(div);
+      while (list.children.length > 12) list.removeChild(list.lastChild);
+    }
+
+    function buildPreview() {
+      const mode = $('execMode').value;
+      const kill = $('killSwitch').value;
+      if (!lastMarket) {
+        $('orderPreview').textContent = 'Fetch market data first.';
+        return;
+      }
+      const side = $('side').value;
+      const price = num(lastMarket.prices?.[side], 0);
+      const stake = num($('stake').value, 1);
+      const tp = num($('takeProfit').value, 25);
+      const sl = num($('stopLoss').value, 20);
+      const shares = price > 0 ? stake / price : 0;
+      const tpPrice = price * (1 + tp / 100);
+      const slPrice = price * (1 - sl / 100);
+      const lines = [
+        `Mode: ${mode}`,
+        `Kill switch: ${kill}`,
+        `Market: ${lastMarket.slug}`,
+        `Side: ${side}`,
+        `Estimated entry: ${price.toFixed(3)}`,
+        `Stake: ${money(stake)}`,
+        `Estimated shares: ${shares.toFixed(4)}`,
+        `TP target: ${tpPrice.toFixed(3)} (+${tp}%)`,
+        `SL target: ${Math.max(0, slPrice).toFixed(3)} (-${sl}%)`,
+      ];
+      if (mode === 'live') lines.push('Live mode is intentionally disabled in Phase 1.');
+      if (kill === 'on') lines.push('Kill switch is ON — no execution should happen.');
+      $('orderPreview').innerHTML = lines.map(x => `<div>${x}</div>`).join('');
+      appendLog(`Preview built for ${side} on ${lastMarket.slug} at ${price.toFixed(3)} in ${mode} mode.`);
+    }
+
+    $('saveConnBtn').onclick = () => { saveState(); $('connStatus').textContent = 'Connection notes saved locally for this browser.'; };
+    $('testConnBtn').onclick = () => { $('connStatus').textContent = 'Phase 1 only: no real Polymarket account connection is active yet.'; };
+    $('execMode').onchange = renderMode;
+    $('fetchBtn').onclick = fetchMarket;
+    $('previewBtn').onclick = buildPreview;
+    ['walletAddress','authMode','execMode','killSwitch','stake','takeProfit','stopLoss','maxDailyLoss','maxConLoss','maxTrades','marketUrl','side'].forEach(id => { if ($(id)) $(id).addEventListener('change', saveState); });
+
+    loadState();
+    renderMode();
+    $('execLog').innerHTML = '<div class="log-item"><strong>Ready</strong><div class="sub">Phase 1 dashboard loaded. Live execution remains off.</div></div>';
+    fetchMarket();
+  </script>
+</body>
+</html>
