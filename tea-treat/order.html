@@ -30,12 +30,26 @@ textarea{resize:vertical;min-height:50px}
 .menu-row{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:var(--card2);border:1.5px solid var(--border);cursor:pointer;transition:all .2s;user-select:none}
 .menu-row:hover{border-color:var(--accent)}
 .menu-row.selected{border-color:var(--accent);background:rgba(255,107,157,.08)}
-.menu-row .item-name{flex:1;font-size:.92rem;font-weight:600}
+.menu-row .item-info{flex:1;min-width:0}
+.menu-row .item-name{font-size:.92rem;font-weight:600}
 .menu-row .item-price{color:var(--gold);font-size:.85rem;font-weight:700;white-space:nowrap}
-.menu-row .qty-controls{display:flex;align-items:center;gap:6px}
+.menu-row .qty-controls{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .qty-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .qty-btn:active{background:var(--accent);color:#fff}
 .qty-num{font-weight:800;min-width:20px;text-align:center;font-size:.95rem}
+
+/* Options panel */
+.options-panel{margin-top:6px;padding:10px 12px;border-radius:10px;background:rgba(77,232,255,.06);border:1px solid rgba(77,232,255,.12);display:none}
+.options-panel.show{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.opt-group{margin-bottom:8px}
+.opt-group:last-child{margin-bottom:0}
+.opt-title{font-size:.78rem;font-weight:700;color:var(--cyan);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.opt-title .required{color:var(--accent);font-size:.7rem}
+.opt-choices{display:flex;gap:6px;flex-wrap:wrap}
+.opt-chip{padding:5px 10px;border-radius:8px;border:1px solid var(--border);font-size:.78rem;cursor:pointer;transition:all .2s;background:transparent;color:var(--text)}
+.opt-chip:hover{border-color:var(--cyan)}
+.opt-chip.selected{border-color:var(--cyan);background:rgba(77,232,255,.15);color:var(--cyan);font-weight:700}
 
 .submit-btn{width:100%;padding:16px;border-radius:14px;border:none;font-size:1.1rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;transition:all .2s}
 .submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(196,77,255,.3)}
@@ -101,11 +115,11 @@ textarea{resize:vertical;min-height:50px}
 
 <script>
 const tid=location.pathname.split('/order/').pop()||location.pathname.split('/').pop();
-let treat=null, quantities={};
+let treat=null, quantities={}, selectedOptions={};
 
 async function init(){
   try{
-    const res=await fetch(`/tea-treat/api/treat/${tid}`);
+    const res=await fetch('/tea-treat/api/treat/'+tid);
     const data=await res.json();
     if(!data.ok)throw new Error(data.error);
     treat=data.treat;
@@ -120,62 +134,92 @@ function render(){
   document.getElementById('orderPage').style.display='block';
   document.getElementById('treatTitle').textContent=treat.title||'請食 Tea';
   document.getElementById('treatRestaurant').textContent=treat.restaurant||'';
-  let meta=[];
-  if(treat.created_by)meta.push(`由 ${treat.created_by} 請`);
-  if(treat.deadline)meta.push(`截止 ${treat.deadline}`);
+  var meta=[];
+  if(treat.created_by)meta.push('由 '+treat.created_by+' 請');
+  if(treat.deadline)meta.push('截止 '+treat.deadline);
   if(treat.platform)meta.push(treat.platform);
   document.getElementById('treatMeta').textContent=meta.join(' · ');
   if(treat.note){
     document.getElementById('noteCard').style.display='block';
     document.getElementById('treatNote').textContent=treat.note;
   }
+  document.getElementById('summaryLink').href='/tea-treat/summary/'+tid;
+  document.getElementById('summaryLink2').href='/tea-treat/summary/'+tid;
 
-  // Summary link
-  document.getElementById('summaryLink').href=`/tea-treat/summary/${tid}`;
-  document.getElementById('summaryLink2').href=`/tea-treat/summary/${tid}`;
-
-  // Menu
-  const grid=document.getElementById('menuGrid');
+  var grid=document.getElementById('menuGrid');
   grid.innerHTML='';
-  (treat.menu||[]).forEach((item,i)=>{
+  (treat.menu||[]).forEach(function(item,i){
     quantities[i]=0;
-    const div=document.createElement('div');
-    div.className='menu-row';div.id=`row-${i}`;
-    div.innerHTML=`
-      <div class="item-name">${item.name}</div>
-      <div class="item-price">$${item.price}</div>
-      <div class="qty-controls">
-        <button class="qty-btn" onclick="chgQty(${i},-1)">−</button>
-        <span class="qty-num" id="qty-${i}">0</span>
-        <button class="qty-btn" onclick="chgQty(${i},1)">+</button>
-      </div>`;
+    selectedOptions[i]={};
+    var div=document.createElement('div');
+    div.className='menu-row';div.id='row-'+i;
+    var hasOpts=item.options&&item.options.length>0;
+    div.innerHTML='<div class="item-info"><div class="item-name">'+item.name+(hasOpts?' ⚙️':'')+'</div><div class="item-price">$'+item.price+'</div></div><div class="qty-controls"><button class="qty-btn" onclick="chgQty('+i+',-1)">−</button><span class="qty-num" id="qty-'+i+'">0</span><button class="qty-btn" onclick="chgQty('+i+',1)">+</button></div>';
+
+    // Options panel
+    if(hasOpts){
+      var optPanel=document.createElement('div');
+      optPanel.className='options-panel';optPanel.id='opts-'+i;
+      item.options.forEach(function(group,gi){
+        var gDiv=document.createElement('div');
+        gDiv.className='opt-group';
+        gDiv.innerHTML='<div class="opt-title">'+group.title+(group.required?'<span class="required">必選</span>':'')+'</div>';
+        var choicesDiv=document.createElement('div');
+        choicesDiv.className='opt-choices';
+        group.choices.forEach(function(choice,ci){
+          var chip=document.createElement('span');
+          chip.className='opt-chip';
+          chip.textContent=choice.name+(choice.price!=='0'&&choice.price?' +$'+choice.price:'');
+          chip.onclick=function(){
+            // Deselect siblings
+            choicesDiv.querySelectorAll('.opt-chip').forEach(function(c){c.classList.remove('selected')});
+            chip.classList.add('selected');
+            if(!selectedOptions[i])selectedOptions[i]={};
+            selectedOptions[i][group.title]=choice.name;
+          };
+          choicesDiv.appendChild(chip);
+        });
+        gDiv.appendChild(choicesDiv);
+        optPanel.appendChild(gDiv);
+      });
+      div.appendChild(optPanel);
+    }
     grid.appendChild(div);
   });
 
   // Load existing order count
-  fetch(`/tea-treat/api/orders/${tid}`).then(r=>r.json()).then(d=>{
-    if(d.ok)document.getElementById('orderCount').textContent=`${d.orders.length} 份`;
+  fetch('/tea-treat/api/orders/'+tid).then(function(r){return r.json()}).then(function(d){
+    if(d.ok)document.getElementById('orderCount').textContent=d.orders.length+' 份';
   });
 }
 
 function chgQty(i,d){
   quantities[i]=Math.max(0,(quantities[i]||0)+d);
-  document.getElementById(`qty-${i}`).textContent=quantities[i];
-  const row=document.getElementById(`row-${i}`);
+  document.getElementById('qty-'+i).textContent=quantities[i];
+  var row=document.getElementById('row-'+i);
   row.classList.toggle('selected',quantities[i]>0);
+  // Show/hide options panel
+  var opts=document.getElementById('opts-'+i);
+  if(opts){
+    if(quantities[i]>0)opts.classList.add('show');
+    else opts.classList.remove('show');
+  }
 }
 
 async function submitOrder(){
-  const name=document.getElementById('orderName').value.trim();
-  const remark=document.getElementById('orderRemark').value.trim();
-  const errEl=document.getElementById('error');
-  const btn=document.getElementById('submitBtn');
+  var name=document.getElementById('orderName').value.trim();
+  var remark=document.getElementById('orderRemark').value.trim();
+  var errEl=document.getElementById('error');
+  var btn=document.getElementById('submitBtn');
   errEl.textContent='';
 
-  const items=[];
-  Object.entries(quantities).forEach(([i,qty])=>{
+  var items=[];
+  Object.keys(quantities).forEach(function(i){
+    var qty=quantities[i];
     if(qty>0&&treat.menu[i]){
-      items.push({name:treat.menu[i].name,price:treat.menu[i].price,qty});
+      var opts=selectedOptions[i]||{};
+      var optsStr=Object.entries(opts).map(function(e){return e[0]+':'+e[1]}).join(', ');
+      items.push({name:treat.menu[i].name,price:treat.menu[i].price,qty:qty,options:optsStr||''});
     }
   });
 
@@ -184,15 +228,15 @@ async function submitOrder(){
 
   btn.disabled=true;btn.textContent='⏳ 提交中...';
   try{
-    const res=await fetch(`/tea-treat/api/order/${tid}`,{
+    var res=await fetch('/tea-treat/api/order/'+tid,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name,items,remark})
+      body:JSON.stringify({name:name,items:items,remark:remark})
     });
-    const data=await res.json();
+    var data=await res.json();
     if(!data.ok)throw new Error(data.error);
     document.getElementById('orderPage').style.display='none';
     document.getElementById('successPage').style.display='block';
-    document.getElementById('successMsg').textContent=`${name}，你揀咗 ${items.length} 樣嘢`;
+    document.getElementById('successMsg').textContent=name+'，你揀咗 '+items.length+' 樣嘢';
   }catch(e){errEl.textContent='❌ '+e.message;}
   finally{btn.disabled=false;btn.textContent='✅ 確認落單';}
 }

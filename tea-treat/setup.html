@@ -257,7 +257,7 @@ function copyLink(){
 }
 
 /* ---- Bookmarklet & Import ---- */
-const BOOKMARKLET_CODE = `javascript:(function(){var items=[];document.querySelectorAll('[data-testid*=product],[class*=product-card],[class*=ProductCard]').forEach(function(el){var name=el.querySelector('[class*=name],[class*=title],h3,h4')?.innerText?.trim();var price=el.querySelector('[class*=price],[class*=Price]')?.innerText?.replace(/[^0-9.]/g,'');if(name)items.push({name:name,price:price||''});});if(!items.length){document.querySelectorAll('li,article,div').forEach(function(el){var t=el.innerText||'';var m=t.match(/(.{2,30})\\n.*?\\$(\\d+)/);if(m&&!items.find(function(i){return i.name===m[1].trim()}))items.push({name:m[1].trim(),price:m[2]});});}if(items.length){var json=JSON.stringify(items);navigator.clipboard.writeText(json).then(function(){alert('已複製 '+items.length+' 個項目到剪貼簿！\\n去請食 Tea 頁面貼上就得。');});}else{alert('搵唔到 menu 項目，請確認你喺 Foodpanda 餐廳頁面。');}})();`;
+const BOOKMARKLET_CODE = `javascript:(async function(){var items=[];var cards=document.querySelectorAll('[data-testid*="product"],[class*="product-card"],[class*="ProductCard"]');if(!cards.length){cards=[];document.querySelectorAll('li,article,[class*="menu-item"]').forEach(function(el){if(el.querySelector('button,[class*="plus"],[class*="add"]'))cards.push(el);});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms)});}function closeModal(){var close=document.querySelector('[class*="close"],[class*="Close"],button[aria-label*="close"],button[aria-label*="Close"]');if(close){close.click();return;}var overlay=document.querySelector('[class*="backdrop"],[class*="overlay"]');if(overlay)overlay.click();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',keyCode:27}));}function extractOptions(){var groups=[];document.querySelectorAll('[class*="option-group"],[class*="OptionGroup"],[class*="modifier-group"],[class*="question"]').forEach(function(g){var titleEl=g.querySelector('[class*="title"],[class*="name"],h3,h4,strong');var title=titleEl?titleEl.innerText.trim():'';var required=g.innerText.indexOf('\\u5fc5\\u9078')>-1||g.innerText.toLowerCase().includes('required');var choices=[];g.querySelectorAll('[class*="choice"],[class*="option-item"],[class*="radio"],[class*="checkbox"],label').forEach(function(c){var nm=c.querySelector('[class*="name"],[class*="label"],span,p');var pr=c.querySelector('[class*="price"],[class*="Price"]');var name=nm?nm.innerText.trim():c.innerText.trim().split('\\n')[0];var price=pr?pr.innerText.replace(/[^0-9.]/g,''):'';if(name&&name!=='\\u5b8c\\u6210'&&name!=='\\u53d6\\u6d88')choices.push({name:name,price:price||'0'});});if(title&&choices.length)groups.push({title:title,required:required,choices:choices});});return groups;}for(var i=0;i<cards.length;i++){var card=cards[i];var nm=card.querySelector('[class*="name"],[class*="title"],h3,h4');var pr=card.querySelector('[class*="price"],[class*="Price"]');var name=nm?nm.innerText.trim():'';var price=pr?pr.innerText.replace(/[^0-9.]/g,''):'';if(!name)continue;var options=[];var clickTarget=card.querySelector('a,[role="button"],[class*="name"],[class*="title"]')||card;clickTarget.click();await sleep(1000);options=extractOptions();await sleep(200);closeModal();await sleep(500);items.push({name:name,price:price,options:options});}if(items.length){var json=JSON.stringify(items);navigator.clipboard.writeText(json).then(function(){var withOpts=items.filter(function(i){return i.options.length}).length;alert('\\u5df2\\u8907\\u88fd '+items.length+' \\u500b\\u9805\\u76ee\\uff08\\u542b '+withOpts+' \\u500b\\u6709 options\\uff09\\u5230\\u526a\\u8cbc\\u7c3f\\uff01');});}else{alert('\\u6435\\u5514\\u5230 menu \\u9805\\u76ee\\uff0c\\u8acb\\u78ba\\u8a8d\\u4f60\\u559a Foodpanda \\u9910\\u5ef3\\u9801\\u9762\\u3002');}})();`;
 
 function copyBookmarklet(){
   navigator.clipboard.writeText(BOOKMARKLET_CODE);
@@ -274,11 +274,36 @@ function importFromJson(){
     const items = JSON.parse(raw);
     if(!Array.isArray(items))throw new Error('must be array');
     const list=document.getElementById('menuList');list.innerHTML='';
-    items.forEach(m=>addMenuItem(m.name||'',m.price||''));
-    showToast(`已匯入 ${items.length} 個項目 ✅`);
+    items.forEach(m=>{
+      addMenuItem(m.name||'',m.price||'');
+      if(m.options && m.options.length){
+        const lastRow = list.querySelector('.menu-item:last-child');
+        if(lastRow){
+          const optDiv = document.createElement('div');
+          optDiv.style.cssText = 'font-size:.7rem;color:var(--cyan);margin-top:3px;padding:0 6px;line-height:1.4';
+          optDiv.textContent = '⚙️ ' + m.options.map(g=>g.title+'('+g.choices.map(c=>c.name).join('/')+')').join(' · ');
+          lastRow.appendChild(optDiv);
+          lastRow.dataset.options = JSON.stringify(m.options);
+        }
+      }
+    });
+    showToast('已匯入 ' + items.length + ' 個項目 ✅');
   }catch(e){
     showToast('JSON 格式錯誤：'+e.message);
   }
+}
+
+// Override getMenu to include options
+function getMenu(){
+  const items=[];
+  document.querySelectorAll('.menu-item').forEach(el=>{
+    const name=el.querySelector('.mi-name').value.trim();
+    const price=el.querySelector('.mi-price').value.trim();
+    let options=[];
+    try{ options=JSON.parse(el.dataset.options||'[]'); }catch{}
+    if(name)items.push({name,price:price||'?',options});
+  });
+  return items;
 }
 
 // Start with some menu items
