@@ -368,7 +368,7 @@
       const url = '/strategy-api/polymarket?url=' + encodeURIComponent(raw);
       $('marketStatus').textContent = 'Loading real market data...';
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Unable to fetch market');
         $('liveYes').textContent = data.prices?.Up != null ? Number(data.prices.Up).toFixed(2) : '-';
