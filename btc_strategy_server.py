@@ -60,6 +60,19 @@ def fetch_json(url: str):
         return json.loads(resp.read().decode('utf-8', 'ignore'))
 
 
+
+
+def fetch_clob_quote(token_id: str):
+    buy = fetch_json(f'https://clob.polymarket.com/price?token_id={parse.quote(token_id)}&side=BUY')
+    sell = fetch_json(f'https://clob.polymarket.com/price?token_id={parse.quote(token_id)}&side=SELL')
+    mid = fetch_json(f'https://clob.polymarket.com/midpoint?token_id={parse.quote(token_id)}')
+    out = {
+        'ask': float(buy.get('price')) if isinstance(buy, dict) and buy.get('price') is not None else None,
+        'bid': float(sell.get('price')) if isinstance(sell, dict) and sell.get('price') is not None else None,
+        'mid': float(mid.get('mid')) if isinstance(mid, dict) and mid.get('mid') is not None else None,
+    }
+    return out
+
 def send_json(h, payload, status=200):
     body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
     h.send_response(status)
@@ -107,11 +120,28 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception:
                     outcome_prices = [outcome_prices]
             prices = {}
+            clob_quotes = {}
+            token_ids = market.get('clobTokenIds') or []
+            if isinstance(token_ids, str):
+                try:
+                    token_ids = json.loads(token_ids)
+                except Exception:
+                    token_ids = [token_ids]
             for idx, out in enumerate(outcomes):
                 try:
                     prices[out] = float(outcome_prices[idx])
                 except Exception:
                     prices[out] = outcome_prices[idx] if idx < len(outcome_prices) else None
+                if idx < len(token_ids):
+                    try:
+                        q = fetch_clob_quote(str(token_ids[idx]))
+                        clob_quotes[out] = q
+                        if q.get('mid') is not None:
+                            prices[out] = q['mid']
+                    except Exception:
+                        pass
+            best_bid = max((q.get('bid') for q in clob_quotes.values() if q.get('bid') is not None), default=market.get('bestBid'))
+            best_ask = max((q.get('ask') for q in clob_quotes.values() if q.get('ask') is not None), default=market.get('bestAsk'))
             return send_json(self, {
                 'ok': True,
                 'slug': slug,
@@ -123,8 +153,9 @@ class Handler(BaseHTTPRequestHandler):
                 'endDate': market.get('endDate'),
                 'outcomes': outcomes,
                 'prices': prices,
-                'bestBid': market.get('bestBid'),
-                'bestAsk': market.get('bestAsk'),
+                'bestBid': best_bid,
+                'bestAsk': best_ask,
+                'clobQuotes': clob_quotes,
                 'lastTradePrice': market.get('lastTradePrice'),
                 'spread': market.get('spread'),
                 'volume': market.get('volume'),
