@@ -27,11 +27,10 @@ select{appearance:none}
 .platform-btn{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
 .platform-btn.active{border-color:var(--accent);background:rgba(255,107,157,.1);color:var(--accent)}
 
-/* Menu items */
 .menu-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-.menu-item{display:flex;gap:8px;align-items:center;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:8px 10px}
+.menu-item{display:flex;gap:8px;align-items:center;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;flex-wrap:wrap}
 .menu-item input{border:none;background:transparent;padding:6px;font-size:.88rem}
-.menu-item .mi-name{flex:2}
+.menu-item .mi-name{flex:2;min-width:120px}
 .menu-item .mi-price{flex:1;max-width:80px}
 .menu-item .mi-del{width:30px;height:30px;border-radius:8px;border:none;background:rgba(255,82,82,.1);color:var(--red);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .add-menu-btn{width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--border);background:transparent;color:var(--muted);font-size:.85rem;cursor:pointer;margin-top:8px;transition:all .2s}
@@ -46,10 +45,8 @@ select{appearance:none}
 .btn-primary{flex:1;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2))}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(196,77,255,.3)}
 .btn-primary:disabled{opacity:.5;cursor:wait}
-
 .error{color:var(--red);font-size:.85rem;margin-top:8px}
 
-/* Result */
 .result-card{background:var(--card);border:1px solid var(--green);border-radius:16px;padding:20px;text-align:center;animation:pop .4s ease}
 @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
 .result-card h2{color:var(--green);margin-bottom:12px}
@@ -57,7 +54,10 @@ select{appearance:none}
 .link-box input{flex:1;font-size:.85rem}
 .link-box button{padding:10px 14px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;white-space:nowrap}
 
-.qr-placeholder{margin-top:12px;padding:16px;background:var(--card2);border-radius:12px;color:var(--muted);font-size:.85rem}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:8px 14px;font-size:.84rem;z-index:200;display:none}
+.toast.show{display:block}
+
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:.75rem;font-weight:800;margin-right:6px}
 </style>
 </head>
 <body>
@@ -72,7 +72,7 @@ select{appearance:none}
       <label>活動名稱</label>
       <input id="title" value="請食 Tea ☕️" placeholder="例如：老細請食下午茶" />
       <label>餐廳名稱</label>
-      <input id="restaurant" placeholder="例如：麥當勞 / 好立克" />
+      <input id="restaurant" placeholder="例如：麥當勞 / Milk Cafe" />
       <label>平台</label>
       <div class="platform-row">
         <button class="platform-btn active" data-p="foodpanda" onclick="pickPlatform(this)">🐼 Foodpanda</button>
@@ -85,28 +85,39 @@ select{appearance:none}
 
     <div class="card">
       <h2>📋 Menu 項目</h2>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px">加齊所有可揀嘅嘢，名 + 價錢</p>
+
+      <!-- Bookmarklet Section -->
+      <div style="padding:14px;border-radius:12px;background:rgba(77,232,255,.06);border:1px solid rgba(77,232,255,.15);margin-bottom:12px">
+        <p style="font-size:.88rem;font-weight:700;color:var(--cyan);margin-bottom:8px">🔗 從 Foodpanda 自動提取 Menu（含冰度/甜度）</p>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:10px;line-height:1.5">
+          <span class="step-num">1</span>Bookmark Bar 顯示出嚟（Chrome 按 Ctrl+Shift+B）<br>
+          <span class="step-num">2</span>拖下面個按鈕去 Bookmark Bar<br>
+          <span class="step-num">3</span>喺 Foodpanda 餐廳頁 click 一下個 bookmark<br>
+          <span class="step-num">4</span>自動複製 JSON → 返嚟下面貼上
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a id="bookmarklet" href="javascript:void(0)" style="display:inline-block;padding:10px 16px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;font-size:.88rem;text-decoration:none;cursor:grab;user-select:none">🧋 提取 Menu</a>
+          <button class="sample-chip" onclick="copyBookmarklet()" style="border:1px solid var(--border);cursor:pointer">📋 複製 Code</button>
+        </div>
+        <p style="font-size:.72rem;color:var(--muted);margin-top:8px">⚠️ 如果 click 完冇反應，試下喺 Foodpanda 頁先 scroll 到 menu 區域再 click</p>
+      </div>
+
+      <!-- Quick Samples -->
       <div class="sample-row">
         <span class="sample-chip" onclick="loadSample('coffee')">☕ 咖啡店</span>
         <span class="sample-chip" onclick="loadSample('mcdonalds')">🍔 麥當勞</span>
-        <span class="sample-chip" onclick="loadSample('milktea')">🧋 茶餐廳</span>
         <span class="sample-chip" onclick="loadSample('milkcafe')">🥛 Milk Cafe</span>
       </div>
 
-      <div style="margin-top:10px;padding:12px;border-radius:12px;background:rgba(77,232,255,.06);border:1px solid rgba(77,232,255,.15)">
-        <p style="font-size:.85rem;font-weight:700;color:var(--cyan);margin-bottom:6px">🔗 從 Foodpanda 自動提取 Menu</p>
-        <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px">1. 喺瀏覽器開 Foodpanda 餐廳頁面 → 2. Bookmark bar 加呢個按鈕 → 3. 喺餐廳頁 click 一下</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <a id="bookmarklet" href="javascript:void(0)" style="display:inline-block;padding:8px 14px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700;font-size:.85rem;text-decoration:none;cursor:grab" onclick="event.preventDefault();alert('拖呢個按鈕去你嘅 Bookmark Bar！')">🧋 提取 Menu</a>
-          <button class="sample-chip" onclick="copyBookmarklet()" style="border:1px solid var(--border);cursor:pointer">📋 複製 Bookmarklet Code</button>
-        </div>
-        <p style="font-size:.75rem;color:var(--muted);margin-top:6px">或者直接喺下面貼 JSON 👇</p>
-        <textarea id="importJson" style="width:100%;margin-top:6px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px;font-size:.82rem;font-family:monospace;min-height:40px" placeholder='[{"name":"奶茶","price":"22"},{"name":"咖啡","price":"28"}]'></textarea>
-        <button class="sample-chip" onclick="importFromJson()" style="margin-top:6px;border:1px solid var(--border);cursor:pointer">📥 Import JSON</button>
+      <!-- JSON Import -->
+      <div style="margin-top:10px">
+        <label>貼上提取嘅 JSON</label>
+        <textarea id="importJson" placeholder='[{"name":"凍奶茶","price":"26","options":[{"title":"冰度","required":true,"choices":[{"name":"正常冰","price":"0"},{"name":"少冰","price":"0"}]}]}]'></textarea>
+        <button class="sample-chip" onclick="importFromJson()" style="margin-top:4px;border:1px solid var(--border);cursor:pointer">📥 Import JSON</button>
       </div>
 
       <div id="menuList" class="menu-list"></div>
-      <button class="add-menu-btn" onclick="addMenuItem()">＋ 加多一樣</button>
+      <button class="add-menu-btn" onclick="addMenuItem()">＋ 手動加多一樣</button>
     </div>
 
     <div class="card">
@@ -138,175 +149,121 @@ select{appearance:none}
     </div>
   </div>
 </div>
+<div id="toast" class="toast"></div>
 
 <script>
-let menuIdx=0, platform='foodpanda';
-const SAMPLES={
-  coffee:[
-    {name:'美式咖啡 (凍)',price:'32'},
-    {name:'美式咖啡 (熱)',price:'28'},
-    {name:'拿鐵 (凍)',price:'38'},
-    {name:'拿鐵 (熱)',price:'35'},
-    {name:'抹茶拿鐵 (凍)',price:'42'},
-    {name:'朱古力 (凍)',price:'38'},
-    {name:'檸檬茶 (凍)',price:'28'},
-    {name:'Tiramisu',price:'48'},
-  ],
-  mcdonalds:[
-    {name:'麥樂雞 (6件)',price:'22'},
-    {name:'麥樂雞 (9件)',price:'29'},
-    {name:'巨無霸',price:'30'},
-    {name:'麥辣雞腿包',price:'28'},
-    {name:'薯條 (大)',price:'20'},
-    {name:'新地',price:'12'},
-    {name:'蘋果批',price:'10'},
-    {name:'中可樂',price:'12'},
-  ],
-  milktea:[
-    {name:'奶茶 (凍)',price:'22'},
-    {name:'奶茶 (熱)',price:'18'},
-    {name:'鴛鴦 (凍)',price:'24'},
-    {name:'檸檬水 (凍)',price:'20'},
-    {name:'菠蘿油',price:'18'},
-    {name:'蛋撻 (2個)',price:'16'},
-    {name:'西多士',price:'28'},
-    {name:'乾炒牛河',price:'52'},
-  ],
-  milkcafe:[
-    {name:'凍奶茶',price:'26'},
-    {name:'熱奶茶',price:'22'},
-    {name:'凍檸茶',price:'26'},
-    {name:'凍咖啡',price:'28'},
-    {name:'菠蘿油',price:'22'},
-    {name:'奶油豬仔包',price:'18'},
-    {name:'公司三文治',price:'42'},
-    {name:'沙爹牛肉公仔麵',price:'38'},
-    {name:'咖喱雞飯',price:'52'},
-    {name:'焗豬扒飯',price:'55'},
-    {name:'黑椒牛柳意粉',price:'58'},
-    {name:'炸雞髀',price:'32'},
-  ],
+function showToast(m){var el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(function(){el.classList.remove('show')},2500)}
+
+var menuIdx=0, platform='foodpanda';
+var SAMPLES={
+  coffee:[{name:'美式咖啡 (凍)',price:'32'},{name:'美式咖啡 (熱)',price:'28'},{name:'拿鐵 (凍)',price:'38'},{name:'拿鐵 (熱)',price:'35'},{name:'抹茶拿鐵 (凍)',price:'42'},{name:'朱古力 (凍)',price:'38'},{name:'檸檬茶 (凍)',price:'28'}],
+  mcdonalds:[{name:'麥樂雞 (6件)',price:'22'},{name:'巨無霸',price:'30'},{name:'麥辣雞腿包',price:'28'},{name:'薯條 (大)',price:'20'},{name:'新地',price:'12'},{name:'中可樂',price:'12'}],
+  milkcafe:[{name:'凍奶茶',price:'26'},{name:'熱奶茶',price:'22'},{name:'凍檸茶',price:'26'},{name:'凍咖啡',price:'28'},{name:'菠蘿油',price:'22'},{name:'公司三文治',price:'42'},{name:'沙爹牛肉公仔麵',price:'38'},{name:'咖喱雞飯',price:'52'},{name:'焗豬扒飯',price:'55'}]
 };
 
-function pickPlatform(el){
-  document.querySelectorAll('.platform-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  platform=el.dataset.p;
-}
+function pickPlatform(el){document.querySelectorAll('.platform-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');platform=el.dataset.p}
 
-function addMenuItem(name='',price=''){
-  const div=document.createElement('div');div.className='menu-item';
-  div.innerHTML=`<input class="mi-name" value="${name}" placeholder="名稱" /><input class="mi-price" value="${price}" placeholder="價錢" type="number" /><button class="mi-del" onclick="this.parentElement.remove()">✕</button>`;
+function addMenuItem(name,price,options){
+  name=name||'';price=price||'';options=options||[];
+  var div=document.createElement('div');div.className='menu-item';
+  div.innerHTML='<input class="mi-name" value="'+name+'" placeholder="名稱" /><input class="mi-price" value="'+price+'" placeholder="價錢" type="number" /><button class="mi-del" onclick="this.parentElement.remove()">✕</button>';
+  if(options.length){
+    var optDiv=document.createElement('div');
+    optDiv.style.cssText='width:100%;font-size:.7rem;color:var(--cyan);padding:2px 6px;line-height:1.4';
+    optDiv.textContent='⚙️ '+options.map(function(g){return g.title+'('+g.choices.map(function(c){return c.name}).join('/')+')'}).join(' · ');
+    div.appendChild(optDiv);
+    div.dataset.options=JSON.stringify(options);
+  }
   document.getElementById('menuList').appendChild(div);
 }
 
-function loadSample(key){
-  const list=document.getElementById('menuList');list.innerHTML='';
-  SAMPLES[key].forEach(m=>addMenuItem(m.name,m.price));
-}
+function loadSample(key){var list=document.getElementById('menuList');list.innerHTML='';SAMPLES[key].forEach(function(m){addMenuItem(m.name,m.price)})}
 
 function getMenu(){
-  const items=[];
-  document.querySelectorAll('.menu-item').forEach(el=>{
-    const name=el.querySelector('.mi-name').value.trim();
-    const price=el.querySelector('.mi-price').value.trim();
-    if(name)items.push({name,price:price||'?'});
+  var items=[];
+  document.querySelectorAll('.menu-item').forEach(function(el){
+    var name=el.querySelector('.mi-name').value.trim();
+    var price=el.querySelector('.mi-price').value.trim();
+    var options=[];try{options=JSON.parse(el.dataset.options||'[]')}catch(e){}
+    if(name)items.push({name:name,price:price||'?',options:options});
   });
   return items;
 }
 
-async function createTreat(){
-  const title=document.getElementById('title').value.trim();
-  const restaurant=document.getElementById('restaurant').value.trim();
-  const url=document.getElementById('url').value.trim();
-  const createdBy=document.getElementById('createdBy').value.trim();
-  const deadline=document.getElementById('deadline').value;
-  const note=document.getElementById('note').value.trim();
-  const menu=getMenu();
-  const errEl=document.getElementById('error');
-  const btn=document.getElementById('createBtn');
-
-  errEl.textContent='';
-  if(!restaurant){errEl.textContent='請填餐廳名稱';return;}
-  if(!menu.length){errEl.textContent='請加至少一個 menu 項目';return;}
-
-  btn.disabled=true;btn.textContent='⏳ 生成中...';
+function importFromJson(){
+  var raw=document.getElementById('importJson').value.trim();
+  if(!raw){showToast('請貼上 JSON');return}
   try{
-    const res=await fetch('/tea-treat/api/create',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({title,restaurant,platform,url,menu,deadline,note,created_by:createdBy})
-    });
-    const data=await res.json();
-    if(!data.ok)throw new Error(data.error||'失敗');
-    const base=location.origin;
-    const link=`${base}/tea-treat/order/${data.treat_id}`;
-    document.getElementById('shareLink').value=link;
-    document.getElementById('openOrder').href=`/tea-treat/order/${data.treat_id}`;
-    document.getElementById('openSummary').href=`/tea-treat/summary/${data.treat_id}`;
-    document.getElementById('createForm').style.display='none';
-    document.getElementById('resultCard').style.display='block';
-  }catch(e){errEl.textContent='❌ '+e.message;}
-  finally{btn.disabled=false;btn.textContent='🧋 生成分享連結';}
+    var items=JSON.parse(raw);
+    if(!Array.isArray(items))throw new Error('must be array');
+    var list=document.getElementById('menuList');list.innerHTML='';
+    items.forEach(function(m){addMenuItem(m.name||'',m.price||'',m.options||[])});
+    showToast('已匯入 '+items.length+' 個項目 ✅');
+  }catch(e){showToast('JSON 格式錯誤：'+e.message)}
+}
+
+// Bookmarklet - synchronous step-by-step version
+// Step 1: Just collect visible items (no clicking into modals)
+var BOOKMARKLET_STEP1='javascript:(function(){var items=[];var qsa=function(s){return[].slice.call(document.querySelectorAll(s))};var cards=qsa("[data-testid*=product],[class*=product-card],[class*=ProductCard]");if(!cards.length){qsa("li,article,[class*=menu-item],[class*=MenuItem]").forEach(function(el){if(el.querySelector("button,[class*=plus],[class*=add]"))cards.push(el)});}cards.forEach(function(card){var nm=card.querySelector("[class*=name],[class*=title],h3,h4");var pr=card.querySelector("[class*=price],[class*=Price]");var name=nm?nm.innerText.trim():"";var price=pr?pr.innerText.replace(/[^0-9.]/g,""):"";if(name&&name.length>1&&name.length<50)items.push({name:name,price:price})});if(items.length){var json=JSON.stringify(items);navigator.clipboard.writeText(json).then(function(){alert("\\u5df2\\u8907\\u88fd "+items.length+" \\u500b\\u9805\\u76ee\\u5230\\u526a\\u8cbc\\u7c3f\\uff01\\n\\n(\\u53ea\\u4fc2\\u57fa\\u672c\\u9805\\u76ee\\uff0c\\u51b0\\u5ea6/\\u7518\\u5ea6\\u8981\\u624b\\u52d5\\u52a0)")})}else{alert("\\u6435\\u5514\\u5230 menu\\uff0c\\u8acb\\u78ba\\u8a8d\\u4f60\\u559a\\u6b63\\u78ba\\u5605\\u9910\\u5ef3\\u9801\\u9762\\u3002\\n\\n\\u63d0\\u793a\\uff1a\\u6efe\\u5230\\u83dc\\u55ae\\u5340\\u57df\\u518d\\u8a66")}})();';
+
+// Step 2: Click each item to get options (more complex)
+var BOOKMARKLET_STEP2='javascript:(function(){if(!window._teaItems){alert("\\u8acb\\u5148\\u7528\\u7b2c1\\u6b65\\u63d0\\u53d6\\u57fa\\u672c menu\\uff01");return}var items=window._teaItems;var idx=window._teaIdx||0;function extractOpts(){var groups=[];document.querySelectorAll("[class*=option-group],[class*=OptionGroup],[class*=modifier-group],[class*=question]").forEach(function(g){var t=g.querySelector("[class*=title],[class*=name],h3,h4,strong");var title=t?t.innerText.trim():"";var req=g.innerHTML.indexOf("\\u5fc5\\u9078")>-1;var choices=[];g.querySelectorAll("[class*=choice],[class*=option-item],[class*=radio],[class*=checkbox],label").forEach(function(c){var n=c.querySelector("[class*=name],[class*=label],span,p");var p=c.querySelector("[class*=price]");var nm=n?n.innerText.trim():c.innerText.trim().split("\\n")[0];var pr=p?p.innerText.replace(/[^0-9.]/g,""):"";if(nm&&nm!="\\u5b8c\\u6210"&&nm!="\\u53d6\\u6d88")choices.push({name:nm,price:pr||"0"})});if(title&&choices.length)groups.push({title:title,required:req,choices:choices})});return groups}function closeModal(){var b=document.querySelector("[class*=backdrop],[class*=overlay]");if(b)b.click();var ev=new KeyboardEvent("keydown",{key:"Escape"});document.dispatchEvent(ev)}function processNext(){if(idx>=items.length){var json=JSON.stringify(items);navigator.clipboard.writeText(json).then(function(){alert("\\u5df2\\u8907\\u88fd "+items.length+" \\u500b\\u9805\\u76ee\\uff08\\u542b options\\uff09\\u5230\\u526a\\u8cbc\\u7c3f\\uff01")});return}var item=items[idx];var cards=[].slice.call(document.querySelectorAll("[data-testid*=product],[class*=product-card],[class*=ProductCard]"));if(!cards.length)cards=[].slice.call(document.querySelectorAll("li,article,[class*=menu-item]"));var found=false;for(var ci=0;ci<cards.length;ci++){var nm=cards[ci].querySelector("[class*=name],[class*=title],h3,h4");if(nm&&nm.innerText.trim()==item.name){nm.click();setTimeout(function(){item.options=extractOpts();closeModal();window._teaIdx=++idx;setTimeout(processNext,600)},900);found=true;break}}if(!found){window._teaIdx=++idx;setTimeout(processNext,200)}}processNext()})();';
+
+function copyBookmarklet(){
+  // Copy step 1 by default
+  navigator.clipboard.writeText(BOOKMARKLET_STEP1);
+  showToast('Step 1 Bookmarklet 已複製！拖去 Bookmark Bar，喺 Foodpanda 頁 click');
+}
+
+// Set both as href options
+document.getElementById('bookmarklet').href = BOOKMARKLET_STEP1;
+document.getElementById('bookmarklet').title = 'Click to copy or drag to bookmark bar';
+
+// Copy step 2
+function copyStep2(){
+  navigator.clipboard.writeText(BOOKMARKLET_STEP2);
+  showToast('Step 2 已複製！用完 Step 1 先用呢個攞 options');
 }
 
 function copyLink(){
-  const inp=document.getElementById('shareLink');
+  var inp=document.getElementById('shareLink');
   inp.select();navigator.clipboard.writeText(inp.value);
   inp.style.borderColor='var(--green)';
-  setTimeout(()=>inp.style.borderColor='',1500);
+  setTimeout(function(){inp.style.borderColor=''},1500);
 }
 
-/* ---- Bookmarklet & Import ---- */
-const BOOKMARKLET_CODE = `javascript:(async function(){var items=[];var cards=document.querySelectorAll('[data-testid*="product"],[class*="product-card"],[class*="ProductCard"]');if(!cards.length){cards=[];document.querySelectorAll('li,article,[class*="menu-item"]').forEach(function(el){if(el.querySelector('button,[class*="plus"],[class*="add"]'))cards.push(el);});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms)});}function closeModal(){var close=document.querySelector('[class*="close"],[class*="Close"],button[aria-label*="close"],button[aria-label*="Close"]');if(close){close.click();return;}var overlay=document.querySelector('[class*="backdrop"],[class*="overlay"]');if(overlay)overlay.click();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',keyCode:27}));}function extractOptions(){var groups=[];document.querySelectorAll('[class*="option-group"],[class*="OptionGroup"],[class*="modifier-group"],[class*="question"]').forEach(function(g){var titleEl=g.querySelector('[class*="title"],[class*="name"],h3,h4,strong');var title=titleEl?titleEl.innerText.trim():'';var required=g.innerText.indexOf('\\u5fc5\\u9078')>-1||g.innerText.toLowerCase().includes('required');var choices=[];g.querySelectorAll('[class*="choice"],[class*="option-item"],[class*="radio"],[class*="checkbox"],label').forEach(function(c){var nm=c.querySelector('[class*="name"],[class*="label"],span,p');var pr=c.querySelector('[class*="price"],[class*="Price"]');var name=nm?nm.innerText.trim():c.innerText.trim().split('\\n')[0];var price=pr?pr.innerText.replace(/[^0-9.]/g,''):'';if(name&&name!=='\\u5b8c\\u6210'&&name!=='\\u53d6\\u6d88')choices.push({name:name,price:price||'0'});});if(title&&choices.length)groups.push({title:title,required:required,choices:choices});});return groups;}for(var i=0;i<cards.length;i++){var card=cards[i];var nm=card.querySelector('[class*="name"],[class*="title"],h3,h4');var pr=card.querySelector('[class*="price"],[class*="Price"]');var name=nm?nm.innerText.trim():'';var price=pr?pr.innerText.replace(/[^0-9.]/g,''):'';if(!name)continue;var options=[];var clickTarget=card.querySelector('a,[role="button"],[class*="name"],[class*="title"]')||card;clickTarget.click();await sleep(1000);options=extractOptions();await sleep(200);closeModal();await sleep(500);items.push({name:name,price:price,options:options});}if(items.length){var json=JSON.stringify(items);navigator.clipboard.writeText(json).then(function(){var withOpts=items.filter(function(i){return i.options.length}).length;alert('\\u5df2\\u8907\\u88fd '+items.length+' \\u500b\\u9805\\u76ee\\uff08\\u542b '+withOpts+' \\u500b\\u6709 options\\uff09\\u5230\\u526a\\u8cbc\\u7c3f\\uff01');});}else{alert('\\u6435\\u5514\\u5230 menu \\u9805\\u76ee\\uff0c\\u8acb\\u78ba\\u8a8d\\u4f60\\u559a Foodpanda \\u9910\\u5ef3\\u9801\\u9762\\u3002');}})();`;
-
-function copyBookmarklet(){
-  navigator.clipboard.writeText(BOOKMARKLET_CODE);
-  showToast('Bookmarklet code 已複製！喺瀏覽器新增 bookmark 貼上去就得');
-}
-
-// Set bookmarklet href
-document.getElementById('bookmarklet').href = BOOKMARKLET_CODE;
-
-function importFromJson(){
-  const raw = document.getElementById('importJson').value.trim();
-  if(!raw){showToast('請貼上 JSON');return;}
+async function createTreat(){
+  var title=document.getElementById('title').value.trim();
+  var restaurant=document.getElementById('restaurant').value.trim();
+  var url=document.getElementById('url').value.trim();
+  var createdBy=document.getElementById('createdBy').value.trim();
+  var deadline=document.getElementById('deadline').value;
+  var note=document.getElementById('note').value.trim();
+  var menu=getMenu();
+  var errEl=document.getElementById('error');
+  var btn=document.getElementById('createBtn');
+  errEl.textContent='';
+  if(!restaurant){errEl.textContent='請填餐廳名稱';return}
+  if(!menu.length){errEl.textContent='請加至少一個 menu 項目';return}
+  btn.disabled=true;btn.textContent='⏳ 生成中...';
   try{
-    const items = JSON.parse(raw);
-    if(!Array.isArray(items))throw new Error('must be array');
-    const list=document.getElementById('menuList');list.innerHTML='';
-    items.forEach(m=>{
-      addMenuItem(m.name||'',m.price||'');
-      if(m.options && m.options.length){
-        const lastRow = list.querySelector('.menu-item:last-child');
-        if(lastRow){
-          const optDiv = document.createElement('div');
-          optDiv.style.cssText = 'font-size:.7rem;color:var(--cyan);margin-top:3px;padding:0 6px;line-height:1.4';
-          optDiv.textContent = '⚙️ ' + m.options.map(g=>g.title+'('+g.choices.map(c=>c.name).join('/')+')').join(' · ');
-          lastRow.appendChild(optDiv);
-          lastRow.dataset.options = JSON.stringify(m.options);
-        }
-      }
+    var res=await fetch('/tea-treat/api/create',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title:title,restaurant:restaurant,platform:platform,url:url,menu:menu,deadline:deadline,note:note,created_by:createdBy})
     });
-    showToast('已匯入 ' + items.length + ' 個項目 ✅');
-  }catch(e){
-    showToast('JSON 格式錯誤：'+e.message);
-  }
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error||'失敗');
+    var base=location.origin;
+    var link=base+'/tea-treat/order/'+data.treat_id;
+    document.getElementById('shareLink').value=link;
+    document.getElementById('openOrder').href='/tea-treat/order/'+data.treat_id;
+    document.getElementById('openSummary').href='/tea-treat/summary/'+data.treat_id;
+    document.getElementById('createForm').style.display='none';
+    document.getElementById('resultCard').style.display='block';
+  }catch(e){errEl.textContent='❌ '+e.message}
+  finally{btn.disabled=false;btn.textContent='🧋 生成分享連結'}
 }
 
-// Override getMenu to include options
-function getMenu(){
-  const items=[];
-  document.querySelectorAll('.menu-item').forEach(el=>{
-    const name=el.querySelector('.mi-name').value.trim();
-    const price=el.querySelector('.mi-price').value.trim();
-    let options=[];
-    try{ options=JSON.parse(el.dataset.options||'[]'); }catch{}
-    if(name)items.push({name,price:price||'?',options});
-  });
-  return items;
-}
-
-// Start with some menu items
 addMenuItem();addMenuItem();addMenuItem();
 </script>
 </body>
