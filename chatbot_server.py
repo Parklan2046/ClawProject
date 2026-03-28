@@ -6,9 +6,9 @@ from urllib import request, error
 
 HOST = os.getenv('CHATBOT_HOST', '127.0.0.1')
 PORT = int(os.getenv('CHATBOT_PORT', '8768'))
-MINIMAX_API_KEY = os.getenv('MINIMAX_API_KEY', '')
-MINIMAX_URL = 'https://api.minimax.io/anthropic/v1/messages'
-MINIMAX_MODEL = os.getenv('CHATBOT_MODEL', 'MiniMax-M2.7')
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
+OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
+CHATBOT_MODEL = os.getenv('CHATBOT_MODEL', 'xiaomi/mimo-v2-pro')
 
 ROLE_PROMPTS = {
     'laura': (
@@ -51,51 +51,49 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != '/chatbot-api/message':
             return send_json(self, {'ok': False, 'error': 'Not found'}, 404)
-        if not MINIMAX_API_KEY:
-            return send_json(self, {'ok': False, 'error': 'MINIMAX_API_KEY missing'}, 500)
+        if not OPENROUTER_API_KEY:
+            return send_json(self, {'ok': False, 'error': 'OPENROUTER_API_KEY missing'}, 500)
         try:
             length = int(self.headers.get('Content-Length', '0'))
             data = json.loads(self.rfile.read(length).decode('utf-8')) if length else {}
             role_mode = str(data.get('role', 'laura')).strip().lower()
             prompt = ROLE_PROMPTS.get(role_mode, ROLE_PROMPTS['laura'])
             incoming = data.get('messages') or []
-            messages = []
+            messages = [{'role': 'system', 'content': prompt}]
             for m in incoming[-12:]:
                 role = str(m.get('role', '')).strip()
                 content = str(m.get('content', '')).strip()
                 if role in ('user', 'assistant') and content:
                     messages.append({'role': role, 'content': content})
-            if not messages:
-                messages = [{'role': 'user', 'content': '你好呀'}]
+            if len(messages) == 1:
+                messages.append({'role': 'user', 'content': '你好呀'})
 
             payload = {
-                'model': MINIMAX_MODEL,
+                'model': CHATBOT_MODEL,
                 'max_tokens': 700,
-                'system': prompt,
                 'messages': messages,
             }
             req = request.Request(
-                MINIMAX_URL,
+                OPENROUTER_URL,
                 data=json.dumps(payload).encode('utf-8'),
                 method='POST',
                 headers={
                     'content-type': 'application/json',
-                    'x-api-key': MINIMAX_API_KEY,
-                    'anthropic-version': '2023-06-01',
+                    'authorization': f'Bearer {OPENROUTER_API_KEY}',
                 },
             )
             with request.urlopen(req, timeout=90) as resp:
                 raw = json.loads(resp.read().decode('utf-8', 'ignore'))
-            content_blocks = raw.get('content') or []
+            choices = raw.get('choices') or []
             text = ''
-            for block in content_blocks:
-                if isinstance(block, dict) and block.get('type') == 'text':
-                    text += block.get('text', '')
+            if choices:
+                msg = choices[0].get('message', {})
+                text = msg.get('content', '')
             text = text.strip() or '我喺度呀。'
-            return send_json(self, {'ok': True, 'reply': text, 'model': MINIMAX_MODEL})
+            return send_json(self, {'ok': True, 'reply': text, 'model': CHATBOT_MODEL})
         except error.HTTPError as e:
             detail = e.read().decode('utf-8', 'ignore')[:2000]
-            return send_json(self, {'ok': False, 'error': f'MiniMax API error {e.code}: {detail}'}, 500)
+            return send_json(self, {'ok': False, 'error': f'OpenRouter API error {e.code}: {detail}'}, 500)
         except Exception as e:
             return send_json(self, {'ok': False, 'error': str(e)}, 500)
 
