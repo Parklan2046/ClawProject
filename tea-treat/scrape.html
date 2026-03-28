@@ -6,66 +6,76 @@
 <title>Menu 提取工具 · 請食 Tea</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0d0b1a;--card:#16132b;--card2:#1e1a38;--border:rgba(255,255,255,.07);--accent:#ff6b9d;--cyan:#4de8ff;--green:#4dff88;--gold:#ffc94d;--muted:#7a7890;--text:#ede8f5}
+:root{--bg:#0d0b1a;--card:#16132b;--card2:#1e1a38;--border:rgba(255,255,255,.07);--accent:#ff6b9d;--accent2:#c44dff;--cyan:#4de8ff;--gold:#ffc94d;--green:#4dff88;--red:#ff5252;--muted:#7a7890;--text:#ede8f5}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px}
 .container{max-width:700px;margin:0 auto}
 h1{font-size:1.3rem;margin-bottom:4px}
 .sub{color:var(--muted);font-size:.85rem;margin-bottom:20px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
 .card h2{font-size:.95rem;font-weight:700;margin-bottom:10px}
-textarea{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:.85rem;font-family:monospace;outline:none;min-height:120px;resize:vertical}
+textarea{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:.82rem;font-family:monospace;outline:none;min-height:80px;resize:vertical}
 textarea:focus{border-color:var(--accent)}
 .btn{padding:12px 20px;border-radius:10px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--accent),#c44dff);margin-top:10px}
 .btn:disabled{opacity:.5}
 .btn-secondary{background:#243146;color:var(--text)}
-.step{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding:12px;border-radius:12px;background:var(--card2)}
+.step{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;padding:12px;border-radius:12px;background:var(--card2)}
 .step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0}
 .step-text{flex:1;font-size:.88rem;line-height:1.5}
-.step-text code{background:rgba(77,232,255,.1);color:var(--cyan);padding:2px 6px;border-radius:4px;font-size:.82rem}
+.step-text code{background:rgba(77,232,255,.1);color:var(--cyan);padding:2px 6px;border-radius:4px;font-size:.8rem}
+.alt-method{margin-top:10px;padding:12px;border-radius:10px;border:1px dashed var(--border);font-size:.82rem;color:var(--muted)}
+.alt-method h3{color:var(--cyan);font-size:.88rem;margin-bottom:6px}
 .output{margin-top:10px;padding:12px;border-radius:10px;background:var(--card2);border:1px solid var(--border)}
 .output-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
 .output-item:last-child{border:none}
 .item-count{color:var(--green);font-weight:700}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:8px 14px;font-size:.84rem;z-index:200;display:none}
 .toast.show{display:block}
+.has-opts{color:var(--cyan);font-size:.75rem}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🧋 Menu 提取工具</h1>
-  <p class="sub">從 Foodpanda 頁面提取 menu items + 冰度/甜度 options</p>
+  <a href="../" style="color:var(--muted);font-size:.85rem;text-decoration:none">← 返回請食 Tea</a>
+  <h1 style="margin-top:12px">🔗 Menu 提取工具</h1>
+  <p class="sub">從 Foodpanda 頁面提取完整 menu（含冰度/甜度 options）</p>
 
   <div class="card">
-    <h2>📝 步驟</h2>
+    <h2>📝 方法一：貼 JSON（最簡單）</h2>
     <div class="step">
       <div class="step-num">1</div>
-      <div class="step-text">喺瀏覽器開 Foodpanda 餐廳頁面，按 <code>F12</code> 開 Developer Tools</div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-text">去 <code>Console</code> tab，貼下面段 code，按 Enter：<br>
-        <code style="display:block;margin-top:6px;word-break:break-all">copy(document.documentElement.outerHTML)</code><br>
-        <span style="font-size:.78rem;color:var(--muted)">（呢個會自動複製成個網頁 HTML 到剪貼簿）</span>
+      <div class="step-text">
+        喺瀏覽器開 Foodpanda 餐廳頁，按 <code>F12</code> 開 Console<br>
+        貼呢段 code 按 Enter：<br>
+        <code style="display:block;margin-top:6px;word-break:break-all;user-select:all">copy(JSON.stringify(JSON.parse(document.getElementById('__PRELOADED_STATE__')?.textContent||'{}')?.vendor?.data?.menus?.[0]?.menuCategories?.flatMap(c=>c.products?.map(p=>({name:p.name,price:''+Math.round((p.minimumPrice??p.price??0)*100)/100,desc:p.description||'',hasOpts:(p.modifierGroups||[]).length>0}))||[])?.filter(x=>x.name)||[]))</code>
+        <span style="font-size:.72rem;color:var(--muted)">自動複製 menu JSON 到剪貼簿</span>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-text">返嚟呢個頁，喺下面個框貼上（Ctrl+V），然後按「提取 Menu」</div>
+      <div class="step-num">2</div>
+      <div class="step-text">返嚟呢度，喺下面貼上（Ctrl+V），然後按「提取」</div>
     </div>
+    <textarea id="jsonInput" placeholder='貼上 menu JSON，例如：[{"name":"凍奶茶","price":"26","desc":"選擇 糖度, 冰度","hasOpts":true},...]'></textarea>
+    <button class="btn" onclick="importJson()">📥 提取 Menu</button>
   </div>
 
   <div class="card">
-    <h2>📋 貼上 Foodpanda 頁面 HTML</h2>
-    <textarea id="htmlInput" placeholder="喺呢度貼上 Foodpanda 頁面嘅 HTML source code..."></textarea>
-    <button class="btn" id="extractBtn" onclick="extractMenu()">🔍 提取 Menu</button>
-    <button class="btn btn-secondary" onclick="document.getElementById('htmlInput').value=''" style="margin-left:8px">清除</button>
+    <h2>📝 方法二：貼完整 HTML</h2>
+    <div class="alt-method">
+      <h3>如果方法一唔 work，用呢個</h3>
+      <p>F12 Console 貼：<code style="user-select:all">copy(document.documentElement.outerHTML)</code><br>
+      然後貼到下面個框</p>
+    </div>
+    <textarea id="htmlInput" placeholder="貼上完整 HTML source code..." style="min-height:60px"></textarea>
+    <button class="btn btn-secondary" onclick="importHtml()" style="margin-top:8px">📥 從 HTML 提取</button>
   </div>
 
   <div id="resultCard" class="card" style="display:none">
     <h2>✅ 提取結果 <span id="resultCount" class="item-count"></span></h2>
     <div id="resultList" class="output"></div>
-    <button class="btn" onclick="copyResult()">📋 複製 JSON</button>
-    <button class="btn btn-secondary" onclick="goImport()" style="margin-left:8px">→ 去 Import</button>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" onclick="copyResult()">📋 複製 JSON</button>
+      <button class="btn btn-secondary" onclick="goImport()">→ 去請食 Tea Import</button>
+    </div>
   </div>
 
   <div id="errorCard" class="card" style="display:none;border-color:rgba(255,82,82,.3)">
@@ -76,131 +86,123 @@ textarea:focus{border-color:var(--accent)}
 <div id="toast" class="toast"></div>
 
 <script>
-var extractedItems = [];
+var extractedItems=[];
+function showToast(m){var el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(function(){el.classList.remove('show')},2500);}
 
-function showToast(m){var el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(function(){el.classList.remove('show')},2500)}
-
-function extractMenu(){
-  var html = document.getElementById('htmlInput').value.trim();
-  if(!html || html.length < 100){
-    showError('請貼上有效嘅 HTML source code（太短或者空）');
-    return;
-  }
-
-  document.getElementById('extractBtn').disabled = true;
-  document.getElementById('extractBtn').textContent = '⏳ 提取中...';
-  document.getElementById('resultCard').style.display = 'none';
-  document.getElementById('errorCard').style.display = 'none';
-
-  try {
-    // Parse HTML in a temp container
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(html, 'text/html');
-
-    // Find product cards - try multiple selectors
-    var cards = doc.querySelectorAll('[class*="product-card"], [class*="ProductCard"], [data-testid*="product"]');
-
-    if(!cards.length){
-      // Broader search
-      cards = doc.querySelectorAll('li, article, [class*="menu-item"], [class*="MenuItem"]');
-    }
-
-    if(!cards.length){
-      showError('搵唔到 menu items。請確認你貼上嘅係 Foodpanda 餐廳頁面嘅 HTML source code。');
-      return;
-    }
-
-    var items = [];
-    var seen = {};
-
-    cards.forEach(function(card){
-      // Get name
-      var nameEl = card.querySelector('[class*="name"], [class*="Name"], [class*="title"], [class*="Title"], h3, h4');
-      var name = nameEl ? nameEl.innerText.trim() : '';
-
-      // Get price
-      var price = '';
-      var priceEl = card.querySelector('[class*="price"], [class*="Price"]');
-      if(priceEl){
-        var m = priceEl.innerText.match(/\$?(\d+(?:\.\d+)?)/);
-        if(m) price = m[1];
-      }
-      if(!price){
-        var text = card.innerText || '';
-        var m = text.match(/\$(\d+(?:\.\d+)?)/);
-        if(m) price = m[1];
-      }
-
-      // Get options
-      var options = [];
-      card.querySelectorAll('[class*="option-group"], [class*="OptionGroup"], [class*="modifier"], [class*="question"]').forEach(function(g){
-        var titleEl = g.querySelector('[class*="title"], [class*="name"], h3, h4, strong');
-        var title = titleEl ? titleEl.innerText.trim() : '';
-        var required = g.innerHTML.indexOf('必選') > -1;
-        var choices = [];
-        g.querySelectorAll('[class*="choice"], [class*="option-item"], label').forEach(function(c){
-          var nm = c.innerText.trim().split('\n')[0].trim();
-          if(nm && nm !== '完成' && nm !== '取消') choices.push({name: nm, price: '0'});
-        });
-        if(title && choices.length) options.push({title: title, required: required, choices: choices});
+function parseMenuItems(raw){
+  // Normalize items from various formats
+  var items=[];
+  var seen={};
+  raw.forEach(function(it){
+    var name=(it.name||'').trim();
+    if(!name||name.length<2||seen[name])return;
+    seen[name]=true;
+    var price=it.price||'';
+    if(!price&&it.minimumPrice)price=''+Math.round(it.minimumPrice*100)/100;
+    if(!price&&it.originalPrice)price=''+it.originalPrice;
+    var desc=it.desc||it.description||'';
+    var hasOpts=it.hasOpts||false;
+    // Check if desc mentions options
+    if(desc&&(desc.includes('選擇')||desc.includes('冰度')||desc.includes('糖度')||desc.includes('必選')))hasOpts=true;
+    // Build options from desc
+    var options=[];
+    if(hasOpts&&desc){
+      var groups=desc.split(/[,，、;；]/);
+      groups.forEach(function(g){
+        g=g.trim().replace(/^選擇\s*/,'');
+        if(g&&g.length>1&&g.length<20){
+          // Default choices based on common patterns
+          var choices=[];
+          if(g.includes('冰')||g.includes('冷')){
+            choices=[{name:'正常冰',price:'0'},{name:'少冰',price:'0'},{name:'微冰',price:'0'},{name:'走冰',price:'0'}];
+          }else if(g.includes('甜')||g.includes('糖')){
+            choices=[{name:'正常甜',price:'0'},{name:'少甜',price:'0'},{name:'半甜',price:'0'},{name:'微甜',price:'0'},{name:'走甜',price:'0'}];
+          }else if(g.includes('辣')){
+            choices=[{name:'唔辣',price:'0'},{name:'小辣',price:'0'},{name:'中辣',price:'0'},{name:'大辣',price:'0'}];
+          }else if(g.includes('大')||g.includes('size')||g.includes('杯')){
+            choices=[{name:'大杯',price:'0'},{name:'中杯',price:'0'}];
+          }else{
+            choices=[{name:'正常',price:'0'}];
+          }
+          options.push({title:g,required:true,choices:choices});
+        }
       });
-
-      // Deduplicate and filter
-      if(name && name.length > 1 && name.length < 80 && !seen[name]){
-        seen[name] = true;
-        items.push({name: name, price: price, options: options});
-      }
-    });
-
-    if(!items.length){
-      showError('搵唔到有效嘅 menu items。可能 HTML 格式唔啱。');
-      return;
     }
+    items.push({name:name,price:price,options:options});
+  });
+  return items;
+}
 
-    extractedItems = items;
-    showResult(items);
+function importJson(){
+  var raw=document.getElementById('jsonInput').value.trim();
+  if(!raw){showError('請貼上 JSON');return;}
+  try{
+    var data=JSON.parse(raw);
+    if(!Array.isArray(data))throw new Error('must be array');
+    extractedItems=parseMenuItems(data);
+    if(!extractedItems.length)throw new Error('搵唔到有效項目');
+    showResult(extractedItems);
+  }catch(e){showError('JSON 格式錯誤：'+e.message);}
+}
 
-  } catch(e){
-    showError('解析失敗：' + e.message);
-  } finally {
-    document.getElementById('extractBtn').disabled = false;
-    document.getElementById('extractBtn').textContent = '🔍 提取 Menu';
-  }
+function importHtml(){
+  var html=document.getElementById('htmlInput').value.trim();
+  if(!html||html.length<100){showError('請貼上有效嘅 HTML');return;}
+  try{
+    // Extract __PRELOADED_STATE__
+    var m=html.match(/window\.__PRELOADED_STATE__\s*=\s*(\{.*?\});\s*<\/script>/s);
+    if(!m)throw new Error('搵唔到 __PRELOADED_STATE__');
+    var state=JSON.parse(m[1]);
+    var menus=state?.vendor?.data?.menus||[];
+    var raw=[];
+    menus.forEach(function(menu){
+      (menu.menuCategories||[]).forEach(function(cat){
+        (cat.products||[]).forEach(function(p){
+          raw.push({
+            name:p.name,
+            price:''+Math.round((p.minimumPrice||p.price||0)*100)/100,
+            desc:p.description||'',
+            hasOpts:(p.modifierGroups||[]).length>0
+          });
+        });
+      });
+    });
+    if(!raw.length)throw new Error('搵唔到 menu items');
+    extractedItems=parseMenuItems(raw);
+    showResult(extractedItems);
+  }catch(e){showError('解析失敗：'+e.message);}
 }
 
 function showResult(items){
-  var card = document.getElementById('resultCard');
-  card.style.display = 'block';
-  document.getElementById('resultCount').textContent = items.length + ' 項';
-
-  var list = document.getElementById('resultList');
-  list.innerHTML = '';
+  document.getElementById('errorCard').style.display='none';
+  var card=document.getElementById('resultCard');
+  card.style.display='block';
+  document.getElementById('resultCount').textContent=items.length+' 項';
+  var list=document.getElementById('resultList');
+  list.innerHTML='';
   items.forEach(function(item){
-    var div = document.createElement('div');
-    div.className = 'output-item';
-    var optText = item.options.length ? ' ⚙️' + item.options.map(function(g){return g.title}).join(',') : '';
-    div.innerHTML = '<span>' + item.name + optText + '</span><span style="color:var(--gold)">$' + (item.price||'?') + '</span>';
+    var div=document.createElement('div');
+    div.className='output-item';
+    var optTag=item.options.length?'<span class="has-opts">⚙️'+item.options.map(function(g){return g.title}).join(',')+'</span>':'';
+    div.innerHTML='<span>'+item.name+' '+optTag+'</span><span style="color:var(--gold)">$'+(item.price||'?')+'</span>';
     list.appendChild(div);
   });
 }
 
 function copyResult(){
-  var json = JSON.stringify(extractedItems, null, 2);
-  navigator.clipboard.writeText(json).then(function(){
-    showToast('已複製 ' + extractedItems.length + ' 個項目到剪貼簿 ✅');
+  navigator.clipboard.writeText(JSON.stringify(extractedItems,null,2)).then(function(){
+    showToast('已複製 '+extractedItems.length+' 個項目 ✅');
   });
 }
 
 function goImport(){
-  // Navigate to setup page with data
-  var json = JSON.stringify(extractedItems);
-  localStorage.setItem('tea_import', json);
-  window.location.href = '/tea-treat/setup/';
+  localStorage.setItem('tea_import',JSON.stringify(extractedItems));
+  window.location.href='/tea-treat/setup/';
 }
 
 function showError(msg){
-  document.getElementById('errorCard').style.display = 'block';
-  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorCard').style.display='block';
+  document.getElementById('errorMsg').textContent=msg;
 }
 </script>
 </body>
