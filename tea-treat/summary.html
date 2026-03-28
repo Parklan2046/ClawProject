@@ -87,8 +87,23 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 
     <div class="actions">
       <button class="btn btn-secondary" onclick="copyOrder()">📋 複製 Order</button>
-      <button class="btn btn-danger" onclick="closeTreat()">🔒 截止落單</button>
+      <button class="btn btn-primary" onclick="showAutoFill()" id="autoFillBtn">🛒 自動填購物車</button>
+      <button class="btn btn-danger" onclick="closeTreat()">🔒 截止</button>
     </div>
+
+    <div id="autoFillSection" class="card" style="display:none;margin-top:14px;border-color:rgba(255,107,157,.3)">
+      <h2>🛒 自動填 Foodpanda 購物車</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:10px">1. 喺瀏覽器開 Foodpanda 餐廳頁 → 2. Click 下面個 bookmarklet → 3. 自動逐樣加落購物車</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <a id="cartBookmarklet" href="javascript:void(0)" style="display:inline-block;padding:10px 16px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;font-size:.9rem;text-decoration:none;cursor:grab" onclick="event.preventDefault();alert('拖呢個按鈕去你嘅 Bookmark Bar，然後喺 Foodpanda 餐廳頁 click！')">🛒 自動加購物車</a>
+        <button class="sample-chip" onclick="copyAutoFillCode()" style="border:1px solid var(--border);cursor:pointer">📋 複製 Code</button>
+      </div>
+      <div style="margin-top:10px;padding:10px;border-radius:10px;background:var(--card2)">
+        <p style="font-size:.78rem;color:var(--gold)">⚠️ 注意：Bookmarklet 會嘗試根據項目名稱匹配 Foodpanda 菜單上嘅「+」按鈕。如果名稱唔完全 match，需要手動補。加完之後記得檢查購物車先付款。</p>
+      </div>
+      <div id="autoFillPreview" style="margin-top:10px"></div>
+    </div>
+
     <p class="refresh-note">每 15 秒自動刷新</p>
   </div>
 </div>
@@ -195,6 +210,106 @@ async function closeTreat(){
     showToast('已截止落單 🔒');
   }catch(e){showToast('操作失敗');}
 }
+
+/* ---- Auto-fill Foodpanda Cart ---- */
+function showAutoFill(){
+  const sec=document.getElementById('autoFillSection');
+  sec.style.display=sec.style.display==='none'?'block':'none';
+}
+
+function buildAutoFillBookmarklet(){
+  // The bookmarklet fetches consolidated order from our API, then clicks + buttons on Foodpanda
+  const apiUrl = `${location.origin}/tea-treat/api/consolidated/${tid}`;
+  const code = `(async function(){
+    var API_URL="${api_URL}";
+    try{
+      var resp=await fetch(API_URL);
+      var data=await resp.json();
+      if(!data.ok||!data.consolidated.length){alert('搵唔到 order data');return;}
+      var items=data.consolidated;
+      var total=0,matched=0,unmatched=[];
+      
+      // Find all product cards on the page
+      var cards=document.querySelectorAll('[class*="product-card"],[class*="ProductCard"],[data-testid*="product"]');
+      if(!cards.length){
+        // Fallback: look for any element with item name and + button
+        cards=[];
+        document.querySelectorAll('li,article,[class*="menu-item"]').forEach(function(el){
+          if(el.querySelector('button,[class*="plus"],[class*="add"]'))cards.push(el);
+        });
+      }
+      
+      for(var item of items){
+        var found=false;
+        var name=item.name.toLowerCase().trim();
+        
+        // Search through all cards for matching name
+        for(var card of cards){
+          var nameEl=card.querySelector('[class*="name"],[class*="title"],h3,h4,p,span');
+          if(!nameEl)continue;
+          var cardName=nameEl.innerText.toLowerCase().trim();
+          
+          // Flexible matching: exact, contains, or partial
+          if(cardName===name||cardName.includes(name)||name.includes(cardName)){
+            // Find the + / add button
+            var btn=card.querySelector('button[class*="plus"],button[class*="add"],[class*="quantity"] button:last-child,[class*="counter"] button:last-child');
+            if(!btn){
+              // Fallback: find all buttons, pick the one with + or 加
+              var btns=card.querySelectorAll('button');
+              for(var b of btns){
+                if(b.innerText.match(/^[+＋加]$/)||b.innerText.trim()==='+'){btn=b;break;}
+              }
+            }
+            if(btn){
+              for(var i=0;i<item.qty;i++){
+                btn.click();
+                total++;
+              }
+              matched++;
+              found=true;
+              break;
+            }
+          }
+        }
+        if(!found)unmatched.push(item.name);
+      }
+      
+      var msg='已自動加 '+matched+'/'+items.length+' 種項目（共 '+total+' 件）到購物車！';
+      if(unmatched.length)msg+='\\n\\n⚠️ 以下項目需要手動加：\\n'+unmatched.join('\\n');
+      msg+='\\n\\n請檢查購物車確認先付款。';
+      alert(msg);
+    }catch(e){alert('Error: '+e.message);}
+  })();`;
+  return code.replace(/\\n/g,'\\\\n');
+}
+
+// Set bookmarklet href when data is ready
+function updateAutoFillBookmarklet(){
+  try{
+    const apiUrl=`${location.origin}/tea-treat/api/consolidated/${tid}`;
+    const code=`javascript:(async function(){try{var r=await fetch("${apiUrl}");var d=await r.json();if(!d.ok||!d.consolidated.length){alert("搵唔到 order data");return;}var items=d.consolidated;var total=0,matched=0,unmatched=[];var cards=document.querySelectorAll("[class*=product-card],[class*=ProductCard],[data-testid*=product]");if(!cards.length){cards=[];document.querySelectorAll("li,article,[class*=menu-item]").forEach(function(el){if(el.querySelector("button,[class*=plus],[class*=add]"))cards.push(el);});}for(var item of items){var found=false;var name=item.name.toLowerCase().trim();for(var card of cards){var nameEl=card.querySelector("[class*=name],[class*=title],h3,h4,p,span");if(!nameEl)continue;var cardName=nameEl.innerText.toLowerCase().trim();if(cardName===name||cardName.includes(name)||name.includes(cardName)){var btn=card.querySelector("button[class*=plus],button[class*=add],[class*=quantity] button:last-child,[class*=counter] button:last-child");if(!btn){var btns=card.querySelectorAll("button");for(var b of btns){if(b.innerText.match(/^[+＋加]$/)||b.innerText.trim()==="+"){btn=b;break;}}}if(btn){for(var i=0;i<item.qty;i++){btn.click();total++;}matched++;found=true;break;}}}if(!found)unmatched.push(item.name);}var msg="已自動加 "+matched+"/"+items.length+" 種項目（共 "+total+" 件）到購物車！";if(unmatched.length)msg+="\\n\\n⚠️ 以下項目需要手動加：\\n"+unmatched.join("\\n");msg+="\\n\\n請檢查購物車確認先付款。";alert(msg);}catch(e){alert("Error: "+e.message);}})();`;
+    document.getElementById('cartBookmarklet').href=code;
+  }catch(e){}
+}
+
+function copyAutoFillCode(){
+  const el=document.getElementById('cartBookmarklet');
+  navigator.clipboard.writeText(el.href);
+  showToast('Bookmarklet code 已複製！新增 bookmark 貼上去');
+}
+
+// Init bookmarklet when orders load
+const origRenderOrders=renderOrders;
+renderOrders=function(orders){
+  origRenderOrders(orders);
+  updateAutoFillBookmarklet();
+  // Show preview
+  const preview=document.getElementById('autoFillPreview');
+  if(orders.length){
+    preview.innerHTML='<p style="font-size:.82rem;color:var(--muted)">📋 會自動加以下項目到購物車：</p>' +
+      orders.map(o=>'<div style="font-size:.8rem;color:var(--text);margin:2px 0">'+o.name+': '+(o.items||[]).map(i=>i.name+' ×'+i.qty).join(', ')+'</div>').join('');
+  }
+};
 
 init();
 </script>

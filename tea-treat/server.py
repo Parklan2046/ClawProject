@@ -2,48 +2,60 @@
 """
 請食 Tea - Office group order helper
 POC: Create treat → Share link → Collect orders → Show summary
+Storage: SQLite
 """
 
 import json
 import os
+import sqlite3
 import uuid
-import time
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import urlparse, parse_qs
 
 HOST = os.getenv('TEA_HOST', '127.0.0.1')
 PORT = int(os.getenv('TEA_PORT', '8771'))
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
-os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'tea.db')
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 
-def load_treats():
-    path = os.path.join(DATA_DIR, 'treats.json')
-    if os.path.exists(path):
-        with open(path) as f:
-            return json.load(f)
-    return {}
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    return conn
 
 
-def save_treats(data):
-    path = os.path.join(DATA_DIR, 'treats.json')
-    with open(path, 'w') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-
-def load_orders():
-    path = os.path.join(DATA_DIR, 'orders.json')
-    if os.path.exists(path):
-        with open(path) as f:
-            return json.load(f)
-    return {}
-
-
-def save_orders(data):
-    path = os.path.join(DATA_DIR, 'orders.json')
-    with open(path, 'w') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+def init_db():
+    conn = get_db()
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS treats (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL DEFAULT '請食 Tea',
+            restaurant TEXT NOT NULL DEFAULT '',
+            platform TEXT DEFAULT 'foodpanda',
+            url TEXT DEFAULT '',
+            menu TEXT DEFAULT '[]',
+            deadline TEXT DEFAULT '',
+            note TEXT DEFAULT '',
+            created_by TEXT DEFAULT '',
+            created_at TEXT DEFAULT '',
+            status TEXT DEFAULT 'open'
+        );
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            treat_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            items TEXT DEFAULT '[]',
+            remark TEXT DEFAULT '',
+            ordered_at TEXT DEFAULT '',
+            updated_at TEXT DEFAULT '',
+            FOREIGN KEY (treat_id) REFERENCES treats(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_orders_treat ON orders(treat_id);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_treat_name ON orders(treat_id, name);
+    """)
+    conn.commit()
+    conn.close()
 
 
 def send_json(h, payload, status=200):
@@ -72,6 +84,19 @@ def send_file(h, filepath, content_type='text/html'):
     h.wfile.write(data)
 
 
+def row_to_dict(row):
+    if row is None:
+        return None
+    d = dict(row)
+    for field in ('menu', 'items'):
+        if field in d and isinstance(d[field], str):
+            try:
+                d[field] = json.loads(d[field])
+            except:
+                d[field] = []
+    return d
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204)
@@ -96,17 +121,54 @@ class Handler(BaseHTTPRequestHandler):
         # API: Get treat info
         if path.startswith('/tea-treat/api/treat/'):
             treat_id = path.split('/tea-treat/api/treat/')[-1]
-            treats = load_treats()
-            if treat_id in treats:
-                return send_json(self, {'ok': True, 'treat': treats[treat_id]})
+            conn = get_db()
+            row = conn.execute('SELECT * FROM treats WHERE id=?', (treat_id,)).fetchone()
+            conn.close()
+            if row:
+                return send_json(self, {'ok': True, 'treat': row_to_dict(row)})
             return send_json(self, {'ok': False, 'error': '搵唔到呢個茶記'}, 404)
 
         # API: Get orders for a treat
         if path.startswith('/tea-treat/api/orders/'):
             treat_id = path.split('/tea-treat/api/orders/')[-1]
-            orders = load_orders()
-            treat_orders = orders.get(treat_id, [])
-            return send_json(self, {'ok': True, 'orders': treat_orders})
+            conn = get_db()
+            rows = conn.execute('SELECT * FROM orders WHERE treat_id=? ORDER BY ordered_at', (treat_id,)).fetchall()
+            conn.close()
+            orders = [row_to_dict(r) for r in rows]
+            return send_json(self, {'ok': True, 'orders': orders})
+
+        # API: Get consolidated order (for bookmarklet)
+        if path.startswith('/tea-treat/api/consolidated/'):
+            treat_id = path.split('/tea-treat/api/consolidated/')[-1]
+            conn = get_db()
+            treat_row = conn.execute('SELECT * FROM treats WHERE id=?', (treat_id,)).fetchone()
+            order_rows = conn.execute('SELECT * FROM orders WHERE treat_id=?', (treat_id,)).fetchall()
+            conn.close()
+            if not treat_row:
+                return send_json(self, {'ok': False, 'error': '搵唔到'}, 404)
+
+            treat = row_to_dict(treat_row)
+            item_counts = {}
+            for o in order_rows:
+                order = row_to_dict(o)
+                for item in order.get('items', []):
+                    name = item.get('name', '')
+                    qty = item.get('qty', 1)
+                    price = item.get('price', '')
+                    if name not in item_counts:
+                        item_counts[name] = {'name': name, 'price': price, 'qty': 0, 'people': []}
+                    item_counts[name]['qty'] += qty
+                    if order['name'] not in item_counts[name]['people']:
+                        item_counts[name]['people'].append(order['name'])
+
+            consolidated = sorted(item_counts.values(), key=lambda x: -x['qty'])
+            return send_json(self, {
+                'ok': True,
+                'treat': {'title': treat['title'], 'restaurant': treat['restaurant']},
+                'consolidated': consolidated,
+                'total_people': len(order_rows),
+                'total_items': sum(c['qty'] for c in consolidated),
+            })
 
         return send_json(self, {'ok': False, 'error': 'Not found'}, 404)
 
@@ -122,79 +184,70 @@ class Handler(BaseHTTPRequestHandler):
         # API: Create treat
         if path == '/tea-treat/api/create':
             treat_id = uuid.uuid4().hex[:8]
-            treat = {
-                'id': treat_id,
-                'title': body.get('title', '請食 Tea'),
-                'restaurant': body.get('restaurant', ''),
-                'platform': body.get('platform', 'foodpanda'),
-                'url': body.get('url', ''),
-                'menu': body.get('menu', []),
-                'deadline': body.get('deadline', ''),
-                'note': body.get('note', ''),
-                'created_by': body.get('created_by', ''),
-                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
-                'status': 'open',
-            }
-            treats = load_treats()
-            treats[treat_id] = treat
-            save_treats(treats)
-            # Init empty orders
-            orders = load_orders()
-            orders[treat_id] = []
-            save_orders(orders)
-            return send_json(self, {'ok': True, 'treat_id': treat_id, 'treat': treat})
+            now = datetime.now().strftime('%Y-%m-%d %H:%M')
+            menu_json = json.dumps(body.get('menu', []), ensure_ascii=False)
+            conn = get_db()
+            conn.execute('''INSERT INTO treats (id, title, restaurant, platform, url, menu, deadline, note, created_by, created_at, status)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+                         (treat_id, body.get('title', '請食 Tea'), body.get('restaurant', ''),
+                          body.get('platform', 'foodpanda'), body.get('url', ''),
+                          menu_json, body.get('deadline', ''), body.get('note', ''),
+                          body.get('created_by', ''), now, 'open'))
+            conn.commit()
+            treat_row = conn.execute('SELECT * FROM treats WHERE id=?', (treat_id,)).fetchone()
+            conn.close()
+            return send_json(self, {'ok': True, 'treat_id': treat_id, 'treat': row_to_dict(treat_row)})
 
         # API: Submit order
         if path.startswith('/tea-treat/api/order/'):
             treat_id = path.split('/tea-treat/api/order/')[-1]
-            treats = load_treats()
-            if treat_id not in treats:
+            conn = get_db()
+            treat = conn.execute('SELECT * FROM treats WHERE id=?', (treat_id,)).fetchone()
+            if not treat:
+                conn.close()
                 return send_json(self, {'ok': False, 'error': '搵唔到呢個茶記'}, 404)
-            if treats[treat_id].get('status') != 'open':
+            if dict(treat).get('status') != 'open':
+                conn.close()
                 return send_json(self, {'ok': False, 'error': '茶記已經截止咗'}, 400)
 
             orderer = body.get('name', '').strip()
             items = body.get('items', [])
             remark = body.get('remark', '').strip()
             if not orderer:
+                conn.close()
                 return send_json(self, {'ok': False, 'error': '請填你個名'}, 400)
             if not items:
+                conn.close()
                 return send_json(self, {'ok': False, 'error': '請揀至少一樣嘢'}, 400)
 
-            orders = load_orders()
-            treat_orders = orders.get(treat_id, [])
+            now = datetime.now().strftime('%Y-%m-%d %H:%M')
+            items_json = json.dumps(items, ensure_ascii=False)
 
-            # Check if already ordered - update instead of duplicate
-            existing = next((o for o in treat_orders if o['name'] == orderer), None)
+            # Upsert: update if exists, insert if not
+            existing = conn.execute('SELECT id FROM orders WHERE treat_id=? AND name=?', (treat_id, orderer)).fetchone()
             if existing:
-                existing['items'] = items
-                existing['remark'] = remark
-                existing['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+                conn.execute('UPDATE orders SET items=?, remark=?, updated_at=? WHERE id=?',
+                             (items_json, remark, now, existing['id']))
             else:
-                treat_orders.append({
-                    'name': orderer,
-                    'items': items,
-                    'remark': remark,
-                    'ordered_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
-                })
-
-            orders[treat_id] = treat_orders
-            save_orders(orders)
+                conn.execute('INSERT INTO orders (treat_id, name, items, remark, ordered_at) VALUES (?,?,?,?,?)',
+                             (treat_id, orderer, items_json, remark, now))
+            conn.commit()
+            conn.close()
             return send_json(self, {'ok': True, 'message': '落單成功！'})
 
         # API: Close treat
         if path.startswith('/tea-treat/api/close/'):
             treat_id = path.split('/tea-treat/api/close/')[-1]
-            treats = load_treats()
-            if treat_id in treats:
-                treats[treat_id]['status'] = 'closed'
-                save_treats(treats)
-                return send_json(self, {'ok': True})
-            return send_json(self, {'ok': False}, 404)
+            conn = get_db()
+            conn.execute("UPDATE treats SET status='closed' WHERE id=?", (treat_id,))
+            conn.commit()
+            conn.close()
+            return send_json(self, {'ok': True})
 
         return send_json(self, {'ok': False, 'error': 'Not found'}, 404)
 
 
 if __name__ == '__main__':
+    init_db()
     print(f'請食 Tea server on http://{HOST}:{PORT}')
     HTTPServer((HOST, PORT), Handler).serve_forever()
