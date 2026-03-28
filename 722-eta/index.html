@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <title>Citybus ETA Checker</title>
+  <title>Citybus ETA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -16,608 +16,591 @@
       --accent2: #ec4899;
       --gold: #fbbf24;
       --green: #86efac;
+      --cyan: #33e6ff;
       --danger: #fca5a5;
       --chip: rgba(255,255,255,0.05);
     }
-    * { box-sizing: border-box; }
+    *{box-sizing:border-box;margin:0;padding:0}
     body {
-      margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at top right, rgba(236,72,153,0.12), transparent 25%),
-        radial-gradient(circle at top left, rgba(249,115,22,0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(236,72,153,0.10), transparent 25%),
+        radial-gradient(circle at top left, rgba(249,115,22,0.10), transparent 28%),
         linear-gradient(180deg, #08111f 0%, #0b1220 100%);
       color: var(--text);
-      padding: 8px;
+      padding: 6px;
+      min-height: 100vh;
     }
     .app { max-width: 760px; margin: 0 auto; }
-    .card {
-      background: rgba(15, 23, 42, 0.95);
+
+    /* Compact Search Bar */
+    .search-bar {
+      background: rgba(15,23,42,0.95);
       border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 14px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.28);
-      margin-bottom: 12px;
-    }
-    h1 { margin: 0; font-size: 1.3rem; line-height: 1.1; }
-    h2 { margin: 0; font-size: 0.98rem; }
-    .sub, .hint, .status, .meta {
-      color: var(--muted);
-      font-size: 0.84rem;
-    }
-    .top-head, .section-head {
+      border-radius: 16px;
+      padding: 10px 12px;
       display: flex;
-      justify-content: space-between;
+      gap: 8px;
       align-items: center;
-      gap: 10px;
       margin-bottom: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
-    label {
-      display: block;
-      margin: 10px 0 6px;
-      color: var(--muted);
-      font-size: 0.84rem;
-    }
-    input, select {
-      width: 100%;
+    .search-bar input {
       background: #0a1020;
       color: var(--text);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px;
-      padding: 12px 13px;
-      font-size: 0.96rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
       outline: none;
+      width: 100px;
+      transition: border-color .2s;
     }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    button {
+    .search-bar input:focus { border-color: var(--accent); }
+    .search-bar input::placeholder { color: var(--muted); }
+    .search-bar input.route-input { width: 70px; font-weight: 800; text-align: center; font-size: 1.1rem; }
+    .search-bar input.stop-input { flex: 1; min-width: 0; }
+    .search-bar .search-label { color: var(--muted); font-size: .72rem; display: flex; flex-direction: column; gap: 2px; }
+    .search-bar button {
       border: none;
-      border-radius: 999px;
-      padding: 12px 16px;
-      font-size: 0.94rem;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.88rem;
       font-weight: 800;
       color: white;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       cursor: pointer;
-      min-height: 44px;
-    }
-    button.secondary { background: #243146; color: var(--text); }
-    button.ghost {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--muted);
-    }
-    button.small { padding: 10px 12px; min-height: 38px; font-size: 0.86rem; font-weight: 700; }
-    .error { margin-top: 8px; color: var(--danger); font-size: 0.88rem; }
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      background: rgba(15,23,42,0.96);
-      border: 1px solid var(--line);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-size: 0.86rem;
-      z-index: 200;
-      display: none;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    }
-    .toast.show { display: block; }
-
-    .bookmark-scroll {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-      flex-wrap: nowrap;
-    }
-    .bookmark-mini {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
       white-space: nowrap;
-      background: rgba(249,115,22,0.12);
-      border: 1px solid rgba(249,115,22,0.18);
+      flex-shrink: 0;
+    }
+    .search-bar button:disabled { opacity: .5; }
+    .search-bar .icon-btn {
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 10px;
+    }
+
+    /* Bookmarks */
+    .bookmarks-card {
+      background: rgba(15,23,42,0.95);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .bookmark-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+    .bookmark-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      white-space: nowrap;
+      background: rgba(249,115,22,0.10);
+      border: 1px solid rgba(249,115,22,0.15);
       border-radius: 999px;
-      padding: 9px 12px;
-      min-height: 40px;
+      padding: 7px 12px;
       flex: 0 0 auto;
       cursor: pointer;
-      font-size: 0.86rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text);
+      transition: all .2s;
+    }
+    .bookmark-chip:hover { background: rgba(249,115,22,0.2); border-color: rgba(249,115,22,0.3); }
+    .bookmark-chip .route-badge {
+      background: rgba(249,115,22,0.2);
+      color: var(--accent);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: .72rem;
       font-weight: 800;
     }
-    .bookmark-mini.primary {
-      border-color: rgba(251,191,36,0.35);
-      background: rgba(251,191,36,0.12);
-      color: var(--gold);
-    }
-    .bookmark-mini .meta-text {
-      color: var(--muted);
-      font-weight: 600;
-      font-size: 0.78rem;
-    }
 
-    .eta-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-    .eta-card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 14px;
+    /* Timer - Prominent */
+    .timer-section {
+      text-align: center;
+      padding: 8px 0;
+      margin-bottom: 6px;
     }
-    .eta-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-    .eta-time { font-size: 1.22rem; font-weight: 900; color: var(--gold); }
-    .eta-away { color: var(--green); font-weight: 800; font-size: 0.86rem; }
-    .eta-sub, .eta-remark { margin-top: 5px; color: var(--muted); font-size: 0.83rem; }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(3, 7, 18, 0.72);
-      display: none;
+    .timer-ring {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      z-index: 100;
-      padding: 12px;
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    .timer-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .timer-ring .countdown {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--cyan);
+      z-index: 1;
+    }
+    .timer-label { color: var(--muted); font-size: .75rem; margin-top: 2px; }
+    .timer-pulse {
+      animation: timerPulse 1s ease infinite;
+    }
+    @keyframes timerPulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: .5; }
+    }
+    .timer-section.hidden { display: none; }
+
+    /* Status line */
+    .status-line {
+      text-align: center;
+      color: var(--muted);
+      font-size: .82rem;
+      margin-bottom: 10px;
+    }
+    .status-line .live-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      margin-right: 4px;
+      animation: livePulse 2s ease infinite;
+      vertical-align: middle;
+    }
+    @keyframes livePulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(134,239,172,.5); }
+      50% { box-shadow: 0 0 0 6px rgba(134,239,172,0); }
+    }
+
+    /* ETA Cards - Fancy */
+    .eta-list { display: flex; flex-direction: column; gap: 10px; }
+    .eta-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: all .3s;
+      animation: cardIn .4s ease;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(12px) scale(.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .eta-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+    }
+    .eta-card:first-child::before { background: var(--green); }
+    .eta-card:nth-child(2)::before { background: var(--gold); }
+    .eta-card:nth-child(3)::before { background: var(--accent); }
+
+    .eta-card.first { border-color: rgba(134,239,172,.2); background: linear-gradient(135deg, rgba(0,230,118,.04), transparent); }
+
+    .eta-row { display: flex; justify-content: space-between; align-items: center; }
+    .eta-big-time {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -.02em;
+      background: linear-gradient(135deg, var(--gold), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .eta-card.first .eta-big-time {
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .eta-countdown-box {
+      text-align: right;
+    }
+    .eta-mins {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--green);
+    }
+    .eta-mins.urgent {
+      color: var(--accent);
+      animation: urgentPulse 1s ease infinite;
+    }
+    @keyframes urgentPulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    .eta-mins-label { color: var(--muted); font-size: .72rem; }
+
+    .eta-dest {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+    .eta-remark {
+      margin-top: 4px;
+      font-size: .78rem;
+      color: var(--gold);
+      background: rgba(251,191,36,.08);
+      border-radius: 8px;
+      padding: 4px 8px;
+      display: inline-block;
+    }
+
+    /* Progress bar under first ETA */
+    .eta-progress {
+      height: 3px;
+      background: rgba(255,255,255,.06);
+      border-radius: 4px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .eta-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s linear;
+    }
+    .eta-card.first .eta-progress-fill { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+
+    /* Error */
+    .error { color: var(--danger); font-size: .85rem; text-align: center; margin-top: 8px; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(3,7,18,.75);
+      display: none; align-items: center; justify-content: center;
+      z-index: 100; padding: 12px;
     }
     .modal-backdrop.show { display: flex; }
     .modal {
       width: min(760px, 100%);
-      max-height: 88vh;
-      overflow: auto;
+      max-height: 88vh; overflow: auto;
       background: #0f172a;
       border: 1px solid var(--line);
-      border-radius: 24px;
+      border-radius: 20px;
       padding: 16px;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 20px 50px rgba(0,0,0,0.45);
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
     }
-    .modal-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-      position: sticky;
-      top: 0;
-      background: #0f172a;
-      padding-bottom: 8px;
-      z-index: 2;
+    .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .modal label { display: block; margin: 8px 0 4px; color: var(--muted); font-size: .82rem; }
+    .modal input, .modal select {
+      width: 100%;
+      background: #0a1020;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: .92rem;
+      outline: none;
     }
-    .result-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .modal button {
+      border: none; border-radius: 999px; padding: 10px 14px;
+      font-size: .88rem; font-weight: 700; color: white; cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    .modal button.secondary { background: #243146; color: var(--text); }
+    .modal button.ghost { background: transparent; border: 1px solid rgba(255,255,255,.1); color: var(--muted); }
+    .modal button.small { padding: 8px 12px; font-size: .82rem; }
+
+    .result-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
     .stop-card {
       background: var(--panel-2);
       border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 14px;
+      border-radius: 14px;
+      padding: 12px;
     }
-    .stop-title { font-weight: 800; line-height: 1.28; }
-    .stop-sub { margin-top: 6px; color: var(--muted); font-size: 0.84rem; word-break: break-word; }
-    .stop-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .filter-chip-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-    .chip {
-      background: var(--chip);
+    .stop-title { font-weight: 800; font-size: .92rem; }
+    .stop-sub { margin-top: 4px; color: var(--muted); font-size: .8rem; }
+    .stop-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .stop-actions button { flex: 1; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(15,23,42,.96);
       border: 1px solid var(--line);
+      color: var(--text);
       border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 0.8rem;
-      color: var(--muted);
+      padding: 8px 14px;
+      font-size: .84rem;
+      z-index: 200;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
     }
+    .toast.show { display: block; }
+
+    .meta { color: var(--muted); font-size: .78rem; }
 
     @media (max-width: 560px) {
-      .row, .stop-actions { grid-template-columns: 1fr; }
-      .actions { flex-direction: column; }
-      button { width: 100%; }
-      .top-head, .section-head { flex-direction: column; align-items: stretch; }
-      .modal { width: 100%; max-height: 86vh; border-radius: 20px; }
+      .search-bar { flex-wrap: wrap; }
+      .search-bar input.route-input { width: 60px; }
+      .search-bar input.stop-input { width: 100%; }
+      .modal { width: 100%; max-height: 86vh; }
+      .modal .row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <section class="card">
-      <div class="top-head">
-        <div>
-          <h1>Citybus ETA Checker</h1>
-          <div class="sub">超短 bookmark chips，搜尋結果會喺畫面中間 dialog 顯示。</div>
-        </div>
-        <button id="openConfigBtn" class="secondary small">管理收藏</button>
-      </div>
-
-      <div class="section-head">
-        <h2>收藏站位</h2>
-        <div class="meta">點一下即查</div>
-      </div>
-      <div id="bookmarkList" class="bookmark-scroll"></div>
-    </section>
-
-    <section class="card">
-      <div class="section-head">
-        <h2>即時到站</h2>
-        <div class="meta">route + stop ID</div>
-      </div>
-      <div class="row">
-        <div>
-          <label for="routeNo">路線</label>
-          <input id="routeNo" value="722" placeholder="例如：722" />
-        </div>
-        <div>
-          <label for="stopId">Stop ID</label>
-          <input id="stopId" value="001272" placeholder="例如：001272" />
-        </div>
-      </div>
-      <div class="actions">
-        <button id="checkBtn">查詢 ETA</button>
-        <button id="saveCurrentBtn" class="secondary">收藏目前站位</button>
-      </div>
-      <div class="hint" style="margin-top:10px;">查到 ETA 後會每 10 秒自動 refresh，並按時間先後排序。</div>
-      <div id="status" class="status"></div>
-      <div id="etaList" class="eta-list"></div>
-      <div id="error" class="error"></div>
-    </section>
-  </div>
-
-  <div id="configModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal">
-      <div class="modal-head">
-        <div>
-          <h2 style="margin:0;">搜尋巴士站 / 收藏設定</h2>
-          <div class="sub">結果會保持喺畫面中間，不會跌到底部。</div>
-        </div>
-        <button id="closeConfigBtn" class="ghost small">關閉</button>
-      </div>
-
-      <label for="searchRoute">巴士路線</label>
-      <input id="searchRoute" value="722" placeholder="例如：722 / 77A / 18X" />
-
-      <div class="row">
-        <div>
-          <label for="searchDir">方向</label>
-          <select id="searchDir">
-            <option value="outbound">往目的地 / Outbound</option>
-            <option value="inbound">返程 / Inbound</option>
-          </select>
-        </div>
-        <div>
-          <label for="filterText">站名篩選</label>
-          <input id="filterText" placeholder="例如：鰂魚涌 / 英皇道 / 中環" />
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="searchBtn">搜尋站位</button>
-        <button id="copyToMainBtn" class="secondary">同步路線到主查詢</button>
-      </div>
-      <div class="filter-chip-row">
-        <div class="chip">搜尋後會留喺 dialog 中間</div>
-        <div class="chip">可即時 filter</div>
-        <div class="chip">可直接加入收藏</div>
-      </div>
-
-      <div id="searchStatus" class="status"></div>
-      <div id="searchResults" class="result-list"></div>
-      <div id="searchError" class="error"></div>
+<div class="app">
+  <!-- Compact Search Bar -->
+  <div class="search-bar">
+    <div class="search-label">
+      <span style="font-size:.65rem;color:var(--muted)">路線</span>
+      <input id="routeNo" class="route-input" value="722" placeholder="722" />
     </div>
+    <div class="search-label" style="flex:1;min-width:0">
+      <span style="font-size:.65rem;color:var(--muted)">Stop ID</span>
+      <input id="stopId" class="stop-input" value="001272" placeholder="001272" />
+    </div>
+    <button id="checkBtn">🔍 查</button>
+    <button class="icon-btn" id="openConfigBtn" title="搜尋 & 收藏">⚙️</button>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <!-- Bookmarks -->
+  <div class="bookmarks-card">
+    <div id="bookmarkList" class="bookmark-scroll"></div>
+  </div>
 
-  <script>
-    const COMPANY = 'CTB';
-    const BOOKMARKS_KEY = 'citybus_eta_bookmarks_v5';
-    let refreshTimer = null;
-    let searchCache = [];
-    let memoryBookmarks = [];
+  <!-- Timer - Prominent at top -->
+  <div id="timerSection" class="timer-section hidden">
+    <div class="timer-ring">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="4"/>
+        <circle id="timerArc" cx="40" cy="40" r="34" fill="none" stroke="var(--cyan)" stroke-width="4"
+          stroke-dasharray="213.6" stroke-dashoffset="0" stroke-linecap="round"/>
+      </svg>
+      <span id="countdownNum" class="countdown">10</span>
+    </div>
+    <div class="timer-label">秒後自動更新</div>
+  </div>
 
-    function showToast(message) {
-      const el = document.getElementById('toast');
-      el.textContent = message;
-      el.classList.add('show');
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => el.classList.remove('show'), 2200);
-    }
+  <!-- Status -->
+  <div id="statusLine" class="status-line"></div>
 
-    function storageAvailable() {
-      try {
-        const key = '__eta_test__';
-        localStorage.setItem(key, '1');
-        localStorage.removeItem(key);
-        return true;
-      } catch {
-        return false;
-      }
-    }
+  <!-- ETA List -->
+  <div id="etaList" class="eta-list"></div>
+  <div id="error" class="error"></div>
+</div>
 
-    function buildEtaUrl(route, stopId) {
-      return `https://rt.data.gov.hk/v2/transport/citybus/eta/${COMPANY}/${stopId}/${encodeURIComponent(route)}`;
-    }
-    function buildRouteStopUrl(route, dir) {
-      return `https://rt.data.gov.hk/v2/transport/citybus/route-stop/${COMPANY}/${encodeURIComponent(route)}/${dir}`;
-    }
-    function buildStopUrl(stopId) {
-      return `https://rt.data.gov.hk/v2/transport/citybus/stop/${stopId}`;
-    }
-    function clearRefreshTimer() {
-      if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
-    }
-    function formatEtaTime(eta) {
-      const t = new Date(eta);
-      if (isNaN(t)) return eta || '未知時間';
-      return `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
-    }
-    function formatMinutesAway(eta) {
-      const t = new Date(eta);
-      if (isNaN(t)) return '';
-      const mins = Math.max(0, Math.round((t.getTime() - Date.now()) / 60000));
-      return mins === 0 ? '即將到站' : `${mins} 分鐘後`;
-    }
-    function shortBookmarkName(item) {
-      return item.custom_name || item.name_tc || item.name_en || item.stop_id;
-    }
-    function getDirectionLabel(dir) {
-      return dir === 'outbound' ? '往目的地' : '返程';
-    }
-    function getBookmarks() {
-      try {
-        if (!storageAvailable()) return memoryBookmarks;
-        const raw = localStorage.getItem(BOOKMARKS_KEY);
-        return raw ? JSON.parse(raw) : [];
-      } catch {
-        return memoryBookmarks;
-      }
-    }
-    function saveBookmarks(list) {
-      try {
-        if (!storageAvailable()) {
-          memoryBookmarks = list;
-          return true;
-        }
-        localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(list));
-        return true;
-      } catch {
-        memoryBookmarks = list;
-        return false;
-      }
-    }
-    function normaliseBookmarks(list) {
-      return [...list].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-    }
-    function addBookmark(item) {
-      const bookmarks = getBookmarks();
-      const exists = bookmarks.some(b => b.route === item.route && b.stop_id === item.stop_id);
-      if (exists) {
-        showToast('收藏已存在');
-        return false;
-      }
-      const next = normaliseBookmarks([item, ...bookmarks]);
-      const persisted = saveBookmarks(next);
-      renderBookmarks();
-      showToast(persisted ? '已加入收藏' : '已加入收藏（暫存模式）');
-      return true;
-    }
+<!-- Config Modal -->
+<div id="configModal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 style="margin:0;font-size:1rem;">搜尋巴士站 / 收藏</h2>
+        <div class="meta">結果喺 dialog 中間顯示</div>
+      </div>
+      <button id="closeConfigBtn" class="ghost small">✕</button>
+    </div>
+    <label>巴士路線</label>
+    <input id="searchRoute" value="722" placeholder="722 / 77A / 18X" />
+    <div class="row">
+      <div>
+        <label>方向</label>
+        <select id="searchDir">
+          <option value="outbound">往目的地</option>
+          <option value="inbound">返程</option>
+        </select>
+      </div>
+      <div>
+        <label>站名篩選</label>
+        <input id="filterText" placeholder="鰂魚涌 / 英皇道" />
+      </div>
+    </div>
+    <div class="actions">
+      <button id="searchBtn">搜尋站位</button>
+      <button id="copyToMainBtn" class="secondary">同步路線</button>
+    </div>
+    <div id="searchStatus" class="meta" style="margin-top:8px"></div>
+    <div id="searchResults" class="result-list"></div>
+    <div id="searchError" class="error"></div>
+  </div>
+</div>
 
-    function renderBookmarks() {
-      const listEl = document.getElementById('bookmarkList');
-      const bookmarks = normaliseBookmarks(getBookmarks());
-      listEl.innerHTML = '';
-      if (!bookmarks.length) {
-        listEl.innerHTML = '<div class="bookmark-mini">未有收藏 <span class="meta-text">請用管理收藏加入</span></div>';
-        return;
-      }
-      bookmarks.forEach((item) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'bookmark-mini' + (item.pinned ? ' primary' : '');
-        btn.innerHTML = `${shortBookmarkName(item)} <span class="meta-text">${item.route}</span>`;
-        btn.addEventListener('click', () => {
-          document.getElementById('routeNo').value = item.route;
-          document.getElementById('stopId').value = item.stop_id;
-          openEta();
-        });
-        listEl.appendChild(btn);
-      });
-    }
+<div id="toast" class="toast"></div>
 
-    async function openEta() {
-      const route = document.getElementById('routeNo').value.trim().toUpperCase();
-      const stopId = document.getElementById('stopId').value.trim();
-      const statusEl = document.getElementById('status');
-      const listEl = document.getElementById('etaList');
-      const errEl = document.getElementById('error');
-      const btn = document.getElementById('checkBtn');
-      clearRefreshTimer();
-      statusEl.textContent = '';
-      listEl.innerHTML = '';
-      errEl.textContent = '';
-      if (!route || !stopId) {
-        errEl.textContent = '請先輸入路線同 stop ID。';
-        return;
-      }
-      btn.disabled = true;
-      statusEl.textContent = '查詢中…';
-      try {
-        const res = await fetch(buildEtaUrl(route, stopId), { cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        const etaItems = (Array.isArray(data.data) ? data.data : [])
-          .filter(item => item && item.eta)
-          .sort((a, b) => new Date(a.eta) - new Date(b.eta));
-        if (!etaItems.length) {
-          statusEl.textContent = `${route} 暫時冇 ETA 資料。可能未開服務或者官方未提供即將到站資料。`;
-          refreshTimer = setTimeout(openEta, 10000);
-          return;
-        }
-        const first = etaItems[0];
-        statusEl.textContent = `${route} → ${first.dest_tc || '目的地'} · 每 10 秒自動更新`;
-        etaItems.slice(0, 3).forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'eta-card';
-          div.innerHTML = `
-            <div class="eta-top">
-              <div class="eta-time">${formatEtaTime(item.eta)}</div>
-              <div class="eta-away">${formatMinutesAway(item.eta)}</div>
-            </div>
-            <div class="eta-sub">stop_id ${item.stop} ・ route ${item.route} ・ ${item.dest_tc || ''}</div>
-            ${item.rmk_tc ? `<div class="eta-remark">${item.rmk_tc}</div>` : ''}
-          `;
-          listEl.appendChild(div);
-        });
-        refreshTimer = setTimeout(openEta, 10000);
-      } catch (err) {
-        console.error(err);
-        errEl.textContent = '查詢失敗：' + err.message;
-      } finally {
-        btn.disabled = false;
-      }
-    }
+<script>
+const COMPANY='CTB', BOOKMARKS_KEY='citybus_eta_bookmarks_v6';
+let refreshTimer=null, countdownTimer=null, countdownVal=10;
+let searchCache=[], memoryBookmarks=[];
 
-    function renderSearchResults() {
-      const resultEl = document.getElementById('searchResults');
-      const filter = document.getElementById('filterText').value.trim().toLowerCase();
-      resultEl.innerHTML = '';
-      const filtered = searchCache.filter(item => {
-        if (!filter) return true;
-        const nameTc = (item.stopInfo?.name_tc || '').toLowerCase();
-        const nameEn = (item.stopInfo?.name_en || '').toLowerCase();
-        const stopId = (item.stop || '').toLowerCase();
-        return nameTc.includes(filter) || nameEn.includes(filter) || stopId.includes(filter);
-      });
-      filtered.forEach(item => {
-        const stopInfo = item.stopInfo || {};
-        const nameTc = stopInfo.name_tc || item.stop;
-        const nameEn = stopInfo.name_en || '';
-        const route = document.getElementById('searchRoute').value.trim().toUpperCase();
-        const dir = document.getElementById('searchDir').value;
-        const div = document.createElement('div');
-        div.className = 'stop-card';
-        div.innerHTML = `
-          <div class="stop-title">${item.seq}. ${nameTc}</div>
-          <div class="stop-sub">${nameEn}${nameEn ? ' ・ ' : ''}stop_id ${item.stop}</div>
-          <div class="stop-actions">
-            <button class="small" data-action="eta">查 ETA</button>
-            <button class="small secondary" data-action="bookmark">加入收藏</button>
+function showToast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(()=>el.classList.remove('show'),2200);}
+function storageAvailable(){try{localStorage.setItem('__t__','1');localStorage.removeItem('__t__');return true;}catch{return false;}}
+function buildEtaUrl(r,s){return`https://rt.data.gov.hk/v2/transport/citybus/eta/${COMPANY}/${s}/${encodeURIComponent(r)}`;}
+function buildRouteStopUrl(r,d){return`https://rt.data.gov.hk/v2/transport/citybus/route-stop/${COMPANY}/${encodeURIComponent(r)}/${d}`;}
+function buildStopUrl(s){return`https://rt.data.gov.hk/v2/transport/citybus/stop/${s}`;}
+function clearTimers(){if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null;}}
+function fmtTime(eta){const t=new Date(eta);if(isNaN(t))return'??';return`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;}
+function fmtMins(eta){const t=new Date(eta);if(isNaN(t))return'';const m=Math.max(0,Math.round((t.getTime()-Date.now())/60000));return m===0?'即到':m;}
+
+function getBookmarks(){try{if(!storageAvailable())return memoryBookmarks;const r=localStorage.getItem(BOOKMARKS_KEY);return r?JSON.parse(r):[];}catch{return memoryBookmarks;}}
+function saveBookmarks(l){try{if(!storageAvailable()){memoryBookmarks=l;return;}localStorage.setItem(BOOKMARKS_KEY,JSON.stringify(l));}catch{memoryBookmarks=l;}}
+function addBookmark(item){const bm=getBookmarks();if(bm.some(b=>b.route===item.route&&b.stop_id===item.stop_id)){showToast('已存在');return false;}saveBookmarks([item,...bm].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));renderBookmarks();showToast('已收藏');return true;}
+
+function renderBookmarks(){
+  const el=document.getElementById('bookmarkList');
+  const bm=getBookmarks();
+  if(!bm.length){el.innerHTML='<div style="color:var(--muted);font-size:.8rem;padding:4px 0">未有收藏 · 按 ⚙️ 加入</div>';return;}
+  el.innerHTML=bm.map(it=>`<div class="bookmark-chip" data-route="${it.route}" data-stop="${it.stop_id}"><span class="route-badge">${it.route}</span>${it.custom_name||it.name_tc||it.stop_id}</div>`).join('');
+  el.querySelectorAll('.bookmark-chip').forEach(c=>c.addEventListener('click',()=>{
+    document.getElementById('routeNo').value=c.dataset.route;
+    document.getElementById('stopId').value=c.dataset.stop;
+    openEta();
+  }));
+}
+
+/* ---- Countdown Timer ---- */
+function startCountdown(){
+  countdownVal=10;
+  const section=document.getElementById('timerSection');
+  const num=document.getElementById('countdownNum');
+  const arc=document.getElementById('timerArc');
+  const circumference=213.6;
+  section.classList.remove('hidden');
+  num.textContent=countdownVal;
+  arc.style.strokeDashoffset='0';
+  if(countdownTimer) clearInterval(countdownTimer);
+  countdownTimer=setInterval(()=>{
+    countdownVal--;
+    if(countdownVal<0){num.textContent='0';return;}
+    num.textContent=countdownVal;
+    arc.style.strokeDashoffset=(circumference*(1-countdownVal/10)).toString();
+    if(countdownVal<=3){num.classList.add('timer-pulse');arc.style.stroke='var(--accent)';}
+    else{num.classList.remove('timer-pulse');arc.style.stroke='var(--cyan)';}
+  },1000);
+}
+
+/* ---- ETA ---- */
+async function openEta(){
+  const route=document.getElementById('routeNo').value.trim().toUpperCase();
+  const stopId=document.getElementById('stopId').value.trim();
+  const statusEl=document.getElementById('statusLine');
+  const listEl=document.getElementById('etaList');
+  const errEl=document.getElementById('error');
+  clearTimers();
+  errEl.textContent='';
+  if(!route||!stopId){errEl.textContent='請輸入路線同 Stop ID';return;}
+  document.getElementById('checkBtn').disabled=true;
+  statusEl.innerHTML='<span class="live-dot"></span>查詢中…';
+  try{
+    const res=await fetch(buildEtaUrl(route,stopId),{cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const items=(Array.isArray(data.data)?data.data:[]).filter(i=>i&&i.eta).sort((a,b)=>new Date(a.eta)-new Date(b.eta));
+    if(!items.length){
+      statusEl.textContent=`${route} 暫時冇 ETA`;
+      startCountdown();
+      refreshTimer=setTimeout(()=>{openEta();},10000);
+      return;
+    }
+    const first=items[0];
+    statusEl.innerHTML=`<span class="live-dot"></span>${route} → ${first.dest_tc||''} · 自動更新中`;
+
+    listEl.innerHTML='';
+    items.slice(0,3).forEach((item,idx)=>{
+      const mins=fmtMins(item.eta);
+      const isUrgent=typeof mins==='number'&&mins<=2;
+      const isUrgentText=mins==='即到';
+      const pct=typeof mins==='number'?Math.max(5,Math.min(100,100-mins*10)):50;
+      const div=document.createElement('div');
+      div.className='eta-card'+(idx===0?' first':'');
+      div.style.animationDelay=(idx*0.1)+'s';
+      div.innerHTML=`
+        <div class="eta-row">
+          <div>
+            <div class="eta-big-time">${fmtTime(item.eta)}</div>
+            <div class="eta-dest">→ ${item.dest_tc||'目的地'} ${item.route?'・ '+item.route:''}</div>
           </div>
-        `;
-        div.querySelector('[data-action="eta"]').addEventListener('click', () => {
-          document.getElementById('routeNo').value = route;
-          document.getElementById('stopId').value = item.stop;
-          closeConfig();
-          openEta();
-        });
-        div.querySelector('[data-action="bookmark"]').addEventListener('click', () => {
-          const added = addBookmark({
-            route,
-            stop_id: item.stop,
-            name_tc: nameTc,
-            name_en: nameEn,
-            direction: dir,
-            directionLabel: getDirectionLabel(dir),
-            pinned: false
-          });
-          document.getElementById('searchStatus').textContent = added ? `已收藏：${nameTc}` : `已存在收藏：${nameTc}`;
-        });
-        resultEl.appendChild(div);
-      });
-      if (!filtered.length) {
-        resultEl.innerHTML = '<div class="status">篩選後冇結果。</div>';
-      }
-    }
-
-    async function searchStops() {
-      const route = document.getElementById('searchRoute').value.trim().toUpperCase();
-      const dir = document.getElementById('searchDir').value;
-      const statusEl = document.getElementById('searchStatus');
-      const errEl = document.getElementById('searchError');
-      const btn = document.getElementById('searchBtn');
-      statusEl.textContent = '';
-      errEl.textContent = '';
-      document.getElementById('searchResults').innerHTML = '';
-      searchCache = [];
-      if (!route) {
-        errEl.textContent = '請先輸入路線號碼。';
-        return;
-      }
-      btn.disabled = true;
-      statusEl.textContent = '搜尋站位中…';
-      try {
-        const routeStopRes = await fetch(buildRouteStopUrl(route, dir), { cache: 'no-store' });
-        if (!routeStopRes.ok) throw new Error('HTTP ' + routeStopRes.status);
-        const routeStopJson = await routeStopRes.json();
-        const stops = Array.isArray(routeStopJson.data) ? routeStopJson.data : [];
-        if (!stops.length) {
-          statusEl.textContent = '搵唔到呢條線嘅站位。';
-          return;
-        }
-        statusEl.textContent = `找到 ${stops.length} 個站位`;
-        searchCache = await Promise.all(stops.slice(0, 25).map(async item => {
-          try {
-            const res = await fetch(buildStopUrl(item.stop), { cache: 'no-store' });
-            if (!res.ok) return { ...item };
-            const json = await res.json();
-            return { ...item, stopInfo: json.data || null };
-          } catch {
-            return { ...item };
-          }
-        }));
-        renderSearchResults();
-      } catch (err) {
-        console.error(err);
-        errEl.textContent = '搜尋失敗：' + err.message;
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    function saveCurrent() {
-      const route = document.getElementById('routeNo').value.trim().toUpperCase();
-      const stopId = document.getElementById('stopId').value.trim();
-      const statusEl = document.getElementById('status');
-      if (!route || !stopId) {
-        statusEl.textContent = '請先輸入 route 同 stop ID 先收藏。';
-        return;
-      }
-      const added = addBookmark({
-        route,
-        stop_id: stopId,
-        name_tc: stopId,
-        name_en: '',
-        direction: '',
-        directionLabel: '手動加入',
-        pinned: false
-      });
-      statusEl.textContent = added ? `已收藏 stop_id ${stopId}` : `收藏內已經有 stop_id ${stopId}`;
-    }
-
-    function openConfig() {
-      const modal = document.getElementById('configModal');
-      modal.classList.add('show');
-      modal.setAttribute('aria-hidden', 'false');
-    }
-    function closeConfig() {
-      const modal = document.getElementById('configModal');
-      modal.classList.remove('show');
-      modal.setAttribute('aria-hidden', 'true');
-    }
-
-    document.getElementById('checkBtn').addEventListener('click', openEta);
-    document.getElementById('saveCurrentBtn').addEventListener('click', saveCurrent);
-    document.getElementById('searchBtn').addEventListener('click', searchStops);
-    document.getElementById('copyToMainBtn').addEventListener('click', () => {
-      document.getElementById('routeNo').value = document.getElementById('searchRoute').value.trim().toUpperCase();
+          <div class="eta-countdown-box">
+            <div class="eta-mins ${isUrgent||isUrgentText?'urgent':''}">${mins}</div>
+            <div class="eta-mins-label">${isUrgentText?'':'分鐘'}</div>
+          </div>
+        </div>
+        ${item.rmk_tc?`<div class="eta-remark">📢 ${item.rmk_tc}</div>`:''}
+        ${idx===0?`<div class="eta-progress"><div class="eta-progress-fill" style="width:${pct}%"></div></div>`:''}
+      `;
+      listEl.appendChild(div);
     });
-    document.getElementById('openConfigBtn').addEventListener('click', openConfig);
-    document.getElementById('closeConfigBtn').addEventListener('click', closeConfig);
-    document.getElementById('configModal').addEventListener('click', (e) => {
-      if (e.target.id === 'configModal') closeConfig();
-    });
-    document.getElementById('filterText').addEventListener('input', renderSearchResults);
 
-    renderBookmarks();
-  </script>
+    startCountdown();
+    refreshTimer=setTimeout(()=>{openEta();},10000);
+  }catch(err){
+    errEl.textContent='查詢失敗：'+err.message;
+    statusEl.textContent='';
+  }finally{
+    document.getElementById('checkBtn').disabled=false;
+  }
+}
+
+/* ---- Search ---- */
+async function searchStops(){
+  const route=document.getElementById('searchRoute').value.trim().toUpperCase();
+  const dir=document.getElementById('searchDir').value;
+  const statusEl=document.getElementById('searchStatus');
+  const errEl=document.getElementById('searchError');
+  const btn=document.getElementById('searchBtn');
+  statusEl.textContent='';errEl.textContent='';
+  document.getElementById('searchResults').innerHTML='';
+  searchCache=[];
+  if(!route){errEl.textContent='請輸入路線';return;}
+  btn.disabled=true;statusEl.textContent='搜尋中…';
+  try{
+    const res=await fetch(buildRouteStopUrl(route,dir),{cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const json=await res.json();
+    const stops=Array.isArray(json.data)?json.data:[];
+    if(!stops.length){statusEl.textContent='搵唔到站位';return;}
+    statusEl.textContent=`搵到 ${stops.length} 個站`;
+    searchCache=await Promise.all(stops.slice(0,25).map(async item=>{
+      try{const r=await fetch(buildStopUrl(item.stop),{cache:'no-store'});if(!r.ok)return{...item};const j=await r.json();return{...item,stopInfo:j.data||null};}catch{return{...item};}
+    }));
+    renderSearchResults();
+  }catch(err){errEl.textContent='搜尋失敗：'+err.message;}
+  finally{btn.disabled=false;}
+}
+
+function renderSearchResults(){
+  const el=document.getElementById('searchResults');
+  const filter=document.getElementById('filterText').value.trim().toLowerCase();
+  el.innerHTML='';
+  const route=document.getElementById('searchRoute').value.trim().toUpperCase();
+  const dir=document.getElementById('searchDir').value;
+  const filtered=searchCache.filter(i=>{
+    if(!filter)return true;
+    return(i.stopInfo?.name_tc||'').toLowerCase().includes(filter)||(i.stopInfo?.name_en||'').toLowerCase().includes(filter)||(i.stop||'').toLowerCase().includes(filter);
+  });
+  filtered.forEach(item=>{
+    const info=item.stopInfo||{};
+    const ntc=info.name_tc||item.stop;
+    const nen=info.name_en||'';
+    const div=document.createElement('div');div.className='stop-card';
+    div.innerHTML=`<div class="stop-title">${item.seq}. ${ntc}</div><div class="stop-sub">${nen}${nen?' ・ ':''}${item.stop}</div><div class="stop-actions"><button class="small" data-a="eta">查 ETA</button><button class="small secondary" data-a="bm">收藏</button></div>`;
+    div.querySelector('[data-a="eta"]').onclick=()=>{document.getElementById('routeNo').value=route;document.getElementById('stopId').value=item.stop;closeConfig();openEta();};
+    div.querySelector('[data-a="bm"]').onclick=()=>{addBookmark({route,stop_id:item.stop,name_tc:ntc,name_en:nen,direction:dir,pinned:false});};
+    el.appendChild(div);
+  });
+  if(!filtered.length)el.innerHTML='<div class="meta">冇結果</div>';
+}
+
+function saveCurrent(){
+  const route=document.getElementById('routeNo').value.trim().toUpperCase();
+  const stopId=document.getElementById('stopId').value.trim();
+  if(!route||!stopId)return;
+  addBookmark({route,stop_id:stopId,name_tc:stopId,name_en:'',direction:'',pinned:false});
+}
+
+function openConfig(){document.getElementById('configModal').classList.add('show');}
+function closeConfig(){document.getElementById('configModal').classList.remove('show');}
+
+document.getElementById('checkBtn').onclick=openEta;
+document.getElementById('openConfigBtn').onclick=openConfig;
+document.getElementById('closeConfigBtn').onclick=closeConfig;
+document.getElementById('configModal').onclick=e=>{if(e.target.id==='configModal')closeConfig();};
+document.getElementById('searchBtn').onclick=searchStops;
+document.getElementById('copyToMainBtn').onclick=()=>{document.getElementById('routeNo').value=document.getElementById('searchRoute').value.trim().toUpperCase();};
+document.getElementById('filterText').oninput=renderSearchResults;
+
+renderBookmarks();
+</script>
 </body>
 </html>
