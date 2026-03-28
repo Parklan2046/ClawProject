@@ -706,6 +706,13 @@
         }
       });
 
+      chatbotInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          chatbotForm?.requestSubmit();
+        }
+      });
+
     })();
   </script>
 </body>
