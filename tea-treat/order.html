@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>落單 · 請食 Tea</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0b1a;--card:#16132b;--card2:#1e1a38;--border:rgba(255,255,255,.07);--accent:#ff6b9d;--accent2:#c44dff;--cyan:#4de8ff;--gold:#ffc94d;--green:#4dff88;--red:#ff5252;--muted:#7a7890;--text:#ede8f5}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+.container{max-width:500px;margin:0 auto}
+
+.hero{text-align:center;padding:24px 16px;background:linear-gradient(135deg,rgba(255,107,157,.08),rgba(196,77,255,.08));border-radius:20px;margin-bottom:16px;border:1px solid var(--border)}
+.hero .emoji{font-size:2.5rem;margin-bottom:6px}
+.hero h1{font-size:1.4rem;font-weight:900}
+.hero .restaurant{color:var(--cyan);font-size:.95rem;margin-top:4px}
+.hero .meta{color:var(--muted);font-size:.8rem;margin-top:6px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h2{font-size:.95rem;font-weight:700;margin-bottom:12px}
+
+label{display:block;color:var(--muted);font-size:.82rem;margin-bottom:4px;margin-top:10px}
+label:first-child{margin-top:0}
+input,textarea{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:.92rem;outline:none;font-family:inherit;transition:border-color .2s}
+input:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:50px}
+
+/* Menu grid */
+.menu-grid{display:flex;flex-direction:column;gap:8px}
+.menu-row{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:var(--card2);border:1.5px solid var(--border);cursor:pointer;transition:all .2s;user-select:none}
+.menu-row:hover{border-color:var(--accent)}
+.menu-row.selected{border-color:var(--accent);background:rgba(255,107,157,.08)}
+.menu-row .item-name{flex:1;font-size:.92rem;font-weight:600}
+.menu-row .item-price{color:var(--gold);font-size:.85rem;font-weight:700;white-space:nowrap}
+.menu-row .qty-controls{display:flex;align-items:center;gap:6px}
+.qty-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.qty-btn:active{background:var(--accent);color:#fff}
+.qty-num{font-weight:800;min-width:20px;text-align:center;font-size:.95rem}
+
+.submit-btn{width:100%;padding:16px;border-radius:14px;border:none;font-size:1.1rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;transition:all .2s}
+.submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(196,77,255,.3)}
+.submit-btn:disabled{opacity:.5;cursor:wait}
+
+.error{color:var(--red);font-size:.85rem;text-align:center;margin-top:8px}
+.success{text-align:center;padding:24px;animation:pop .4s ease}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.success .big{font-size:3rem;margin-bottom:8px}
+.success h2{color:var(--green);margin-bottom:8px}
+.success p{color:var(--muted);font-size:.9rem}
+
+.order-count{display:inline-flex;align-items:center;gap:4px;background:rgba(255,107,157,.12);color:var(--accent);padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700}
+
+.loading{text-align:center;padding:40px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="loading" class="loading">⏳ 載入中...</div>
+  <div id="orderPage" style="display:none">
+    <div class="hero">
+      <div class="emoji">🧋</div>
+      <h1 id="treatTitle"></h1>
+      <div class="restaurant" id="treatRestaurant"></div>
+      <div class="meta" id="treatMeta"></div>
+    </div>
+
+    <div id="noteCard" class="card" style="display:none">
+      <h2>📝 備註</h2>
+      <p id="treatNote" style="font-size:.88rem;color:var(--muted)"></p>
+    </div>
+
+    <div class="card">
+      <h2>📋 揀嘢食 / 飲 <span class="order-count" id="orderCount">0 份</span></h2>
+      <div id="menuGrid" class="menu-grid"></div>
+    </div>
+
+    <div class="card">
+      <label>你個名</label>
+      <input id="orderName" placeholder="填你個名" />
+      <label>備註（選填）</label>
+      <textarea id="orderRemark" placeholder="例如：少甜、走冰、加辣..."></textarea>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitOrder()">✅ 確認落單</button>
+    <div id="error" class="error"></div>
+
+    <div style="text-align:center;margin-top:12px">
+      <a id="summaryLink" href="#" target="_blank" style="color:var(--muted);font-size:.82rem;text-decoration:none">📊 查看所有 Order</a>
+    </div>
+  </div>
+
+  <div id="successPage" class="success" style="display:none">
+    <div class="big">🎉</div>
+    <h2>落單成功！</h2>
+    <p id="successMsg"></p>
+    <div style="margin-top:20px">
+      <a id="summaryLink2" href="#" target="_blank" style="display:inline-block;padding:12px 20px;border-radius:12px;background:var(--card);border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:.9rem">📊 查看全部 Order</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const tid=location.pathname.split('/order/').pop()||location.pathname.split('/').pop();
+let treat=null, quantities={};
+
+async function init(){
+  try{
+    const res=await fetch(`/tea-treat/api/treat/${tid}`);
+    const data=await res.json();
+    if(!data.ok)throw new Error(data.error);
+    treat=data.treat;
+    render();
+  }catch(e){
+    document.getElementById('loading').textContent='❌ '+e.message;
+  }
+}
+
+function render(){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('orderPage').style.display='block';
+  document.getElementById('treatTitle').textContent=treat.title||'請食 Tea';
+  document.getElementById('treatRestaurant').textContent=treat.restaurant||'';
+  let meta=[];
+  if(treat.created_by)meta.push(`由 ${treat.created_by} 請`);
+  if(treat.deadline)meta.push(`截止 ${treat.deadline}`);
+  if(treat.platform)meta.push(treat.platform);
+  document.getElementById('treatMeta').textContent=meta.join(' · ');
+  if(treat.note){
+    document.getElementById('noteCard').style.display='block';
+    document.getElementById('treatNote').textContent=treat.note;
+  }
+
+  // Summary link
+  document.getElementById('summaryLink').href=`/tea-treat/summary/${tid}`;
+  document.getElementById('summaryLink2').href=`/tea-treat/summary/${tid}`;
+
+  // Menu
+  const grid=document.getElementById('menuGrid');
+  grid.innerHTML='';
+  (treat.menu||[]).forEach((item,i)=>{
+    quantities[i]=0;
+    const div=document.createElement('div');
+    div.className='menu-row';div.id=`row-${i}`;
+    div.innerHTML=`
+      <div class="item-name">${item.name}</div>
+      <div class="item-price">$${item.price}</div>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="chgQty(${i},-1)">−</button>
+        <span class="qty-num" id="qty-${i}">0</span>
+        <button class="qty-btn" onclick="chgQty(${i},1)">+</button>
+      </div>`;
+    grid.appendChild(div);
+  });
+
+  // Load existing order count
+  fetch(`/tea-treat/api/orders/${tid}`).then(r=>r.json()).then(d=>{
+    if(d.ok)document.getElementById('orderCount').textContent=`${d.orders.length} 份`;
+  });
+}
+
+function chgQty(i,d){
+  quantities[i]=Math.max(0,(quantities[i]||0)+d);
+  document.getElementById(`qty-${i}`).textContent=quantities[i];
+  const row=document.getElementById(`row-${i}`);
+  row.classList.toggle('selected',quantities[i]>0);
+}
+
+async function submitOrder(){
+  const name=document.getElementById('orderName').value.trim();
+  const remark=document.getElementById('orderRemark').value.trim();
+  const errEl=document.getElementById('error');
+  const btn=document.getElementById('submitBtn');
+  errEl.textContent='';
+
+  const items=[];
+  Object.entries(quantities).forEach(([i,qty])=>{
+    if(qty>0&&treat.menu[i]){
+      items.push({name:treat.menu[i].name,price:treat.menu[i].price,qty});
+    }
+  });
+
+  if(!name){errEl.textContent='請填你個名';return;}
+  if(!items.length){errEl.textContent='請揀至少一樣嘢';return;}
+
+  btn.disabled=true;btn.textContent='⏳ 提交中...';
+  try{
+    const res=await fetch(`/tea-treat/api/order/${tid}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,items,remark})
+    });
+    const data=await res.json();
+    if(!data.ok)throw new Error(data.error);
+    document.getElementById('orderPage').style.display='none';
+    document.getElementById('successPage').style.display='block';
+    document.getElementById('successMsg').textContent=`${name}，你揀咗 ${items.length} 樣嘢`;
+  }catch(e){errEl.textContent='❌ '+e.message;}
+  finally{btn.disabled=false;btn.textContent='✅ 確認落單';}
+}
+
+init();
+</script>
+</body>
+</html>

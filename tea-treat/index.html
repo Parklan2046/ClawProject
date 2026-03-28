@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>請食 Tea</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0b1a;--card:#16132b;--border:rgba(255,255,255,.07);--accent:#ff6b9d;--accent2:#c44dff;--cyan:#4de8ff;--gold:#ffc94d;--green:#4dff88;--muted:#7a7890;--text:#ede8f5}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.landing{text-align:center;max-width:500px;width:100%}
+.logo{font-size:4rem;margin-bottom:8px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+h1{font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.subtitle{color:var(--muted);font-size:1rem;margin-bottom:32px;line-height:1.6}
+.features{display:flex;flex-direction:column;gap:12px;margin-bottom:36px}
+.feature{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;background:var(--card);border:1px solid var(--border);text-align:left}
+.feature .icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.feature .text h3{font-size:.95rem;font-weight:700;margin-bottom:2px}
+.feature .text p{font-size:.8rem;color:var(--muted)}
+.cta{display:block;width:100%;padding:16px;border-radius:14px;border:none;font-size:1.1rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;transition:all .3s;text-decoration:none}
+.cta:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(196,77,255,.3)}
+.footer{margin-top:24px;color:var(--muted);font-size:.75rem}
+</style>
+</head>
+<body>
+<div class="landing">
+  <div class="logo">🧋</div>
+  <h1>請食 Tea</h1>
+  <p class="subtitle">搞 tea 訂單從此簡單<br>開單 → 分享 → 同事揀嘢 → 自動整合落單</p>
+
+  <div class="features">
+    <div class="feature">
+      <div class="icon" style="background:rgba(255,107,157,.12);color:var(--accent)">🔗</div>
+      <div class="text">
+        <h3>貼餐廳連結</h3>
+        <p>Foodpanda / Keeta 餐廳 URL，一鍵開單</p>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="icon" style="background:rgba(77,232,255,.12);color:var(--cyan)">📱</div>
+      <div class="text">
+        <h3>分享俾同事</h3>
+        <p>一個 link，同事即刻揀嘢飲，唔使填 form</p>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="icon" style="background:rgba(77,255,136,.12);color:var(--green)">📋</div>
+      <div class="text">
+        <h3>自動整合 Order</h3>
+        <p>即時統計每人揀咗咩，對住落單就得</p>
+      </div>
+    </div>
+  </div>
+
+  <a href="setup/" class="cta">🧋 開始請食 Tea</a>
+  <div class="footer">POC version · on9claw.com</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Order 總覽 · 請食 Tea</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0b1a;--card:#16132b;--card2:#1e1a38;--border:rgba(255,255,255,.07);--accent:#ff6b9d;--accent2:#c44dff;--cyan:#4de8ff;--gold:#ffc94d;--green:#4dff88;--red:#ff5252;--muted:#7a7890;--text:#ede8f5}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+.container{max-width:600px;margin:0 auto}
+
+.hero{text-align:center;padding:20px;background:linear-gradient(135deg,rgba(77,232,255,.06),rgba(196,77,255,.06));border-radius:20px;margin-bottom:16px;border:1px solid var(--border)}
+.hero h1{font-size:1.3rem;font-weight:900}
+.hero .restaurant{color:var(--cyan);font-size:.9rem;margin-top:2px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+.stat .num{font-size:1.4rem;font-weight:900}
+.stat .label{font-size:.72rem;color:var(--muted);margin-top:2px}
+.stat.green .num{color:var(--green)}.stat.gold .num{color:var(--gold)}.stat.cyan .num{color:var(--cyan)}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h2{font-size:.95rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* Consolidated order */
+.consolidated-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;background:var(--card2);margin-bottom:6px}
+.consolidated-item .name{font-weight:600;font-size:.92rem}
+.consolidated-item .detail{display:flex;align-items:center;gap:10px}
+.consolidated-item .qty{background:rgba(255,107,157,.15);color:var(--accent);padding:3px 10px;border-radius:999px;font-weight:800;font-size:.85rem}
+.consolidated-item .subtotal{color:var(--gold);font-size:.85rem;font-weight:700}
+
+/* Person orders */
+.person-card{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px}
+.person-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.person-name{font-weight:800;font-size:.95rem}
+.person-time{color:var(--muted);font-size:.75rem}
+.person-items{display:flex;flex-direction:column;gap:4px}
+.person-item{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.person-item .pi-name{flex:1}
+.person-item .pi-qty{width:30px;text-align:center}
+.person-item .pi-price{width:60px;text-align:right;color:var(--gold)}
+.person-remark{margin-top:6px;font-size:.78rem;color:var(--gold);background:rgba(255,201,77,.08);padding:4px 8px;border-radius:8px}
+
+.actions{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;padding:12px;border-radius:12px;border:none;font-size:.92rem;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;display:inline-block}
+.btn-primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.btn-secondary{color:var(--text);background:var(--card2);border:1px solid var(--border)}
+.btn-danger{color:var(--red);background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.2)}
+
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.refresh-note{text-align:center;color:var(--muted);font-size:.75rem;margin-top:8px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:8px 14px;font-size:.84rem;z-index:200;display:none}
+.toast.show{display:block}
+
+@media(max-width:500px){.stats{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="loading" class="loading">⏳ 載入中...</div>
+  <div id="summaryPage" style="display:none">
+    <div class="hero">
+      <h1>📊 Order 總覽</h1>
+      <div class="restaurant" id="titleLine"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat green"><div class="num" id="statPeople">0</div><div class="label">人數</div></div>
+      <div class="stat gold"><div class="num" id="statItems">0</div><div class="label">總件數</div></div>
+      <div class="stat cyan"><div class="num" id="statTotal">$0</div><div class="label">總額</div></div>
+    </div>
+
+    <div class="card">
+      <h2>📦 整合 Order（方便落單）</h2>
+      <div id="consolidatedList"></div>
+      <div style="margin-top:10px;padding:10px;border-radius:10px;background:rgba(255,201,77,.08);display:flex;justify-content:space-between">
+        <span style="font-weight:700;color:var(--gold)">總計</span>
+        <span id="grandTotal" style="font-weight:900;color:var(--gold)"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>👥 各人 Order</h2>
+      <div id="personList"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="copyOrder()">📋 複製 Order</button>
+      <button class="btn btn-danger" onclick="closeTreat()">🔒 截止落單</button>
+    </div>
+    <p class="refresh-note">每 15 秒自動刷新</p>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const tid=location.pathname.split('/summary/').pop()||location.pathname.split('/').pop();
+let treat=null, refreshTimer=null;
+
+function showToast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(()=>el.classList.remove('show'),2200);}
+
+async function init(){
+  try{
+    const res=await fetch(`/tea-treat/api/treat/${tid}`);
+    const data=await res.json();
+    if(!data.ok)throw new Error(data.error);
+    treat=data.treat;
+    render();
+    loadOrders();
+    refreshTimer=setInterval(loadOrders,15000);
+  }catch(e){
+    document.getElementById('loading').textContent='❌ '+e.message;
+  }
+}
+
+async function loadOrders(){
+  try{
+    const res=await fetch(`/tea-treat/api/orders/${tid}`,{cache:'no-store'});
+    const data=await res.json();
+    if(data.ok)renderOrders(data.orders||[]);
+  }catch(e){}
+}
+
+function render(){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('summaryPage').style.display='block';
+  document.getElementById('titleLine').textContent=`${treat.title} · ${treat.restaurant}`;
+}
+
+function renderOrders(orders){
+  // Stats
+  document.getElementById('statPeople').textContent=orders.length;
+  let totalItems=0, totalPrice=0;
+  const itemMap={}; // name -> {qty, price, people}
+
+  orders.forEach(o=>{
+    (o.items||[]).forEach(it=>{
+      totalItems+=it.qty;
+      const price=parseFloat(it.price)||0;
+      totalPrice+=price*it.qty;
+      if(!itemMap[it.name])itemMap[it.name]={qty:0,price:0,people:[]};
+      itemMap[it.name].qty+=it.qty;
+      itemMap[it.name].price+=price*it.qty;
+      if(!itemMap[it.name].people.includes(o.name))itemMap[it.name].people.push(o.name);
+    });
+  });
+
+  document.getElementById('statItems').textContent=totalItems;
+  document.getElementById('statTotal').textContent=`$${totalPrice.toFixed(0)}`;
+  document.getElementById('grandTotal').textContent=`$${totalPrice.toFixed(0)} (${totalItems} 件)`;
+
+  // Consolidated
+  const consolEl=document.getElementById('consolidatedList');
+  consolEl.innerHTML='';
+  const sorted=Object.entries(itemMap).sort((a,b)=>b[1].qty-a[1].qty);
+  sorted.forEach(([name,data])=>{
+    const div=document.createElement('div');div.className='consolidated-item';
+    div.innerHTML=`<div class="name">${name}</div><div class="detail"><span class="qty">×${data.qty}</span><span class="subtotal">$${data.price.toFixed(0)}</span></div>`;
+    consolEl.appendChild(div);
+  });
+  if(!sorted.length)consolEl.innerHTML='<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:12px">仲未有人落單</p>';
+
+  // Per person
+  const personEl=document.getElementById('personList');
+  personEl.innerHTML='';
+  orders.forEach(o=>{
+    const div=document.createElement('div');div.className='person-card';
+    let itemsHtml=(o.items||[]).map(it=>`<div class="person-item"><span class="pi-name">${it.name}</span><span class="pi-qty">×${it.qty}</span><span class="pi-price">$${(parseFloat(it.price||0)*it.qty).toFixed(0)}</span></div>`).join('');
+    let personTotal=(o.items||[]).reduce((s,it)=>s+(parseFloat(it.price)||0)*it.qty,0);
+    div.innerHTML=`<div class="person-head"><span class="person-name">${o.name}</span><span class="person-time">${o.ordered_at||''} · $${personTotal.toFixed(0)}</span></div><div class="person-items">${itemsHtml}</div>${o.remark?`<div class="person-remark">💬 ${o.remark}</div>`:''}`;
+    personEl.appendChild(div);
+  });
+}
+
+function copyOrder(){
+  const items=document.querySelectorAll('.consolidated-item');
+  let text=`🧋 ${treat.title} - ${treat.restaurant}\n📋 Order List\n${'─'.repeat(30)}\n`;
+  items.forEach(el=>{
+    const name=el.querySelector('.name').textContent;
+    const qty=el.querySelector('.qty').textContent;
+    const price=el.querySelector('.subtotal').textContent;
+    text+=`${name} ${qty} ${price}\n`;
+  });
+  text+=`${'─'.repeat(30)}\n${document.getElementById('grandTotal').textContent}`;
+  navigator.clipboard.writeText(text);
+  showToast('已複製到剪貼簿 📋');
+}
+
+async function closeTreat(){
+  if(!confirm('確定截止落單？截止後其他人唔可以再落單。'))return;
+  try{
+    await fetch(`/tea-treat/api/close/${tid}`,{method:'POST'});
+    showToast('已截止落單 🔒');
+  }catch(e){showToast('操作失敗');}
+}
+
+init();
+</script>
+</body>
+</html>
