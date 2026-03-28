@@ -380,6 +380,13 @@ async function analyze(){
     const sections=parseReport(data.report);
     const sColors=['#ff3ea5','#33e6ff','#00e676','#ffab40','#ff5252','#b388ff','#ffd740','#80cbc4'];
     const container=$('reportSections');container.innerHTML='';
+
+    // Check if report has score section - if not, likely truncated
+    const hasScore = /綜合評分/.test(data.report);
+    if(!hasScore){
+      container.innerHTML+=`<div class="section"><div class="section-head"><div class="section-icon" style="background:#ff525218;color:#ff5252">⚠️</div><div class="section-title" style="color:#ff5252">報告可能未完整</div></div><div class="section-body">由於篇幅限制，綜合評分部分可能被截斷。請重新分析或減少輸入。</div></div>`;
+    }
+
     sections.forEach((sec,i)=>{
       const color=sColors[i%sColors.length];
       container.innerHTML+=`<div class="section"><div class="section-head"><div class="section-icon" style="background:${color}18;color:${color}">${sec.icon}</div><div class="section-title" style="color:${color}">${sec.title}</div></div><div class="section-body">${sec.body.trim()}</div></div>`;
