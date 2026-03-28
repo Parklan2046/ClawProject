@@ -208,7 +208,7 @@ function importFromJson(){
 }
 
 // Bookmarklet - smart: only real menu items, with progress bar
-var BM='javascript:(function(){var s=document.createElement("script");s.src="https://on9claw.com/tea-treat/scrape.js";document.body.appendChild(s);})();';
+var BM='javascript:window.open("https://on9claw.com/tea-treat/scrape.html","_blank")';
 
 function copyBookmarklet(){
   navigator.clipboard.writeText(BM);
@@ -263,6 +263,8 @@ async function createTreat(){
   finally{btn.disabled=false;btn.textContent='🧋 生成分享連結'}
 }
 
+// Auto-import from scrape tool
+var savedImport=localStorage.getItem("tea_import");if(savedImport){try{var items=JSON.parse(savedImport);localStorage.removeItem("tea_import");var list=document.getElementById("menuList");list.innerHTML="";items.forEach(function(m){addMenuItem(m.name||"",m.price||"",m.options||[])});showToast("\u5df2\u81ea\u52d5\u5320\u5165 "+items.length+" \u500b\u9805\u76ee \u2705")}catch(e){}}
 addMenuItem();addMenuItem();addMenuItem();
 </script>
 </body>
