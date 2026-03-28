@@ -87,10 +87,24 @@ select{appearance:none}
       <h2>📋 Menu 項目</h2>
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px">加齊所有可揀嘅嘢，名 + 價錢</p>
       <div class="sample-row">
-        <span class="sample-chip" onclick="loadSample('coffee')">☕ 咖啡店 Sample</span>
-        <span class="sample-chip" onclick="loadSample('mcdonalds')">🍔 麥當勞 Sample</span>
-        <span class="sample-chip" onclick="loadSample('milktea')">🧋 茶餐廳 Sample</span>
+        <span class="sample-chip" onclick="loadSample('coffee')">☕ 咖啡店</span>
+        <span class="sample-chip" onclick="loadSample('mcdonalds')">🍔 麥當勞</span>
+        <span class="sample-chip" onclick="loadSample('milktea')">🧋 茶餐廳</span>
+        <span class="sample-chip" onclick="loadSample('milkcafe')">🥛 Milk Cafe</span>
       </div>
+
+      <div style="margin-top:10px;padding:12px;border-radius:12px;background:rgba(77,232,255,.06);border:1px solid rgba(77,232,255,.15)">
+        <p style="font-size:.85rem;font-weight:700;color:var(--cyan);margin-bottom:6px">🔗 從 Foodpanda 自動提取 Menu</p>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px">1. 喺瀏覽器開 Foodpanda 餐廳頁面 → 2. Bookmark bar 加呢個按鈕 → 3. 喺餐廳頁 click 一下</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a id="bookmarklet" href="javascript:void(0)" style="display:inline-block;padding:8px 14px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700;font-size:.85rem;text-decoration:none;cursor:grab" onclick="event.preventDefault();alert('拖呢個按鈕去你嘅 Bookmark Bar！')">🧋 提取 Menu</a>
+          <button class="sample-chip" onclick="copyBookmarklet()" style="border:1px solid var(--border);cursor:pointer">📋 複製 Bookmarklet Code</button>
+        </div>
+        <p style="font-size:.75rem;color:var(--muted);margin-top:6px">或者直接喺下面貼 JSON 👇</p>
+        <textarea id="importJson" style="width:100%;margin-top:6px;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px;font-size:.82rem;font-family:monospace;min-height:40px" placeholder='[{"name":"奶茶","price":"22"},{"name":"咖啡","price":"28"}]'></textarea>
+        <button class="sample-chip" onclick="importFromJson()" style="margin-top:6px;border:1px solid var(--border);cursor:pointer">📥 Import JSON</button>
+      </div>
+
       <div id="menuList" class="menu-list"></div>
       <button class="add-menu-btn" onclick="addMenuItem()">＋ 加多一樣</button>
     </div>
@@ -157,6 +171,20 @@ const SAMPLES={
     {name:'蛋撻 (2個)',price:'16'},
     {name:'西多士',price:'28'},
     {name:'乾炒牛河',price:'52'},
+  ],
+  milkcafe:[
+    {name:'凍奶茶',price:'26'},
+    {name:'熱奶茶',price:'22'},
+    {name:'凍檸茶',price:'26'},
+    {name:'凍咖啡',price:'28'},
+    {name:'菠蘿油',price:'22'},
+    {name:'奶油豬仔包',price:'18'},
+    {name:'公司三文治',price:'42'},
+    {name:'沙爹牛肉公仔麵',price:'38'},
+    {name:'咖喱雞飯',price:'52'},
+    {name:'焗豬扒飯',price:'55'},
+    {name:'黑椒牛柳意粉',price:'58'},
+    {name:'炸雞髀',price:'32'},
   ],
 };
 
@@ -226,6 +254,31 @@ function copyLink(){
   inp.select();navigator.clipboard.writeText(inp.value);
   inp.style.borderColor='var(--green)';
   setTimeout(()=>inp.style.borderColor='',1500);
+}
+
+/* ---- Bookmarklet & Import ---- */
+const BOOKMARKLET_CODE = `javascript:(function(){var items=[];document.querySelectorAll('[data-testid*=product],[class*=product-card],[class*=ProductCard]').forEach(function(el){var name=el.querySelector('[class*=name],[class*=title],h3,h4')?.innerText?.trim();var price=el.querySelector('[class*=price],[class*=Price]')?.innerText?.replace(/[^0-9.]/g,'');if(name)items.push({name:name,price:price||''});});if(!items.length){document.querySelectorAll('li,article,div').forEach(function(el){var t=el.innerText||'';var m=t.match(/(.{2,30})\\n.*?\\$(\\d+)/);if(m&&!items.find(function(i){return i.name===m[1].trim()}))items.push({name:m[1].trim(),price:m[2]});});}if(items.length){var json=JSON.stringify(items);navigator.clipboard.writeText(json).then(function(){alert('已複製 '+items.length+' 個項目到剪貼簿！\\n去請食 Tea 頁面貼上就得。');});}else{alert('搵唔到 menu 項目，請確認你喺 Foodpanda 餐廳頁面。');}})();`;
+
+function copyBookmarklet(){
+  navigator.clipboard.writeText(BOOKMARKLET_CODE);
+  showToast('Bookmarklet code 已複製！喺瀏覽器新增 bookmark 貼上去就得');
+}
+
+// Set bookmarklet href
+document.getElementById('bookmarklet').href = BOOKMARKLET_CODE;
+
+function importFromJson(){
+  const raw = document.getElementById('importJson').value.trim();
+  if(!raw){showToast('請貼上 JSON');return;}
+  try{
+    const items = JSON.parse(raw);
+    if(!Array.isArray(items))throw new Error('must be array');
+    const list=document.getElementById('menuList');list.innerHTML='';
+    items.forEach(m=>addMenuItem(m.name||'',m.price||''));
+    showToast(`已匯入 ${items.length} 個項目 ✅`);
+  }catch(e){
+    showToast('JSON 格式錯誤：'+e.message);
+  }
 }
 
 // Start with some menu items
