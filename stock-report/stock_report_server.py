@@ -298,6 +298,72 @@ def send_json(h, payload, status=200):
     h.wfile.write(body)
 
 
+def search_stocks(query: str) -> list:
+    """Search for stocks using yfinance search API."""
+    results = []
+    try:
+        import yfinance as yf
+        search = yf.Search(query, max_results=8)
+        quotes = getattr(search, 'quotes', []) or []
+        for q in quotes:
+            results.append({
+                'ticker': q.get('symbol', ''),
+                'name': q.get('longname') or q.get('shortname') or q.get('symbol', ''),
+                'exchange': q.get('exchDisp', q.get('exchange', '')),
+                'type': q.get('typeDisp', q.get('quoteType', '')),
+                'currency': q.get('currency', ''),
+            })
+    except Exception:
+        pass
+
+    # Also check our local name map
+    q_lower = query.strip().lower()
+    for name, ticker in HK_NAME_MAP.items():
+        if q_lower in name and ticker not in [r['ticker'] for r in results]:
+            try:
+                stock = yf.Ticker(ticker)
+                info = stock.info or {}
+                results.insert(0, {
+                    'ticker': ticker,
+                    'name': info.get('longName') or info.get('shortName') or name,
+                    'exchange': info.get('exchange', ''),
+                    'type': info.get('quoteType', ''),
+                    'currency': info.get('currency', ''),
+                })
+            except Exception:
+                results.insert(0, {
+                    'ticker': ticker,
+                    'name': name,
+                    'exchange': 'HKG',
+                    'type': 'EQUITY',
+                    'currency': 'HKD',
+                })
+            break
+
+    return results[:8]
+
+
+def validate_ticker(ticker: str) -> dict:
+    """Validate a ticker exists and return basic info."""
+    try:
+        import yfinance as yf
+        resolved = resolve_ticker(ticker)
+        stock = yf.Ticker(resolved)
+        info = stock.info or {}
+        name = info.get('longName') or info.get('shortName')
+        if name:
+            return {
+                'valid': True,
+                'ticker': resolved,
+                'name': name,
+                'currency': info.get('currency', ''),
+                'exchange': info.get('exchange', ''),
+            }
+    except Exception:
+        pass
+    return {'valid': False}
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204)
@@ -307,37 +373,61 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if self.path != '/stock-report/api/analyze':
-            return send_json(self, {'ok': False, 'error': 'Not found'}, 404)
+        if self.path == '/stock-report/api/search':
+            try:
+                length = int(self.headers.get('Content-Length', '0'))
+                body = json.loads(self.rfile.read(length).decode('utf-8')) if length else {}
+                query = str(body.get('query', '')).strip()
+                if len(query) < 1:
+                    return send_json(self, {'ok': True, 'results': []})
+                results = search_stocks(query)
+                return send_json(self, {'ok': True, 'results': results})
+            except Exception as e:
+                return send_json(self, {'ok': False, 'error': str(e)}, 500)
 
-        try:
-            length = int(self.headers.get('Content-Length', '0'))
-            body = json.loads(self.rfile.read(length).decode('utf-8')) if length else {}
-            query = str(body.get('ticker', '')).strip()
-            if not query:
-                return send_json(self, {'ok': False, 'error': '請輸入股票代號或名稱'}, 400)
+        if self.path == '/stock-report/api/validate':
+            try:
+                length = int(self.headers.get('Content-Length', '0'))
+                body = json.loads(self.rfile.read(length).decode('utf-8')) if length else {}
+                ticker = str(body.get('ticker', '')).strip()
+                if not ticker:
+                    return send_json(self, {'valid': False})
+                result = validate_ticker(ticker)
+                return send_json(self, result)
+            except Exception as e:
+                return send_json(self, {'valid': False, 'error': str(e)}, 500)
 
-            ticker = resolve_ticker(query)
-            data = fetch_stock_data(ticker)
-            report = generate_report(data)
+        if self.path == '/stock-report/api/analyze':
+            try:
+                length = int(self.headers.get('Content-Length', '0'))
+                body = json.loads(self.rfile.read(length).decode('utf-8')) if length else {}
+                query = str(body.get('ticker', '')).strip()
+                if not query:
+                    return send_json(self, {'ok': False, 'error': '請輸入股票代號或名稱'}, 400)
 
-            return send_json(self, {
-                'ok': True,
-                'ticker': ticker,
-                'company_name': data['fundamentals']['name'],
-                'report': report,
-                'data': {
-                    'current_price': data['technicals'].get('current_price'),
-                    'currency': data['fundamentals'].get('currency', 'USD'),
-                    'market_cap': data['fundamentals'].get('market_cap'),
-                    'pe_ratio': data['fundamentals'].get('pe_ratio'),
-                },
-                'fetch_time': data['fetch_time'],
-            })
+                ticker = resolve_ticker(query)
+                data = fetch_stock_data(ticker)
+                report = generate_report(data)
 
-        except Exception as e:
-            traceback.print_exc()
-            return send_json(self, {'ok': False, 'error': str(e)}, 500)
+                return send_json(self, {
+                    'ok': True,
+                    'ticker': ticker,
+                    'company_name': data['fundamentals']['name'],
+                    'report': report,
+                    'data': {
+                        'current_price': data['technicals'].get('current_price'),
+                        'currency': data['fundamentals'].get('currency', 'USD'),
+                        'market_cap': data['fundamentals'].get('market_cap'),
+                        'pe_ratio': data['fundamentals'].get('pe_ratio'),
+                    },
+                    'fetch_time': data['fetch_time'],
+                })
+
+            except Exception as e:
+                traceback.print_exc()
+                return send_json(self, {'ok': False, 'error': str(e)}, 500)
+
+        return send_json(self, {'ok': False, 'error': 'Not found'}, 404)
 
 
 if __name__ == '__main__':
