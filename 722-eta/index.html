@@ -199,9 +199,13 @@ function startCD(){
 }
 
 /* ---- ETA ---- */
-async function openEta(forceCo){
+/* ---- ETA ---- */
+async function openEta(forceCo,partnerStop){
   var route=document.getElementById('routeNo').value.trim().toUpperCase();
-  var stopId=document.getElementById('stopId').value.trim();
+  var stopInput=document.getElementById('stopId').value.trim();
+  var stopParts=stopInput.split('+');
+  var stopId=stopParts[0];
+  var partner=partnerStop||(stopParts[1]||null);
   var statusEl=document.getElementById('status');var listEl=document.getElementById('etaList');var errEl=document.getElementById('error');
   clearTimers();errEl.textContent='';
   if(!route||!stopId){errEl.textContent='請輸入路線同 Stop ID';return;}
@@ -210,37 +214,36 @@ async function openEta(forceCo){
 
   try{
     var allEtas=[];
-    // Try both APIs
     var co=forceCo||detectCO(route,stopId);
 
-    // Citybus
+    // Primary stop
     if(co==='CTB'||co==='ALL'){
-      try{
-        var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/'+stopId+'/'+route,{cache:'no-store'});
-        var d1=await r1.json();
-        (d1.data||[]).forEach(i=>{i._co='CTB';allEtas.push(i);});
-      }catch(e){}
+      try{var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/'+stopId+'/'+route,{cache:'no-store'});var d1=await r1.json();(d1.data||[]).forEach(function(i){i._co='CTB';allEtas.push(i);});}catch(e){}
     }
-    // KMB
     if(co==='KMB'||co==='ALL'){
-      try{
-        var r2=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/eta/'+stopId+'/'+route+'/1',{cache:'no-store'});
-        var d2=await r2.json();
-        (d2.data||[]).forEach(i=>{i._co='KMB';allEtas.push(i);});
-      }catch(e){}
+      try{var r2=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/eta/'+stopId+'/'+route+'/1',{cache:'no-store'});var d2=await r2.json();(d2.data||[]).forEach(function(i){i._co='KMB';allEtas.push(i);});}catch(e){}
     }
 
-    var items=allEtas.filter(i=>i&&i.eta).sort((a,b)=>new Date(a.eta)-new Date(b.eta));
-    if(!items.length){statusEl.textContent=route+' 暫時冇 ETA';startCD();refreshTimer=setTimeout(()=>openEta(co),10000);return;}
+    // Partner stop (other operator)
+    if(partner){
+      var partnerCo=co==='KMB'?'CTB':'KMB';
+      if(partnerCo==='CTB'){
+        try{var r3=await fetch('https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/'+partner+'/'+route,{cache:'no-store'});var d3=await r3.json();(d3.data||[]).forEach(function(i){i._co='CTB';allEtas.push(i);});}catch(e){}
+      }else{
+        try{var r4=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/eta/'+partner+'/'+route+'/1',{cache:'no-store'});var d4=await r4.json();(d4.data||[]).forEach(function(i){i._co='KMB';allEtas.push(i);});}catch(e){}
+      }
+    }
 
-    // Detect operators present
-    var ops=[...new Set(items.map(i=>i._co))];
-    var opLabel=ops.map(o=>o==='KMB'?'九巴':'城巴').join('+');
+    var items=allEtas.filter(function(i){return i&&i.eta}).sort(function(a,b){return new Date(a.eta)-new Date(b.eta)});
+    if(!items.length){statusEl.textContent=route+' 暫時冇 ETA';startCD();refreshTimer=setTimeout(function(){openEta(co,partner)},10000);return;}
+
+    var ops=[...new Set(items.map(function(i){return i._co}))];
+    var opLabel=ops.map(function(o){return o==='KMB'?'九巴':'城巴'}).join('+');
     var first=items[0];
-    statusEl.innerHTML=`<span class="dot"></span>${route} → ${first.dest_tc||''} (${opLabel}) · 自動更新`;
+    statusEl.innerHTML='<span class="dot"></span>'+route+' → '+(first.dest_tc||'')+' ('+opLabel+') · 自動更新';
 
     listEl.innerHTML='';
-    items.slice(0,5).forEach((item,idx)=>{
+    items.slice(0,5).forEach(function(item,idx){
       var mins=fmtMins(item.eta);
       var isUrgent=mins==='即到'||(typeof mins==='number'&&mins<=2);
       var opCls=item._co==='KMB'?'op-kmb':'op-ctb';
@@ -249,34 +252,13 @@ async function openEta(forceCo){
       var div=document.createElement('div');
       div.className='eta-card'+(idx===0?' first':'');
       div.style.animationDelay=(idx*0.08)+'s';
-      div.innerHTML=`
-        <div class="eta-row">
-          <div>
-            <div class="eta-time">${fmtTime(item.eta)}</div>
-            <div class="eta-dest">→ ${item.dest_tc||''} <span class="op-badge ${opCls}">${opShort}</span></div>
-          </div>
-          <div class="eta-box">
-            <div class="eta-mins ${isUrgent?'urgent':''}">${mins}</div>
-            <div class="eta-mins-label">${mins==='即到'?'':'分鐘'}</div>
-          </div>
-        </div>
-        ${item.rmk_tc?'<div class="eta-remark">📢 '+item.rmk_tc+'</div>':''}
-        ${idx===0?'<div class="eta-progress"><div class="eta-progress-fill" style="width:'+pct+'%"></div></div>':''}
-      `;
+      div.innerHTML='\n        <div class="eta-row">\n          <div>\n            <div class="eta-time">'+fmtTime(item.eta)+'</div>\n            <div class="eta-dest">→ '+(item.dest_tc||'')+' <span class="op-badge '+opCls+'">'+opShort+'</span></div>\n          </div>\n          <div class="eta-box">\n            <div class="eta-mins '+(isUrgent?'urgent':'')+'">'+mins+'</div>\n            <div class="eta-mins-label">'+(mins==='即到'?'':'分鐘')+'</div>\n          </div>\n        </div>\n        '+(item.rmk_tc?'<div class="eta-remark">📢 '+item.rmk_tc+'</div>':'')+'\n        '+(idx===0?'<div class="eta-progress"><div class="eta-progress-fill" style="width:'+pct+'%"></div></div>':'')+'\n      ';
       listEl.appendChild(div);
     });
 
-    startCD();refreshTimer=setTimeout(()=>openEta(co),10000);
+    startCD();refreshTimer=setTimeout(function(){openEta(co,partner)},10000);
   }catch(e){errEl.textContent='查詢失敗：'+e.message;statusEl.textContent='';}
   finally{document.getElementById('checkBtn').disabled=false;}
-}
-
-function detectCO(route,stopId){
-  // Heuristic: if stopId looks like KMB hash (hex string), use KMB
-  if(/^[0-9A-F]{16}$/i.test(stopId))return'KMB';
-  // If numeric 6-digit, likely CTB
-  if(/^\d{6}$/.test(stopId))return'CTB';
-  return'ALL';
 }
 
 function fmtTime(eta){var t=new Date(eta);if(isNaN(t))return'??';return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');}
@@ -428,11 +410,78 @@ function renderStops(){
   });
 }
 
-function pickAndSearch(stopId,name){
+function pickAndSearch(stopId,name,co){
   document.getElementById('routeNo').value=searchState.route;
   document.getElementById('stopId').value=stopId;
   closeSearch();
-  openEta(searchState.co);
+  // For joint routes, try to find matching stop from other operator
+  var otherCo=co==='KMB'?'CTB':'KMB';
+  openEtaWithPartner(stopId,co,otherCo);
+}
+
+async function openEtaWithPartner(stopId,co,otherCo){
+  // Find nearby stop from other operator using lat/long
+  var partnerStop=null;
+  try{
+    var myInfo=null;
+    if(co==='KMB'){
+      var res=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop/'+stopId,{cache:'no-store'});
+      var d=await res.json();
+      myInfo=d.data||{};
+    }else{
+      var res=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+stopId,{cache:'no-store'});
+      var d=await res.json();
+      myInfo=d.data||{};
+    }
+    var myLat=parseFloat(myInfo.lat||0);
+    var myLng=parseFloat(myInfo.long||myInfo.lng||0);
+
+    if(myLat&&myLng){
+      // Get other operator's stops for same route and find nearest
+      var route=searchState.route;
+      if(otherCo==='KMB'){
+        var rsRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
+        var rsData=await rsRes.json();
+        var dirCode=searchState.dir==='O'?'O':'I';
+        var kmbStops=(rsData.data||[]).filter(s=>s.route===route&&s.bound===dirCode);
+        var allStops=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
+        var allStopsD=await allStops.json();
+        var smap={};(allStopsD.data||[]).forEach(s=>{smap[s.stop]=s;});
+        var bestDist=Infinity;
+        kmbStops.forEach(s=>{
+          var info=smap[s.stop]||{};
+          var lat=parseFloat(info.lat||0);var lng=parseFloat(info.long||0);
+          if(lat&&lng){
+            var dist=Math.sqrt(Math.pow(lat-myLat,2)+Math.pow(lng-myLng,2));
+            if(dist<bestDist){bestDist=dist;partnerStop=s.stop;}
+          }
+        });
+      }else{
+        var dirParam=searchState.dir==='O'?'outbound':'inbound';
+        var rsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+route+'/'+dirParam,{cache:'no-store'});
+        var rsData=await rsRes.json();
+        var bestDist=Infinity;
+        for(var s of(rsData.data||[])){
+          try{
+            var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});
+            var sd=await sr.json();
+            var info=sd.data||{};
+            var lat=parseFloat(info.lat||0);var lng=parseFloat(info.long||0);
+            if(lat&&lng){
+              var dist=Math.sqrt(Math.pow(lat-myLat,2)+Math.pow(lng-myLng,2));
+              if(dist<bestDist){bestDist=dist;partnerStop=s.stop;}
+            }
+          }catch{}
+        }
+      }
+      if(bestDist>0.003)partnerStop=null; // > ~300m = too far, don't match
+    }
+  }catch(e){}
+
+  if(partnerStop){
+    document.getElementById('stopId').value=stopId+'+'+partnerStop;
+  }
+  openEta(co,partnerStop);
 }
 
 document.getElementById('checkBtn').onclick=()=>openEta();
