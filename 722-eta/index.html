@@ -1,606 +1,342 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <meta charset="UTF-8" />
-  <title>Citybus ETA</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg: #08111f;
-      --panel: #0f172a;
-      --panel-2: #172033;
-      --line: rgba(255,255,255,0.08);
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --accent: #f97316;
-      --accent2: #ec4899;
-      --gold: #fbbf24;
-      --green: #86efac;
-      --cyan: #33e6ff;
-      --danger: #fca5a5;
-      --chip: rgba(255,255,255,0.05);
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top right, rgba(236,72,153,0.10), transparent 25%),
-        radial-gradient(circle at top left, rgba(249,115,22,0.10), transparent 28%),
-        linear-gradient(180deg, #08111f 0%, #0b1220 100%);
-      color: var(--text);
-      padding: 6px;
-      min-height: 100vh;
-    }
-    .app { max-width: 760px; margin: 0 auto; }
+<meta charset="UTF-8">
+<title>巴士 ETA | Citybus + 九巴</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#08111f;--panel:#0f172a;--line:rgba(255,255,255,.08);--text:#e5e7eb;--muted:#94a3b8;--accent:#f97316;--pink:#ec4899;--gold:#fbbf24;--green:#86efac;--cyan:#33e6ff;--red:#fca5a5;--kmb:#65afff;--ctb:#f97316}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);padding:6px;min-height:100vh;background-image:radial-gradient(circle at top right,rgba(236,72,153,.08),transparent 25%),radial-gradient(circle at top left,rgba(249,115,22,.08),transparent 28%)}
+.app{max-width:760px;margin:0 auto}
 
-    /* Compact Search Bar */
-    .search-bar {
-      background: rgba(15,23,42,0.95);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 10px 12px;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    .search-bar input {
-      background: #0a1020;
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 0.95rem;
-      outline: none;
-      width: 100px;
-      transition: border-color .2s;
-    }
-    .search-bar input:focus { border-color: var(--accent); }
-    .search-bar input::placeholder { color: var(--muted); }
-    .search-bar input.route-input { width: 70px; font-weight: 800; text-align: center; font-size: 1.1rem; }
-    .search-bar input.stop-input { flex: 1; min-width: 0; }
-    .search-bar .search-label { color: var(--muted); font-size: .72rem; display: flex; flex-direction: column; gap: 2px; }
-    .search-bar button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 0.88rem;
-      font-weight: 800;
-      color: white;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .search-bar button:disabled { opacity: .5; }
-    .search-bar .icon-btn {
-      background: rgba(255,255,255,0.06);
-      color: var(--muted);
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 10px;
-    }
+/* Search bar */
+.search-bar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.search-bar input{background:#0a1020;color:var(--text);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:9px 10px;font-size:.9rem;outline:none;transition:border .2s}
+.search-bar input:focus{border-color:var(--accent)}
+.search-bar input.route-input{width:65px;font-weight:800;text-align:center;font-size:1rem}
+.search-bar input.stop-input{flex:1;min-width:0}
+.search-bar .search-label{color:var(--muted);font-size:.65rem;display:flex;flex-direction:column;gap:2px}
+.search-bar button{border:none;border-radius:8px;padding:9px 12px;font-size:.85rem;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--accent),var(--pink));cursor:pointer;white-space:nowrap;flex-shrink:0}
+.search-bar button:disabled{opacity:.5}
+.search-bar .icon-btn{background:rgba(255,255,255,.06);color:var(--muted);padding:9px;font-size:.95rem;border-radius:8px;border:none;cursor:pointer}
 
-    /* Bookmarks */
-    .bookmarks-card {
-      background: rgba(15,23,42,0.95);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 10px 12px;
-      margin-bottom: 10px;
-    }
-    .bookmark-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-    .bookmark-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      white-space: nowrap;
-      background: rgba(249,115,22,0.10);
-      border: 1px solid rgba(249,115,22,0.15);
-      border-radius: 999px;
-      padding: 7px 12px;
-      flex: 0 0 auto;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--text);
-      transition: all .2s;
-    }
-    .bookmark-chip:hover { background: rgba(249,115,22,0.2); border-color: rgba(249,115,22,0.3); }
-    .bookmark-chip .route-badge {
-      background: rgba(249,115,22,0.2);
-      color: var(--accent);
-      border-radius: 6px;
-      padding: 2px 6px;
-      font-size: .72rem;
-      font-weight: 800;
-    }
+/* Bookmarks */
+.bookmarks{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px;margin-bottom:10px}
+.bm-scroll{display:flex;gap:6px;overflow-x:auto}
+.bm-chip{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.12);border-radius:999px;padding:6px 10px;flex:0 0 auto;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--text);transition:all .2s}
+.bm-chip:hover{background:rgba(249,115,22,.15)}
+.bm-chip .badge{padding:2px 5px;border-radius:5px;font-size:.65rem;font-weight:800}
+.bm-chip .badge.kmb{background:rgba(101,175,255,.15);color:var(--kmb)}
+.bm-chip .badge.ctb{background:rgba(249,115,22,.15);color:var(--ctb)}
 
-    /* Timer - Prominent */
-    .timer-section {
-      text-align: center;
-      padding: 8px 0;
-      margin-bottom: 6px;
-    }
-    .timer-ring {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      width: 80px;
-      height: 80px;
-    }
-    .timer-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-    .timer-ring .countdown {
-      font-size: 1.6rem;
-      font-weight: 900;
-      color: var(--cyan);
-      z-index: 1;
-    }
-    .timer-label { color: var(--muted); font-size: .75rem; margin-top: 2px; }
-    .timer-pulse {
-      animation: timerPulse 1s ease infinite;
-    }
-    @keyframes timerPulse {
-      0%,100% { opacity: 1; }
-      50% { opacity: .5; }
-    }
-    .timer-section.hidden { display: none; }
+/* Operator badge */
+.op-badge{display:inline-block;padding:2px 6px;border-radius:5px;font-size:.65rem;font-weight:800;vertical-align:middle;margin-left:4px}
+.op-kmb{background:rgba(101,175,255,.15);color:var(--kmb)}
+.op-ctb{background:rgba(249,115,22,.15);color:var(--ctb)}
 
-    /* Status line */
-    .status-line {
-      text-align: center;
-      color: var(--muted);
-      font-size: .82rem;
-      margin-bottom: 10px;
-    }
-    .status-line .live-dot {
-      display: inline-block;
-      width: 8px; height: 8px;
-      background: var(--green);
-      border-radius: 50%;
-      margin-right: 4px;
-      animation: livePulse 2s ease infinite;
-      vertical-align: middle;
-    }
-    @keyframes livePulse {
-      0%,100% { box-shadow: 0 0 0 0 rgba(134,239,172,.5); }
-      50% { box-shadow: 0 0 0 6px rgba(134,239,172,0); }
-    }
+/* Timer */
+.timer{text-align:center;padding:6px 0;margin-bottom:4px}
+.timer.hidden{display:none}
+.timer-ring{display:inline-flex;align-items:center;justify-content:center;position:relative;width:64px;height:64px}
+.timer-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.timer-ring .num{font-size:1.3rem;font-weight:900;color:var(--cyan);z-index:1}
+.timer-label{color:var(--muted);font-size:.7rem;margin-top:1px}
+.timer-pulse{animation:tp 1s ease infinite}
+@keyframes tp{0%,100%{opacity:1}50%{opacity:.4}}
 
-    /* ETA Cards - Fancy */
-    .eta-list { display: flex; flex-direction: column; gap: 10px; }
-    .eta-card {
-      background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 16px;
-      position: relative;
-      overflow: hidden;
-      transition: all .3s;
-      animation: cardIn .4s ease;
-    }
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(12px) scale(.97); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .eta-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-      border-radius: 4px 0 0 4px;
-    }
-    .eta-card:first-child::before { background: var(--green); }
-    .eta-card:nth-child(2)::before { background: var(--gold); }
-    .eta-card:nth-child(3)::before { background: var(--accent); }
+/* Status */
+.status{text-align:center;color:var(--muted);font-size:.8rem;margin-bottom:8px}
+.status .dot{display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;margin-right:4px;vertical-align:middle;animation:lp 2s ease infinite}
+@keyframes lp{0%,100%{box-shadow:0 0 0 0 rgba(134,239,172,.5)}50%{box-shadow:0 0 0 5px rgba(134,239,172,0)}}
 
-    .eta-card.first { border-color: rgba(134,239,172,.2); background: linear-gradient(135deg, rgba(0,230,118,.04), transparent); }
+/* ETA cards */
+.eta-list{display:flex;flex-direction:column;gap:8px}
+.eta-card{background:linear-gradient(135deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:14px;padding:14px;position:relative;overflow:hidden;animation:ci .4s ease}
+@keyframes ci{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.eta-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.eta-card:first-child::before{background:var(--green)}
+.eta-card:nth-child(2)::before{background:var(--gold)}
+.eta-card:nth-child(3)::before{background:var(--accent)}
+.eta-card.first{border-color:rgba(134,239,172,.15);background:linear-gradient(135deg,rgba(0,230,118,.03),transparent)}
+.eta-row{display:flex;justify-content:space-between;align-items:center}
+.eta-time{font-size:1.7rem;font-weight:900;letter-spacing:-.02em}
+.eta-card.first .eta-time{background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.eta-card:not(.first) .eta-time{background:linear-gradient(135deg,var(--gold),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.eta-box{text-align:right}
+.eta-mins{font-size:1.3rem;font-weight:900;color:var(--green)}
+.eta-mins.urgent{color:var(--accent);animation:up 1s ease infinite}
+@keyframes up{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.eta-mins-label{color:var(--muted);font-size:.68rem}
+.eta-dest{margin-top:4px;color:var(--muted);font-size:.78rem;display:flex;align-items:center;gap:6px}
+.eta-remark{margin-top:4px;font-size:.75rem;color:var(--gold);background:rgba(251,191,36,.08);border-radius:6px;padding:3px 7px;display:inline-block}
+.eta-progress{height:3px;background:rgba(255,255,255,.04);border-radius:4px;margin-top:8px;overflow:hidden}
+.eta-progress-fill{height:100%;border-radius:4px;transition:width 1s linear}
+.eta-card.first .eta-progress-fill{background:linear-gradient(90deg,var(--green),var(--cyan))}
 
-    .eta-row { display: flex; justify-content: space-between; align-items: center; }
-    .eta-big-time {
-      font-size: 2rem;
-      font-weight: 900;
-      letter-spacing: -.02em;
-      background: linear-gradient(135deg, var(--gold), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .eta-card.first .eta-big-time {
-      background: linear-gradient(135deg, var(--green), var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(3,7,18,.75);display:none;align-items:center;justify-content:center;z-index:100;padding:12px}
+.modal-bg.show{display:flex}
+.modal{width:min(600px,100%);max-height:80vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;position:sticky;top:0;background:var(--panel);padding-bottom:8px;z-index:2}
+.modal-head h2{font-size:1rem;font-weight:700}
+.modal button.ghost{background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--muted);border-radius:8px;padding:7px 12px;font-size:.82rem;cursor:pointer}
+.modal label{display:block;color:var(--muted);font-size:.78rem;margin:8px 0 3px}
+.modal input,.modal select{width:100%;background:#0a1020;color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 10px;font-size:.88rem;outline:none}
+.modal .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal .actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.modal .actions button{border:none;border-radius:999px;padding:9px 13px;font-size:.85rem;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--accent),var(--pink))}
+.modal .actions button.sec{background:#243146;color:var(--text)}
+.stop-card{background:var(--panel-2,#172033);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:6px}
+.stop-title{font-weight:700;font-size:.88rem}
+.stop-sub{margin-top:3px;color:var(--muted);font-size:.76rem}
+.stop-actions{display:flex;gap:5px;margin-top:7px}
+.stop-actions button{flex:1;border:none;border-radius:8px;padding:7px;font-size:.8rem;font-weight:600;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--accent),var(--pink))}
+.stop-actions button.sec{background:#243146;color:var(--text)}
 
-    .eta-countdown-box {
-      text-align: right;
-    }
-    .eta-mins {
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: var(--green);
-    }
-    .eta-mins.urgent {
-      color: var(--accent);
-      animation: urgentPulse 1s ease infinite;
-    }
-    @keyframes urgentPulse {
-      0%,100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-    }
-    .eta-mins-label { color: var(--muted); font-size: .72rem; }
-
-    .eta-dest {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: .82rem;
-    }
-    .eta-remark {
-      margin-top: 4px;
-      font-size: .78rem;
-      color: var(--gold);
-      background: rgba(251,191,36,.08);
-      border-radius: 8px;
-      padding: 4px 8px;
-      display: inline-block;
-    }
-
-    /* Progress bar under first ETA */
-    .eta-progress {
-      height: 3px;
-      background: rgba(255,255,255,.06);
-      border-radius: 4px;
-      margin-top: 10px;
-      overflow: hidden;
-    }
-    .eta-progress-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 1s linear;
-    }
-    .eta-card.first .eta-progress-fill { background: linear-gradient(90deg, var(--green), var(--cyan)); }
-
-    /* Error */
-    .error { color: var(--danger); font-size: .85rem; text-align: center; margin-top: 8px; }
-
-    /* Modal */
-    .modal-backdrop {
-      position: fixed; inset: 0;
-      background: rgba(3,7,18,.75);
-      display: none; align-items: center; justify-content: center;
-      z-index: 100; padding: 12px;
-    }
-    .modal-backdrop.show { display: flex; }
-    .modal {
-      width: min(760px, 100%);
-      max-height: 88vh; overflow: auto;
-      background: #0f172a;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 16px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.45);
-    }
-    .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .modal label { display: block; margin: 8px 0 4px; color: var(--muted); font-size: .82rem; }
-    .modal input, .modal select {
-      width: 100%;
-      background: #0a1020;
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: .92rem;
-      outline: none;
-    }
-    .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .modal .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-    .modal button {
-      border: none; border-radius: 999px; padding: 10px 14px;
-      font-size: .88rem; font-weight: 700; color: white; cursor: pointer;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-    }
-    .modal button.secondary { background: #243146; color: var(--text); }
-    .modal button.ghost { background: transparent; border: 1px solid rgba(255,255,255,.1); color: var(--muted); }
-    .modal button.small { padding: 8px 12px; font-size: .82rem; }
-
-    .result-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-    .stop-card {
-      background: var(--panel-2);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-    }
-    .stop-title { font-weight: 800; font-size: .92rem; }
-    .stop-sub { margin-top: 4px; color: var(--muted); font-size: .8rem; }
-    .stop-actions { display: flex; gap: 6px; margin-top: 8px; }
-    .stop-actions button { flex: 1; }
-
-    .toast {
-      position: fixed; left: 50%; bottom: 18px;
-      transform: translateX(-50%);
-      background: rgba(15,23,42,.96);
-      border: 1px solid var(--line);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-size: .84rem;
-      z-index: 200;
-      display: none;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    .toast.show { display: block; }
-
-    .meta { color: var(--muted); font-size: .78rem; }
-
-    @media (max-width: 560px) {
-      .search-bar { flex-wrap: wrap; }
-      .search-bar input.route-input { width: 60px; }
-      .search-bar input.stop-input { width: 100%; }
-      .modal { width: 100%; max-height: 86vh; }
-      .modal .row { grid-template-columns: 1fr; }
-    }
-  </style>
+.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:7px 13px;font-size:.82rem;z-index:200;display:none}
+.toast.show{display:block}
+@media(max-width:500px){.search-bar{flex-wrap:wrap}.search-bar input.route-input{width:55px}.search-bar input.stop-input{width:100%}.modal{width:100%;max-height:84vh}.modal .row{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div class="app">
-  <!-- Compact Search Bar -->
   <div class="search-bar">
-    <div class="search-label">
-      <span style="font-size:.65rem;color:var(--muted)">路線</span>
-      <input id="routeNo" class="route-input" value="722" placeholder="722" />
-    </div>
-    <div class="search-label" style="flex:1;min-width:0">
-      <span style="font-size:.65rem;color:var(--muted)">Stop ID</span>
-      <input id="stopId" class="stop-input" value="001272" placeholder="001272" />
-    </div>
-    <button id="checkBtn">🔍 查</button>
-    <button class="icon-btn" id="openConfigBtn" title="搜尋 & 收藏">⚙️</button>
+    <div class="search-label"><span style="font-size:.6rem">路線</span><input id="routeNo" class="route-input" value="722"></div>
+    <div class="search-label" style="flex:1;min-width:0"><span style="font-size:.6rem">Stop ID / 站名</span><input id="stopId" class="stop-input" value="001272" placeholder="001272 或站名"></div>
+    <button id="checkBtn" onclick="openEta()">🔍</button>
+    <button class="icon-btn" onclick="openSearch()">⚙️</button>
   </div>
 
-  <!-- Bookmarks -->
-  <div class="bookmarks-card">
-    <div id="bookmarkList" class="bookmark-scroll"></div>
-  </div>
+  <div class="bookmarks"><div id="bmList" class="bm-scroll"></div></div>
 
-  <!-- Timer - Prominent at top -->
-  <div id="timerSection" class="timer-section hidden">
+  <div id="timer" class="timer hidden">
     <div class="timer-ring">
-      <svg width="80" height="80" viewBox="0 0 80 80">
-        <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="4"/>
-        <circle id="timerArc" cx="40" cy="40" r="34" fill="none" stroke="var(--cyan)" stroke-width="4"
-          stroke-dasharray="213.6" stroke-dashoffset="0" stroke-linecap="round"/>
-      </svg>
-      <span id="countdownNum" class="countdown">10</span>
+      <svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="3"/><circle id="tArc" cx="32" cy="32" r="28" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round"/></svg>
+      <span id="tNum" class="num">10</span>
     </div>
-    <div class="timer-label">秒後自動更新</div>
+    <div class="timer-label">秒後更新</div>
   </div>
 
-  <!-- Status -->
-  <div id="statusLine" class="status-line"></div>
-
-  <!-- ETA List -->
+  <div id="status" class="status"></div>
   <div id="etaList" class="eta-list"></div>
-  <div id="error" class="error"></div>
+  <div id="error" style="color:var(--red);font-size:.82rem;text-align:center;margin-top:6px"></div>
 </div>
 
-<!-- Config Modal -->
-<div id="configModal" class="modal-backdrop" aria-hidden="true">
+<!-- Search Modal -->
+<div id="searchModal" class="modal-bg">
   <div class="modal">
     <div class="modal-head">
-      <div>
-        <h2 style="margin:0;font-size:1rem;">搜尋巴士站 / 收藏</h2>
-        <div class="meta">結果喺 dialog 中間顯示</div>
-      </div>
-      <button id="closeConfigBtn" class="ghost small">✕</button>
+      <h2>🔍 搜尋巴士站</h2>
+      <button class="ghost" onclick="closeSearch()">✕</button>
     </div>
-    <label>巴士路線</label>
-    <input id="searchRoute" value="722" placeholder="722 / 77A / 18X" />
-    <div class="row">
-      <div>
-        <label>方向</label>
-        <select id="searchDir">
-          <option value="outbound">往目的地</option>
-          <option value="inbound">返程</option>
-        </select>
-      </div>
-      <div>
-        <label>站名篩選</label>
-        <input id="filterText" placeholder="鰂魚涌 / 英皇道" />
-      </div>
+    <label>巴士路線</label><input id="sRoute" value="722" placeholder="722 / 6 / 101">
+    <div class="row" style="margin-top:8px">
+      <div><label>方向</label><select id="sDir"><option value="outbound">往外</option><option value="inbound">返程</option></select></div>
+      <div><label>站名篩選</label><input id="sFilter" placeholder="鰂魚涌 / 英皇道"></div>
     </div>
     <div class="actions">
-      <button id="searchBtn">搜尋站位</button>
-      <button id="copyToMainBtn" class="secondary">同步路線</button>
+      <button onclick="searchStops()">搜尋</button>
+      <button class="sec" onclick="copyRoute()">同步路線</button>
     </div>
-    <div id="searchStatus" class="meta" style="margin-top:8px"></div>
-    <div id="searchResults" class="result-list"></div>
-    <div id="searchError" class="error"></div>
+    <div id="sStatus" class="status" style="margin-top:8px"></div>
+    <div id="sResults"></div>
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
 
 <script>
-const COMPANY='CTB', BOOKMARKS_KEY='citybus_eta_bookmarks_v6';
-let refreshTimer=null, countdownTimer=null, countdownVal=10;
-let searchCache=[], memoryBookmarks=[];
+var refreshTimer=null,cdTimer=null,cdVal=10;
+var BK='citybus_eta_bk_v7';
+var memoryBK=[];
 
-function showToast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(()=>el.classList.remove('show'),2200);}
-function storageAvailable(){try{localStorage.setItem('__t__','1');localStorage.removeItem('__t__');return true;}catch{return false;}}
-function buildEtaUrl(r,s){return`https://rt.data.gov.hk/v2/transport/citybus/eta/${COMPANY}/${s}/${encodeURIComponent(r)}`;}
-function buildRouteStopUrl(r,d){return`https://rt.data.gov.hk/v2/transport/citybus/route-stop/${COMPANY}/${encodeURIComponent(r)}/${d}`;}
-function buildStopUrl(s){return`https://rt.data.gov.hk/v2/transport/citybus/stop/${s}`;}
-function clearTimers(){if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null;}}
-function fmtTime(eta){const t=new Date(eta);if(isNaN(t))return'??';return`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;}
-function fmtMins(eta){const t=new Date(eta);if(isNaN(t))return'';const m=Math.max(0,Math.round((t.getTime()-Date.now())/60000));return m===0?'即到':m;}
+function showToast(m){var e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(()=>e.classList.remove('show'),2200);}
 
-function getBookmarks(){try{if(!storageAvailable())return memoryBookmarks;const r=localStorage.getItem(BOOKMARKS_KEY);return r?JSON.parse(r):[];}catch{return memoryBookmarks;}}
-function saveBookmarks(l){try{if(!storageAvailable()){memoryBookmarks=l;return;}localStorage.setItem(BOOKMARKS_KEY,JSON.stringify(l));}catch{memoryBookmarks=l;}}
-function addBookmark(item){const bm=getBookmarks();if(bm.some(b=>b.route===item.route&&b.stop_id===item.stop_id)){showToast('已存在');return false;}saveBookmarks([item,...bm].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));renderBookmarks();showToast('已收藏');return true;}
+function getBK(){try{if(!storageOK())return memoryBK;var r=localStorage.getItem(BK);return r?JSON.parse(r):[];}catch{return memoryBK;}}
+function saveBK(l){try{if(!storageOK()){memoryBK=l;return;}localStorage.setItem(BK,JSON.stringify(l));}catch{memoryBK=l;}}
+function storageOK(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true;}catch{return false;}}
+function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));renderBK();showToast('已收藏');return true;}
 
-function renderBookmarks(){
-  const el=document.getElementById('bookmarkList');
-  const bm=getBookmarks();
-  if(!bm.length){el.innerHTML='<div style="color:var(--muted);font-size:.8rem;padding:4px 0">未有收藏 · 按 ⚙️ 加入</div>';return;}
-  el.innerHTML=bm.map(it=>`<div class="bookmark-chip" data-route="${it.route}" data-stop="${it.stop_id}"><span class="route-badge">${it.route}</span>${it.custom_name||it.name_tc||it.stop_id}</div>`).join('');
-  el.querySelectorAll('.bookmark-chip').forEach(c=>c.addEventListener('click',()=>{
-    document.getElementById('routeNo').value=c.dataset.route;
-    document.getElementById('stopId').value=c.dataset.stop;
-    openEta();
-  }));
+function renderBK(){
+  var el=document.getElementById('bmList');
+  var bk=getBK();
+  if(!bk.length){el.innerHTML='<div style="color:var(--muted);font-size:.76rem;padding:3px 0">未有收藏 · 按 ⚙️ 加入</div>';return;}
+  el.innerHTML=bk.map(it=>{
+    var opCls=it.co==='KMB'?'kmb':'ctb';
+    var opLabel=it.co==='KMB'?'九巴':'城巴';
+    return `<div class="bm-chip" data-r="${it.route}" data-s="${it.stop_id}" data-co="${it.co}"><span class="badge ${opCls}">${opLabel}</span><span>${it.custom_name||it.name_tc||it.stop_id} ${it.route}</span></div>`;
+  }).join('');
+  el.querySelectorAll('.bm-chip').forEach(c=>c.onclick=()=>{
+    document.getElementById('routeNo').value=c.dataset.r;
+    document.getElementById('stopId').value=c.dataset.s;
+    openEta(c.dataset.co);
+  });
 }
 
-/* ---- Countdown Timer ---- */
-function startCountdown(){
-  countdownVal=10;
-  const section=document.getElementById('timerSection');
-  const num=document.getElementById('countdownNum');
-  const arc=document.getElementById('timerArc');
-  const circumference=213.6;
-  section.classList.remove('hidden');
-  num.textContent=countdownVal;
-  arc.style.strokeDashoffset='0';
-  if(countdownTimer) clearInterval(countdownTimer);
-  countdownTimer=setInterval(()=>{
-    countdownVal--;
-    if(countdownVal<0){num.textContent='0';return;}
-    num.textContent=countdownVal;
-    arc.style.strokeDashoffset=(circumference*(1-countdownVal/10)).toString();
-    if(countdownVal<=3){num.classList.add('timer-pulse');arc.style.stroke='var(--accent)';}
-    else{num.classList.remove('timer-pulse');arc.style.stroke='var(--cyan)';}
-  },1000);
+/* ---- Timer ---- */
+function startCD(){
+  cdVal=10;var sec=document.getElementById('timer');var num=document.getElementById('tNum');var arc=document.getElementById('tArc');var c=175.9;
+  sec.classList.remove('hidden');num.textContent=cdVal;arc.style.strokeDashoffset='0';arc.style.stroke='var(--cyan)';
+  if(cdTimer)clearInterval(cdTimer);
+  cdTimer=setInterval(()=>{cdVal--;if(cdVal<0){num.textContent='0';return;}num.textContent=cdVal;arc.style.strokeDashoffset=(c*(1-cdVal/10)).toString();if(cdVal<=3){num.classList.add('timer-pulse');arc.style.stroke='var(--accent)';}else{num.classList.remove('timer-pulse');arc.style.stroke='var(--cyan)';}},1000);
 }
 
 /* ---- ETA ---- */
-async function openEta(){
-  const route=document.getElementById('routeNo').value.trim().toUpperCase();
-  const stopId=document.getElementById('stopId').value.trim();
-  const statusEl=document.getElementById('statusLine');
-  const listEl=document.getElementById('etaList');
-  const errEl=document.getElementById('error');
-  clearTimers();
-  errEl.textContent='';
+async function openEta(forceCo){
+  var route=document.getElementById('routeNo').value.trim().toUpperCase();
+  var stopId=document.getElementById('stopId').value.trim();
+  var statusEl=document.getElementById('status');var listEl=document.getElementById('etaList');var errEl=document.getElementById('error');
+  clearTimers();errEl.textContent='';
   if(!route||!stopId){errEl.textContent='請輸入路線同 Stop ID';return;}
   document.getElementById('checkBtn').disabled=true;
-  statusEl.innerHTML='<span class="live-dot"></span>查詢中…';
+  statusEl.innerHTML='<span class="dot"></span>查詢中…';
+
   try{
-    const res=await fetch(buildEtaUrl(route,stopId),{cache:'no-store'});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const data=await res.json();
-    const items=(Array.isArray(data.data)?data.data:[]).filter(i=>i&&i.eta).sort((a,b)=>new Date(a.eta)-new Date(b.eta));
-    if(!items.length){
-      statusEl.textContent=`${route} 暫時冇 ETA`;
-      startCountdown();
-      refreshTimer=setTimeout(()=>{openEta();},10000);
-      return;
+    var allEtas=[];
+    // Try both APIs
+    var co=forceCo||detectCO(route,stopId);
+
+    // Citybus
+    if(co==='CTB'||co==='ALL'){
+      try{
+        var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/'+stopId+'/'+route,{cache:'no-store'});
+        var d1=await r1.json();
+        (d1.data||[]).forEach(i=>{i._co='CTB';allEtas.push(i);});
+      }catch(e){}
     }
-    const first=items[0];
-    statusEl.innerHTML=`<span class="live-dot"></span>${route} → ${first.dest_tc||''} · 自動更新中`;
+    // KMB
+    if(co==='KMB'||co==='ALL'){
+      try{
+        var r2=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/eta/'+stopId+'/'+route+'/1',{cache:'no-store'});
+        var d2=await r2.json();
+        (d2.data||[]).forEach(i=>{i._co='KMB';allEtas.push(i);});
+      }catch(e){}
+    }
+
+    var items=allEtas.filter(i=>i&&i.eta).sort((a,b)=>new Date(a.eta)-new Date(b.eta));
+    if(!items.length){statusEl.textContent=route+' 暫時冇 ETA';startCD();refreshTimer=setTimeout(()=>openEta(co),10000);return;}
+
+    // Detect operators present
+    var ops=[...new Set(items.map(i=>i._co))];
+    var opLabel=ops.map(o=>o==='KMB'?'九巴':'城巴').join('+');
+    var first=items[0];
+    statusEl.innerHTML=`<span class="dot"></span>${route} → ${first.dest_tc||''} (${opLabel}) · 自動更新`;
 
     listEl.innerHTML='';
-    items.slice(0,3).forEach((item,idx)=>{
-      const mins=fmtMins(item.eta);
-      const isUrgent=typeof mins==='number'&&mins<=2;
-      const isUrgentText=mins==='即到';
-      const pct=typeof mins==='number'?Math.max(5,Math.min(100,100-mins*10)):50;
-      const div=document.createElement('div');
+    items.slice(0,5).forEach((item,idx)=>{
+      var mins=fmtMins(item.eta);
+      var isUrgent=mins==='即到'||(typeof mins==='number'&&mins<=2);
+      var opCls=item._co==='KMB'?'op-kmb':'op-ctb';
+      var opShort=item._co==='KMB'?'九巴':'城巴';
+      var pct=typeof mins==='number'?Math.max(5,Math.min(100,100-mins*10)):50;
+      var div=document.createElement('div');
       div.className='eta-card'+(idx===0?' first':'');
-      div.style.animationDelay=(idx*0.1)+'s';
+      div.style.animationDelay=(idx*0.08)+'s';
       div.innerHTML=`
         <div class="eta-row">
           <div>
-            <div class="eta-big-time">${fmtTime(item.eta)}</div>
-            <div class="eta-dest">→ ${item.dest_tc||'目的地'} ${item.route?'・ '+item.route:''}</div>
+            <div class="eta-time">${fmtTime(item.eta)}</div>
+            <div class="eta-dest">→ ${item.dest_tc||''} <span class="op-badge ${opCls}">${opShort}</span></div>
           </div>
-          <div class="eta-countdown-box">
-            <div class="eta-mins ${isUrgent||isUrgentText?'urgent':''}">${mins}</div>
-            <div class="eta-mins-label">${isUrgentText?'':'分鐘'}</div>
+          <div class="eta-box">
+            <div class="eta-mins ${isUrgent?'urgent':''}">${mins}</div>
+            <div class="eta-mins-label">${mins==='即到'?'':'分鐘'}</div>
           </div>
         </div>
-        ${item.rmk_tc?`<div class="eta-remark">📢 ${item.rmk_tc}</div>`:''}
-        ${idx===0?`<div class="eta-progress"><div class="eta-progress-fill" style="width:${pct}%"></div></div>`:''}
+        ${item.rmk_tc?'<div class="eta-remark">📢 '+item.rmk_tc+'</div>':''}
+        ${idx===0?'<div class="eta-progress"><div class="eta-progress-fill" style="width:'+pct+'%"></div></div>':''}
       `;
       listEl.appendChild(div);
     });
 
-    startCountdown();
-    refreshTimer=setTimeout(()=>{openEta();},10000);
-  }catch(err){
-    errEl.textContent='查詢失敗：'+err.message;
-    statusEl.textContent='';
-  }finally{
-    document.getElementById('checkBtn').disabled=false;
-  }
+    startCD();refreshTimer=setTimeout(()=>openEta(co),10000);
+  }catch(e){errEl.textContent='查詢失敗：'+e.message;statusEl.textContent='';}
+  finally{document.getElementById('checkBtn').disabled=false;}
 }
+
+function detectCO(route,stopId){
+  // Heuristic: if stopId looks like KMB hash (hex string), use KMB
+  if(/^[0-9A-F]{16}$/i.test(stopId))return'KMB';
+  // If numeric 6-digit, likely CTB
+  if(/^\d{6}$/.test(stopId))return'CTB';
+  return'ALL';
+}
+
+function fmtTime(eta){var t=new Date(eta);if(isNaN(t))return'??';return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');}
+function fmtMins(eta){var t=new Date(eta);if(isNaN(t))return'';var m=Math.max(0,Math.round((t.getTime()-Date.now())/60000));return m===0?'即到':m;}
+function clearTimers(){if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}if(cdTimer){clearInterval(cdTimer);cdTimer=null;}}
 
 /* ---- Search ---- */
+function openSearch(){document.getElementById('searchModal').classList.add('show');}
+function closeSearch(){document.getElementById('searchModal').classList.remove('show');}
+function copyRoute(){document.getElementById('routeNo').value=document.getElementById('sRoute').value.trim().toUpperCase();}
+
 async function searchStops(){
-  const route=document.getElementById('searchRoute').value.trim().toUpperCase();
-  const dir=document.getElementById('searchDir').value;
-  const statusEl=document.getElementById('searchStatus');
-  const errEl=document.getElementById('searchError');
-  const btn=document.getElementById('searchBtn');
-  statusEl.textContent='';errEl.textContent='';
-  document.getElementById('searchResults').innerHTML='';
-  searchCache=[];
-  if(!route){errEl.textContent='請輸入路線';return;}
-  btn.disabled=true;statusEl.textContent='搜尋中…';
+  var route=document.getElementById('sRoute').value.trim().toUpperCase();
+  var dir=document.getElementById('sDir').value;
+  var filter=document.getElementById('sFilter').value.trim().toLowerCase();
+  var statusEl=document.getElementById('sStatus');var resEl=document.getElementById('sResults');
+  statusEl.textContent='';resEl.innerHTML='';
+  if(!route){statusEl.textContent='請輸入路線';return;}
+  statusEl.textContent='搜尋中…';
+  var dirCode=dir==='outbound'?'O':'I';
+  var results=[];
+
+  // Try KMB
   try{
-    const res=await fetch(buildRouteStopUrl(route,dir),{cache:'no-store'});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const json=await res.json();
-    const stops=Array.isArray(json.data)?json.data:[];
-    if(!stops.length){statusEl.textContent='搵唔到站位';return;}
-    statusEl.textContent=`搵到 ${stops.length} 個站`;
-    searchCache=await Promise.all(stops.slice(0,25).map(async item=>{
-      try{const r=await fetch(buildStopUrl(item.stop),{cache:'no-store'});if(!r.ok)return{...item};const j=await r.json();return{...item,stopInfo:j.data||null};}catch{return{...item};}
-    }));
-    renderSearchResults();
-  }catch(err){errEl.textContent='搜尋失敗：'+err.message;}
-  finally{btn.disabled=false;}
-}
+    var r1=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
+    var d1=await r1.json();
+    var kmbStops=(d1.data||[]).filter(s=>s.route===route&&s.bound===dirCode);
+    if(kmbStops.length){
+      // Get stop names
+      var stopRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
+      var stopData=await stopRes.json();
+      var stopMap={};
+      (stopData.data||[]).forEach(s=>{stopMap[s.stop]=s;});
+      kmbStops.forEach(s=>{
+        var info=stopMap[s.stop]||{};
+        results.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',co:'KMB',seq:s.seq});
+      });
+    }
+  }catch(e){}
 
-function renderSearchResults(){
-  const el=document.getElementById('searchResults');
-  const filter=document.getElementById('filterText').value.trim().toLowerCase();
-  el.innerHTML='';
-  const route=document.getElementById('searchRoute').value.trim().toUpperCase();
-  const dir=document.getElementById('searchDir').value;
-  const filtered=searchCache.filter(i=>{
-    if(!filter)return true;
-    return(i.stopInfo?.name_tc||'').toLowerCase().includes(filter)||(i.stopInfo?.name_en||'').toLowerCase().includes(filter)||(i.stop||'').toLowerCase().includes(filter);
+  // Try Citybus
+  try{
+    var r2=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+route+'/'+dir,{cache:'no-store'});
+    var d2=await r2.json();
+    for(var s of(d2.data||[])){
+      try{
+        var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});
+        var sd=await sr.json();
+        var info=sd.data||{};
+        results.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',co:'CTB',seq:s.seq});
+      }catch{}
+    }
+  }catch(e){}
+
+  if(filter)results=results.filter(r=>(r.name_tc||'').toLowerCase().includes(filter)||(r.name_en||'').toLowerCase().includes(filter)||(r.stop_id||'').toLowerCase().includes(filter));
+
+  statusEl.textContent=results.length?`搵到 ${results.length} 個站`:'搵唔到站';
+  results.forEach(r=>{
+    var opCls=r.co==='KMB'?'kmb':'ctb';
+    var opLabel=r.co==='KMB'?'九巴':'城巴';
+    var div=document.createElement('div');div.className='stop-card';
+    div.innerHTML=`<div class="stop-title">${r.seq?r.seq+'. ':''}${r.name_tc||r.name_en}</div><div class="stop-sub"><span class="badge ${opCls}" style="font-size:.65rem;padding:2px 5px;border-radius:4px;font-weight:800">${opLabel}</span> ${r.name_en||''} · ${r.stop_id}</div><div class="stop-actions"><button onclick="pickStop('${route}','${r.stop_id}','${r.co}')">查 ETA</button><button class="sec" onclick="addStop('${route}','${r.stop_id}','${r.name_tc}','${r.name_en}','${r.co}')">收藏</button></div>`;
+    resEl.appendChild(div);
   });
-  filtered.forEach(item=>{
-    const info=item.stopInfo||{};
-    const ntc=info.name_tc||item.stop;
-    const nen=info.name_en||'';
-    const div=document.createElement('div');div.className='stop-card';
-    div.innerHTML=`<div class="stop-title">${item.seq}. ${ntc}</div><div class="stop-sub">${nen}${nen?' ・ ':''}${item.stop}</div><div class="stop-actions"><button class="small" data-a="eta">查 ETA</button><button class="small secondary" data-a="bm">收藏</button></div>`;
-    div.querySelector('[data-a="eta"]').onclick=()=>{document.getElementById('routeNo').value=route;document.getElementById('stopId').value=item.stop;closeConfig();openEta();};
-    div.querySelector('[data-a="bm"]').onclick=()=>{addBookmark({route,stop_id:item.stop,name_tc:ntc,name_en:nen,direction:dir,pinned:false});};
-    el.appendChild(div);
-  });
-  if(!filtered.length)el.innerHTML='<div class="meta">冇結果</div>';
 }
 
-function saveCurrent(){
-  const route=document.getElementById('routeNo').value.trim().toUpperCase();
-  const stopId=document.getElementById('stopId').value.trim();
-  if(!route||!stopId)return;
-  addBookmark({route,stop_id:stopId,name_tc:stopId,name_en:'',direction:'',pinned:false});
-}
+function pickStop(route,stop,co){document.getElementById('routeNo').value=route;document.getElementById('stopId').value=stop;closeSearch();openEta(co);}
+function addStop(route,stop,tc,en,co){addBK({route,stop_id:stop,name_tc:tc,name_en:en,co:co||'CTB',custom_name:'',pinned:false});}
 
-function openConfig(){document.getElementById('configModal').classList.add('show');}
-function closeConfig(){document.getElementById('configModal').classList.remove('show');}
+document.getElementById('checkBtn').onclick=()=>openEta();
+document.getElementById('routeNo').onkeydown=e=>{if(e.key==='Enter')openEta();};
+document.getElementById('stopId').onkeydown=e=>{if(e.key==='Enter')openEta();};
+document.getElementById('sFilter').oninput=()=>searchStops();
+document.getElementById('searchModal').onclick=e=>{if(e.target.id==='searchModal')closeSearch();};
 
-document.getElementById('checkBtn').onclick=openEta;
-document.getElementById('openConfigBtn').onclick=openConfig;
-document.getElementById('closeConfigBtn').onclick=closeConfig;
-document.getElementById('configModal').onclick=e=>{if(e.target.id==='configModal')closeConfig();};
-document.getElementById('searchBtn').onclick=searchStops;
-document.getElementById('copyToMainBtn').onclick=()=>{document.getElementById('routeNo').value=document.getElementById('searchRoute').value.trim().toUpperCase();};
-document.getElementById('filterText').oninput=renderSearchResults;
-
-renderBookmarks();
+renderBK();
 </script>
 </body>
 </html>
