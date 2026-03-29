@@ -100,8 +100,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 
 .busbot-toggle{position:fixed;bottom:16px;right:16px;z-index:50;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#33e6ff,#ff6b9d);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:1.5rem}
 .busbot-panel{position:fixed;bottom:80px;right:16px;z-index:51;width:min(380px,calc(100vw - 32px));height:500px;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:20px;display:none;flex-direction:column;overflow:hidden}
-.busbot-panel.show{display:flex}
-.busbot-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.busbot-panel.show{display:flex}\.busbot-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
 .busbot-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
 .busbot-info{flex:1}.busbot-name{font-weight:700;font-size:.9rem}.busbot-status{font-size:.7rem;color:#86efac}
 .busbot-close{background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer}
@@ -175,13 +174,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
   </div>
 </div>
 
+
 <button class="busbot-toggle" id="busbotToggle">🧑‍✈️</button>
 <div class="busbot-panel" id="busbotPanel">
-  <div class="busbot-head">
-    <div class="busbot-avatar" style="background:linear-gradient(135deg,#ffc94d,#ff6b9d)">🧑‍✈️</div>
-    <div class="busbot-info"><div class="busbot-name">巴膠仔</div><div class="busbot-status">🟢 在線 · 巴士路線助手</div></div>
-    <button class="busbot-close" id="busbotClose">✕</button>
-  </div>
+  <div class="busbot-head"><div class="busbot-avatar" style="background:linear-gradient(135deg,#ffc94d,#ff6b9d)">🧑‍✈️</div><div class="busbot-info"><div class="busbot-name">巴膠仔</div><div class="busbot-status">🟢 在線</div></div><button class="busbot-close" id="busbotClose">✕</button></div>
   <div class="busbot-messages" id="busbotMsgs"><div class="busbot-msg bot">嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！</div></div>
   <div class="busbot-input-area"><input id="busbotInput" placeholder="問我巴士問題..." /><button id="busbotSend">發送</button></div>
 </div>
@@ -557,42 +553,24 @@ document.getElementById('sRoute').onkeydown=e=>{if(e.key==='Enter')findRoute();}
 
 renderBK();
 
-// === Bus Bot Chat ===
-})();
+// BusBot
 (function(){
-  var hist=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！'}];
-  var tog=document.getElementById('busbotToggle');
-  var pan=document.getElementById('busbotPanel');
-  var cls=document.getElementById('busbotClose');
-  var inp=document.getElementById('busbotInput');
-  var snd=document.getElementById('busbotSend');
-  var msg=document.getElementById('busbotMsgs');
-
-  function togBot(){pan.classList.toggle('show')}
-  tog.onclick=togBot;
-  cls.onclick=togBot;
-  inp.onkeydown=function(e){if(e.key==='Enter')send()};
-  snd.onclick=send;
-
-  function addMsg(role,text){
-    var d=document.createElement('div');
-    d.className='busbot-msg '+(role==='user'?'user':'bot');
-    d.textContent=text;msg.appendChild(d);msg.scrollTop=9e9;
-  }
-
+  var h=[{role:"assistant",content:"嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！"}];
+  document.getElementById("busbotToggle").onclick=function(){document.getElementById("busbotPanel").classList.toggle("show")};
+  document.getElementById("busbotClose").onclick=function(){document.getElementById("busbotPanel").classList.remove("show")};
+  var inp=document.getElementById("busbotInput");
+  inp.onkeydown=function(e){if(e.key==="Enter")send()};
+  document.getElementById("busbotSend").onclick=send;
+  function addMsg(r,t){var d=document.createElement("div");d.className="busbot-msg "+(r==="user"?"user":"bot");d.textContent=t;document.getElementById("busbotMsgs").appendChild(d);document.getElementById("busbotMsgs").scrollTop=9e9}
   function send(){
-    var t=inp.value.trim();if(!t)return;inp.value='';
-    addMsg('user',t);hist.push({role:'user',content:t});
-    var ld=document.createElement('div');ld.className='busbot-typing';
-    ld.innerHTML='<span></span><span></span><span></span>';msg.appendChild(ld);msg.scrollTop=9e9;
-    fetch('/busbot-api/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist})})
+    var t=inp.value.trim();if(!t)return;inp.value="";addMsg("user",t);h.push({role:"user",content:t});
+    var ld=document.createElement("div");ld.className="busbot-typing";ld.innerHTML="<span></span><span></span><span></span>";document.getElementById("busbotMsgs").appendChild(ld);
+    fetch("/busbot-api/message",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:h})})
     .then(function(r){return r.json()})
-    .then(function(d){ld.remove();if(d.ok){addMsg('bot',d.reply);hist.push({role:'assistant',content:d.reply})}else addMsg('bot','Error: '+(d.error||'unknown'))})
-    .catch(function(){ld.remove();addMsg('bot','Network error')});
+    .then(function(d){ld.remove();if(d.ok){addMsg("bot",d.reply);h.push({role:"assistant",content:d.reply})}else addMsg("bot","Error")})
+    .catch(function(){ld.remove();addMsg("bot","Network error")})
   }
-})
-})
-
+})();
 </script>
 </body>
 </html>
