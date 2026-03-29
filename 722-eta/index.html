@@ -558,6 +558,7 @@ document.getElementById('sRoute').onkeydown=e=>{if(e.key==='Enter')findRoute();}
 renderBK();
 
 // === Bus Bot Chat ===
+})();
 (function(){
   var hist=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！'}];
   var tog=document.getElementById('busbotToggle');
@@ -589,7 +590,8 @@ renderBK();
     .then(function(d){ld.remove();if(d.ok){addMsg('bot',d.reply);hist.push({role:'assistant',content:d.reply})}else addMsg('bot','Error: '+(d.error||'unknown'))})
     .catch(function(){ld.remove();addMsg('bot','Network error')});
   }
-})();
+})
+})
 
 </script>
 </body>
