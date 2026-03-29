@@ -386,23 +386,40 @@ async function pickDir(d){
       }catch{}
     }
   }catch(e){}
-  // Merge nearby stops from different operators
+  // Merge stops from different operators (by location AND name similarity)
   stops.sort((a,b)=>a.seq-b.seq);
   var merged=[],used={};
   stops.forEach(s=>{
     if(used[s.stop_id])return;
     used[s.stop_id]=true;
     var group=[s];
-    if(s.lat&&s.lng){
-      stops.forEach(s2=>{
-        if(used[s2.stop_id]||s2.co===s.co)return;
-        if(s2.lat&&s2.lng){
-          var dist=Math.sqrt(Math.pow(s.lat-s2.lat,2)+Math.pow(s.lng-s2.lng,2));
-          if(dist<0.002){group.push(s2);used[s2.stop_id]=true;}
-        }
-      });
-    }
-    merged.push({stops:group,name_tc:s.name_tc,name_en:s.name_en,seq:s.seq});
+    stops.forEach(s2=>{
+      if(used[s2.stop_id]||s2.co===s.co)return;
+      var matched=false;
+      // Match by lat/lng (< 300m)
+      if(s.lat&&s.lng&&s2.lat&&s2.lng){
+        var dist=Math.sqrt(Math.pow(s.lat-s2.lat,2)+Math.pow(s.lng-s2.lng,2));
+        if(dist<0.003)matched=true;
+      }
+      // Match by Chinese name (same or contains)
+      if(!matched&&s.name_tc&&s2.name_tc){
+        var n1=s.name_tc.replace(/[\(（].*?[\)）]/g,'').trim();
+        var n2=s2.name_tc.replace(/[\(（].*?[\)）]/g,'').trim();
+        if(n1===n2||(n1.length>2&&n2.includes(n1))||(n2.length>2&&n1.includes(n2)))matched=true;
+      }
+      // Match by English name
+      if(!matched&&s.name_en&&s2.name_en){
+        var e1=s.name_en.toLowerCase().split(/[\(,]/)[0].trim();
+        var e2=s2.name_en.toLowerCase().split(/[\(,]/)[0].trim();
+        if(e1===e2&&e1.length>3)matched=true;
+      }
+      if(matched){group.push(s2);used[s2.stop_id]=true;}
+    });
+    // Use best name (prefer Chinese)
+    var bestName=s.name_tc||s.name_en||'';
+    var bestEn=s.name_en||'';
+    group.forEach(g=>{if(g.name_tc&&g.name_tc.length>bestName.length)bestName=g.name_tc;if(g.name_en&&g.name_en.length>bestEn.length)bestEn=g.name_en;});
+    merged.push({stops:group,name_tc:bestName,name_en:bestEn,seq:s.seq});
   });
   searchState.mergedStops=merged;
   renderStops();
