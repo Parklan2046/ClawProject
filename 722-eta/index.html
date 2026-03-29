@@ -114,7 +114,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     <button class="icon-btn" onclick="openSearch()">⚙️</button>
   </div>
 
-  <div class="bookmarks"><div id="bmList" class="bm-scroll"></div></div>
+  <div class="bookmarks" style="display:flex;align-items:center;gap:8px"><div id="bmList" class="bm-scroll" style="flex:1"></div><button id="bmEditBtn" onclick="toggleEdit()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:.72rem;cursor:pointer;white-space:nowrap">管理</button></div>
 
   <div id="timer" class="timer hidden">
     <div class="timer-ring">
@@ -208,20 +208,50 @@ function saveBK(l){try{if(!storageOK()){memoryBK=l;return;}localStorage.setItem(
 function storageOK(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true;}catch{return false;}}
 function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));renderBK();showToast('已收藏');return true;}
 
+var bmEditMode=false;
 function renderBK(){
   var el=document.getElementById('bmList');
   var bk=getBK();
   if(!bk.length){el.innerHTML='<div style="color:var(--muted);font-size:.76rem;padding:3px 0">未有收藏 · 按 ⚙️ 加入</div>';return;}
-  el.innerHTML=bk.map(it=>{
+  el.innerHTML=bk.map((it,i)=>{
     var opCls=it.co==='KMB'?'kmb':'ctb';
     var opLabel=it.co==='KMB'?'九巴':'城巴';
-    return `<div class="bm-chip" data-r="${it.route}" data-s="${it.stop_id}" data-co="${it.co}"><span class="badge ${opCls}">${opLabel}</span><span>${it.custom_name||it.name_tc||it.stop_id} ${it.route}</span></div>`;
+    var delBtn=bmEditMode?'<button onclick="event.stopPropagation();delBK('+i+')" style="background:none;border:none;color:#ff5252;font-size:.9rem;cursor:pointer;padding:0 4px">✕</button>':'';
+    return `<div class="bm-chip" data-r="${it.route}" data-s="${it.stop_id}" data-co="${it.co}" data-idx="${i}"><span class="badge ${opCls}">${opLabel}</span><span>${it.custom_name||it.name_tc||it.stop_id} ${it.route}</span>${delBtn}</div>`;
   }).join('');
-  el.querySelectorAll('.bm-chip').forEach(c=>c.onclick=()=>{
-    document.getElementById('routeNo').value=c.dataset.r;
-    document.getElementById('stopId').value=c.dataset.s;
-    openEta(c.dataset.co);
-  });
+  if(!bmEditMode){
+    el.querySelectorAll('.bm-chip').forEach(c=>c.onclick=()=>{
+      document.getElementById('routeNo').value=c.dataset.r;
+      document.getElementById('stopId').value=c.dataset.s;
+      openEta(c.dataset.co);
+    });
+  }
+}
+function toggleEdit(){
+  bmEditMode=!bmEditMode;
+  var btn=document.getElementById('bmEditBtn');
+  btn.textContent=bmEditMode?'完成':'管理';
+  btn.style.background=bmEditMode?'var(--red)':'';
+  renderBK();
+}
+function delBK(idx){
+  var bk=getBK();
+  if(idx>=0&&idx<bk.length){
+    var name=bk[idx].custom_name||bk[idx].name_tc||bk[idx].stop_id;
+    bk.splice(idx,1);
+    saveBK(bk);
+    renderBK();
+    showToast('已刪除 '+name);
+  }
+}
+function sortBK(by){
+  var bk=getBK();
+  if(by==='route')bk.sort((a,b)=>a.route.localeCompare(b.route));
+  else if(by==='name')bk.sort((a,b)=>(a.name_tc||'').localeCompare(b.name_tc||''));
+  else if(by==='co')bk.sort((a,b)=>a.co.localeCompare(b.co));
+  saveBK(bk);
+  renderBK();
+  showToast('已排序');
 }
 
 /* ---- Timer ---- */
