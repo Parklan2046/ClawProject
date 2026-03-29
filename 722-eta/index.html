@@ -98,9 +98,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .toast.show{display:block}
 @media(max-width:500px){.search-bar{flex-wrap:wrap}.search-bar input.route-input{width:55px}.search-bar input.stop-input{width:100%}.modal{width:100%;max-height:84vh}.modal .row{grid-template-columns:1fr}}
 
-.busbot-toggle{position:fixed;bottom:16px;right:16px;z-index:50;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#33e6ff,#ff6b9d);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:transform .2s}
-.busbot-toggle:hover{transform:scale(1.1)}
-.busbot-panel{position:fixed;bottom:80px;right:16px;z-index:51;width:min(380px,calc(100vw - 32px));height:500px;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:20px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.busbot-toggle{position:fixed;bottom:16px;right:16px;z-index:50;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#33e6ff,#ff6b9d);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.busbot-panel{position:fixed;bottom:80px;right:16px;z-index:51;width:min(380px,calc(100vw - 32px));height:500px;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:20px;display:none;flex-direction:column;overflow:hidden}
 .busbot-panel.show{display:flex}
 .busbot-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
 .busbot-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
@@ -112,7 +111,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .busbot-msg.user{background:rgba(255,107,157,.12);align-self:flex-end;border-bottom-right-radius:4px}
 .busbot-input-area{display:flex;gap:8px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08)}
 .busbot-input-area input{flex:1;background:#0a1020;color:#e5e7eb;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 14px;font-size:.9rem;outline:none}
-.busbot-input-area input:focus{border-color:#33e6ff}
 .busbot-input-area button{background:linear-gradient(135deg,#33e6ff,#ff6b9d);border:none;border-radius:12px;padding:10px 14px;color:#fff;font-weight:700;cursor:pointer}
 </style>
 </head>
@@ -177,7 +175,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
   </div>
 </div>
 
-<button class="busbot-toggle" id="busbotToggle" title="問巴膠仔">🧑‍✈️</button>
+<button class="busbot-toggle" id="busbotToggle">🧑‍✈️</button>
 <div class="busbot-panel" id="busbotPanel">
   <div class="busbot-head">
     <div class="busbot-avatar" style="background:linear-gradient(135deg,#ffc94d,#ff6b9d)">🧑‍✈️</div>
@@ -199,44 +197,7 @@ function showToast(m){var e=document.getElementById('toast');e.textContent=m;e.c
 function getBK(){try{if(!storageOK())return memoryBK;var r=localStorage.getItem(BK);return r?JSON.parse(r):[];}catch{return memoryBK;}}
 function saveBK(l){try{if(!storageOK()){memoryBK=l;return;}localStorage.setItem(BK,JSON.stringify(l));}catch{memoryBK=l;}}
 function storageOK(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true;}catch{return false;}}
-function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));
-/* ---- Bus Bot Chat ---- */
-(function(){
-  var botHistory=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！'}];
-  var toggle=document.getElementById('busbotToggle');
-  var panel=document.getElementById('busbotPanel');
-  var closeBtn=document.getElementById('busbotClose');
-  var input=document.getElementById('busbotInput');
-  var sendBtn=document.getElementById('busbotSend');
-  var msgs=document.getElementById('busbotMsgs');
-
-  function toggleBot(){panel.classList.toggle('show')}
-  toggle.onclick=toggleBot;
-  closeBtn.onclick=toggleBot;
-  input.onkeydown=function(e){if(e.key==='Enter')sendBotMsg()};
-
-  function addBotMsg(role,text){
-    var d=document.createElement('div');
-    d.className='busbot-msg '+(role==='user'?'user':'bot');
-    d.textContent=text;msgs.appendChild(d);msgs.scrollTop=9e9;
-  }
-
-  async function sendBotMsg(){
-    var text=input.value.trim();if(!text)return;input.value='';
-    addBotMsg('user',text);botHistory.push({role:'user',content:text});
-    var t=document.createElement('div');t.className='busbot-typing';
-    t.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(t);msgs.scrollTop=9e9;
-    try{
-      var r=await fetch('/busbot-api/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:botHistory})});
-      var d=await r.json();t.remove();
-      if(d.ok){addBotMsg('bot',d.reply);botHistory.push({role:'assistant',content:d.reply})}
-      else addBotMsg('bot','😅 Error: '+(d.error||'unknown'))
-    }catch(e){t.remove();addBotMsg('bot','Network error')}
-  }
-  sendBtn.onclick=sendBotMsg;
-})();
-
-renderBK();showToast('已收藏');return true;}
+function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));renderBK();showToast('已收藏');return true;}
 
 function renderBK(){
   var el=document.getElementById('bmList');
@@ -594,44 +555,42 @@ document.getElementById('sFilter').oninput=()=>renderStops();
 document.getElementById('searchModal').onclick=e=>{if(e.target.id==='searchModal')closeSearch();};
 document.getElementById('sRoute').onkeydown=e=>{if(e.key==='Enter')findRoute();};
 
+renderBK();
 
-/* ---- Bus Bot Chat ---- */
+// === Bus Bot Chat ===
 (function(){
-  var botHistory=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！'}];
-  var toggle=document.getElementById('busbotToggle');
-  var panel=document.getElementById('busbotPanel');
-  var closeBtn=document.getElementById('busbotClose');
-  var input=document.getElementById('busbotInput');
-  var sendBtn=document.getElementById('busbotSend');
-  var msgs=document.getElementById('busbotMsgs');
+  var hist=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！'}];
+  var tog=document.getElementById('busbotToggle');
+  var pan=document.getElementById('busbotPanel');
+  var cls=document.getElementById('busbotClose');
+  var inp=document.getElementById('busbotInput');
+  var snd=document.getElementById('busbotSend');
+  var msg=document.getElementById('busbotMsgs');
 
-  function toggleBot(){panel.classList.toggle('show')}
-  toggle.onclick=toggleBot;
-  closeBtn.onclick=toggleBot;
-  input.onkeydown=function(e){if(e.key==='Enter')sendBotMsg()};
+  function togBot(){pan.classList.toggle('show')}
+  tog.onclick=togBot;
+  cls.onclick=togBot;
+  inp.onkeydown=function(e){if(e.key==='Enter')send()};
+  snd.onclick=send;
 
-  function addBotMsg(role,text){
+  function addMsg(role,text){
     var d=document.createElement('div');
     d.className='busbot-msg '+(role==='user'?'user':'bot');
-    d.textContent=text;msgs.appendChild(d);msgs.scrollTop=9e9;
+    d.textContent=text;msg.appendChild(d);msg.scrollTop=9e9;
   }
 
-  async function sendBotMsg(){
-    var text=input.value.trim();if(!text)return;input.value='';
-    addBotMsg('user',text);botHistory.push({role:'user',content:text});
-    var t=document.createElement('div');t.className='busbot-typing';
-    t.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(t);msgs.scrollTop=9e9;
-    try{
-      var r=await fetch('/busbot-api/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:botHistory})});
-      var d=await r.json();t.remove();
-      if(d.ok){addBotMsg('bot',d.reply);botHistory.push({role:'assistant',content:d.reply})}
-      else addBotMsg('bot','😅 Error: '+(d.error||'unknown'))
-    }catch(e){t.remove();addBotMsg('bot','Network error')}
+  function send(){
+    var t=inp.value.trim();if(!t)return;inp.value='';
+    addMsg('user',t);hist.push({role:'user',content:t});
+    var ld=document.createElement('div');ld.className='busbot-typing';
+    ld.innerHTML='<span></span><span></span><span></span>';msg.appendChild(ld);msg.scrollTop=9e9;
+    fetch('/busbot-api/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist})})
+    .then(function(r){return r.json()})
+    .then(function(d){ld.remove();if(d.ok){addMsg('bot',d.reply);hist.push({role:'assistant',content:d.reply})}else addMsg('bot','Error: '+(d.error||'unknown'))})
+    .catch(function(){ld.remove();addMsg('bot','Network error')});
   }
-  sendBtn.onclick=sendBotMsg;
 })();
 
-renderBK();
 </script>
 </body>
 </html>
