@@ -261,6 +261,19 @@
       border-color: rgba(255,62,165,0.18);
     }
 
+    .status-badge {
+      display: inline-flex;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      margin-left: 6px;
+    }
+    .status-ready { background: rgba(0,230,118,.15); color: #4dff88; }
+    .status-poc { background: rgba(255,171,64,.15); color: #ffab40; }
+    .status-beta { background: rgba(77,232,255,.15); color: #4de8ff; }
+    .status-private { background: rgba(255,82,82,.15); color: #ff5252; }
     .card-tag {
       display: inline-flex;
       padding: 6px 10px;
@@ -471,28 +484,28 @@
     <h2 id="projects" class="section-title">Projects</h2>
     <section class="cards">
       <article class="card tilt-card">
-        <div class="card-tag">Transport</div>
-        <h3>Bus ETA</h3>
+        <div class="card-tag">Transport</div><span class="status-badge status-ready">✅ Ready</span>
+        <h3>🚌 Bus ETA</h3>
         <p>A fast Citybus route lookup page for quick checking with a lightweight mobile-first interface.</p>
         <a href="722-eta/">Open project →</a>
       </article>
 
       <article class="card tilt-card hidden-card" id="lunchWalletCard">
-        <div class="card-tag">Private Utility</div>
+        <div class="card-tag">Private Utility</div><span class="status-badge status-ready">✅ Ready</span>
         <h3>Lunch Wallet 🔒</h3>
         <p>A simple shared wallet tool for lunch spending, balances, and lightweight group cost tracking.</p>
         <a href="lunch-wallet/">Private access →</a>
       </article>
 
       <article class="card tilt-card">
-        <div class="card-tag">AI Storytelling</div>
+        <div class="card-tag">AI Storytelling</div><span class="status-badge status-beta">🧪 Beta</span>
         <h3>Ebook Cantonese Narration</h3>
         <p>Import text or EPUB content, rewrite it into spoken Cantonese, and test playback in a live narration demo.</p>
         <a href="ebook-canto-poc/">Open project →</a>
       </article>
 
       <article class="card tilt-card">
-        <div class="card-tag">AI Music</div>
+        <div class="card-tag">AI Music</div><span class="status-badge status-ready">✅ Ready</span>
         <h3>Spotify AI Dashboard</h3>
         <p>A polished dashboard for now playing, queue intelligence, device status, and private Spotify controls.</p>
         <a href="spotify-dashboard/">Open project →</a>
@@ -501,31 +514,31 @@
 
 
       <article class="card tilt-card">
-        <div class="card-tag">Private Trading</div>
+        <div class="card-tag">Private Trading</div><span class="status-badge status-private">🔒 Private</span>
         <h3>Polymarket Execution</h3>
         <p>A private execution-ready dashboard for connection notes, risk controls, market snapshots, and order preview.</p>
         <a href="polymarket-execution/">Open project →</a>
       </article>
       <article class="card tilt-card">
-        <div class="card-tag">Strategy Lab</div>
+        <div class="card-tag">Strategy Lab</div><span class="status-badge status-beta">🧪 Beta</span>
         <h3>BTC 5m Strategy Lab</h3>
         <p>Paper-test your 5-minute BTC market ideas with rule inputs, expectancy math, and a simulated trade journal.</p>
         <a href="btc-5m-strategy-lab/">Open project →</a>
       </article>
       <article class="card tilt-card">
-        <div class="card-tag">Market</div>
+        <div class="card-tag">Market</div><span class="status-badge status-beta">🧪 Beta</span>
         <h3>US Market Radar</h3>
         <p>A compact dashboard experiment for tracking market context, structure, and quick-glance signals.</p>
         <a href="us-market-radar/">Open project →</a>
       </article>
       <article class="card tilt-card">
-        <div class="card-tag">AI 分析</div>
+        <div class="card-tag">AI 分析</div><span class="status-badge status-poc">🚀 POC</span>
         <h3>📊 投資報告</h3>
         <p>輸入股票代號或名稱，AI 即時生成廣東話投資分析報告，涵蓋基本面、技術面、風險同建議。</p>
         <a href="stock-report/">Open project →</a>
       </article>
       <article class="card tilt-card">
-        <div class="card-tag">辦公室</div>
+        <div class="card-tag">辦公室</div><span class="status-badge status-poc">🚀 POC</span>
         <h3>🧋 請食 Tea</h3>
         <p>搞 tea 訂單神器！開單 → 分享 link → 同事揀嘢 → 自動整合 order，唔使再開 Google Form。</p>
         <a href="tea-treat/">Open project →</a>
