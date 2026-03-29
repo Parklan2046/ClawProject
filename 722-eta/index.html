@@ -105,31 +105,29 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .loading-text{color:#33e6ff;font-size:.82rem;font-weight:600}
 .loading-sub{color:#94a3b8;font-size:.72rem;margin-top:1px}
 
+
 /* Bus Bot Chat */
 .busbot-toggle{position:fixed;bottom:16px;right:16px;z-index:50;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#33e6ff,#ff6b9d);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:transform .2s}
 .busbot-toggle:hover{transform:scale(1.1)}
-.busbot-panel{position:fixed;bottom:80px;right:16px;z-index:51;width:min(380px,calc(100vw - 32px));height:500px;background:var(--panel);border:1px solid var(--line);border-radius:20px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.busbot-panel{position:fixed;bottom:80px;right:16px;z-index:51;width:min(380px,calc(100vw - 32px));height:500px;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:20px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 .busbot-panel.show{display:flex}
-.busbot-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
-.busbot-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#33e6ff,#ff6b9d);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-.busbot-info{flex:1}
-.busbot-name{font-weight:700;font-size:.9rem}
-.busbot-status{font-size:.7rem;color:var(--green)}
-.busbot-close{background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer}
+.busbot-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.busbot-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.busbot-info{flex:1}.busbot-name{font-weight:700;font-size:.9rem}.busbot-status{font-size:.7rem;color:#86efac}
+.busbot-close{background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer}
 .busbot-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
-.busbot-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:.88rem;line-height:1.5;animation:fadeIn .3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.busbot-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:.88rem;line-height:1.5}
 .busbot-msg.bot{background:rgba(51,232,255,.08);align-self:flex-start;border-bottom-left-radius:4px}
 .busbot-msg.user{background:rgba(255,107,157,.12);align-self:flex-end;border-bottom-right-radius:4px}
-.busbot-input-area{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
-.busbot-input-area input{flex:1;background:#0a1020;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:.9rem;outline:none}
-.busbot-input-area input:focus{border-color:var(--cyan)}
+.busbot-input-area{display:flex;gap:8px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08)}
+.busbot-input-area input{flex:1;background:#0a1020;color:#e5e7eb;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 14px;font-size:.9rem;outline:none}
+.busbot-input-area input:focus{border-color:#33e6ff}
 .busbot-input-area button{background:linear-gradient(135deg,#33e6ff,#ff6b9d);border:none;border-radius:12px;padding:10px 14px;color:#fff;font-weight:700;cursor:pointer}
 .busbot-typing{display:flex;gap:4px;padding:10px 14px;align-self:flex-start}
-.busbot-typing span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:typing 1.4s infinite}
+.busbot-typing span{width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:bt 1.4s infinite}
 .busbot-typing span:nth-child(2){animation-delay:.2s}
 .busbot-typing span:nth-child(3){animation-delay:.4s}
-@keyframes typing{0%,60%,100%{opacity:.3}30%{opacity:1}}
+@keyframes bt{0%,60%,100%{opacity:.3}30%{opacity:1}}
 </style>
 </head>
 <body>
@@ -206,23 +204,15 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
   <div class="loading-sub" id="loadingSub"></div>
 </div>
 <!-- Bus Bot Chat -->
-<button class="busbot-toggle" id="busbotToggle" title="問巴膠仔">🚌</button>
+<button class="busbot-toggle" id="busbotToggle" title="問巴膠仔">🧑‍✈️</button>
 <div class="busbot-panel" id="busbotPanel">
   <div class="busbot-head">
     <div class="busbot-avatar" style="background:linear-gradient(135deg,#ffc94d,#ff6b9d)">🧑‍✈️</div>
-    <div class="busbot-info">
-      <div class="busbot-name">巴膠仔</div>
-      <div class="busbot-status">🟢 在線 · 巴士路線助手</div>
-    </div>
+    <div class="busbot-info"><div class="busbot-name">巴膠仔</div><div class="busbot-status">🟢 在線 · 巴士路線助手</div></div>
     <button class="busbot-close" onclick="toggleBot()">✕</button>
   </div>
-  <div class="busbot-messages" id="busbotMsgs">
-    <div class="busbot-msg bot">嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！可以問我路線、站位、ETA ～</div>
-  </div>
-  <div class="busbot-input-area">
-    <input id="busbotInput" placeholder="問我巴士問題..." />
-    <button onclick="sendBotMsg()">發送</button>
-  </div>
+  <div class="busbot-messages" id="busbotMsgs"><div class="busbot-msg bot">嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！</div></div>
+  <div class="busbot-input-area"><input id="busbotInput" placeholder="問我巴士問題..." /><button onclick="sendBotMsg()">發送</button></div>
 </div>
 <div id="toast" class="toast"></div>
 
@@ -237,529 +227,34 @@ function getBK(){try{if(!storageOK())return memoryBK;var r=localStorage.getItem(
 function saveBK(l){try{if(!storageOK()){memoryBK=l;return;}localStorage.setItem(BK,JSON.stringify(l));}catch{memoryBK=l;}}
 function storageOK(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true;}catch{return false;}}
 function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));
-    renderBK();
+    
+/* ---- Bus Bot Chat ---- */
+var botHistory=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！'}];
+function toggleBot(){document.getElementById('busbotPanel').classList.toggle('show')}
+document.getElementById('busbotToggle').onclick=toggleBot;
+document.getElementById('busbotInput').onkeydown=function(e){if(e.key==='Enter')sendBotMsg()};
+async function sendBotMsg(){
+  var inp=document.getElementById('busbotInput'),text=inp.value.trim();
+  if(!text)return;inp.value='';addBotMsg('user',text);botHistory.push({role:'user',content:text});
+  var msgs=document.getElementById('busbotMsgs'),t=document.createElement('div');
+  t.className='busbot-typing';t.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(t);msgs.scrollTop=9e9;
+  try{
+    var r=await fetch('/busbot-api/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:botHistory})});
+    var d=await r.json();t.remove();
+    if(d.ok){addBotMsg('bot',d.reply);botHistory.push({role:'assistant',content:d.reply})}
+    else addBotMsg('bot','😅 Error: '+(d.error||'unknown'))
+  }catch(e){t.remove();addBotMsg('bot','Network error')}
+}
+function addBotMsg(role,text){
+  var m=document.getElementById('busbotMsgs'),d=document.createElement('div');
+  d.className='busbot-msg '+(role==='user'?'user':'bot');d.textContent=text;m.appendChild(d);m.scrollTop=9e9;
+}
+
+renderBK();
     showToast("已收藏");
     return true;
 }
 
-/* ---- Bus Bot Chat ---- */
-var botHistory=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！可以問我路線、站位、ETA ～'}];
-
-function toggleBot(){
-  document.getElementById('busbotPanel').classList.toggle('show');
-}
-
-document.getElementById('busbotToggle').onclick=toggleBot;
-document.getElementById('busbotInput').onkeydown=function(e){if(e.key==='Enter')sendBotMsg()};
-
-async function sendBotMsg(){
-  var input=document.getElementById('busbotInput');
-  var text=input.value.trim();
-  if(!text)return;
-  input.value='';
-  addBotMsg('user',text);
-  botHistory.push({role:'user',content:text});
-
-  // Show typing
-  var msgs=document.getElementById('busbotMsgs');
-  var typing=document.createElement('div');
-  typing.className='busbot-typing';
-  typing.innerHTML='<span></span><span></span><span></span>';
-  msgs.appendChild(typing);
-  msgs.scrollTop=msgs.scrollHeight;
-
-  try{
-    var res=await fetch('/busbot-api/message',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:botHistory})
-    });
-    var data=await res.json();
-    typing.remove();
-    if(data.ok){
-      addBotMsg('bot',data.reply);
-      botHistory.push({role:'assistant',content:data.reply});
-    }else{
-      addBotMsg('bot','😅 唔好意思，我諗唔到點答你。Error: '+(data.error||'unknown'));
-    }
-  }catch(e){
-    typing.remove();
-    addBotMsg('bot','network error: '+e.message);
-  }
-}
-
-function addBotMsg(role,text){
-  var msgs=document.getElementById('busbotMsgs');
-  var div=document.createElement('div');
-  div.className='busbot-msg '+(role==='user'?'user':'bot');
-  div.textContent=text;
-  msgs.appendChild(div);
-  msgs.scrollTop=msgs.scrollHeight;
-}
-
-renderBK();showToast('已收藏');return true;}
-
-function renderBK(){
-  var el=document.getElementById('bmList');
-  var bk=getBK();
-  if(!bk.length){el.innerHTML='<div style="color:var(--muted);font-size:.76rem;padding:3px 0">未有收藏 · 按 ⚙️ 加入</div>';return;}
-  el.innerHTML=bk.map(it=>{
-    var opCls=it.co==='KMB'?'kmb':'ctb';
-    var opLabel=it.co==='KMB'?'九巴':'城巴';
-    return `<div class="bm-chip" data-r="${it.route}" data-s="${it.stop_id}" data-co="${it.co}"><span class="badge ${opCls}">${opLabel}</span><span>${it.custom_name||it.name_tc||it.stop_id} ${it.route}</span></div>`;
-  }).join('');
-  el.querySelectorAll('.bm-chip').forEach(c=>c.onclick=()=>{
-    document.getElementById('routeNo').value=c.dataset.r;
-    document.getElementById('stopId').value=c.dataset.s;
-    openEta(c.dataset.co);
-  });
-}
-
-/* ---- Timer ---- */
-function startCD(){
-  cdVal=10;var sec=document.getElementById('timer');var num=document.getElementById('tNum');var arc=document.getElementById('tArc');var c=81.68;
-  sec.classList.remove('hidden');num.textContent=cdVal;arc.style.strokeDashoffset='0';arc.style.stroke='var(--cyan)';
-  if(cdTimer)clearInterval(cdTimer);
-  cdTimer=setInterval(()=>{cdVal--;if(cdVal<0){num.textContent='0';return;}num.textContent=cdVal;arc.style.strokeDashoffset=(c*(1-cdVal/10)).toString();if(cdVal<=3){num.classList.add('timer-pulse');arc.style.stroke='var(--accent)';}else{num.classList.remove('timer-pulse');arc.style.stroke='var(--cyan)';}},1000);
-}
-
-/* ---- ETA ---- */
-/* ---- ETA ---- */
-async function openEta(forceCo,partnerStop){
-  var route=document.getElementById('routeNo').value.trim().toUpperCase();
-  var stopInput=document.getElementById('stopId').value.trim();
-  var stopParts=stopInput.split('+');
-  var stopId=stopParts[0];
-  var partner=partnerStop||(stopParts[1]||null);
-  var statusEl=document.getElementById('status');var listEl=document.getElementById('etaList');var errEl=document.getElementById('error');
-  clearTimers();errEl.textContent='';
-  if(!route||!stopId){errEl.textContent='請輸入路線同 Stop ID';return;}
-  document.getElementById('checkBtn').disabled=true;
-  statusEl.innerHTML='<span class="dot"></span>查詢中…';
-
-  try{
-    var allEtas=[];
-    var co=forceCo||detectCO(route,stopId);
-
-    // Primary stop
-    if(co==='CTB'||co==='ALL'){
-      try{var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/'+stopId+'/'+route,{cache:'no-store'});var d1=await r1.json();(d1.data||[]).forEach(function(i){i._co='CTB';allEtas.push(i);});}catch(e){}
-    }
-    if(co==='KMB'||co==='ALL'){
-      try{var r2=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/eta/'+stopId+'/'+route+'/1',{cache:'no-store'});var d2=await r2.json();(d2.data||[]).forEach(function(i){i._co='KMB';allEtas.push(i);});}catch(e){}
-    }
-
-    // Partner stop (other operator)
-    if(partner){
-      var partnerCo=co==='KMB'?'CTB':'KMB';
-      if(partnerCo==='CTB'){
-        try{var r3=await fetch('https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/'+partner+'/'+route,{cache:'no-store'});var d3=await r3.json();(d3.data||[]).forEach(function(i){i._co='CTB';allEtas.push(i);});}catch(e){}
-      }else{
-        try{var r4=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/eta/'+partner+'/'+route+'/1',{cache:'no-store'});var d4=await r4.json();(d4.data||[]).forEach(function(i){i._co='KMB';allEtas.push(i);});}catch(e){}
-      }
-    }
-
-    // Filter ETAs by selected direction (match destination)
-    var dirDest=searchState.dir==='O'?'out':'in';
-    var filtered=allEtas.filter(function(i){return i&&i.eta});
-    // If we have a direction selected, try to filter by matching dest
-    if(searchState.dir){
-      // Get expected destinations from the direction picker
-      var expectedDests=[];
-      filtered.forEach(function(i){
-        var dest=(i.dest_tc||'').toLowerCase();
-        // KMB: dir field "O"/"I", CTB: also has dir
-        var itemDir=i.dir||'';
-        if(itemDir&&itemDir!==searchState.dir){
-          // Mark for removal if direction doesn't match
-          i._wrongDir=true;
-        }
-      });
-      // Remove wrong direction items
-      filtered=filtered.filter(function(i){return !i._wrongDir});
-    }
-    var items=filtered.sort(function(a,b){return new Date(a.eta)-new Date(b.eta)});
-    if(!items.length){statusEl.textContent=route+' 暫時冇 ETA';startCD();refreshTimer=setTimeout(function(){openEta(co,partner)},10000);return;}
-
-    var ops=[...new Set(items.map(function(i){return i._co}))];
-    var opLabel=ops.map(function(o){return o==='KMB'?'九巴':'城巴'}).join('+');
-    var first=items[0];
-    statusEl.innerHTML='<span class="dot"></span>'+route+' → '+(first.dest_tc||'')+' ('+opLabel+') · 自動更新';
-
-    listEl.innerHTML='';
-    items.slice(0,5).forEach(function(item,idx){
-      var mins=fmtMins(item.eta);
-      var isUrgent=mins==='即到'||(typeof mins==='number'&&mins<=2);
-      var opCls=item._co==='KMB'?'op-kmb':'op-ctb';
-      var opShort=item._co==='KMB'?'九巴':'城巴';
-      var pct=typeof mins==='number'?Math.max(5,Math.min(100,100-mins*10)):50;
-      var div=document.createElement('div');
-      div.className='eta-card'+(idx===0?' first':'');
-      div.style.animationDelay=(idx*0.08)+'s';
-      div.innerHTML='\n        <div class="eta-row">\n          <div>\n            <div class="eta-time">'+fmtTime(item.eta)+'</div>\n            <div class="eta-dest">→ '+(item.dest_tc||'')+' <span class="op-badge '+opCls+'">'+opShort+'</span></div>\n          </div>\n          <div class="eta-box">\n            <div class="eta-mins '+(isUrgent?'urgent':'')+'">'+mins+'</div>\n            <div class="eta-mins-label">'+(mins==='即到'?'':'分鐘')+'</div>\n          </div>\n        </div>\n        '+(item.rmk_tc?'<div class="eta-remark">📢 '+item.rmk_tc+'</div>':'')+'\n        '+(idx===0?'<div class="eta-progress"><div class="eta-progress-fill" style="width:'+pct+'%"></div></div>':'')+'\n      ';
-      listEl.appendChild(div);
-    });
-
-    startCD();refreshTimer=setTimeout(function(){openEta(co,partner)},10000);
-  }catch(e){errEl.textContent='查詢失敗：'+e.message;statusEl.textContent='';}
-  finally{document.getElementById('checkBtn').disabled=false;}
-}
-
-function detectCO(route,stopId){
-  if(/^[0-9A-F]{16}$/i.test(stopId))return'KMB';
-  if(/^\d{6}$/.test(stopId))return'CTB';
-  return'ALL';
-}
-function fmtTime(eta){var t=new Date(eta);if(isNaN(t))return'??';return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');}
-function fmtMins(eta){var t=new Date(eta);if(isNaN(t))return'';var m=Math.max(0,Math.round((t.getTime()-Date.now())/60000));return m===0?'即到':m;}
-function clearTimers(){if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}if(cdTimer){clearInterval(cdTimer);cdTimer=null;}}
-
-/* ---- Loading Overlay ---- */
-function showLoading(text,sub){
-  document.getElementById('loadingText').textContent=text||'搜尋中...';
-  document.getElementById('loadingSub').textContent=sub||'';
-  document.getElementById('loadingOverlay').classList.remove('hidden');
-}
-function hideLoading(){document.getElementById('loadingOverlay').classList.add('hidden');}
-function updateLoading(text,sub){
-  document.getElementById('loadingText').textContent=text;
-  if(sub)document.getElementById('loadingSub').textContent=sub;
-}
-
-/* ---- 3-Step Search ---- */
-var searchState={route:'',co:'',dir:'',dirCode:'',stops:[],stopMap:{}};
-
-function openSearch(){document.getElementById('searchModal').classList.add('show');goStep(1);}
-function closeSearch(){document.getElementById('searchModal').classList.remove('show');}
-
-function goStep(n){
-  document.getElementById('step1').style.display=n===1?'block':'none';
-  document.getElementById('step2').style.display=n===2?'block':'none';
-  document.getElementById('step3').style.display=n===3?'block':'none';
-  var titles={'1':'🔍 搜尋巴士路線','2':'📍 揀方向','3':'🚏 揀站位'};
-  document.getElementById('sTitle').textContent=titles[n]||'搜尋';
-}
-
-// Step 1: Find route and show directions
-async function findRoute(){
-  var route=document.getElementById('sRoute').value.trim().toUpperCase();
-  var s1=document.getElementById('sStatus1');
-  if(!route){s1.textContent='請輸入路線';return;}
-  searchState.route=route;
-  showLoading('搜尋路線 '+route+'...','同時查詢九巴同城巴');
-
-  var dirs=[];
-  var errors=[];
-
-  // Check KMB
-  try{
-    var r=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
-    if(r.ok){
-      var d=await r.json();
-      var kmbRS=(d.data||[]).filter(s=>s.route===route);
-      if(kmbRS.length){
-        updateLoading('搵到九巴路線...','正在獲取目的地資訊');
-        var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});
-        if(rr.ok){
-          var rd=await rr.json();
-          var seen={};
-          (rd.data||[]).forEach(r=>{
-            if(r.route===route){
-              var key=r.bound+'_'+(r.service_type||'1');
-              if(!seen[key]){
-                seen[key]=true;
-                dirs.push({co:'KMB',dir:r.bound,dest:r.bound==='O'?(r.dest_tc||'往外'):(r.orig_tc||r.dest_tc||'返程'),service_type:r.service_type||'1'});
-              }
-            }
-          });
-        }
-      }
-    }
-  }catch(e){errors.push('KMB: '+e.message);}
-
-  // Check Citybus
-  try{
-    updateLoading('查詢城巴路線...','');
-    var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB/'+route,{cache:'no-store'});
-    if(r1.ok){
-      var d1=await r1.json();
-      if(d1.data){
-        var info=d1.data;
-        // Avoid duplicate if KMB already added same direction
-        var hasKmbO=dirs.some(d=>d.co==='KMB'&&d.dir==='O');
-        var hasKmbI=dirs.some(d=>d.co==='KMB'&&d.dir==='I');
-        if(!hasKmbO)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});
-        if(!hasKmbI)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});
-        // Always add CTB versions if KMB exists (for joint routes)
-        if(hasKmbO)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});
-        if(hasKmbI)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});
-      }
-    }
-  }catch(e){errors.push('CTB: '+e.message);}
-
-  hideLoading();
-  if(!dirs.length){s1.textContent='搵唔到路線 '+route+(errors.length?' ('+errors.join(', ')+')':'');return;}
-  s1.textContent='';
-
-  // Deduplicate and show
-  searchState.co=dirs[0].co;
-  var dirEl=document.getElementById('dirList');
-  dirEl.innerHTML='';
-  dirs.forEach(d=>{
-    var opCls=d.co==='KMB'?'op-kmb':'op-ctb';
-    var opLabel=d.co==='KMB'?'九巴':'城巴';
-    var dirLabel=d.dir==='O'?'往':'返';
-    var div=document.createElement('div');
-    div.style.cssText='display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;background:var(--card2,#172033);border:1px solid var(--line);cursor:pointer;transition:all .2s';
-    div.innerHTML=`<span style="font-size:1.5rem">${d.dir==='O'?'➡️':'⬅️'}</span><div style="flex:1"><div style="font-weight:700;font-size:1rem">${dirLabel} ${d.dest}</div><div style="font-size:.78rem;color:var(--muted)"><span class="op-badge ${opCls}">${opLabel}</span></div></div><span style="color:var(--muted);font-size:.8rem">→</span>`;
-    div.onmouseenter=()=>div.style.borderColor='var(--accent)';
-    div.onmouseleave=()=>div.style.borderColor='var(--line)';
-    div.onclick=()=>pickDir(d);
-    dirEl.appendChild(div);
-  });
-  goStep(2);
-}
-
-// Step 2: Pick direction → load stops
-async function pickDir(d){
-  searchState.co=d.co;
-  searchState.dir=d.dir;
-  searchState.dirCode=d.dir==='O'?'outbound':'inbound';
-  document.getElementById('sDirLabel').textContent=(d.dir==='O'?'往 ':'返 ')+d.dest;
-  document.getElementById('sRouteLabel2').textContent=searchState.route;
-  goStep(3);
-  document.getElementById('step3Loading').style.display='block';
-  document.getElementById('step3Content').style.display='none';
-
-  var stops=[];
-  var stopMap={};
-
-  // Load BOTH operators for this route
-  try{
-    var rsRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
-    var rsData=await rsRes.json();
-    var kmbStops=(rsData.data||[]).filter(s=>s.route===searchState.route&&s.bound===d.dir);
-    var sRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
-    var sData=await sRes.json();
-    (sData.data||[]).forEach(s=>{stopMap[s.stop]=s;});
-    kmbStops.forEach(s=>{
-      var info=stopMap[s.stop]||{};
-      stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'KMB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});
-    });
-  }catch(e){}
-  try{
-    var dirParam=d.dir==='O'?'outbound':'inbound';
-    var rsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+searchState.route+'/'+dirParam,{cache:'no-store'});
-    var rsData=await rsRes.json();
-    for(var s of(rsData.data||[])){
-      try{
-        var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});
-        var sd=await sr.json();
-        var info=sd.data||{};
-        stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'CTB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});
-      }catch{}
-    }
-  }catch(e){}
-  // Merge stops from different operators (by location AND name similarity)
-  stops.sort((a,b)=>a.seq-b.seq);
-  var merged=[],used={};
-  stops.forEach(s=>{
-    if(used[s.stop_id])return;
-    used[s.stop_id]=true;
-    var group=[s];
-    stops.forEach(s2=>{
-      if(used[s2.stop_id]||s2.co===s.co)return;
-      var matched=false;
-      // Match by lat/lng (< 300m)
-      if(s.lat&&s.lng&&s2.lat&&s2.lng){
-        var dist=Math.sqrt(Math.pow(s.lat-s2.lat,2)+Math.pow(s.lng-s2.lng,2));
-        if(dist<0.003)matched=true;
-      }
-      // Match by Chinese name (same or contains)
-      if(!matched&&s.name_tc&&s2.name_tc){
-        var n1=s.name_tc.replace(/[\(（].*?[\)）]/g,'').trim();
-        var n2=s2.name_tc.replace(/[\(（].*?[\)）]/g,'').trim();
-        if(n1===n2||(n1.length>2&&n2.includes(n1))||(n2.length>2&&n1.includes(n2)))matched=true;
-      }
-      // Match by English name
-      if(!matched&&s.name_en&&s2.name_en){
-        var e1=s.name_en.toLowerCase().split(/[\(,]/)[0].trim();
-        var e2=s2.name_en.toLowerCase().split(/[\(,]/)[0].trim();
-        if(e1===e2&&e1.length>3)matched=true;
-      }
-      if(matched){group.push(s2);used[s2.stop_id]=true;}
-    });
-    // Use best name (prefer Chinese)
-    var bestName=s.name_tc||s.name_en||'';
-    var bestEn=s.name_en||'';
-    group.forEach(g=>{if(g.name_tc&&g.name_tc.length>bestName.length)bestName=g.name_tc;if(g.name_en&&g.name_en.length>bestEn.length)bestEn=g.name_en;});
-    merged.push({stops:group,name_tc:bestName,name_en:bestEn,seq:s.seq});
-  });
-  searchState.mergedStops=merged;
-  document.getElementById('step3Loading').style.display='none';
-  document.getElementById('step3Content').style.display='block';
-  renderStops();
-}
-
-function renderStops(){
-  var filter=document.getElementById('sFilter').value.trim().toLowerCase();
-  var listEl=document.getElementById('stopList');
-  listEl.innerHTML='';
-  var filtered=searchState.mergedStops||[];
-  if(filter)filtered=filtered.filter(s=>(s.name_tc||'').toLowerCase().includes(filter)||(s.name_en||'').toLowerCase().includes(filter)||(s.stop_id||'').toLowerCase().includes(filter));
-
-  if(!filtered.length){listEl.innerHTML='<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px">搵唔到站</div>';return;}
-
-  filtered.forEach(g=>{
-    var div=document.createElement('div');
-    div.className='stop-card';
-    div.style.cursor='pointer';
-    div.style.transition='all .2s';
-    var ops=[...new Set(g.stops.map(s=>s.co))];
-    var badges=ops.map(o=>'<span class="op-badge '+(o==='KMB'?'op-kmb':'op-ctb')+'">'+(o==='KMB'?'九巴':'城巴')+'</span>').join(' ');
-    var stopIds=g.stops.map(s=>s.stop_id).join('+');
-    div.innerHTML=`<div class="stop-title">${g.seq? g.seq+'. ':''}${g.name_tc||g.name_en}</div><div class="stop-sub">${badges} ${g.name_en||''}</div><div class="stop-actions"><button onclick="pickAndSearch('${stopIds}','${(g.name_tc||'').replace(/'/g,"\\'")}')">查 ETA</button><button class="sec" onclick="addBK({route:searchState.route,stop_id:'${stopIds}',name_tc:'${(g.name_tc||'').replace(/'/g,"\\'")}',name_en:'${(g.name_en||'').replace(/'/g,"\\'")}',co:'${ops.join('+')}',custom_name:'',pinned:false});showToast('已收藏');">收藏</button></div>`;
-    div.onmouseenter=()=>div.style.borderColor='var(--accent)';
-    div.onmouseleave=()=>div.style.borderColor='var(--line)';
-    listEl.appendChild(div);
-  });
-}
-
-function pickAndSearch(stopId,name,co){
-  document.getElementById('routeNo').value=searchState.route;
-  document.getElementById('stopId').value=stopId;
-  closeSearch();
-  // For joint routes, try to find matching stop from other operator
-  var otherCo=co==='KMB'?'CTB':'KMB';
-  openEtaWithPartner(stopId,co,otherCo);
-}
-
-async function openEtaWithPartner(stopId,co,otherCo){
-  // Find nearby stop from other operator using lat/long
-  var partnerStop=null;
-  try{
-    var myInfo=null;
-    if(co==='KMB'){
-      var res=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop/'+stopId,{cache:'no-store'});
-      var d=await res.json();
-      myInfo=d.data||{};
-    }else{
-      var res=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+stopId,{cache:'no-store'});
-      var d=await res.json();
-      myInfo=d.data||{};
-    }
-    var myLat=parseFloat(myInfo.lat||0);
-    var myLng=parseFloat(myInfo.long||myInfo.lng||0);
-
-    if(myLat&&myLng){
-      // Get other operator's stops for same route and find nearest
-      var route=searchState.route;
-      if(otherCo==='KMB'){
-        var rsRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
-        var rsData=await rsRes.json();
-        var dirCode=searchState.dir==='O'?'O':'I';
-        var kmbStops=(rsData.data||[]).filter(s=>s.route===route&&s.bound===dirCode);
-        var allStops=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
-        var allStops=await allStops.json();
-        var smap={};(allStops.data||[]).forEach(s=>{smap[s.stop]=s;});
-        var bestDist=Infinity;
-        kmbStops.forEach(s=>{
-          var info=smap[s.stop]||{};
-          var lat=parseFloat(info.lat||0);var lng=parseFloat(info.long||0);
-          if(lat&&lng){
-            var dist=Math.sqrt(Math.pow(lat-myLat,2)+Math.pow(lng-myLng,2));
-            if(dist<bestDist){bestDist=dist;partnerStop=s.stop;}
-          }
-        });
-      }else{
-        var dirParam=searchState.dir==='O'?'outbound':'inbound';
-        var rsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+route+'/'+dirParam,{cache:'no-store'});
-        var rsData=await rsRes.json();
-        var bestDist=Infinity;
-        for(var s of(rsData.data||[])){
-          try{
-            var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});
-            var sd=await sr.json();
-            var info=sd.data||{};
-            var lat=parseFloat(info.lat||0);var lng=parseFloat(info.long||0);
-            if(lat&&lng){
-              var dist=Math.sqrt(Math.pow(lat-myLat,2)+Math.pow(lng-myLng,2));
-              if(dist<bestDist){bestDist=dist;partnerStop=s.stop;}
-            }
-          }catch{}
-        }
-      }
-      if(bestDist>0.003)partnerStop=null; // > ~300m = too far, don't match
-    }
-  }catch(e){}
-
-  if(partnerStop){
-    document.getElementById('stopId').value=stopId+'+'+partnerStop;
-  }
-  openEta(co,partnerStop);
-}
-
-document.getElementById('checkBtn').onclick=()=>openEta();
-document.getElementById('routeNo').onkeydown=e=>{if(e.key==='Enter')openEta();};
-document.getElementById('stopId').onkeydown=e=>{if(e.key==='Enter')openEta();};
-document.getElementById('sFilter').oninput=()=>renderStops();
-document.getElementById('searchModal').onclick=e=>{if(e.target.id==='searchModal')closeSearch();};
-document.getElementById('sRoute').onkeydown=e=>{if(e.key==='Enter')findRoute();};
-
-/* ---- Bus Bot Chat ---- */
-var botHistory=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！可以問我路線、站位、ETA ～'}];
-
-function toggleBot(){
-  document.getElementById('busbotPanel').classList.toggle('show');
-}
-
-document.getElementById('busbotToggle').onclick=toggleBot;
-document.getElementById('busbotInput').onkeydown=function(e){if(e.key==='Enter')sendBotMsg()};
-
-async function sendBotMsg(){
-  var input=document.getElementById('busbotInput');
-  var text=input.value.trim();
-  if(!text)return;
-  input.value='';
-  addBotMsg('user',text);
-  botHistory.push({role:'user',content:text});
-
-  // Show typing
-  var msgs=document.getElementById('busbotMsgs');
-  var typing=document.createElement('div');
-  typing.className='busbot-typing';
-  typing.innerHTML='<span></span><span></span><span></span>';
-  msgs.appendChild(typing);
-  msgs.scrollTop=msgs.scrollHeight;
-
-  try{
-    var res=await fetch('/busbot-api/message',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:botHistory})
-    });
-    var data=await res.json();
-    typing.remove();
-    if(data.ok){
-      addBotMsg('bot',data.reply);
-      botHistory.push({role:'assistant',content:data.reply});
-    }else{
-      addBotMsg('bot','😅 唔好意思，我諗唔到點答你。Error: '+(data.error||'unknown'));
-    }
-  }catch(e){
-    typing.remove();
-    addBotMsg('bot','network error: '+e.message);
-  }
-}
-
-function addBotMsg(role,text){
-  var msgs=document.getElementById('busbotMsgs');
-  var div=document.createElement('div');
-  div.className='busbot-msg '+(role==='user'?'user':'bot');
-  div.textContent=text;
-  msgs.appendChild(div);
-  msgs.scrollTop=msgs.scrollHeight;
-}
-
-renderBK();
 </script>
 </body>
 </html>
