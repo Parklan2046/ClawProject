@@ -543,6 +543,12 @@
         <p>搞 tea 訂單神器！開單 → 分享 link → 同事揀嘢 → 自動整合 order，唔使再開 Google Form。</p>
         <a href="tea-treat/">Open project →</a>
       </article>
+      <article class="card tilt-card hidden-card" id="chatbotLogsCard">
+        <div class="card-tag">Private</div><span class="status-badge status-private">🔒 Private</span>
+        <h3>📊 Laura 對話記錄</h3>
+        <p>即時查看 on9claw.com chatbot 所有對話記錄，包含用戶同 Laura 嘅完整對話。</p>
+        <a href="chatbot-logs/">Open project →</a>
+      </article>
     </section>
 
     <div class="footer">Parklan Clawhub · retro techno edition</div>
@@ -596,10 +602,12 @@
       const revealInput = revealForm?.querySelector('input[name="password"]');
       const errorEl = document.getElementById('privateError');
       const lunchCard = document.getElementById('lunchWalletCard');
+      const chatbotLogsCard = document.getElementById('chatbotLogsCard');
       const expectedHash = 'cb69775effd93fc34ef38dfbfcdc4c593b1a3d8e7ab70c0f05d627dbc5cbd298';
 
       function setLunchVisible() {
         lunchCard?.classList.add('show');
+        chatbotLogsCard?.classList.add('show');
         sessionStorage.setItem('clawhub_lunch_unlocked', '1');
       }
       if (sessionStorage.getItem('clawhub_lunch_unlocked') === '1') setLunchVisible();
