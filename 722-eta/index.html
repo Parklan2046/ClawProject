@@ -209,7 +209,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 <button class="busbot-toggle" id="busbotToggle" title="問巴膠仔">🚌</button>
 <div class="busbot-panel" id="busbotPanel">
   <div class="busbot-head">
-    <div class="busbot-avatar">🚌</div>
+    <div class="busbot-avatar" style="background:linear-gradient(135deg,#ffc94d,#ff6b9d)">🧑‍✈️</div>
     <div class="busbot-info">
       <div class="busbot-name">巴膠仔</div>
       <div class="busbot-status">🟢 在線 · 巴士路線助手</div>
@@ -236,7 +236,13 @@ function showToast(m){var e=document.getElementById('toast');e.textContent=m;e.c
 function getBK(){try{if(!storageOK())return memoryBK;var r=localStorage.getItem(BK);return r?JSON.parse(r):[];}catch{return memoryBK;}}
 function saveBK(l){try{if(!storageOK()){memoryBK=l;return;}localStorage.setItem(BK,JSON.stringify(l));}catch{memoryBK=l;}}
 function storageOK(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true;}catch{return false;}}
-function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));/* ---- Bus Bot Chat ---- */
+function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));
+    renderBK();
+    showToast("已收藏");
+    return true;
+}
+
+/* ---- Bus Bot Chat ---- */
 var botHistory=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！可以問我路線、站位、ETA ～'}];
 
 function toggleBot(){
