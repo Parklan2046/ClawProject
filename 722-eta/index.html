@@ -247,7 +247,9 @@ async function openEta(forceCo,partnerStop){
       }
     }
 
-    var items=allEtas.filter(function(i){return i&&i.eta}).sort(function(a,b){return new Date(a.eta)-new Date(b.eta)});
+    var filtered=allEtas.filter(function(i){return i&&i.eta});
+    if(searchState.dir){filtered=filtered.filter(function(i){return !i.dir||i.dir===searchState.dir})}
+    var items=filtered.sort(function(a,b){return new Date(a.eta)-new Date(b.eta)});
     if(!items.length){statusEl.textContent=route+' 暫時冇 ETA';startCD();refreshTimer=setTimeout(function(){openEta(co,partner)},10000);return;}
 
     var ops=[...new Set(items.map(function(i){return i._co}))];
