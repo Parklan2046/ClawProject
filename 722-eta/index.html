@@ -94,7 +94,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .stop-actions button{flex:1;border:none;border-radius:8px;padding:7px;font-size:.8rem;font-weight:600;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--accent),var(--pink))}
 .stop-actions button.sec{background:#243146;color:var(--text)}
 
-.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:7px 13px;font-size:.82rem;z-index:200;display:none}
+.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:7px 13px;font-size:.82rem;z-index:300;display:none}
 .toast.show{display:block}
 @media(max-width:500px){.search-bar{flex-wrap:wrap}.search-bar input.route-input{width:55px}.search-bar input.stop-input{width:100%}.modal{width:100%;max-height:84vh}.modal .row{grid-template-columns:1fr}}
 </style>
@@ -150,12 +150,19 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 
     <!-- Step 3: Pick stop -->
     <div id="step3" style="display:none">
-      <p style="font-size:.85rem;margin-bottom:8px">
-        <b id="sDirLabel" style="color:var(--cyan)"></b> · <span id="sRouteLabel2"></span>
-      </p>
-      <input id="sFilter" placeholder="篩選站名…（例如：鰂魚涌、英皇道）" style="margin-bottom:10px">
-      <div id="stopList" style="max-height:50vh;overflow-y:auto"></div>
-      <button class="ghost" style="margin-top:10px" onclick="goStep(2)">← 重新揀方向</button>
+      <div id="step3Loading" style="text-align:center;padding:30px">
+        <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,.08);border-top-color:#33e6ff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px"></div>
+        <div style="color:#33e6ff;font-size:.9rem;font-weight:600">載入站位中...</div>
+        <div style="color:#94a3b8;font-size:.78rem;margin-top:4px">同時查詢九巴同城巴</div>
+      </div>
+      <div id="step3Content" style="display:none">
+        <p style="font-size:.85rem;margin-bottom:8px">
+          <b id="sDirLabel" style="color:#33e6ff"></b> · <span id="sRouteLabel2"></span>
+        </p>
+        <input id="sFilter" placeholder="篩選站名…（例如：鰂魚涌、英皇道）" style="margin-bottom:10px">
+        <div id="stopList" style="max-height:50vh;overflow-y:auto"></div>
+        <button class="ghost" style="margin-top:10px" onclick="goStep(2)">← 重新揀方向</button>
+      </div>
     </div>
   </div>
 </div>
@@ -388,8 +395,9 @@ async function pickDir(d){
   searchState.dirCode=d.dir==='O'?'outbound':'inbound';
   document.getElementById('sDirLabel').textContent=(d.dir==='O'?'往 ':'返 ')+d.dest;
   document.getElementById('sRouteLabel2').textContent=searchState.route;
-  showLoading('載入站位...','查詢九巴同城巴站位');
   goStep(3);
+  document.getElementById('step3Loading').style.display='block';
+  document.getElementById('step3Content').style.display='none';
 
   var stops=[];
   var stopMap={};
@@ -456,7 +464,8 @@ async function pickDir(d){
     merged.push({stops:group,name_tc:bestName,name_en:bestEn,seq:s.seq});
   });
   searchState.mergedStops=merged;
-  hideLoading();
+  document.getElementById('step3Loading').style.display='none';
+  document.getElementById('step3Content').style.display='block';
   renderStops();
 }
 
