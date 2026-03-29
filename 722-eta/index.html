@@ -160,6 +160,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
   </div>
 </div>
 
+<div id="loadingOverlay" class="loading-overlay hidden">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">搜尋中...</div>
+  <div class="loading-sub" id="loadingSub"></div>
+</div>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -270,6 +275,18 @@ function fmtTime(eta){var t=new Date(eta);if(isNaN(t))return'??';return String(t
 function fmtMins(eta){var t=new Date(eta);if(isNaN(t))return'';var m=Math.max(0,Math.round((t.getTime()-Date.now())/60000));return m===0?'即到':m;}
 function clearTimers(){if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}if(cdTimer){clearInterval(cdTimer);cdTimer=null;}}
 
+/* ---- Loading Overlay ---- */
+function showLoading(text,sub){
+  document.getElementById('loadingText').textContent=text||'搜尋中...';
+  document.getElementById('loadingSub').textContent=sub||'';
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+}
+function hideLoading(){document.getElementById('loadingOverlay').classList.add('hidden');}
+function updateLoading(text,sub){
+  document.getElementById('loadingText').textContent=text;
+  if(sub)document.getElementById('loadingSub').textContent=sub;
+}
+
 /* ---- 3-Step Search ---- */
 var searchState={route:'',co:'',dir:'',dirCode:'',stops:[],stopMap:{}};
 
@@ -289,43 +306,60 @@ async function findRoute(){
   var route=document.getElementById('sRoute').value.trim().toUpperCase();
   var s1=document.getElementById('sStatus1');
   if(!route){s1.textContent='請輸入路線';return;}
-  s1.textContent='搜尋中…';
   searchState.route=route;
+  showLoading('搜尋路線 '+route+'...','同時查詢九巴同城巴');
 
   var dirs=[];
+  var errors=[];
 
   // Check KMB
   try{
     var r=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
-    var d=await r.json();
-    var kmbRS=(d.data||[]).filter(s=>s.route===route);
-    var kmbO=[...new Set(kmbRS.filter(s=>s.bound==='O').map(s=>s.service_type))];
-    var kmbI=[...new Set(kmbRS.filter(s=>s.bound==='I').map(s=>s.service_type))];
-    if(kmbO.length||kmbI.length){
-      // Get route info for destinations
-      var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});
-      var rd=await rr.json();
-      (rd.data||[]).forEach(r=>{
-        if(r.route===route){
-          if(r.bound==='O')dirs.push({co:'KMB',dir:'O',dest:r.dest_tc||'往外',service_type:r.service_type||'1'});
-          if(r.bound==='I')dirs.push({co:'KMB',dir:'I',dest:r.orig_tc||r.dest_tc||'返程',service_type:r.service_type||'1'});
+    if(r.ok){
+      var d=await r.json();
+      var kmbRS=(d.data||[]).filter(s=>s.route===route);
+      if(kmbRS.length){
+        updateLoading('搵到九巴路線...','正在獲取目的地資訊');
+        var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});
+        if(rr.ok){
+          var rd=await rr.json();
+          var seen={};
+          (rd.data||[]).forEach(r=>{
+            if(r.route===route){
+              var key=r.bound+'_'+(r.service_type||'1');
+              if(!seen[key]){
+                seen[key]=true;
+                dirs.push({co:'KMB',dir:r.bound,dest:r.bound==='O'?(r.dest_tc||'往外'):(r.orig_tc||r.dest_tc||'返程'),service_type:r.service_type||'1'});
+              }
+            }
+          });
         }
-      });
+      }
     }
-  }catch(e){}
+  }catch(e){errors.push('KMB: '+e.message);}
 
   // Check Citybus
   try{
+    updateLoading('查詢城巴路線...','');
     var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB/'+route,{cache:'no-store'});
-    var d1=await r1.json();
-    if(d1.data){
-      var info=d1.data;
-      dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});
-      dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});
+    if(r1.ok){
+      var d1=await r1.json();
+      if(d1.data){
+        var info=d1.data;
+        // Avoid duplicate if KMB already added same direction
+        var hasKmbO=dirs.some(d=>d.co==='KMB'&&d.dir==='O');
+        var hasKmbI=dirs.some(d=>d.co==='KMB'&&d.dir==='I');
+        if(!hasKmbO)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});
+        if(!hasKmbI)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});
+        // Always add CTB versions if KMB exists (for joint routes)
+        if(hasKmbO)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});
+        if(hasKmbI)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});
+      }
     }
-  }catch(e){}
+  }catch(e){errors.push('CTB: '+e.message);}
 
-  if(!dirs.length){s1.textContent='搵唔到路線 '+route;return;}
+  hideLoading();
+  if(!dirs.length){s1.textContent='搵唔到路線 '+route+(errors.length?' ('+errors.join(', ')+')':'');return;}
   s1.textContent='';
 
   // Deduplicate and show
@@ -354,7 +388,7 @@ async function pickDir(d){
   searchState.dirCode=d.dir==='O'?'outbound':'inbound';
   document.getElementById('sDirLabel').textContent=(d.dir==='O'?'往 ':'返 ')+d.dest;
   document.getElementById('sRouteLabel2').textContent=searchState.route;
-  document.getElementById('sStatus1').textContent='載入站位中…';
+  showLoading('載入站位...','查詢九巴同城巴站位');
   goStep(3);
 
   var stops=[];
@@ -422,6 +456,7 @@ async function pickDir(d){
     merged.push({stops:group,name_tc:bestName,name_en:bestEn,seq:s.seq});
   });
   searchState.mergedStops=merged;
+  hideLoading();
   renderStops();
 }
 
