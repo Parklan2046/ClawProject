@@ -127,20 +127,36 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 <div id="searchModal" class="modal-bg">
   <div class="modal">
     <div class="modal-head">
-      <h2>🔍 搜尋巴士站</h2>
+      <h2 id="sTitle">🔍 搜尋巴士路線</h2>
       <button class="ghost" onclick="closeSearch()">✕</button>
     </div>
-    <label>巴士路線</label><input id="sRoute" value="722" placeholder="722 / 6 / 101">
-    <div class="row" style="margin-top:8px">
-      <div><label>方向</label><select id="sDir"><option value="outbound">往外</option><option value="inbound">返程</option></select></div>
-      <div><label>站名篩選</label><input id="sFilter" placeholder="鰂魚涌 / 英皇道"></div>
+
+    <!-- Step 1: Enter route -->
+    <div id="step1">
+      <label>輸入巴士路線</label>
+      <input id="sRoute" value="" placeholder="例如：722 / 6 / 101 / 113" style="font-size:1.2rem;font-weight:800;text-align:center;padding:14px">
+      <div class="actions" style="margin-top:12px">
+        <button onclick="findRoute()" style="flex:1">🔍 搜尋路線</button>
+      </div>
+      <div id="sStatus1" class="status" style="margin-top:8px"></div>
     </div>
-    <div class="actions">
-      <button onclick="searchStops()">搜尋</button>
-      <button class="sec" onclick="copyRoute()">同步路線</button>
+
+    <!-- Step 2: Pick direction -->
+    <div id="step2" style="display:none">
+      <p style="font-size:.85rem;margin-bottom:12px">路線 <b id="sRouteLabel" style="color:var(--cyan)"></b> 有以下方向：</p>
+      <div id="dirList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="ghost" style="margin-top:12px" onclick="goStep(1)">← 重新搜尋</button>
     </div>
-    <div id="sStatus" class="status" style="margin-top:8px"></div>
-    <div id="sResults"></div>
+
+    <!-- Step 3: Pick stop -->
+    <div id="step3" style="display:none">
+      <p style="font-size:.85rem;margin-bottom:8px">
+        <b id="sDirLabel" style="color:var(--cyan)"></b> · <span id="sRouteLabel2"></span>
+      </p>
+      <input id="sFilter" placeholder="篩選站名…（例如：鰂魚涌、英皇道）" style="margin-bottom:10px">
+      <div id="stopList" style="max-height:50vh;overflow-y:auto"></div>
+      <button class="ghost" style="margin-top:10px" onclick="goStep(2)">← 重新揀方向</button>
+    </div>
   </div>
 </div>
 
@@ -267,74 +283,164 @@ function fmtTime(eta){var t=new Date(eta);if(isNaN(t))return'??';return String(t
 function fmtMins(eta){var t=new Date(eta);if(isNaN(t))return'';var m=Math.max(0,Math.round((t.getTime()-Date.now())/60000));return m===0?'即到':m;}
 function clearTimers(){if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}if(cdTimer){clearInterval(cdTimer);cdTimer=null;}}
 
-/* ---- Search ---- */
-function openSearch(){document.getElementById('searchModal').classList.add('show');}
+/* ---- 3-Step Search ---- */
+var searchState={route:'',co:'',dir:'',dirCode:'',stops:[],stopMap:{}};
+
+function openSearch(){document.getElementById('searchModal').classList.add('show');goStep(1);}
 function closeSearch(){document.getElementById('searchModal').classList.remove('show');}
-function copyRoute(){document.getElementById('routeNo').value=document.getElementById('sRoute').value.trim().toUpperCase();}
 
-async function searchStops(){
+function goStep(n){
+  document.getElementById('step1').style.display=n===1?'block':'none';
+  document.getElementById('step2').style.display=n===2?'block':'none';
+  document.getElementById('step3').style.display=n===3?'block':'none';
+  var titles={'1':'🔍 搜尋巴士路線','2':'📍 揀方向','3':'🚏 揀站位'};
+  document.getElementById('sTitle').textContent=titles[n]||'搜尋';
+}
+
+// Step 1: Find route and show directions
+async function findRoute(){
   var route=document.getElementById('sRoute').value.trim().toUpperCase();
-  var dir=document.getElementById('sDir').value;
-  var filter=document.getElementById('sFilter').value.trim().toLowerCase();
-  var statusEl=document.getElementById('sStatus');var resEl=document.getElementById('sResults');
-  statusEl.textContent='';resEl.innerHTML='';
-  if(!route){statusEl.textContent='請輸入路線';return;}
-  statusEl.textContent='搜尋中…';
-  var dirCode=dir==='outbound'?'O':'I';
-  var results=[];
+  var s1=document.getElementById('sStatus1');
+  if(!route){s1.textContent='請輸入路線';return;}
+  s1.textContent='搜尋中…';
+  searchState.route=route;
 
-  // Try KMB
+  var dirs=[];
+
+  // Check KMB
   try{
-    var r1=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
-    var d1=await r1.json();
-    var kmbStops=(d1.data||[]).filter(s=>s.route===route&&s.bound===dirCode);
-    if(kmbStops.length){
-      // Get stop names
-      var stopRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
-      var stopData=await stopRes.json();
-      var stopMap={};
-      (stopData.data||[]).forEach(s=>{stopMap[s.stop]=s;});
-      kmbStops.forEach(s=>{
-        var info=stopMap[s.stop]||{};
-        results.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',co:'KMB',seq:s.seq});
+    var r=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
+    var d=await r.json();
+    var kmbRS=(d.data||[]).filter(s=>s.route===route);
+    var kmbO=[...new Set(kmbRS.filter(s=>s.bound==='O').map(s=>s.service_type))];
+    var kmbI=[...new Set(kmbRS.filter(s=>s.bound==='I').map(s=>s.service_type))];
+    if(kmbO.length||kmbI.length){
+      // Get route info for destinations
+      var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});
+      var rd=await rr.json();
+      (rd.data||[]).forEach(r=>{
+        if(r.route===route){
+          if(r.bound==='O')dirs.push({co:'KMB',dir:'O',dest:r.dest_tc||'往外',service_type:r.service_type||'1'});
+          if(r.bound==='I')dirs.push({co:'KMB',dir:'I',dest:r.orig_tc||r.dest_tc||'返程',service_type:r.service_type||'1'});
+        }
       });
     }
   }catch(e){}
 
-  // Try Citybus
+  // Check Citybus
   try{
-    var r2=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+route+'/'+dir,{cache:'no-store'});
-    var d2=await r2.json();
-    for(var s of(d2.data||[])){
-      try{
-        var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});
-        var sd=await sr.json();
-        var info=sd.data||{};
-        results.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',co:'CTB',seq:s.seq});
-      }catch{}
+    var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB/'+route,{cache:'no-store'});
+    var d1=await r1.json();
+    if(d1.data){
+      var info=d1.data;
+      dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});
+      dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});
     }
   }catch(e){}
 
-  if(filter)results=results.filter(r=>(r.name_tc||'').toLowerCase().includes(filter)||(r.name_en||'').toLowerCase().includes(filter)||(r.stop_id||'').toLowerCase().includes(filter));
+  if(!dirs.length){s1.textContent='搵唔到路線 '+route;return;}
+  s1.textContent='';
 
-  statusEl.textContent=results.length?`搵到 ${results.length} 個站`:'搵唔到站';
-  results.forEach(r=>{
-    var opCls=r.co==='KMB'?'kmb':'ctb';
-    var opLabel=r.co==='KMB'?'九巴':'城巴';
-    var div=document.createElement('div');div.className='stop-card';
-    div.innerHTML=`<div class="stop-title">${r.seq?r.seq+'. ':''}${r.name_tc||r.name_en}</div><div class="stop-sub"><span class="badge ${opCls}" style="font-size:.65rem;padding:2px 5px;border-radius:4px;font-weight:800">${opLabel}</span> ${r.name_en||''} · ${r.stop_id}</div><div class="stop-actions"><button onclick="pickStop('${route}','${r.stop_id}','${r.co}')">查 ETA</button><button class="sec" onclick="addStop('${route}','${r.stop_id}','${r.name_tc}','${r.name_en}','${r.co}')">收藏</button></div>`;
-    resEl.appendChild(div);
+  // Deduplicate and show
+  searchState.co=dirs[0].co;
+  var dirEl=document.getElementById('dirList');
+  dirEl.innerHTML='';
+  dirs.forEach(d=>{
+    var opCls=d.co==='KMB'?'op-kmb':'op-ctb';
+    var opLabel=d.co==='KMB'?'九巴':'城巴';
+    var dirLabel=d.dir==='O'?'往':'返';
+    var div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;background:var(--card2,#172033);border:1px solid var(--line);cursor:pointer;transition:all .2s';
+    div.innerHTML=`<span style="font-size:1.5rem">${d.dir==='O'?'➡️':'⬅️'}</span><div style="flex:1"><div style="font-weight:700;font-size:1rem">${dirLabel} ${d.dest}</div><div style="font-size:.78rem;color:var(--muted)"><span class="op-badge ${opCls}">${opLabel}</span></div></div><span style="color:var(--muted);font-size:.8rem">→</span>`;
+    div.onmouseenter=()=>div.style.borderColor='var(--accent)';
+    div.onmouseleave=()=>div.style.borderColor='var(--line)';
+    div.onclick=()=>pickDir(d);
+    dirEl.appendChild(div);
+  });
+  goStep(2);
+}
+
+// Step 2: Pick direction → load stops
+async function pickDir(d){
+  searchState.co=d.co;
+  searchState.dir=d.dir;
+  searchState.dirCode=d.dir==='O'?'outbound':'inbound';
+  document.getElementById('sDirLabel').textContent=(d.dir==='O'?'往 ':'返 ')+d.dest;
+  document.getElementById('sRouteLabel2').textContent=searchState.route;
+  document.getElementById('sStatus1').textContent='載入站位中…';
+  goStep(3);
+
+  var stops=[];
+  var stopMap={};
+
+  if(d.co==='KMB'){
+    try{
+      var rsRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
+      var rsData=await rsRes.json();
+      var kmbStops=(rsData.data||[]).filter(s=>s.route===searchState.route&&s.bound===d.dir&&(d.service_type?s.service_type===d.service_type:true));
+      var sRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
+      var sData=await sRes.json();
+      (sData.data||[]).forEach(s=>{stopMap[s.stop]=s;});
+      kmbStops.forEach(s=>{
+        var info=stopMap[s.stop]||{};
+        stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0});
+      });
+    }catch(e){}
+  }else{
+    try{
+      var dirParam=d.dir==='O'?'outbound':'inbound';
+      var rsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+searchState.route+'/'+dirParam,{cache:'no-store'});
+      var rsData=await rsRes.json();
+      for(var s of(rsData.data||[])){
+        try{
+          var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});
+          var sd=await sr.json();
+          var info=sd.data||{};
+          stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0});
+        }catch{}
+      }
+    }catch(e){}
+  }
+
+  searchState.stops=stops.sort((a,b)=>a.seq-b.seq);
+  searchState.stopMap=stopMap;
+  renderStops();
+}
+
+function renderStops(){
+  var filter=document.getElementById('sFilter').value.trim().toLowerCase();
+  var listEl=document.getElementById('stopList');
+  listEl.innerHTML='';
+  var filtered=searchState.stops;
+  if(filter)filtered=filtered.filter(s=>(s.name_tc||'').toLowerCase().includes(filter)||(s.name_en||'').toLowerCase().includes(filter)||(s.stop_id||'').toLowerCase().includes(filter));
+
+  if(!filtered.length){listEl.innerHTML='<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px">搵唔到站</div>';return;}
+
+  filtered.forEach(s=>{
+    var div=document.createElement('div');
+    div.className='stop-card';
+    div.style.cursor='pointer';
+    div.style.transition='all .2s';
+    div.innerHTML=`<div class="stop-title">${s.seq? s.seq+'. ':''}${s.name_tc||s.name_en}</div><div class="stop-sub">${s.name_en||''} · ${s.stop_id}</div><div class="stop-actions"><button onclick="pickAndSearch('${s.stop_id}','${(s.name_tc||'').replace(/'/g,"\\'")}')">查 ETA</button><button class="sec" onclick="addBK({route:searchState.route,stop_id:'${s.stop_id}',name_tc:'${(s.name_tc||'').replace(/'/g,"\\'")}',name_en:'${(s.name_en||'').replace(/'/g,"\\'")}',co:searchState.co,custom_name:'',pinned:false});showToast('已收藏');">收藏</button></div>`;
+    div.onmouseenter=()=>div.style.borderColor='var(--accent)';
+    div.onmouseleave=()=>div.style.borderColor='var(--line)';
+    listEl.appendChild(div);
   });
 }
 
-function pickStop(route,stop,co){document.getElementById('routeNo').value=route;document.getElementById('stopId').value=stop;closeSearch();openEta(co);}
-function addStop(route,stop,tc,en,co){addBK({route,stop_id:stop,name_tc:tc,name_en:en,co:co||'CTB',custom_name:'',pinned:false});}
+function pickAndSearch(stopId,name){
+  document.getElementById('routeNo').value=searchState.route;
+  document.getElementById('stopId').value=stopId;
+  closeSearch();
+  openEta(searchState.co);
+}
 
 document.getElementById('checkBtn').onclick=()=>openEta();
 document.getElementById('routeNo').onkeydown=e=>{if(e.key==='Enter')openEta();};
 document.getElementById('stopId').onkeydown=e=>{if(e.key==='Enter')openEta();};
-document.getElementById('sFilter').oninput=()=>searchStops();
+document.getElementById('sFilter').oninput=()=>renderStops();
 document.getElementById('searchModal').onclick=e=>{if(e.target.id==='searchModal')closeSearch();};
+document.getElementById('sRoute').onkeydown=e=>{if(e.key==='Enter')findRoute();};
 
 renderBK();
 </script>
