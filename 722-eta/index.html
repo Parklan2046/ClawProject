@@ -261,6 +261,11 @@ async function openEta(forceCo,partnerStop){
   finally{document.getElementById('checkBtn').disabled=false;}
 }
 
+function detectCO(route,stopId){
+  if(/^[0-9A-F]{16}$/i.test(stopId))return'KMB';
+  if(/^\d{6}$/.test(stopId))return'CTB';
+  return'ALL';
+}
 function fmtTime(eta){var t=new Date(eta);if(isNaN(t))return'??';return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');}
 function fmtMins(eta){var t=new Date(eta);if(isNaN(t))return'';var m=Math.max(0,Math.round((t.getTime()-Date.now())/60000));return m===0?'即到':m;}
 function clearTimers(){if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}if(cdTimer){clearInterval(cdTimer);cdTimer=null;}}
@@ -355,37 +360,51 @@ async function pickDir(d){
   var stops=[];
   var stopMap={};
 
-  if(d.co==='KMB'){
-    try{
-      var rsRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
-      var rsData=await rsRes.json();
-      var kmbStops=(rsData.data||[]).filter(s=>s.route===searchState.route&&s.bound===d.dir&&(d.service_type?s.service_type===d.service_type:true));
-      var sRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
-      var sData=await sRes.json();
-      (sData.data||[]).forEach(s=>{stopMap[s.stop]=s;});
-      kmbStops.forEach(s=>{
-        var info=stopMap[s.stop]||{};
-        stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0});
+  // Load BOTH operators for this route
+  try{
+    var rsRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
+    var rsData=await rsRes.json();
+    var kmbStops=(rsData.data||[]).filter(s=>s.route===searchState.route&&s.bound===d.dir);
+    var sRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
+    var sData=await sRes.json();
+    (sData.data||[]).forEach(s=>{stopMap[s.stop]=s;});
+    kmbStops.forEach(s=>{
+      var info=stopMap[s.stop]||{};
+      stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'KMB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});
+    });
+  }catch(e){}
+  try{
+    var dirParam=d.dir==='O'?'outbound':'inbound';
+    var rsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+searchState.route+'/'+dirParam,{cache:'no-store'});
+    var rsData=await rsRes.json();
+    for(var s of(rsData.data||[])){
+      try{
+        var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});
+        var sd=await sr.json();
+        var info=sd.data||{};
+        stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'CTB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});
+      }catch{}
+    }
+  }catch(e){}
+  // Merge nearby stops from different operators
+  stops.sort((a,b)=>a.seq-b.seq);
+  var merged=[],used={};
+  stops.forEach(s=>{
+    if(used[s.stop_id])return;
+    used[s.stop_id]=true;
+    var group=[s];
+    if(s.lat&&s.lng){
+      stops.forEach(s2=>{
+        if(used[s2.stop_id]||s2.co===s.co)return;
+        if(s2.lat&&s2.lng){
+          var dist=Math.sqrt(Math.pow(s.lat-s2.lat,2)+Math.pow(s.lng-s2.lng,2));
+          if(dist<0.002){group.push(s2);used[s2.stop_id]=true;}
+        }
       });
-    }catch(e){}
-  }else{
-    try{
-      var dirParam=d.dir==='O'?'outbound':'inbound';
-      var rsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+searchState.route+'/'+dirParam,{cache:'no-store'});
-      var rsData=await rsRes.json();
-      for(var s of(rsData.data||[])){
-        try{
-          var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});
-          var sd=await sr.json();
-          var info=sd.data||{};
-          stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0});
-        }catch{}
-      }
-    }catch(e){}
-  }
-
-  searchState.stops=stops.sort((a,b)=>a.seq-b.seq);
-  searchState.stopMap=stopMap;
+    }
+    merged.push({stops:group,name_tc:s.name_tc,name_en:s.name_en,seq:s.seq});
+  });
+  searchState.mergedStops=merged;
   renderStops();
 }
 
@@ -393,17 +412,20 @@ function renderStops(){
   var filter=document.getElementById('sFilter').value.trim().toLowerCase();
   var listEl=document.getElementById('stopList');
   listEl.innerHTML='';
-  var filtered=searchState.stops;
+  var filtered=searchState.mergedStops||[];
   if(filter)filtered=filtered.filter(s=>(s.name_tc||'').toLowerCase().includes(filter)||(s.name_en||'').toLowerCase().includes(filter)||(s.stop_id||'').toLowerCase().includes(filter));
 
   if(!filtered.length){listEl.innerHTML='<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px">搵唔到站</div>';return;}
 
-  filtered.forEach(s=>{
+  filtered.forEach(g=>{
     var div=document.createElement('div');
     div.className='stop-card';
     div.style.cursor='pointer';
     div.style.transition='all .2s';
-    div.innerHTML=`<div class="stop-title">${s.seq? s.seq+'. ':''}${s.name_tc||s.name_en}</div><div class="stop-sub">${s.name_en||''} · ${s.stop_id}</div><div class="stop-actions"><button onclick="pickAndSearch('${s.stop_id}','${(s.name_tc||'').replace(/'/g,"\\'")}')">查 ETA</button><button class="sec" onclick="addBK({route:searchState.route,stop_id:'${s.stop_id}',name_tc:'${(s.name_tc||'').replace(/'/g,"\\'")}',name_en:'${(s.name_en||'').replace(/'/g,"\\'")}',co:searchState.co,custom_name:'',pinned:false});showToast('已收藏');">收藏</button></div>`;
+    var ops=[...new Set(g.stops.map(s=>s.co))];
+    var badges=ops.map(o=>'<span class="op-badge '+(o==='KMB'?'op-kmb':'op-ctb')+'">'+(o==='KMB'?'九巴':'城巴')+'</span>').join(' ');
+    var stopIds=g.stops.map(s=>s.stop_id).join('+');
+    div.innerHTML=`<div class="stop-title">${g.seq? g.seq+'. ':''}${g.name_tc||g.name_en}</div><div class="stop-sub">${badges} ${g.name_en||''}</div><div class="stop-actions"><button onclick="pickAndSearch('${stopIds}','${(g.name_tc||'').replace(/'/g,"\\'")}')">查 ETA</button><button class="sec" onclick="addBK({route:searchState.route,stop_id:'${stopIds}',name_tc:'${(g.name_tc||'').replace(/'/g,"\\'")}',name_en:'${(g.name_en||'').replace(/'/g,"\\'")}',co:'${ops.join('+')}',custom_name:'',pinned:false});showToast('已收藏');">收藏</button></div>`;
     div.onmouseenter=()=>div.style.borderColor='var(--accent)';
     div.onmouseleave=()=>div.style.borderColor='var(--line)';
     listEl.appendChild(div);
