@@ -36,12 +36,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .op-ctb{background:rgba(249,115,22,.15);color:var(--ctb)}
 
 /* Timer */
-.timer{text-align:center;padding:6px 0;margin-bottom:4px}
+.timer{position:fixed;bottom:60px;left:16px;background:rgba(15,23,42,.94);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:299;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .timer.hidden{display:none}
-.timer-ring{display:inline-flex;align-items:center;justify-content:center;position:relative;width:64px;height:64px}
+.timer-ring{position:relative;width:32px;height:32px;flex-shrink:0}
 .timer-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
-.timer-ring .num{font-size:1.3rem;font-weight:900;color:var(--cyan);z-index:1}
-.timer-label{color:var(--muted);font-size:.7rem;margin-top:1px}
+.timer-ring .num{font-size:.85rem;font-weight:900;color:#33e6ff;z-index:1;position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.timer-label{color:#94a3b8;font-size:.72rem}
 .timer-pulse{animation:tp 1s ease infinite}
 @keyframes tp{0%,100%{opacity:1}50%{opacity:.4}}
 
@@ -119,10 +119,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 
   <div id="timer" class="timer hidden">
     <div class="timer-ring">
-      <svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="3"/><circle id="tArc" cx="32" cy="32" r="28" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round"/></svg>
+      <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="2.5"/><circle id="tArc" cx="16" cy="16" r="13" fill="none" stroke="#33e6ff" stroke-width="2.5" stroke-dasharray="81.68" stroke-dashoffset="0" stroke-linecap="round"/></svg>
       <span id="tNum" class="num">10</span>
     </div>
-    <div class="timer-label">秒後更新</div>
+    <span class="timer-label">秒後更新</span>
   </div>
 
   <div id="status" class="status"></div>
@@ -191,7 +191,61 @@ function showToast(m){var e=document.getElementById('toast');e.textContent=m;e.c
 function getBK(){try{if(!storageOK())return memoryBK;var r=localStorage.getItem(BK);return r?JSON.parse(r):[];}catch{return memoryBK;}}
 function saveBK(l){try{if(!storageOK()){memoryBK=l;return;}localStorage.setItem(BK,JSON.stringify(l));}catch{memoryBK=l;}}
 function storageOK(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true;}catch{return false;}}
-function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));renderBK();showToast('已收藏');return true;}
+function addBK(it){var bk=getBK();if(bk.some(b=>b.route===it.route&&b.stop_id===it.stop_id&&b.co===it.co)){showToast('已存在');return false;}saveBK([it,...bk].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)));/* ---- Bus Bot Chat ---- */
+var botHistory=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！可以問我路線、站位、ETA ～'}];
+
+function toggleBot(){
+  document.getElementById('busbotPanel').classList.toggle('show');
+}
+
+document.getElementById('busbotToggle').onclick=toggleBot;
+document.getElementById('busbotInput').onkeydown=function(e){if(e.key==='Enter')sendBotMsg()};
+
+async function sendBotMsg(){
+  var input=document.getElementById('busbotInput');
+  var text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  addBotMsg('user',text);
+  botHistory.push({role:'user',content:text});
+
+  // Show typing
+  var msgs=document.getElementById('busbotMsgs');
+  var typing=document.createElement('div');
+  typing.className='busbot-typing';
+  typing.innerHTML='<span></span><span></span><span></span>';
+  msgs.appendChild(typing);
+  msgs.scrollTop=msgs.scrollHeight;
+
+  try{
+    var res=await fetch('/busbot-api/message',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:botHistory})
+    });
+    var data=await res.json();
+    typing.remove();
+    if(data.ok){
+      addBotMsg('bot',data.reply);
+      botHistory.push({role:'assistant',content:data.reply});
+    }else{
+      addBotMsg('bot','😅 唔好意思，我諗唔到點答你。Error: '+(data.error||'unknown'));
+    }
+  }catch(e){
+    typing.remove();
+    addBotMsg','network error: '+e.message);
+  }
+}
+
+function addBotMsg(role,text){
+  var msgs=document.getElementById('busbotMsgs');
+  var div=document.createElement('div');
+  div.className='busbot-msg '+(role==='user'?'user':'bot');
+  div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+renderBK();showToast('已收藏');return true;}
 
 function renderBK(){
   var el=document.getElementById('bmList');
@@ -211,7 +265,7 @@ function renderBK(){
 
 /* ---- Timer ---- */
 function startCD(){
-  cdVal=10;var sec=document.getElementById('timer');var num=document.getElementById('tNum');var arc=document.getElementById('tArc');var c=175.9;
+  cdVal=10;var sec=document.getElementById('timer');var num=document.getElementById('tNum');var arc=document.getElementById('tArc');var c=81.68;
   sec.classList.remove('hidden');num.textContent=cdVal;arc.style.strokeDashoffset='0';arc.style.stroke='var(--cyan)';
   if(cdTimer)clearInterval(cdTimer);
   cdTimer=setInterval(()=>{cdVal--;if(cdVal<0){num.textContent='0';return;}num.textContent=cdVal;arc.style.strokeDashoffset=(c*(1-cdVal/10)).toString();if(cdVal<=3){num.classList.add('timer-pulse');arc.style.stroke='var(--accent)';}else{num.classList.remove('timer-pulse');arc.style.stroke='var(--cyan)';}},1000);
@@ -253,7 +307,26 @@ async function openEta(forceCo,partnerStop){
       }
     }
 
-    var items=allEtas.filter(function(i){return i&&i.eta}).sort(function(a,b){return new Date(a.eta)-new Date(b.eta)});
+    // Filter ETAs by selected direction (match destination)
+    var dirDest=searchState.dir==='O'?'out':'in';
+    var filtered=allEtas.filter(function(i){return i&&i.eta});
+    // If we have a direction selected, try to filter by matching dest
+    if(searchState.dir){
+      // Get expected destinations from the direction picker
+      var expectedDests=[];
+      filtered.forEach(function(i){
+        var dest=(i.dest_tc||'').toLowerCase();
+        // KMB: dir field "O"/"I", CTB: also has dir
+        var itemDir=i.dir||'';
+        if(itemDir&&itemDir!==searchState.dir){
+          // Mark for removal if direction doesn't match
+          i._wrongDir=true;
+        }
+      });
+      // Remove wrong direction items
+      filtered=filtered.filter(function(i){return !i._wrongDir});
+    }
+    var items=filtered.sort(function(a,b){return new Date(a.eta)-new Date(b.eta)});
     if(!items.length){statusEl.textContent=route+' 暫時冇 ETA';startCD();refreshTimer=setTimeout(function(){openEta(co,partner)},10000);return;}
 
     var ops=[...new Set(items.map(function(i){return i._co}))];
@@ -580,6 +653,60 @@ document.getElementById('stopId').onkeydown=e=>{if(e.key==='Enter')openEta();};
 document.getElementById('sFilter').oninput=()=>renderStops();
 document.getElementById('searchModal').onclick=e=>{if(e.target.id==='searchModal')closeSearch();};
 document.getElementById('sRoute').onkeydown=e=>{if(e.key==='Enter')findRoute();};
+
+/* ---- Bus Bot Chat ---- */
+var botHistory=[{role:'assistant',content:'嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！可以問我路線、站位、ETA ～'}];
+
+function toggleBot(){
+  document.getElementById('busbotPanel').classList.toggle('show');
+}
+
+document.getElementById('busbotToggle').onclick=toggleBot;
+document.getElementById('busbotInput').onkeydown=function(e){if(e.key==='Enter')sendBotMsg()};
+
+async function sendBotMsg(){
+  var input=document.getElementById('busbotInput');
+  var text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  addBotMsg('user',text);
+  botHistory.push({role:'user',content:text});
+
+  // Show typing
+  var msgs=document.getElementById('busbotMsgs');
+  var typing=document.createElement('div');
+  typing.className='busbot-typing';
+  typing.innerHTML='<span></span><span></span><span></span>';
+  msgs.appendChild(typing);
+  msgs.scrollTop=msgs.scrollHeight;
+
+  try{
+    var res=await fetch('/busbot-api/message',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:botHistory})
+    });
+    var data=await res.json();
+    typing.remove();
+    if(data.ok){
+      addBotMsg('bot',data.reply);
+      botHistory.push({role:'assistant',content:data.reply});
+    }else{
+      addBotMsg('bot','😅 唔好意思，我諗唔到點答你。Error: '+(data.error||'unknown'));
+    }
+  }catch(e){
+    typing.remove();
+    addBotMsg','network error: '+e.message);
+  }
+}
+
+function addBotMsg(role,text){
+  var msgs=document.getElementById('busbotMsgs');
+  var div=document.createElement('div');
+  div.className='busbot-msg '+(role==='user'?'user':'bot');
+  div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
 
 renderBK();
 </script>
