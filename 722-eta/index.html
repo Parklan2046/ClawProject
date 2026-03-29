@@ -100,7 +100,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 
 .busbot-toggle{position:fixed;bottom:16px;right:16px;z-index:50;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#33e6ff,#ff6b9d);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:1.5rem}
 .busbot-panel{position:fixed;bottom:80px;right:16px;z-index:51;width:min(380px,calc(100vw - 32px));height:500px;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:20px;display:none;flex-direction:column;overflow:hidden}
-.busbot-panel.show{display:flex}\.busbot-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.busbot-panel.show{display:flex}
+.busbot-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
 .busbot-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
 .busbot-info{flex:1}.busbot-name{font-weight:700;font-size:.9rem}.busbot-status{font-size:.7rem;color:#86efac}
 .busbot-close{background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer}
@@ -173,7 +174,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     </div>
   </div>
 </div>
-
 
 <button class="busbot-toggle" id="busbotToggle">🧑‍✈️</button>
 <div class="busbot-panel" id="busbotPanel">
