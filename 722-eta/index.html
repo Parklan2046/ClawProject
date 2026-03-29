@@ -97,6 +97,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:7px 13px;font-size:.82rem;z-index:300;display:none}
 .toast.show{display:block}
 @media(max-width:500px){.search-bar{flex-wrap:wrap}.search-bar input.route-input{width:55px}.search-bar input.stop-input{width:100%}.modal{width:100%;max-height:84vh}.modal .row{grid-template-columns:1fr}}
+
+.loading-overlay.hidden{display:none}
+.loading-overlay{position:fixed;bottom:16px;left:16px;background:rgba(15,23,42,.96);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:49;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.loading-spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.1);border-top-color:#33e6ff;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:#33e6ff;font-size:.82rem;font-weight:600}
 </style>
 </head>
 <body>
