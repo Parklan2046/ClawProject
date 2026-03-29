@@ -172,6 +172,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
   <div class="loading-text" id="loadingText">搜尋中...</div>
   <div class="loading-sub" id="loadingSub"></div>
 </div>
+<button class="busbot-toggle" id="busbotToggle" style="position:fixed;bottom:16px;right:16px;z-index:50;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#33e6ff,#ff6b9d);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem">U0001f9d1u200du2708ufe0f</button>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -575,6 +576,12 @@ document.getElementById('searchModal').onclick=e=>{if(e.target.id==='searchModal
 document.getElementById('sRoute').onkeydown=e=>{if(e.key==='Enter')findRoute();};
 
 renderBK();
+// BusBot
+(function(){
+  var h=[{role:"assistant",content:"嗨～我係巴膠仔🚌 有咩巴士問題隨時問我！"}];
+  var tog=document.getElementById("busbotToggle");
+  if(tog)tog.onclick=function(){var p=document.getElementById("busbotPanel");if(p)p.classList.toggle("show")};
+})();
 </script>
 </body>
 </html>
