@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>開單 · 請食 Tea</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0b1a;--card:#16132b;--card2:#1e1a38;--border:rgba(255,255,255,.07);--accent:#ff6b9d;--accent2:#c44dff;--cyan:#4de8ff;--gold:#ffc94d;--green:#4dff88;--red:#ff5252;--muted:#7a7890;--text:#ede8f5}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+.container{max-width:560px;margin:0 auto}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:.85rem;margin-bottom:16px}
+h1{font-size:1.4rem;font-weight:900;margin-bottom:4px}
+.sub{color:var(--muted);font-size:.85rem;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
+.card h2{font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+label{display:block;color:var(--muted);font-size:.82rem;margin-bottom:4px;margin-top:12px}
+label:first-child{margin-top:0}
+input,textarea,select{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:.92rem;outline:none;font-family:inherit;transition:border-color .2s}
+input:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:60px}
+select{appearance:none}
+
+/* Extract button */
+.extract-btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#33e6ff,#ff6b9d);color:#fff;font-size:1rem;font-weight:800;cursor:pointer;transition:all .2s;margin-top:12px}
+.extract-btn:hover{transform:translateY(-1px)}
+.extract-btn:disabled{opacity:.5;cursor:wait}
+
+/* Progress */
+.extract-progress{margin-top:12px;display:none}
+.extract-progress.show{display:block}
+.progress-step{display:flex;align-items:center;gap:10px;padding:8px 0;color:var(--muted);font-size:.85rem}
+.progress-step.active{color:var(--cyan)}
+.progress-step.done{color:var(--green)}
+.progress-step .dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0}
+.progress-step.active .dot{background:var(--cyan);animation:pu 1s infinite}
+.progress-step.done .dot{background:var(--green)}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Extracted items */
+.extracted-list{margin-top:12px;max-height:300px;overflow-y:auto;display:none}
+.extracted-list.show{display:block}
+.extracted-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--card2);margin-bottom:4px;font-size:.85rem}
+.extracted-item .name{flex:1;font-weight:600}
+.extracted-item .price{color:var(--gold);font-weight:700}
+.extracted-item .opts{font-size:.7rem;color:var(--cyan)}
+
+/* Form fields */
+.platform-row{display:flex;gap:8px;margin-top:4px}
+.platform-btn{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
+.platform-btn.active{border-color:var(--accent);background:rgba(255,107,157,.1);color:var(--accent)}
+
+.menu-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.menu-item{display:flex;gap:8px;align-items:center;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;flex-wrap:wrap}
+.menu-item input{border:none;background:transparent;padding:6px;font-size:.88rem}
+.menu-item .mi-name{flex:2;min-width:120px}
+.menu-item .mi-price{flex:1;max-width:80px}
+.menu-item .mi-del{width:30px;height:30px;border-radius:8px;border:none;background:rgba(255,82,82,.1);color:var(--red);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.add-menu-btn{width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--border);background:transparent;color:var(--muted);font-size:.85rem;cursor:pointer;margin-top:8px;transition:all .2s}
+.add-menu-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.actions{display:flex;gap:10px;margin-top:20px}
+.btn{padding:14px;border-radius:12px;border:none;font-size:1rem;font-weight:800;cursor:pointer;transition:all .2s}
+.btn-primary{flex:1;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:wait}
+.error{color:var(--red);font-size:.85rem;margin-top:8px}
+
+.result-card{background:var(--card);border:1px solid var(--green);border-radius:16px;padding:20px;text-align:center;animation:pop .4s ease}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.link-box{display:flex;gap:8px;margin:12px 0}
+.link-box input{flex:1;font-size:.85rem}
+.link-box button{padding:10px 14px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;white-space:nowrap}
+
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:8px 14px;font-size:.84rem;z-index:200;display:none}
+.toast.show{display:block}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../" class="back">← 返回</a>
+  <h1>🧋 開單請食 Tea</h1>
+  <p class="sub">貼 Foodpanda 連結，自動提取 menu</p>
+
+  <div id="createForm">
+    <!-- Step 1: Enter URL -->
+    <div class="card">
+      <h2>🔗 貼 Foodpanda 餐廳連結</h2>
+      <label>餐廳名稱</label>
+      <input id="restaurant" placeholder="例如：快樂番薯" />
+      <label>Foodpanda 餐廳連結</label>
+      <input id="fpUrl" placeholder="https://www.foodpanda.hk/restaurant/..." />
+      <button class="extract-btn" id="extractBtn" onclick="extractMenu()">🔍 自動提取 Menu</button>
+
+      <!-- Progress -->
+      <div id="extractProgress" class="extract-progress">
+        <div class="progress-step" id="step1"><span class="dot"></span>打開 Foodpanda 頁面...</div>
+        <div class="progress-step" id="step2"><span class="dot"></span>提取菜單數據...</div>
+        <div class="progress-step" id="step3"><span class="dot"></span>AI 分析冰度/甜度 options...</div>
+        <div class="progress-step" id="step4"><span class="dot"></span>整理完成！</div>
+      </div>
+
+      <!-- Extracted items -->
+      <div id="extractedList" class="extracted-list"></div>
+    </div>
+
+    <!-- Step 2: Settings -->
+    <div class="card">
+      <h2>⚙️ 設定</h2>
+      <label>活動名稱</label>
+      <input id="title" value="請食 Tea ☕️" />
+      <label>平台</label>
+      <div class="platform-row">
+        <button class="platform-btn active" data-p="foodpanda" onclick="pickPlatform(this)">🐼 Foodpanda</button>
+        <button class="platform-btn" data-p="keeta" onclick="pickPlatform(this)">🛵 Keeta</button>
+      </div>
+      <label>你個名（Organizer）</label>
+      <input id="createdBy" placeholder="你嘅名" />
+      <label>截止時間</label>
+      <input id="deadline" type="time" />
+      <label>備註</label>
+      <textarea id="note" placeholder="例如：每人限額$50"></textarea>
+    </div>
+
+    <!-- Step 3: Edit menu (auto-filled) -->
+    <div class="card">
+      <h2>📋 Menu 項目（自動填入）</h2>
+      <div id="menuList" class="menu-list"></div>
+      <button class="add-menu-btn" onclick="addMenuItem()">＋ 手動加多一樣</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="createBtn" onclick="createTreat()">🧋 生成分享連結</button>
+    </div>
+    <div id="error" class="error"></div>
+  </div>
+
+  <div id="resultCard" class="result-card" style="display:none">
+    <h2 style="color:var(--green)">✅ 開單成功！</h2>
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">分享呢個 link 俾同事揀嘢</p>
+    <div class="link-box">
+      <input id="shareLink" readonly />
+      <button onclick="copyLink()">📋 複製</button>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <a id="openOrder" class="btn btn-primary" style="flex:1;text-align:center;text-decoration:none" target="_blank">👀 預覽</a>
+      <a id="openSummary" class="btn" style="flex:1;text-align:center;text-decoration:none;background:var(--card2);color:var(--text);border:1px solid var(--border)" target="_blank">📊 查看 Order</a>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+var platform='foodpanda', extractedItems=[];
+
+function showToast(m){var el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(()=>el.classList.remove('show'),2500)}
+
+function pickPlatform(el){
+  document.querySelectorAll('.platform-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');platform=el.dataset.p;
+}
+
+function setStep(n){
+  for(var i=1;i<=4;i++){
+    var el=document.getElementById('step'+i);
+    el.className='progress-step'+(i<n?' done':i===n?' active':'');
+  }
+}
+
+// Extract menu from Foodpanda URL
+async function extractMenu(){
+  var url=document.getElementById('fpUrl').value.trim();
+  var restaurant=document.getElementById('restaurant').value.trim();
+  
+  if(!url){showToast('請貼 Foodpanda 連結');return;}
+  if(url.indexOf('foodpanda')<0){showToast('請貼有效嘅 Foodpanda 連結');return;}
+
+  var btn=document.getElementById('extractBtn');
+  btn.disabled=true;btn.textContent='⏳ 提取中...';
+  document.getElementById('extractProgress').className='extract-progress show';
+  document.getElementById('extractedList').className='extracted-list';
+
+  try{
+    // Step 1: Open Foodpanda page
+    setStep(1);
+    await sleep(800);
+
+    // Step 2: Extract menu data
+    setStep(2);
+    var res=await fetch('/menu-ext/api/extract',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({url:url})
+    });
+    var data=await res.json();
+    if(!data.ok) throw new Error(data.error||'提取失敗');
+
+    // Step 3: AI analyzing options
+    setStep(3);
+    await sleep(500);
+
+    // Step 4: Done
+    setStep(4);
+
+    extractedItems=data.items||[];
+    if(data.restaurant && !restaurant){
+      document.getElementById('restaurant').value=data.restaurant;
+    }
+
+    // Show extracted items
+    showExtracted(extractedItems);
+
+    // Auto-fill menu list
+    autoFillMenu(extractedItems);
+
+    showToast(`提取成功！${extractedItems.length} 個項目`);
+
+  }catch(e){
+    showToast('❌ '+e.message);
+  }finally{
+    btn.disabled=false;btn.textContent='🔍 自動提取 Menu';
+    document.getElementById('extractProgress').className='extract-progress';
+  }
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+function showExtracted(items){
+  var el=document.getElementById('extractedList');
+  el.innerHTML='<div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">已提取 '+items.length+' 個項目：</div>';
+  items.forEach(function(item){
+    var optCount=item.options?item.options.length:0;
+    var optTag=optCount?'<span class="opts">⚙️'+item.options.map(o=>o.title).join(',')+'</span>':'';
+    el.innerHTML+='<div class="extracted-item"><span class="name">'+esc(item.name)+'</span>'+optTag+'<span class="price">$'+(item.price||'?')+'</span></div>';
+  });
+  el.className='extracted-list show';
+}
+
+function autoFillMenu(items){
+  var list=document.getElementById('menuList');
+  list.innerHTML='';
+  items.forEach(function(item){
+    addMenuItem(item.name, item.price, item.options||[]);
+  });
+}
+
+function addMenuItem(name,price,options){
+  name=name||'';price=price||'';options=options||[];
+  var div=document.createElement('div');div.className='menu-item';
+  div.innerHTML='<input class="mi-name" value="'+esc(name)+'" placeholder="名稱" /><input class="mi-price" value="'+esc(price)+'" placeholder="價錢" type="number" /><button class="mi-del" onclick="this.parentElement.remove()">✕</button>';
+  if(options.length){
+    var optDiv=document.createElement('div');
+    optDiv.style.cssText='width:100%;font-size:.7rem;color:var(--cyan);padding:2px 6px;line-height:1.4';
+    optDiv.textContent='⚙️ '+options.map(o=>o.title+'('+o.choices.map(c=>c.name).join('/')+')').join(' · ');
+    div.appendChild(optDiv);
+    div.dataset.options=JSON.stringify(options);
+  }
+  document.getElementById('menuList').appendChild(div);
+}
+
+function getMenu(){
+  var items=[];
+  document.querySelectorAll('.menu-item').forEach(function(el){
+    var name=el.querySelector('.mi-name').value.trim();
+    var price=el.querySelector('.mi-price').value.trim();
+    var options=[];try{options=JSON.parse(el.dataset.options||'[]')}catch(e){}
+    if(name)items.push({name:name,price:price||'?',options:options});
+  });
+  return items;
+}
+
+function esc(s){return(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+async function createTreat(){
+  var restaurant=document.getElementById('restaurant').value.trim();
+  var title=document.getElementById('title').value.trim();
+  var createdBy=document.getElementById('createdBy').value.trim();
+  var deadline=document.getElementById('deadline').value;
+  var note=document.getElementById('note').value.trim();
+  var menu=getMenu();
+  var err=document.getElementById('error');err.textContent='';
+
+  if(!restaurant){err.textContent='請填餐廳名稱';return;}
+  if(!menu.length){err.textContent='請先提取或手動加 menu';return;}
+
+  var btn=document.getElementById('createBtn');
+  btn.disabled=true;btn.textContent='⏳ 生成中...';
+
+  try{
+    var res=await fetch('/tea-treat/api/create',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title:title,restaurant:restaurant,platform:platform,url:document.getElementById('fpUrl').value,menu:menu,deadline:deadline,note:note,created_by:createdBy})
+    });
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error);
+
+    var link=location.origin+'/tea-treat/order/'+data.treat_id;
+    document.getElementById('shareLink').value=link;
+    document.getElementById('openOrder').href='/tea-treat/order/'+data.treat_id;
+    document.getElementById('openSummary').href='/tea-treat/summary/'+data.treat_id;
+    document.getElementById('createForm').style.display='none';
+    document.getElementById('resultCard').style.display='block';
+
+  }catch(e){err.textContent='❌ '+e.message;}
+  finally{btn.disabled=false;btn.textContent='🧋 生成分享連結';}
+}
+
+function copyLink(){
+  var inp=document.getElementById('shareLink');
+  inp.select();navigator.clipboard.writeText(inp.value);
+  showToast('已複製連結 ✅');
+}
+</script>
+</body>
+</html>
