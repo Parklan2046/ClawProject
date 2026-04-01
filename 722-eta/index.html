@@ -363,6 +363,10 @@ function goStep(n){
 }
 
 // Step 1: Find route and show directions
+var _kmbRouteStopCache=null,_kmbRouteCache=null;
+var _kmbCacheTs=0;
+var CACHE_TTL=3600000; // 1 hour
+
 async function findRoute(){
   var route=document.getElementById('sRoute').value.trim().toUpperCase();
   var s1=document.getElementById('sStatus1');
@@ -372,29 +376,43 @@ async function findRoute(){
 
   var dirs=[];
   var errors=[];
+  var kmbRS=[];
 
-  // Check KMB
+  // Check KMB - use cached data if fresh
   try{
-    var r=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
-    if(r.ok){
-      var d=await r.json();
-      var kmbRS=(d.data||[]).filter(s=>s.route===route);
-      console.log('[DEBUG findRoute] route='+route+' kmbRS.length='+kmbRS.length);
+    var now=Date.now();
+    if(_kmbRouteStopCache&&_kmbRouteCache&&(now-_kmbCacheTs)<CACHE_TTL){
+      kmbRS=(_kmbRouteStopCache.data||[]).filter(s=>s.route===route);
       if(kmbRS.length){
-        updateLoading('搵到九巴路線...','正在獲取目的地資訊');
-        var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});
-        if(rr.ok){
-          var rd=await rr.json();
-          var seen={};
-          (rd.data||[]).forEach(r=>{
-            if(r.route===route){
-              var key=r.bound+'_'+(r.service_type||'1');
-              if(!seen[key]){
-                seen[key]=true;
-                dirs.push({co:'KMB',dir:r.bound,dest:r.bound==='O'?(r.dest_tc||'往外'):(r.orig_tc||r.dest_tc||'返程'),service_type:r.service_type||'1'});
+        var seen={};
+        (_kmbRouteCache.data||[]).forEach(r=>{
+          if(r.route===route){
+            var key=r.bound+'_'+(r.service_type||'1');
+            if(!seen[key]){seen[key]=true;dirs.push({co:'KMB',dir:r.bound,dest:r.bound==='O'?(r.dest_tc||'往外'):(r.orig_tc||r.dest_tc||'返程'),service_type:r.service_type||'1'});}
+          }
+        });
+      }
+    }else{
+      var r=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
+      if(r.ok){
+        var d=await r.json();
+        _kmbRouteStopCache=d;
+        kmbRS=(d.data||[]).filter(s=>s.route===route);
+        if(kmbRS.length){
+          updateLoading('搵到九巴路線...','正在獲取目的地資訊');
+          var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});
+          if(rr.ok){
+            var rd=await rr.json();
+            _kmbRouteCache=rd;
+            _kmbCacheTs=now;
+            var seen={};
+            (rd.data||[]).forEach(r=>{
+              if(r.route===route){
+                var key=r.bound+'_'+(r.service_type||'1');
+                if(!seen[key]){seen[key]=true;dirs.push({co:'KMB',dir:r.bound,dest:r.bound==='O'?(r.dest_tc||'往外'):(r.orig_tc||r.dest_tc||'返程'),service_type:r.service_type||'1'});}
               }
-            }
-          });
+            });
+          }
         }
       }
     }
@@ -408,12 +426,10 @@ async function findRoute(){
       var d1=await r1.json();
       if(d1.data){
         var info=d1.data;
-        // Avoid duplicate if KMB already added same direction
         var hasKmbO=dirs.some(d=>d.co==='KMB'&&d.dir==='O');
         var hasKmbI=dirs.some(d=>d.co==='KMB'&&d.dir==='I');
         if(!hasKmbO)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});
         if(!hasKmbI)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});
-        // Always add CTB versions if KMB exists (for joint routes)
         if(hasKmbO)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});
         if(hasKmbI)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});
       }
@@ -421,7 +437,7 @@ async function findRoute(){
   }catch(e){errors.push('CTB: '+e.message);}
 
   hideLoading();
-  console.log('[DEBUG findRoute] final dirs.length='+dirs.length+' errors='+JSON.stringify(errors));
+  
   if(!dirs.length){s1.textContent='搵唔到路線 '+route+(errors.length?' ('+errors.join(', ')+')':'');return;}
   s1.textContent='';
 
