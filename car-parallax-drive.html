@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Drive - Parallax Simulation</title>
+    <title>Ferrari Lawrence Drive - Parallax</title>
     <style>
         body {
             margin: 0;
@@ -31,67 +31,63 @@
 
         // Animation variables
         let time = 0;
-        let scrollSpeed = 4;
+        let scrollSpeed = 5;
 
-        // Parallax layers offsets
         let skyOffset = 0;
         let hillOffset = 0;
         let treeOffset = 0;
         let groundOffset = 0;
 
-        // Wheel rotation
         let wheelAngle = 0;
-
-        // Car bob
         let bob = 0;
 
         function drawSky() {
-            // Sunset sky gradient
-            const gradient = ctx.createLinearGradient(0, 0, 0, height * 0.6);
-            gradient.addColorStop(0, '#1e3a5f'); // deep blue
-            gradient.addColorStop(0.4, '#ff8c42'); // orange
-            gradient.addColorStop(0.7, '#ffcc66'); // yellow
-            gradient.addColorStop(1, '#a0d8ff');
-            ctx.fillStyle = gradient;
+            const grad = ctx.createLinearGradient(0, 0, 0, height * 0.65);
+            grad.addColorStop(0, '#1a2a4a');
+            grad.addColorStop(0.35, '#ff6b3d');
+            grad.addColorStop(0.6, '#ff9f1c');
+            grad.addColorStop(1, '#ffd166');
+            ctx.fillStyle = grad;
             ctx.fillRect(0, 0, width, height * 0.7);
 
             // Sun
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#ffeb3b';
             ctx.fillStyle = '#ffeb3b';
             ctx.beginPath();
-            ctx.arc(width * 0.8, height * 0.25, 40, 0, Math.PI * 2);
+            ctx.arc(width * 0.78, height * 0.22, 45, 0, Math.PI * 2);
             ctx.fill();
+            ctx.shadowBlur = 0;
 
-            // Light clouds (static for simplicity, or slow)
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.beginPath();
-            ctx.ellipse(width * 0.2 + skyOffset * 0.1, height * 0.3, 80, 30, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(width * 0.6 + skyOffset * 0.1, height * 0.22, 60, 25, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // Clouds
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            for (let i = 0; i < 4; i++) {
+                const x = (width * 0.15 * i + skyOffset * 0.08) % (width * 1.5);
+                ctx.beginPath();
+                ctx.ellipse(x, height * 0.18 + i*15, 90, 35, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
         }
 
         function drawHills() {
-            ctx.fillStyle = '#2e7d32';
-            const hillY = height * 0.65;
-
-            // Distant hills - slow parallax
+            // Distant hills
+            ctx.fillStyle = '#1e5f3a';
+            let hillY = height * 0.62;
             ctx.beginPath();
             ctx.moveTo(0, hillY);
-            for (let x = 0; x <= width; x += 10) {
-                const y = hillY - Math.sin((x + hillOffset) * 0.005) * 80 - 40;
-                ctx.lineTo(x, y);
+            for (let x = 0; x <= width; x += 8) {
+                ctx.lineTo(x, hillY - Math.sin((x + hillOffset)*0.004)*95);
             }
-            ctx.lineTo(width, height * 0.7);
-            ctx.lineTo(0, height * 0.7);
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
             ctx.fill();
 
-            ctx.fillStyle = '#1e5f2e';
+            // Closer hills
+            ctx.fillStyle = '#2a7d4a';
             ctx.beginPath();
-            ctx.moveTo(0, hillY + 30);
-            for (let x = 0; x <= width; x += 10) {
-                const y = hillY + 30 - Math.sin((x + hillOffset * 1.2) * 0.008) * 60;
-                ctx.lineTo(x, y);
+            ctx.moveTo(0, hillY + 40);
+            for (let x = 0; x <= width; x += 8) {
+                ctx.lineTo(x, hillY + 40 - Math.sin((x + hillOffset*1.3)*0.007)*55);
             }
             ctx.lineTo(width, height);
             ctx.lineTo(0, height);
@@ -99,173 +95,196 @@
         }
 
         function drawTreesAndPoles() {
-            const treeSpeed = 1.8;
-            const spacing = 120;
-
-            ctx.strokeStyle = '#3d2a1f';
-            ctx.lineWidth = 12;
-
-            // Trees and poles repeat
-            for (let i = -2; i < Math.ceil(width / spacing) + 3; i++) {
-                const x = (i * spacing + treeOffset * treeSpeed) % (width + spacing * 2) - spacing;
+            const spacing = 140;
+            for (let i = -3; i < Math.ceil(width / spacing) + 4; i++) {
+                let x = (i * spacing + treeOffset * 1.6) % (width * 1.8) - spacing * 1.5;
 
                 // Tree trunk
-                ctx.beginPath();
-                ctx.moveTo(x + 10, height * 0.68);
-                ctx.lineTo(x + 10, height * 0.85);
-                ctx.stroke();
+                ctx.fillStyle = '#3d2a1f';
+                ctx.fillRect(x + 8, height * 0.65, 14, height * 0.28);
 
-                // Tree foliage
-                ctx.fillStyle = '#1b5e20';
+                // Foliage
+                ctx.fillStyle = '#1e5f2a';
                 ctx.beginPath();
-                ctx.moveTo(x - 20, height * 0.68);
-                ctx.lineTo(x + 40, height * 0.68);
-                ctx.lineTo(x + 10, height * 0.48);
+                ctx.moveTo(x - 25, height * 0.68);
+                ctx.quadraticCurveTo(x + 20, height * 0.42, x + 55, height * 0.68);
                 ctx.fill();
 
                 ctx.beginPath();
-                ctx.moveTo(x - 15, height * 0.78);
-                ctx.lineTo(x + 35, height * 0.78);
-                ctx.lineTo(x + 10, height * 0.58);
+                ctx.moveTo(x - 18, height * 0.78);
+                ctx.quadraticCurveTo(x + 25, height * 0.55, x + 48, height * 0.78);
                 ctx.fill();
 
-                // Poles alternate
-                if (i % 3 === 0) {
-                    ctx.fillStyle = '#555';
-                    ctx.fillRect(x + 80, height * 0.55, 8, height * 0.35); // pole
-                    ctx.fillRect(x + 65, height * 0.52, 35, 8); // crossbar
+                // Occasional poles
+                if (i % 4 === 0) {
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(x + 85, height * 0.48, 10, height * 0.38);
+                    ctx.fillRect(x + 70, height * 0.48, 40, 12);
                 }
             }
         }
 
         function drawRoadAndGround() {
-            // Ground / grass
-            ctx.fillStyle = '#1e5f2e';
-            ctx.fillRect(0, height * 0.85, width, height);
+            // Grass
+            ctx.fillStyle = '#1e5f2a';
+            ctx.fillRect(0, height * 0.83, width, height);
 
             // Road
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, height * 0.82, width, height * 0.18);
+            ctx.fillStyle = '#222';
+            ctx.fillRect(0, height * 0.8, width, height * 0.22);
 
-            // Road edge lines
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 6;
-            ctx.setLineDash([20, 30]);
+            // White lines
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 5;
+            ctx.setLineDash([30, 45]);
             ctx.beginPath();
-            ctx.moveTo(0, height * 0.84);
-            ctx.lineTo(width, height * 0.84);
+            ctx.moveTo(0, height * 0.83);
+            ctx.lineTo(width, height * 0.83);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(0, height * 0.96);
-            ctx.lineTo(width, height * 0.96);
+            ctx.moveTo(0, height * 0.97);
+            ctx.lineTo(width, height * 0.97);
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Center dashed lines - fast moving
-            ctx.strokeStyle = '#ffeb3b';
-            ctx.lineWidth = 8;
-            ctx.setLineDash([40, 60]);
-            const dashOffset = (groundOffset * 2.5) % 100;
-            ctx.lineDashOffset = -dashOffset;
+            // Yellow center line
+            ctx.strokeStyle = '#ffcc00';
+            ctx.lineWidth = 9;
+            ctx.setLineDash([50, 80]);
+            ctx.lineDashOffset = -(groundOffset * 3.5) % 130;
             ctx.beginPath();
-            ctx.moveTo(0, height * 0.89);
-            ctx.lineTo(width, height * 0.89);
+            ctx.moveTo(0, height * 0.9);
+            ctx.lineTo(width, height * 0.9);
             ctx.stroke();
             ctx.setLineDash([]);
         }
 
         function drawCar() {
-            const carX = width * 0.28;
-            const carY = height * 0.75 + Math.sin(bob) * 3; // subtle bob
+            const carX = width * 0.3;
+            const carY = height * 0.72 + Math.sin(bob) * 4;
 
-            // Car body - dark blue
-            ctx.fillStyle = '#1a3c72';
+            // Shadow under car
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
             ctx.beginPath();
-            ctx.roundRect(carX - 20, carY - 45, 180, 50, 8); // main body
+            ctx.ellipse(carX + 75, carY + 38, 95, 14, 0, 0, Math.PI*2);
             ctx.fill();
 
-            // Cabin / windows
-            ctx.fillStyle = '#0f2a4f';
+            // Main body - Ferrari red with gradient
+            const bodyGrad = ctx.createLinearGradient(carX, carY-60, carX, carY);
+            bodyGrad.addColorStop(0, '#ff1e1e');
+            bodyGrad.addColorStop(0.5, '#e60000');
+            bodyGrad.addColorStop(1, '#b30000');
+            ctx.fillStyle = bodyGrad;
+
             ctx.beginPath();
-            ctx.roundRect(carX + 20, carY - 65, 80, 30, 5);
+            // Sleek Ferrari-style body
+            ctx.moveTo(carX - 10, carY - 25);
+            ctx.quadraticCurveTo(carX + 10, carY - 55, carX + 65, carY - 58);  // hood
+            ctx.quadraticCurveTo(carX + 125, carY - 55, carX + 175, carY - 32); // roof
+            ctx.quadraticCurveTo(carX + 195, carY - 5, carX + 200, carY + 18); // rear
+            ctx.lineTo(carX + 195, carY + 28);
+            ctx.lineTo(carX - 5, carY + 30);
+            ctx.closePath();
             ctx.fill();
 
-            // Lower body trim
-            ctx.fillStyle = '#ffcc00';
-            ctx.fillRect(carX - 15, carY - 20, 170, 12);
+            // Gloss highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.beginPath();
+            ctx.moveTo(carX + 15, carY - 48);
+            ctx.quadraticCurveTo(carX + 55, carY - 52, carX + 110, carY - 35);
+            ctx.lineTo(carX + 90, carY - 22);
+            ctx.closePath();
+            ctx.fill();
+
+            // Windows
+            ctx.fillStyle = '#112233';
+            ctx.beginPath();
+            ctx.moveTo(carX + 68, carY - 52);
+            ctx.quadraticCurveTo(carX + 88, carY - 52, carX + 115, carY - 38);
+            ctx.lineTo(carX + 145, carY - 22);
+            ctx.lineTo(carX + 115, carY - 20);
+            ctx.closePath();
+            ctx.fill();
+
+            // Lawrence text
+            ctx.fillStyle = '#ffee00';
+            ctx.font = 'bold 18px Arial';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Lawrence', carX + 45, carY + 8);
 
             // Wheels
-            const wheelRadius = 22;
-            const wheelY = carY + 8;
+            const wheelY = carY + 28;
+            const r = 24;
 
             // Rear wheel
             ctx.fillStyle = '#111';
             ctx.beginPath();
-            ctx.arc(carX + 30, wheelY, wheelRadius, 0, Math.PI * 2);
+            ctx.arc(carX + 38, wheelY, r, 0, Math.PI * 2);
             ctx.fill();
-            // Tire highlight
-            ctx.strokeStyle = '#ddd';
-            ctx.lineWidth = 6;
+
+            // Rim
+            ctx.fillStyle = '#ccc';
             ctx.beginPath();
-            ctx.arc(carX + 30, wheelY, wheelRadius - 4, 0, Math.PI * 2);
-            ctx.stroke();
+            ctx.arc(carX + 38, wheelY, r - 8, 0, Math.PI * 2);
+            ctx.fill();
 
             // Front wheel
+            ctx.fillStyle = '#111';
             ctx.beginPath();
-            ctx.arc(carX + 130, wheelY, wheelRadius, 0, Math.PI * 2);
+            ctx.arc(carX + 148, wheelY, r, 0, Math.PI * 2);
             ctx.fill();
+            ctx.fillStyle = '#ccc';
             ctx.beginPath();
-            ctx.arc(carX + 130, wheelY, wheelRadius - 4, 0, Math.PI * 2);
-            ctx.stroke();
+            ctx.arc(carX + 148, wheelY, r - 8, 0, Math.PI * 2);
+            ctx.fill();
 
-            // Wheel spokes / rotation effect
+            // Spokes with rotation
             ctx.save();
-            ctx.translate(carX + 30, wheelY);
+            ctx.translate(carX + 38, wheelY);
             ctx.rotate(wheelAngle);
-            ctx.strokeStyle = '#aaa';
-            ctx.lineWidth = 3;
-            for (let i = 0; i < 8; i++) {
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 4;
+            for (let i = 0; i < 6; i++) {
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
-                ctx.lineTo(0, wheelRadius - 8);
-                ctx.rotate(Math.PI * 2 / 8);
+                ctx.lineTo(0, r - 10);
+                ctx.rotate(Math.PI * 2 / 6);
                 ctx.stroke();
             }
             ctx.restore();
 
             ctx.save();
-            ctx.translate(carX + 130, wheelY);
+            ctx.translate(carX + 148, wheelY);
             ctx.rotate(wheelAngle);
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 6; i++) {
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
-                ctx.lineTo(0, wheelRadius - 8);
-                ctx.rotate(Math.PI * 2 / 8);
+                ctx.lineTo(0, r - 10);
+                ctx.rotate(Math.PI * 2 / 6);
                 ctx.stroke();
             }
             ctx.restore();
 
-            // Headlights
-            ctx.fillStyle = '#ffeb3b';
-            ctx.shadowBlur = 20;
+            // Headlight
+            ctx.fillStyle = '#fff7cc';
+            ctx.shadowBlur = 25;
             ctx.shadowColor = '#ffeb3b';
-            ctx.fillRect(carX + 155, carY - 35, 12, 12);
+            ctx.fillRect(carX + 195, carY - 18, 18, 14);
             ctx.shadowBlur = 0;
         }
 
         function animate() {
             ctx.clearRect(0, 0, width, height);
 
-            time += 0.016;
+            time += 0.018;
 
-            // Update offsets (different speeds for parallax)
-            skyOffset = (skyOffset + scrollSpeed * 0.1) % width;
-            hillOffset = (hillOffset + scrollSpeed * 0.6) % (width * 2);
-            treeOffset = (treeOffset + scrollSpeed * 1.4) % (width * 1.5);
-            groundOffset = (groundOffset + scrollSpeed * 3) % width;
+            skyOffset -= scrollSpeed * 0.12;
+            hillOffset -= scrollSpeed * 0.55;
+            treeOffset -= scrollSpeed * 1.65;
+            groundOffset -= scrollSpeed * 3.2;
 
-            wheelAngle += scrollSpeed * 0.08; // wheel spin
-            bob = time * 12; // car bob
+            wheelAngle += scrollSpeed * 0.085;
+            bob = time * 14;
 
             drawSky();
             drawHills();
@@ -273,32 +292,17 @@
             drawRoadAndGround();
             drawCar();
 
-            // Subtle speed lines on road
-            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 8; i++) {
-                const y = height * 0.87 + (i * 12);
-                ctx.beginPath();
-                ctx.moveTo(width * 0.1, y);
-                ctx.lineTo(width * 0.9, y);
-                ctx.stroke();
-            }
-
             requestAnimationFrame(animate);
         }
 
-        // Keyboard controls (optional speed adjust)
-        let speedMultiplier = 1;
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowUp') scrollSpeed = Math.min(scrollSpeed + 1, 12);
-            if (e.key === 'ArrowDown') scrollSpeed = Math.max(scrollSpeed - 1, 1);
+            if (e.key === 'ArrowUp') scrollSpeed = Math.min(scrollSpeed + 1, 15);
+            if (e.key === 'ArrowDown') scrollSpeed = Math.max(scrollSpeed - 1, 2);
         });
 
-        // Start animation
         animate();
 
-        // Info text
-        console.log('%c✅ Car Parallax Drive Simulation loaded! Use ↑↓ arrows to adjust speed.', 'color: #1a3c72; font-size: 14px');
+        console.log('%c✅ Ferrari Lawrence Parallax Simulation Ready! ↑↓ adjust speed', 'color:#ff1e1e; font-weight:bold');
     </script>
 </body>
 </html>
