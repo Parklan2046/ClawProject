@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Drive - Parallax Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Animation variables
+        let time = 0;
+        let scrollSpeed = 4;
+
+        // Parallax layers offsets
+        let skyOffset = 0;
+        let hillOffset = 0;
+        let treeOffset = 0;
+        let groundOffset = 0;
+
+        // Wheel rotation
+        let wheelAngle = 0;
+
+        // Car bob
+        let bob = 0;
+
+        function drawSky() {
+            // Sunset sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, height * 0.6);
+            gradient.addColorStop(0, '#1e3a5f'); // deep blue
+            gradient.addColorStop(0.4, '#ff8c42'); // orange
+            gradient.addColorStop(0.7, '#ffcc66'); // yellow
+            gradient.addColorStop(1, '#a0d8ff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height * 0.7);
+
+            // Sun
+            ctx.fillStyle = '#ffeb3b';
+            ctx.beginPath();
+            ctx.arc(width * 0.8, height * 0.25, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Light clouds (static for simplicity, or slow)
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(width * 0.2 + skyOffset * 0.1, height * 0.3, 80, 30, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(width * 0.6 + skyOffset * 0.1, height * 0.22, 60, 25, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawHills() {
+            ctx.fillStyle = '#2e7d32';
+            const hillY = height * 0.65;
+
+            // Distant hills - slow parallax
+            ctx.beginPath();
+            ctx.moveTo(0, hillY);
+            for (let x = 0; x <= width; x += 10) {
+                const y = hillY - Math.sin((x + hillOffset) * 0.005) * 80 - 40;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(width, height * 0.7);
+            ctx.lineTo(0, height * 0.7);
+            ctx.fill();
+
+            ctx.fillStyle = '#1e5f2e';
+            ctx.beginPath();
+            ctx.moveTo(0, hillY + 30);
+            for (let x = 0; x <= width; x += 10) {
+                const y = hillY + 30 - Math.sin((x + hillOffset * 1.2) * 0.008) * 60;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.fill();
+        }
+
+        function drawTreesAndPoles() {
+            const treeSpeed = 1.8;
+            const spacing = 120;
+
+            ctx.strokeStyle = '#3d2a1f';
+            ctx.lineWidth = 12;
+
+            // Trees and poles repeat
+            for (let i = -2; i < Math.ceil(width / spacing) + 3; i++) {
+                const x = (i * spacing + treeOffset * treeSpeed) % (width + spacing * 2) - spacing;
+
+                // Tree trunk
+                ctx.beginPath();
+                ctx.moveTo(x + 10, height * 0.68);
+                ctx.lineTo(x + 10, height * 0.85);
+                ctx.stroke();
+
+                // Tree foliage
+                ctx.fillStyle = '#1b5e20';
+                ctx.beginPath();
+                ctx.moveTo(x - 20, height * 0.68);
+                ctx.lineTo(x + 40, height * 0.68);
+                ctx.lineTo(x + 10, height * 0.48);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(x - 15, height * 0.78);
+                ctx.lineTo(x + 35, height * 0.78);
+                ctx.lineTo(x + 10, height * 0.58);
+                ctx.fill();
+
+                // Poles alternate
+                if (i % 3 === 0) {
+                    ctx.fillStyle = '#555';
+                    ctx.fillRect(x + 80, height * 0.55, 8, height * 0.35); // pole
+                    ctx.fillRect(x + 65, height * 0.52, 35, 8); // crossbar
+                }
+            }
+        }
+
+        function drawRoadAndGround() {
+            // Ground / grass
+            ctx.fillStyle = '#1e5f2e';
+            ctx.fillRect(0, height * 0.85, width, height);
+
+            // Road
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, height * 0.82, width, height * 0.18);
+
+            // Road edge lines
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 6;
+            ctx.setLineDash([20, 30]);
+            ctx.beginPath();
+            ctx.moveTo(0, height * 0.84);
+            ctx.lineTo(width, height * 0.84);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, height * 0.96);
+            ctx.lineTo(width, height * 0.96);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Center dashed lines - fast moving
+            ctx.strokeStyle = '#ffeb3b';
+            ctx.lineWidth = 8;
+            ctx.setLineDash([40, 60]);
+            const dashOffset = (groundOffset * 2.5) % 100;
+            ctx.lineDashOffset = -dashOffset;
+            ctx.beginPath();
+            ctx.moveTo(0, height * 0.89);
+            ctx.lineTo(width, height * 0.89);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawCar() {
+            const carX = width * 0.28;
+            const carY = height * 0.75 + Math.sin(bob) * 3; // subtle bob
+
+            // Car body - dark blue
+            ctx.fillStyle = '#1a3c72';
+            ctx.beginPath();
+            ctx.roundRect(carX - 20, carY - 45, 180, 50, 8); // main body
+            ctx.fill();
+
+            // Cabin / windows
+            ctx.fillStyle = '#0f2a4f';
+            ctx.beginPath();
+            ctx.roundRect(carX + 20, carY - 65, 80, 30, 5);
+            ctx.fill();
+
+            // Lower body trim
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(carX - 15, carY - 20, 170, 12);
+
+            // Wheels
+            const wheelRadius = 22;
+            const wheelY = carY + 8;
+
+            // Rear wheel
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(carX + 30, wheelY, wheelRadius, 0, Math.PI * 2);
+            ctx.fill();
+            // Tire highlight
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(carX + 30, wheelY, wheelRadius - 4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Front wheel
+            ctx.beginPath();
+            ctx.arc(carX + 130, wheelY, wheelRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(carX + 130, wheelY, wheelRadius - 4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Wheel spokes / rotation effect
+            ctx.save();
+            ctx.translate(carX + 30, wheelY);
+            ctx.rotate(wheelAngle);
+            ctx.strokeStyle = '#aaa';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, wheelRadius - 8);
+                ctx.rotate(Math.PI * 2 / 8);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(carX + 130, wheelY);
+            ctx.rotate(wheelAngle);
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, wheelRadius - 8);
+                ctx.rotate(Math.PI * 2 / 8);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Headlights
+            ctx.fillStyle = '#ffeb3b';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#ffeb3b';
+            ctx.fillRect(carX + 155, carY - 35, 12, 12);
+            ctx.shadowBlur = 0;
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            time += 0.016;
+
+            // Update offsets (different speeds for parallax)
+            skyOffset = (skyOffset + scrollSpeed * 0.1) % width;
+            hillOffset = (hillOffset + scrollSpeed * 0.6) % (width * 2);
+            treeOffset = (treeOffset + scrollSpeed * 1.4) % (width * 1.5);
+            groundOffset = (groundOffset + scrollSpeed * 3) % width;
+
+            wheelAngle += scrollSpeed * 0.08; // wheel spin
+            bob = time * 12; // car bob
+
+            drawSky();
+            drawHills();
+            drawTreesAndPoles();
+            drawRoadAndGround();
+            drawCar();
+
+            // Subtle speed lines on road
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 8; i++) {
+                const y = height * 0.87 + (i * 12);
+                ctx.beginPath();
+                ctx.moveTo(width * 0.1, y);
+                ctx.lineTo(width * 0.9, y);
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Keyboard controls (optional speed adjust)
+        let speedMultiplier = 1;
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') scrollSpeed = Math.min(scrollSpeed + 1, 12);
+            if (e.key === 'ArrowDown') scrollSpeed = Math.max(scrollSpeed - 1, 1);
+        });
+
+        // Start animation
+        animate();
+
+        // Info text
+        console.log('%c✅ Car Parallax Drive Simulation loaded! Use ↑↓ arrows to adjust speed.', 'color: #1a3c72; font-size: 14px');
+    </script>
+</body>
+</html>
