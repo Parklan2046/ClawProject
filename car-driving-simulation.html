@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driving Simulation - Law Test</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { overflow: hidden; background: #000; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 100;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="info">
+        Realistic Car Driving Simulation<br>
+        <small>Side view • Parallax scrolling • Pure Canvas</small>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Animation variables
+        let time = 0;
+        const carSpeed = 3.5;
+
+        // Layers for parallax
+        let bgOffset = 0;
+        let midOffset = 0;
+        let fgOffset = 0;
+        let roadOffset = 0;
+
+        // Simple car properties
+        let wheelRotation = 0;
+
+        function drawSky() {
+            // Sunset sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, height * 0.6);
+            gradient.addColorStop(0, '#ff6b3d');
+            gradient.addColorStop(0.4, '#ff9f6b');
+            gradient.addColorStop(0.7, '#4a9eff');
+            gradient.addColorStop(1, '#2a5a9e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height * 0.65);
+
+            // Sun
+            ctx.fillStyle = 'rgba(255, 220, 80, 0.95)';
+            ctx.beginPath();
+            ctx.arc(width * 0.8, height * 0.22, 45, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawMountains() {
+            ctx.fillStyle = '#3a5a7a';
+            ctx.beginPath();
+            ctx.moveTo(0, height * 0.6);
+            ctx.lineTo(width * 0.25, height * 0.35);
+            ctx.lineTo(width * 0.5, height * 0.58);
+            ctx.lineTo(width * 0.75, height * 0.3);
+            ctx.lineTo(width, height * 0.6);
+            ctx.fill();
+
+            // Second layer
+            ctx.fillStyle = '#2e4a65';
+            ctx.beginPath();
+            ctx.moveTo(-width*0.2 + (bgOffset * 0.2) % (width*1.5), height * 0.6);
+            ctx.lineTo(width * 0.15 + (bgOffset * 0.2) % (width*1.5), height * 0.42);
+            ctx.lineTo(width * 0.45 + (bgOffset * 0.2) % (width*1.5), height * 0.6);
+            ctx.fill();
+        }
+
+        function drawRoadside() {
+            // Grass
+            ctx.fillStyle = '#1e4a1e';
+            ctx.fillRect(0, height * 0.72, width, height);
+
+            // Road
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, height * 0.78, width, height * 0.22);
+
+            // Road lines
+            ctx.strokeStyle = '#ffeb3b';
+            ctx.lineWidth = 8;
+            for (let i = -2; i < 15; i++) {
+                const x = (i * 120 + (roadOffset * 8) % 120) - 60;
+                ctx.beginPath();
+                ctx.moveTo(x, height * 0.85);
+                ctx.lineTo(x + 60, height * 0.85);
+                ctx.stroke();
+            }
+        }
+
+        function drawCar() {
+            const carX = width * 0.25;
+            const carY = height * 0.68;
+
+            // Subtle bounce
+            const bounce = Math.sin(time * 0.15) * 3;
+
+            // Car body
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(carX + 20, carY + bounce - 35, 140, 45); // main body
+            ctx.fillRect(carX + 50, carY + bounce - 60, 75, 30);   // cabin
+
+            // Windows
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(carX + 58, carY + bounce - 55, 28, 22);
+            ctx.fillRect(carX + 90, carY + bounce - 55, 28, 22);
+
+            // Wheels
+            wheelRotation += carSpeed * 0.08;
+
+            // Rear wheel
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.arc(carX + 45, carY + bounce + 15, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ecf0f1';
+            ctx.beginPath();
+            ctx.arc(carX + 45, carY + bounce + 15, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Front wheel
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.arc(carX + 125, carY + bounce + 15, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ecf0f1';
+            ctx.beginPath();
+            ctx.arc(carX + 125, carY + bounce + 15, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wheel spokes / rotation effect
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 4;
+            for (let i = 0; i < 8; i++) {
+                const angle = wheelRotation + (i * Math.PI / 4);
+                ctx.beginPath();
+                ctx.moveTo(carX + 45, carY + bounce + 15);
+                ctx.lineTo(carX + 45 + Math.cos(angle) * 18, carY + bounce + 15 + Math.sin(angle) * 18);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(carX + 125, carY + bounce + 15);
+                ctx.lineTo(carX + 125 + Math.cos(angle) * 18, carY + bounce + 15 + Math.sin(angle) * 18);
+                ctx.stroke();
+            }
+        }
+
+        function drawTrees() {
+            // Simple repeating trees at medium speed
+            ctx.fillStyle = '#1e3a1e';
+            for (let i = -1; i < 8; i++) {
+                const x = (i * 180 + midOffset) % (width * 1.3) - 80;
+                const treeY = height * 0.55;
+
+                // Trunk
+                ctx.fillStyle = '#3f2a1e';
+                ctx.fillRect(x + 30, treeY + 20, 12, 45);
+
+                // Foliage
+                ctx.fillStyle = '#1e4a1e';
+                ctx.beginPath();
+                ctx.ellipse(x + 36, treeY + 25, 35, 28, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(x + 36, treeY + 8, 28, 22, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            time += 1;
+
+            // Update offsets (parallax)
+            bgOffset -= carSpeed * 0.4;
+            midOffset -= carSpeed * 1.1;
+            fgOffset -= carSpeed * 2.2;
+            roadOffset -= carSpeed * 5;
+
+            drawSky();
+            drawMountains();
+            drawTrees();
+            drawRoadside();
+            drawCar();
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        console.log('%cCar Driving Simulation loaded successfully!', 'color: #e74c3c; font-size: 16px;');
+    </script>
+</body>
+</html>
