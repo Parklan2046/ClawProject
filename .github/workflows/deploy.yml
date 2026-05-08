@@ -1,0 +1,35 @@
+name: Deploy to DigitalOcean Droplet
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to DigitalOcean Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USERNAME }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: 22
+          script: |
+            echo "🚀 Starting deployment..."
+
+            # Change this to your actual project folder on the server
+            cd /var/www/clawproject
+
+            git pull origin main
+
+            echo "✅ Code updated successfully at $(date)"
+
+            # Add any extra commands here (example):
+            # sudo systemctl restart nginx
+            # pm2 restart clawproject
+            # docker compose up -d --build
