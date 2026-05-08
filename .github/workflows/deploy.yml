@@ -1,4 +1,4 @@
-name: Deploy to DigitalOcean Droplet
+name: Deploy to DigitalOcean
 
 on:
   push:
@@ -12,15 +12,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to DigitalOcean Droplet
+      - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USERNAME }}
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          port: 22
+          password: ${{ secrets.DROPLET_PASSWORD }}
           script: |
             echo "🚀 Starting deployment..."
             cd /var/www/clawproject
-            git pull origin main || echo "Failed to pull"
-            echo "✅ Code updated at $(date)"
+            git pull origin main
+            echo "✅ Code updated"
+            echo "📋 Current files:"
+            ls -la
+            echo "Deployment completed at $(date)"
