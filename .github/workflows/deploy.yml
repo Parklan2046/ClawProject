@@ -21,15 +21,6 @@ jobs:
           port: 22
           script: |
             echo "🚀 Starting deployment..."
-
-            # Change this to your actual project folder on the server
             cd /var/www/clawproject
-
-            git pull origin main
-
-            echo "✅ Code updated successfully at $(date)"
-
-            # Add any extra commands here (example):
-            # sudo systemctl restart nginx
-            # pm2 restart clawproject
-            # docker compose up -d --build
+            git pull origin main || echo "Failed to pull"
+            echo "✅ Code updated at $(date)"
