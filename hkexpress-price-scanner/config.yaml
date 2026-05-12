@@ -1,54 +1,43 @@
-# HKExpress Price Scanner Configuration
+# HKExpress Price Scanner Configuration - Focused Scan
+# Tracking specific HKExpress flights
+
+from: HKG  # Default origin
 
 routes:
   - from: HKG
-    to: NRT
-    name: "HKG → Tokyo (Narita)"
-  - from: HKG
-    to: KIX
-    name: "HKG → Osaka (Kansai)"
-  - from: HKG
-    to: ICN
-    name: "HKG → Seoul (Incheon)"
-  - from: HKG
-    to: BKK
-    name: "HKG → Bangkok"
-  - from: HKG
-    to: TPE
-    name: "HKG → Taipei"
+    to: NGO
+    name: "HKG → Nagoya"
+    flights: "UO690"
+    dates:
+      - "2026-08-07"
+      - "2026-08-08"
+    threshold: 1200
+
+  - from: NRT
+    to: HKG
+    name: "Tokyo → Hong Kong"
+    flights: "UO871 / UO647 / UO651 / UO653"
+    dates:
+      - "2026-08-15"
+      - "2026-08-16"
+      - "2026-08-17"
+    threshold: 1500
 
 scanner:
   headless: true
-  days_ahead: 7           # Per-scan date count (practical limit)
   max_retries: 2
-  request_delay_sec: 3    # Delay between searches to be polite
+  request_delay_sec: 3
 
 database:
   path: "/opt/hkexpress-scanner/prices.db"
 
 scheduler:
-  interval_hours: 6       # Scan every 6 hours
-  jitter_minutes: 15      # Random delay to avoid detection
+  interval_hours: 1
 
 notifications:
   telegram:
     enabled: true
-    chat_id: "811104510"  # Your Telegram ID
-  email:
-    enabled: false
-    smtp_host: ""
-    smtp_port: 587
-    from_addr: ""
-    to_addr: ""
-    password: ""
-
-# Price drop thresholds (HKD) — notify if price falls below
-thresholds:
-  "HKG-NRT": 800
-  "HKG-KIX": 700
-  "HKG-ICN": 900
-  "HKG-BKK": 600
-  "HKG-TPE": 500
+    chat_id: "811104510"
 
 report:
   output_path: "/var/www/on9claw/hkexpress/index.html"

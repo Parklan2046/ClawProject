@@ -79,11 +79,13 @@ async def scan_routes(config: dict, route_filter: str = None,
 
     # If --to is specified, override routes to just that destination
     if dest:
-        from_airport = "HKG"
+        from_airport = config.get("from", "HKG")
         routes = [{
             "from": from_airport,
             "to": dest.upper(),
-            "name": f"HKG \u2192 {dest.upper()}"
+            "name": f"{from_airport} \u2192 {dest.upper()}",
+            "flights": "all",
+            "dates": None
         }]
 
     try:
@@ -95,13 +97,22 @@ async def scan_routes(config: dict, route_filter: str = None,
             if route_filter and rkey != route_filter:
                 continue
 
-            logger.info(f"Scanning: {route['name']} ({rkey})")
-            results = await scraper.get_price_calendar(
-                route["from"], route["to"], start_date, days_ahead
-            )
+            # Get dates: explicit list or computed from today
+            route_dates = route.get("dates")
+            if not route_dates:
+                route_dates = [start_date]
+                for i in range(1, days_ahead):
+                    d = datetime.strptime(start_date, "%Y-%m-%d").date() + timedelta(days=i)
+                    route_dates.append(d.strftime("%Y-%m-%d"))
+
+            flights_label = route.get("flights", "all")
+            logger.info(f"Scanning: {route['name']} ({rkey}) [{flights_label}]")
 
             prices_found = 0
-            for flight_date, price in results.items():
+            for flight_date in route_dates:
+                price = await scraper.search_flight_price(
+                    route["from"], route["to"], flight_date
+                )
                 if price is not None:
                     prices_found += 1
                     prev_price = db.get_previous_price(
@@ -111,14 +122,13 @@ async def scan_routes(config: dict, route_filter: str = None,
                         route["from"], route["to"], flight_date, price
                     )
 
-                    # Check for price drops
-                    threshold = thresholds.get(rkey)
+                    # Price drop detection
+                    threshold = thresholds.get(rkey) or route.get("threshold")
                     if prev_price and price < prev_price:
                         drop_pct = ((prev_price - price) / prev_price) * 100
                         logger.info(
-                            f"  📉 PRICE DROP: {route['name']} {flight_date} "
-                            f"HK${prev_price:.0f} → HK${price:.0f} "
-                            f"({drop_pct:.1f}%)"
+                            f"  📉 DROP: {route['name']} {flight_date} "
+                            f"HK${prev_price:.0f} → HK${price:.0f} ({drop_pct:.1f}%)"
                         )
                         notifier.notify_price_drop(
                             route["name"], flight_date, prev_price, price,
@@ -126,9 +136,8 @@ async def scan_routes(config: dict, route_filter: str = None,
                         )
                     elif threshold and price <= threshold:
                         logger.info(
-                            f"  🎯 BELOW THRESHOLD: {route['name']} "
-                            f"{flight_date} HK${price:.0f} "
-                            f"(threshold: HK${threshold:.0f})"
+                            f"  🎯 BELOW: {route['name']} {flight_date} "
+                            f"HK${price:.0f}"
                         )
                         notifier.notify_price_drop(
                             route["name"], flight_date, prev_price, price,
@@ -136,14 +145,13 @@ async def scan_routes(config: dict, route_filter: str = None,
                         )
 
             logger.info(
-                f"  Done: {route['name']} — {prices_found} prices found "
-                f"across {len(results)} dates"
+                f"  Done: {route['name']} — {prices_found}/{len(route_dates)} dates"
             )
 
             # Brief summary if prices found
             if prices_found > 0:
                 notifier.notify_scan_complete(
-                    route["name"], prices_found, len(results)
+                    route["name"], prices_found, len(route_dates)
                 )
 
     except Exception as e:

@@ -16,8 +16,9 @@ def generate_report(db, config, output_path: str):
     routes_data = []
     for route in routes:
         rkey = f"{route['from']}-{route['to']}"
+        flights_label = route.get("flights", "")
         prices = db.get_latest_prices(route["from"], route["to"], limit=30)
-        threshold = thresholds.get(rkey)
+        threshold = thresholds.get(rkey) or route.get("threshold")
 
         # Calculate stats
         valid_prices = [p for p in prices if p.get("lowest_price")]
@@ -33,6 +34,7 @@ def generate_report(db, config, output_path: str):
             "from": route["from"],
             "to": route["to"],
             "key": rkey,
+            "flights": flights_label,
             "threshold": threshold,
             "stats": stats,
             "prices": [{
@@ -195,7 +197,7 @@ footer {{
         html += f"""
 <div class="card">
   <h2>{rd['name']}</h2>
-  <div class="route-code">{rd['key']}</div>
+  <div class="route-code">{rd['key']}{" · " + rd['flights'] if rd.get('flights') else ""}</div>
   <div class="stats">
     <div class="stat"><div class="stat-label">Lowest</div><div class="stat-value {low_cls}">{f"HK${s['min']:,.0f}" if s['min'] else '—'}</div></div>
     <div class="stat"><div class="stat-label">Avg</div><div class="stat-value">{f"HK${s['avg']:,.0f}" if s['avg'] else '—'}</div></div>
