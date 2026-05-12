@@ -49,3 +49,6 @@ thresholds:
   "HKG-ICN": 900
   "HKG-BKK": 600
   "HKG-TPE": 500
+
+report:
+  output_path: "/var/www/on9claw/hkexpress/index.html"

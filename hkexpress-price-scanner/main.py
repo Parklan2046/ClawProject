@@ -22,6 +22,7 @@ from database import PriceDatabase
 from scraper import HKExpressScraper
 from notifier import Notifier
 from scheduler import ScanScheduler
+from report import generate_report
 
 logging.basicConfig(
     level=logging.INFO,
@@ -129,6 +130,16 @@ async def scan_routes(config: dict, route_filter: str = None):
     finally:
         await scraper.stop()
         logger.info("Scraper stopped")
+
+    # Generate dashboard
+    try:
+        report_path = config.get("report", {}).get(
+            "output_path", "/var/www/on9claw/hkexpress/index.html"
+        )
+        generate_report(db, config, report_path)
+        logger.info(f"Dashboard written to {report_path}")
+    except Exception as e:
+        logger.error(f"Report generation failed: {e}")
 
 
 def show_history(config: dict, route_filter: str = None):
