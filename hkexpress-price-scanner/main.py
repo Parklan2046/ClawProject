@@ -40,7 +40,9 @@ def load_config(path: str = None) -> dict:
         return yaml.safe_load(f)
 
 
-async def scan_routes(config: dict, route_filter: str = None):
+async def scan_routes(config: dict, route_filter: str = None,
+                     dest: str = None, from_date: str = None,
+                     to_date: str = None):
     """Scan all configured routes for flight prices."""
     scraper = HKExpressScraper(
         headless=config.get("scanner", {}).get("headless", True),
@@ -61,8 +63,28 @@ async def scan_routes(config: dict, route_filter: str = None):
 
     routes = config.get("routes", [])
     thresholds = config.get("thresholds", {})
-    today = date.today().strftime("%Y-%m-%d")
-    days_ahead = config.get("scanner", {}).get("days_ahead", 90)
+    
+    # Date range: from_date defaults to today, to_date defaults to from_date + days_ahead
+    if from_date:
+        start_date = from_date
+    else:
+        start_date = date.today().strftime("%Y-%m-%d")
+    
+    if to_date:
+        end_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+        days_ahead = (end_date_obj - start_date_obj).days + 1
+    else:
+        days_ahead = config.get("scanner", {}).get("days_ahead", 7)
+
+    # If --to is specified, override routes to just that destination
+    if dest:
+        from_airport = "HKG"
+        routes = [{
+            "from": from_airport,
+            "to": dest.upper(),
+            "name": f"HKG \u2192 {dest.upper()}"
+        }]
 
     try:
         await scraper.start()
@@ -75,7 +97,7 @@ async def scan_routes(config: dict, route_filter: str = None):
 
             logger.info(f"Scanning: {route['name']} ({rkey})")
             results = await scraper.get_price_calendar(
-                route["from"], route["to"], today, days_ahead
+                route["from"], route["to"], start_date, days_ahead
             )
 
             prices_found = 0
@@ -202,6 +224,9 @@ def main():
 
     scan_p = sub.add_parser("scan", help="Run a one-time scan")
     scan_p.add_argument("--route", type=str, help="Filter by route (e.g. HKG-NRT)")
+    scan_p.add_argument("--to", type=str, help="Destination airport code (e.g. NRT, TPE)")
+    scan_p.add_argument("--from-date", type=str, help="Start date YYYY-MM-DD (default: today)")
+    scan_p.add_argument("--to-date", type=str, help="End date YYYY-MM-DD (default: today+N days)")
     scan_p.add_argument("--config", type=str, help="Path to config.yaml")
 
     sub.add_parser("serve", help="Start the scheduler")
@@ -221,7 +246,12 @@ def main():
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
 
     if args.command == "scan":
-        asyncio.run(scan_routes(config, args.route))
+        asyncio.run(scan_routes(
+            config, args.route,
+            dest=args.to,
+            from_date=args.from_date,
+            to_date=args.to_date
+        ))
     elif args.command == "serve":
         asyncio.run(serve(config))
     elif args.command == "history":
