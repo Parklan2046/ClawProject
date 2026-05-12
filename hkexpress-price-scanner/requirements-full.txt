@@ -1,0 +1,6 @@
+playwright
+pandas
+sqlite3
+python-dotenv
+requests
+beautifulsoup4
