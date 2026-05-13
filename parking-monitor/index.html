@@ -58,8 +58,7 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* Refresh timer */
-.timer{position:fixed;bottom:16px;left:16px;background:rgba(17,18,36,.96);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:49;box-shadow:0 6px 20px rgba(0,0,0,.3)}
-.timer.hidden{display:none}
+.timer{position:fixed;top:16px;right:16px;background:rgba(17,18,36,.96);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .timer-ring{position:relative;width:32px;height:32px;flex-shrink:0}
 .timer-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
 .timer-ring .num{font-size:.85rem;font-weight:900;color:var(--accent);position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
@@ -90,7 +89,7 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 <div id="loading" class="loading"><div class="spinner"></div><p>載入中...</p></div>
 <div id="grid" class="grid" style="display:none"></div>
 
-<div id="timer" class="timer hidden">
+<div id="timer" class="timer" style="display:none">
   <div class="timer-ring">
     <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2.5"/><circle id="tArc" cx="16" cy="16" r="13" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="81.68" stroke-dashoffset="0" stroke-linecap="round"/></svg>
     <span id="tNum" class="num">10</span>
@@ -120,7 +119,9 @@ var refreshTimer=null,cdTimer=null,cdVal=10;
 function startCD(){
   cdVal=10;
   var timer=document.getElementById('timer'), num=document.getElementById('tNum'), arc=document.getElementById('tArc');
-  timer.classList.remove('hidden'); num.textContent=cdVal; arc.style.strokeDashoffset='0'; arc.style.stroke='var(--accent)';
+  if(!timer||!num||!arc)return;
+  console.log('startCD: showing timer');
+  timer.style.display='flex'; num.textContent=cdVal; arc.style.strokeDashoffset='0'; arc.style.stroke='var(--accent)';
   if(cdTimer)clearInterval(cdTimer);
   cdTimer=setInterval(function(){
     cdVal--; if(cdVal<0){num.textContent='0';return;}
