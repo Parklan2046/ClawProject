@@ -14,6 +14,9 @@ def generate_report(db, config, output_path: str):
 
     # Build route data
     routes_data = []
+    route_summaries = {f"{s['route_from']}-{s['route_to']}": s for s in db.get_routes_summary()}
+    
+    latest_scan = None
     for route in routes:
         rkey = f"{route['from']}-{route['to']}"
         flights_label = route.get("flights", "")
@@ -30,6 +33,17 @@ def generate_report(db, config, output_path: str):
             "count": len(valid_prices),
         }
 
+        summary = route_summaries.get(rkey, {})
+        last_scan_utc = summary.get("last_scan", "")
+        last_scan_hkt = ""
+        if last_scan_utc:
+            try:
+                dt = datetime.strptime(str(last_scan_utc), "%Y-%m-%d %H:%M:%S")
+                last_scan_hkt = (dt + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M HKT")
+                if latest_scan is None or dt > latest_scan:
+                    latest_scan = dt
+            except: pass
+
         routes_data.append({
             "name": route["name"],
             "from": route["from"],
@@ -37,6 +51,7 @@ def generate_report(db, config, output_path: str):
             "key": rkey,
             "flights": flights_label,
             "note": note,
+            "last_scan": last_scan_hkt,
             "threshold": threshold,
             "stats": stats,
             "prices": [{
@@ -46,7 +61,10 @@ def generate_report(db, config, output_path: str):
             } for p in prices]
         })
 
-    now = (datetime.utcnow() + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M HKT")
+    if latest_scan:
+        now = (latest_scan + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M HKT")
+    else:
+        now = (datetime.utcnow() + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M HKT")
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -110,8 +128,13 @@ h1 {{
 .flight-note {{
   color: var(--blue);
   font-size: 0.8em;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   font-style: italic;
+}}
+.last-scan {{
+  color: var(--dim);
+  font-size: 0.75em;
+  margin-bottom: 12px;
 }}
 .stats {{
   display: flex;
@@ -185,7 +208,7 @@ footer {{
 <body>
 
 <h1>✈️ HKExpress Price Scanner</h1>
-<p class="subtitle">Prices via Google Flights · Updated: {now} · Scans every 30 min</p>
+<p class="subtitle">Prices via Google Flights · Last scanned: {now} · Every 30 min</p>
 
 <div class="grid">
 """
@@ -207,6 +230,7 @@ footer {{
   <h2>{rd['name']}</h2>
   <div class="route-code">{rd['key']}{" · " + rd.get('flights','') if rd.get('flights') and rd.get('flights') != 'all' else ""}</div>
   {"<div class='flight-note'>" + rd['note'] + "</div>" if rd.get('note') else ""}
+  {"<div class='last-scan'>🕐 Last scanned: " + rd['last_scan'] + "</div>" if rd.get('last_scan') else ""}
   <div class="stats">
     <div class="stat"><div class="stat-label">Lowest</div><div class="stat-value {low_cls}">{f"HK${s['min']:,.0f}" if s['min'] else '—'}</div></div>
     <div class="stat"><div class="stat-label">Avg</div><div class="stat-value">{f"HK${s['avg']:,.0f}" if s['avg'] else '—'}</div></div>
