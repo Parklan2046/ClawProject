@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>香園圍停車場監察</title>
+<style>
+:root {
+  --bg: #0f0f1a; --card: #1a1a2e; --accent: #4de8ff;
+  --text: #eaeaea; --dim: #8888aa;
+  --green: #00d68f; --yellow: #ffaa00; --red: #e94560; --blue: #00b4d8;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh;
+}
+h1 { text-align:center; font-size:1.6em; margin-bottom:4px; color: var(--accent); }
+.subtitle { text-align:center; color:var(--dim); margin-bottom:20px; font-size:.88em; }
+.controls {
+  display:flex; justify-content:center; gap:10px; margin-bottom:24px; flex-wrap:wrap;
+}
+.controls select, .controls button {
+  background:var(--card); color:var(--text); border:1px solid rgba(255,255,255,.1);
+  padding:10px 16px; border-radius:10px; font-size:.9em; cursor:pointer;
+}
+.controls button {
+  background:linear-gradient(135deg, var(--accent), #0077b6);
+  border:none; font-weight:700; color:#000;
+}
+.controls button:hover { opacity:.85; }
+.loading { text-align:center; padding:40px; color:var(--dim); }
+.grid { max-width:900px; margin:0 auto; }
+.day-card {
+  background:var(--card); border-radius:12px; padding:16px 20px;
+  margin-bottom:12px; border:1px solid rgba(255,255,255,.06);
+  display:grid; grid-template-columns:120px 1fr; gap:16px; align-items:start;
+}
+.day-left { text-align:center; }
+.day-name { font-size:.8em; color:var(--dim); text-transform:uppercase; }
+.day-date { font-size:1.3em; font-weight:700; }
+.day-label { font-size:.75em; color:var(--dim); }
+.day-right { min-width:0; }
+.badge {
+  display:inline-block; padding:3px 10px; border-radius:20px;
+  font-size:.72em; font-weight:700; letter-spacing:.5px; margin-bottom:8px;
+}
+.badge-open { background:rgba(0,214,143,.15); color:var(--green); }
+.badge-available { background:rgba(77,232,255,.12); color:var(--accent); }
+.badge-limited { background:rgba(255,170,0,.15); color:var(--yellow); }
+.badge-full { background:rgba(233,69,96,.15); color:var(--red); }
+.badge-error { background:rgba(136,136,170,.15); color:var(--dim); }
+.windows {
+  display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;
+}
+.window-block {
+  background:rgba(0,214,143,.08); border:1px solid rgba(0,214,143,.2);
+  border-radius:8px; padding:6px 12px; font-size:.85em; white-space:nowrap;
+}
+.window-block .time { font-weight:700; color:var(--green); }
+.window-block .spaces { font-size:.75em; color:var(--dim); margin-left:4px; }
+.no-windows { color:var(--dim); font-size:.85em; }
+.summary {
+  text-align:center; margin-top:20px; padding:12px; 
+  background:var(--card); border-radius:12px; max-width:900px; margin-left:auto; margin-right:auto;
+}
+.summary .stat { display:inline-block; margin:0 16px; }
+.summary .stat-val { font-size:1.3em; font-weight:700; }
+.summary .stat-label { font-size:.75em; color:var(--dim); }
+.last-updated { text-align:center; color:var(--dim); font-size:.75em; margin-top:8px; }
+.footer { text-align:center; color:var(--dim); font-size:.75em; margin-top:24px; }
+</style>
+</head>
+<body>
+
+<h1>🅿️ 香園圍停車場</h1>
+<p class="subtitle">Heung Yuen Wai Border Parking · 可預約時段一覽</p>
+
+<div class="controls">
+  <select id="carType" onchange="refresh()">
+    <option value="private">私家車</option>
+    <option value="goods">客貨車</option>
+    <option value="motorcycle">電單車</option>
+    <option value="disabled_blue">傷殘人士(藍證)</option>
+    <option value="disabled_grey">接載殘疾人士(灰證)</option>
+  </select>
+  <button onclick="refresh()">🔄 重新整理</button>
+</div>
+
+<div id="loading" class="loading">載入中...</div>
+<div id="grid" class="grid" style="display:none"></div>
+<div id="summary" class="summary" style="display:none"></div>
+<div id="updated" class="last-updated" style="display:none"></div>
+
+<div class="footer">Parklan Clawhub · <a href="/" style="color:var(--blue)">← Back</a></div>
+
+<script>
+const STATUS_MAP = {
+  open: { cls:'badge-open', label:'全天開放' },
+  available: { cls:'badge-available', label:'大部份開放' },
+  limited: { cls:'badge-limited', label:'少量時段' },
+  full: { cls:'badge-full', label:'已滿' },
+  error: { cls:'badge-error', label:'無法載入' },
+};
+
+async function refresh() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('grid').style.display = 'none';
+  
+  const carType = document.getElementById('carType').value;
+  const resp = await fetch(`/parking/api/availability?days=7&type=${carType}`);
+  const data = await resp.json();
+  
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('grid').style.display = 'block';
+  
+  if (!data.ok) {
+    document.getElementById('grid').innerHTML = `<p class="loading">❌ ${data.error}</p>`;
+    return;
+  }
+  
+  renderGrid(data);
+  renderSummary(data);
+}
+
+function renderGrid(data) {
+  const grid = document.getElementById('grid');
+  const now = new Date();
+  
+  grid.innerHTML = data.days.map((day, i) => {
+    const isToday = i === 0;
+    const status = STATUS_MAP[day.status] || STATUS_MAP.error;
+    const windows = day.windows || [];
+    
+    let windowsHTML = '';
+    if (day.status === 'error') {
+      windowsHTML = `<div class="no-windows">⚠️ ${day.error || '無法載入'}</div>`;
+    } else if (windows.length === 0) {
+      windowsHTML = '<div class="no-windows">❌ 全日已滿</div>';
+    } else if (day.full_day_available) {
+      windowsHTML = '<div class="window-block"><span class="time">全日開放</span> <span class="spaces">共 ' + day.quota + ' 個車位</span></div>';
+    } else {
+      windowsHTML = '<div class="windows">' + windows.map(w => 
+        `<div class="window-block"><span class="time">${w.start} – ${w.end}</span> <span class="spaces">至少 ${w.spaces} 位</span></div>`
+      ).join('') + '</div>';
+    }
+    
+    return `
+      <div class="day-card" style="${isToday ? 'border-color: rgba(77,232,255,.25)' : ''}">
+        <div class="day-left">
+          <div class="day-name">${day.day_name} ${isToday ? '⬅ 今日' : ''}</div>
+          <div class="day-date">${day.day_label}</div>
+        </div>
+        <div class="day-right">
+          <span class="badge ${status.cls}">${status.label}</span>
+          ${day.available_count !== undefined ? `<span style="font-size:.75em;color:var(--dim);margin-left:8px">${day.available_count}/${day.total_slots} 時段可用</span>` : ''}
+          ${windowsHTML}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSummary(data) {
+  const days = data.days.filter(d => d.status !== 'error');
+  const fullyOpen = days.filter(d => d.full_day_available).length;
+  const limited = days.filter(d => d.status === 'limited').length;
+  const full = days.filter(d => d.status === 'full').length;
+  
+  document.getElementById('summary').style.display = 'block';
+  document.getElementById('summary').innerHTML = `
+    <div class="stat"><div class="stat-val" style="color:var(--green)">${fullyOpen}</div><div class="stat-label">完全開放</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--accent)">${days.length - fullyOpen - limited - full}</div><div class="stat-label">大部份開放</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--yellow)">${limited}</div><div class="stat-label">少量時段</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--red)">${full}</div><div class="stat-label">已滿</div></div>
+  `;
+  
+  document.getElementById('updated').style.display = 'block';
+  const hkt = new Date(now.getTime() + 8*3600000);
+  document.getElementById('updated').textContent = `最後更新: ${hkt.toLocaleString('zh-HK', {timeZone:'Asia/Hong_Kong'})} HKT`;
+}
+
+document.addEventListener('DOMContentLoaded', refresh);
+</script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+#!/usr/bin/env python3
+"""
+Heung Yuen Wai Parking Monitor
+Consolidates 30-min slot data into readable booking windows.
+"""
+
+import json
+import os
+import requests
+from datetime import date, timedelta
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+HOST = os.getenv("PARKING_HOST", "127.0.0.1")
+PORT = int(os.getenv("PARKING_PORT", "8774"))
+API_BASE = "https://hywparking.com.hk"
+
+# Vehicle types mapping
+CAR_TYPES = {
+    "private": {"id": 1, "zone": "1", "name": "私家車"},
+    "disabled_grey": {"id": 5, "zone": "1", "name": "司機接載殘疾人士(灰證)"},
+    "disabled_blue": {"id": 6, "zone": "1", "name": "傷殘人士泊車許可證(藍證)"},
+    "motorcycle": {"id": 3, "zone": "1", "name": "電單車"},
+    "goods": {"id": 4, "zone": "2", "name": "客貨車"},
+}
+
+
+class ParkingAPI:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "Accept-Language": "zh-HK,zh;q=0.9",
+        })
+        self._init_session()
+
+    def _init_session(self):
+        self.session.get(f"{API_BASE}/car-park/carParkBooking?lang=zh_TW", timeout=15)
+
+    def get_slots(self, target_date: str, zone: str = "1", cartype: int = 1):
+        """Get available parking slots for a specific date."""
+        r = self.session.get(
+            f"{API_BASE}/bookingApi/available-space",
+            params={"zone": zone, "cartype": cartype, "in": target_date, "lang": "zh_TW"},
+            timeout=15
+        )
+        data = r.json()
+        if not data.get("success"):
+            return {"error": data.get("message", "API error")}
+
+        slots = data["data"]["AvailableSpaces"]
+        return self._consolidate_slots(slots, target_date)
+
+    def _consolidate_slots(self, slots: list, target_date: str = None) -> dict:
+        """Merge consecutive available slots into booking windows for one day."""
+        if not slots:
+            return {"quota": 0, "windows": [], "full_day_available": False}
+
+        quota = slots[0]["Quota"]
+
+        # Filter to only slots for the target date
+        if target_date:
+            # target_date is like "2026/05/13", slot TimeSlot is "2026-05-13 00:00"
+            date_filter = target_date.replace("/", "-")
+            slots = [s for s in slots if s["TimeSlot"].startswith(date_filter)]
+
+        if not slots:
+            return {"quota": quota, "total_slots": 0, "available_count": 0, 
+                    "status": "full", "windows": [], "full_day_available": False}
+
+        # Build list of (time_str, available_bool)
+        times = []
+        for s in slots:
+            available = s["Spaces"] > 0 if "Spaces" in s else False
+            times.append((s["TimeSlot"], available, s["Spaces"]))
+
+        # Merge consecutive available blocks
+        windows = []
+        current_start = None
+        current_end = None
+        min_spaces_in_window = quota
+
+        for time_str, available, spaces in times:
+            if available:
+                if current_start is None:
+                    current_start = time_str
+                    min_spaces_in_window = spaces
+                current_end = time_str
+                min_spaces_in_window = min(min_spaces_in_window, spaces)
+            else:
+                if current_start is not None:
+                    windows.append({
+                        "start": current_start[-5:],  # HH:MM
+                        "end": self._add_30min(current_end),
+                        "spaces": min_spaces_in_window,
+                    })
+                    current_start = None
+                    min_spaces_in_window = quota
+
+        # Don't forget the last window
+        if current_start is not None:
+            windows.append({
+                "start": current_start[-5:],
+                "end": self._add_30min(current_end),
+                "spaces": min_spaces_in_window,
+            })
+
+        # Calculate status
+        total_slots = len(slots)
+        available_count = sum(1 for _, avail, _ in times if avail)
+
+        status = "full"
+        if available_count == total_slots:
+            status = "open"  # All slots available
+        elif available_count > total_slots * 0.5:
+            status = "available"  # Most slots available
+        elif available_count > 0:
+            status = "limited"  # Some slots available
+
+        return {
+            "quota": quota,
+            "total_slots": total_slots,
+            "available_count": available_count,
+            "status": status,
+            "windows": windows,
+            "full_day_available": available_count == total_slots,
+        }
+
+    def _add_30min(self, time_str: str) -> str:
+        """Add 30 minutes to a time slot string."""
+        if " " in time_str:
+            time_str = time_str.split(" ")[1]
+        h, m = map(int, time_str.split(":"))
+        m += 30
+        if m >= 60:
+            h += 1
+            m -= 60
+        return f"{h:02d}:{m:02d}"
+
+
+api = ParkingAPI()
+
+
+def send_json(h, payload, status=200):
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    h.send_response(status)
+    h.send_header("Content-Type", "application/json; charset=utf-8")
+    h.send_header("Content-Length", str(len(body)))
+    h.send_header("Access-Control-Allow-Origin", "*")
+    h.end_headers()
+    h.wfile.write(body)
+
+
+def send_html(h, path):
+    base = os.path.dirname(__file__)
+    filepath = os.path.join(base, path)
+    if not os.path.exists(filepath):
+        h.send_response(404)
+        h.end_headers()
+        return
+    with open(filepath, "rb") as f:
+        data = f.read()
+    h.send_response(200)
+    h.send_header("Content-Type", "text/html; charset=utf-8")
+    h.send_header("Content-Length", str(len(data)))
+    h.end_headers()
+    h.wfile.write(data)
+
+
+class Handler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    def do_GET(self):
+        path = self.path.rstrip("/").split("?")[0]
+        params = {}
+        if "?" in self.path:
+            from urllib.parse import parse_qs, urlparse
+            params = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+
+        # Dashboard page
+        if path in ("", "/parking"):
+            return send_html(self, "index.html")
+
+        # API: Get availability for a single date
+        if path == "/parking/api/slots":
+            target = params.get("date", date.today().strftime("%Y/%m/%d"))
+            car_type = params.get("type", "private")
+            ct = CAR_TYPES.get(car_type, CAR_TYPES["private"])
+
+            try:
+                result = api.get_slots(target, ct["zone"], ct["id"])
+                result["date"] = target
+                result["vehicle"] = ct["name"]
+                result["car_type_key"] = car_type
+                return send_json(self, {"ok": True, **result})
+            except Exception as e:
+                return send_json(self, {"ok": False, "error": str(e)}, 500)
+
+        # API: Get availability for a date range
+        if path == "/parking/api/availability":
+            days = int(params.get("days", "7"))
+            car_type = params.get("type", "private")
+            ct = CAR_TYPES.get(car_type, CAR_TYPES["private"])
+
+            results = []
+            today = date.today()
+            for i in range(days):
+                d = today + timedelta(days=i)
+                date_str = d.strftime("%Y/%m/%d")
+                try:
+                    day_data = api.get_slots(date_str, ct["zone"], ct["id"])
+                    day_data["date"] = date_str
+                    day_data["day_name"] = d.strftime("%a")
+                    day_data["day_label"] = d.strftime("%m月%d日")
+                    results.append(day_data)
+                except Exception as e:
+                    results.append({
+                        "date": date_str,
+                        "day_name": d.strftime("%a"),
+                        "day_label": d.strftime("%m月%d日"),
+                        "error": str(e),
+                        "status": "error",
+                    })
+
+            return send_json(self, {
+                "ok": True,
+                "vehicle": ct["name"],
+                "car_type_key": car_type,
+                "zone": ct["zone"],
+                "days": results,
+            })
+
+        return send_json(self, {"ok": False, "error": "Not found"}, 404)
+
+
+if __name__ == "__main__":
+    print(f"Parking Monitor on http://{HOST}:{PORT}")
+    HTTPServer((HOST, PORT), Handler).serve_forever()
