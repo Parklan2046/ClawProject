@@ -5,10 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>香園圍停車場監察</title>
 <style>
-:root {
-  --bg:#0f0f1a;--card:#1a1a2e;--accent:#4de8ff;--text:#eaeaea;--dim:#8888aa;
-  --green:#00d68f;--yellow:#ffaa00;--red:#e94560;--input-bg:rgba(255,255,255,.05);
-}
+:root{--bg:#0f0f1a;--card:#1a1a2e;--accent:#4de8ff;--text:#eaeaea;--dim:#8888aa;--green:#00d68f;--yellow:#ffaa00;--red:#e94560}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:20px;min-height:100vh}
 h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:var(--accent)}
@@ -30,7 +27,6 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:var(--accent)}
 .badge-available{background:rgba(77,232,255,.12);color:var(--accent)}
 .badge-limited{background:rgba(255,170,0,.15);color:var(--yellow)}
 .badge-full{background:rgba(233,69,96,.15);color:var(--red)}
-.badge-error{background:rgba(136,136,170,.15);color:var(--dim)}
 .windows{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
 .window-block{background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.2);border-radius:8px;padding:5px 10px;font-size:.82em;white-space:nowrap;cursor:pointer;transition:all .15s}
 .window-block:hover{background:rgba(0,214,143,.18);border-color:rgba(0,214,143,.4);transform:translateY(-1px)}
@@ -39,33 +35,16 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:var(--accent)}
 .full-day .time{font-weight:700;color:var(--accent)}
 .no-windows{color:var(--dim);font-size:.82em}
 
-/* Modal */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;color-scheme:dark}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;color-scheme:dark}
+.modal{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;max-width:400px;width:100%}
 .modal h2{color:var(--accent);margin-bottom:12px;font-size:1.1em}
-.modal .step{display:none}
-.modal .step.active{display:block}
-.modal .info{color:var(--dim);font-size:.82em;margin-bottom:16px;line-height:1.7}
+.modal .info{color:var(--dim);font-size:.85em;margin-bottom:20px;line-height:1.8;background:rgba(255,255,255,.03);padding:14px;border-radius:10px}
 .modal .info b{color:var(--text)}
-.modal label{display:block;font-size:.82em;color:var(--dim);margin-bottom:4px;margin-top:14px}
-.modal label:first-child{margin-top:0}
-.modal input,.modal select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#12121f;color:#fff;font-size:.9em;outline:none;-webkit-appearance:none;appearance:none}
-.modal select{background:#12121f url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e") no-repeat right 10px center/16px;padding-right:32px}
-.modal input:focus,.modal select:focus{border-color:var(--accent)}
-.modal .row{display:flex;gap:10px}
-.modal .row>*{flex:1}
-.modal .error{color:var(--red);font-size:.78em;margin-top:4px;display:none}
-.modal .price-display{background:rgba(77,232,255,.08);border:1px solid rgba(77,232,255,.15);border-radius:10px;padding:14px;text-align:center;margin-top:12px}
-.modal .price-display .amount{font-size:1.5em;font-weight:700;color:var(--accent)}
-.modal .price-display .detail{font-size:.78em;color:var(--dim);margin-top:2px}
-.modal .actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
-.modal .actions button{padding:10px 20px;border-radius:10px;border:none;font-size:.88em;font-weight:700;cursor:pointer;flex:1;min-width:100px}
+.modal .actions{display:flex;gap:10px}
+.modal .actions button,.modal .actions a{padding:12px 20px;border-radius:10px;border:none;font-size:.9em;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;text-align:center;flex:1}
 .btn-primary{background:linear-gradient(135deg,var(--accent),#0077b6);color:#000}
 .btn-primary:hover{opacity:.85}
 .btn-secondary{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.1)!important}
-.btn-secondary:hover{background:rgba(255,255,255,.1)}
-.btn-danger{background:rgba(233,69,96,.15);color:var(--red);border:1px solid rgba(233,69,96,.2)!important}
-.btn-success{background:rgba(0,214,143,.2);color:var(--green)}
 
 .notes{max-width:900px;margin:24px auto 0;padding:16px 20px;background:var(--card);border-radius:12px;border:1px solid rgba(255,255,255,.06);font-size:.78em;color:var(--dim)}
 .notes h3{color:var(--accent);font-size:.95em;margin-bottom:8px}
@@ -73,9 +52,6 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:var(--accent)}
 .last-updated{text-align:center;color:var(--dim);font-size:.72em;margin-top:12px}
 .footer{text-align:center;color:var(--dim);font-size:.72em;margin-top:20px}
 .footer a{color:var(--accent);text-decoration:none}
-.sms-timer{color:var(--yellow);font-size:.8em;margin-top:6px}
-.phone-prefix{background:var(--card);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:10px 0 0 10px;padding:10px 12px;font-size:.9em;white-space:nowrap;border-right:none}
-.phone-input{border-radius:0 10px 10px 0!important}
 </style>
 </head>
 <body>
@@ -105,31 +81,18 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:var(--accent)}
   <h3>📋 預約須知</h3>
   <ol>
     <li>泊車收費以每一小時計算，不足一小時亦作一小時收費</li>
-    <li>可於入場前 <b>30分鐘至7天</b> 預約車位</li>
-    <li>私家車/電單車：最短<b>2小時</b>，最長<b>168小時 (7天)</b> · 客貨車：最短<b>2小時</b>，最長<b>72小時 (3天)</b></li>
-    <li>可在預約入場時間最少<b>2小時前</b>更改或取消 · 行政費 HK$100</li>
-    <li>預約時須繳付全部費用 · 同一車輛不能預約連續兩個泊車時段</li>
+    <li>可於入場前 <b>30分鐘至7天</b> 預約車位 · 最短<b>2小時</b></li>
+    <li>私家車/電單車最長<b>7天</b> · 客貨車最長<b>3天</b></li>
+    <li>更改或取消：入場前2小時 · 行政費 HK$100</li>
   </ol>
 </div>
-
 <div class="footer">Parklan Clawhub · <a href="/">← Back</a></div>
 
 <script>
-const CAR_TYPES = {
-  private:{zone:'1',id:1,code:1,name:'私家車',maxDays:7},
-  goods:{zone:'2',id:4,code:4,name:'客貨車',maxDays:3},
-  motorcycle:{zone:'1',id:3,code:2,name:'電單車',maxDays:7},
-  disabled_blue:{zone:'1',id:6,code:3,name:'傷殘人士(藍證)',maxDays:7},
-  disabled_grey:{zone:'1',id:5,code:3,name:'接載殘疾人士(灰證)',maxDays:7},
-};
+const STATUS_MAP={open:{cls:'badge-open',label:'全日可訂'},available:{cls:'badge-available',label:'大部份可訂'},limited:{cls:'badge-limited',label:'少量時段'},full:{cls:'badge-full',label:'已滿'},error:{cls:'badge-error',label:'無法載入'}};
 
-const STATUS_MAP = {
-  open:{cls:'badge-open',label:'全日可訂'},
-  available:{cls:'badge-available',label:'大部份可訂'},
-  limited:{cls:'badge-limited',label:'少量時段'},
-  full:{cls:'badge-full',label:'已滿'},
-  error:{cls:'badge-error',label:'無法載入'},
-};
+const CAR_TYPE_NAMES={private:'私家車',goods:'客貨車',motorcycle:'電單車',disabled_blue:'傷殘人士(藍證)',disabled_grey:'接載殘疾人士(灰證)'};
+const CAR_TYPE_RADIOS={private:'bookRadio00',goods:'bookRadio10',motorcycle:'bookRadio02',disabled_blue:'bookRadio03',disabled_grey:'bookRadio01'};
 
 function initDates(){
   const hkt=new Date(Date.now()+8*3600000);
@@ -165,37 +128,23 @@ function renderGrid(data){
     let wh='';
     if(day.status==='error') wh=`<div class="no-windows">⚠️ ${day.error||'無法載入'}</div>`;
     else if(ws.length===0) wh='<div class="no-windows">❌ 無可預約時段</div>';
-    else if(day.full_day_available) wh=`<div class="full-day" onclick="openBooking('${day.date}','06:00','22:00',${day.quota})"><span class="time">06:00 – 22:00 全線開放</span> <span class="spaces">${day.quota} 個車位</span></div>`;
-    else wh='<div class="windows">'+ws.map(w=>`<div class="window-block" onclick="openBooking('${day.date}','${w.start}','${w.end}',${w.spaces})"><span class="time">${w.start} – ${w.end}</span> <span class="spaces">· ${w.spaces} 位</span></div>`).join('')+'</div>';
+    else if(day.full_day_available) wh=`<div class="full-day" onclick="openDialog('${day.date}','06:00','22:00',${day.quota})"><span class="time">06:00 – 22:00 全線開放</span> <span class="spaces">${day.quota} 個車位</span></div>`;
+    else wh='<div class="windows">'+ws.map(w=>`<div class="window-block" onclick="openDialog('${day.date}','${w.start}','${w.end}',${w.spaces})"><span class="time">${w.start} – ${w.end}</span> <span class="spaces">· ${w.spaces} 位</span></div>`).join('')+'</div>';
     return `<div class="day-card" style="${isToday?'border-color:rgba(77,232,255,.25)':''}"><div class="day-left"><div class="day-name">${day.day_name}${isToday?' ⬅':''}</div><div class="day-date">${day.day_label}</div></div><div class="day-right"><span class="badge ${st.cls}">${st.label}</span>${wh}</div></div>`;
   }).join('');
   document.getElementById('updated').style.display='block';
   document.getElementById('updated').textContent=`最後更新: ${new Date(Date.now()+8*3600000).toLocaleString('zh-HK',{timeZone:'Asia/Hong_Kong'})} HKT`;
 }
 
-// ====== BOOKING DIALOG ======
-let bookingState={};
-
-function timeOptions(earliest,latest){
-  const sh=parseInt(earliest.split(':')[0]), sm=parseInt(earliest.split(':')[1]);
-  const eh=parseInt(latest.split(':')[0]), em=parseInt(latest.split(':')[1]);
-  let opts='';
-  for(let h=sh;h<=eh;h++){
-    for(let m=(h===sh?sm:0);m<60;m+=30){
-      if(h===eh&&m>em)break;
-      const t=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-      opts+=`<option value="${t}">${t}</option>`;
-    }
-  }
-  return opts;
-}
-
-async function openBooking(date,winStart,winEnd,spaces){
-  const ct=CAR_TYPES[window._carType||'private'];
+function openDialog(date,winStart,winEnd,spaces){
+  const ct=window._carType||'private';
+  const ctn=CAR_TYPE_NAMES[ct]||'私家車';
+  const radio=CAR_TYPE_RADIOS[ct]||'bookRadio00';
   const parts=date.split('/');
   const displayDate=`${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`;
-
-  bookingState={date,winStart,winEnd,spaces,ct,displayDate,step:1};
+  const[sh,sm]=winStart.split(':').map(Number);
+  const[eh,em]=winEnd.split(':').map(Number);
+  const hours=eh+em/60-(sh+sm/60);
 
   const ov=document.createElement('div');
   ov.id='booking-dialog';
@@ -203,205 +152,20 @@ async function openBooking(date,winStart,winEnd,spaces){
   ov.onclick=e=>{if(e.target===ov)ov.remove()};
   ov.innerHTML=`
     <div class="modal">
-      <h2>📋 預約車位</h2>
-      <div class="info"><b>${ct.name}</b> · ${displayDate} · 可訂範圍 ${winStart}–${winEnd} (最少${spaces}位)</div>
-      <div id="step1" class="step active">
-        <label>入場時間</label>
-        <select id="enterTime">${timeOptions(winStart,winEnd)}</select>
-        <label>離場時間 (最少2小時)</label>
-        <select id="leaveTime">${timeOptions(winStart,winEnd)}</select>
-        <div id="timeError" class="error">⚠️ 最少2小時，離場必須遲過入場</div>
-        <div class="actions">
-          <button class="btn-secondary" onclick="document.getElementById('booking-dialog').remove()">取消</button>
-          <button class="btn-primary" onclick="goStep2()">下一步 →</button>
-        </div>
+      <h2>📋 預約詳情</h2>
+      <div class="info">
+        <b>車輛類別：</b>${ctn}<br>
+        <b>日期：</b>${displayDate}<br>
+        <b>時段：</b>${winStart} – ${winEnd} (${hours.toFixed(1)}小時)<br>
+        <b>剩餘車位：</b>至少 ${spaces} 個
       </div>
-      <div id="step2" class="step">
-        <div id="priceDisplay" class="price-display" style="display:none">
-          <div class="detail">預約費用</div>
-          <div class="amount" id="priceAmount">計算中...</div>
-          <div class="detail" id="priceDetail"></div>
-        </div>
-        <label>車牌號碼*</label>
-        <input id="carPlate" placeholder="例: XX1234">
-        <label>手提電話號碼*</label>
-        <div class="row"><span class="phone-prefix">+852</span><input id="phone" class="phone-input" placeholder="98765432"></div>
-        <label>電郵 (可選)</label>
-        <input id="email" placeholder="your@email.com">
-        <label>八達通卡號碼* (入場用)</label>
-        <input id="octopus" placeholder="八達通卡號碼 (9位數字)">
-        <div class="actions">
-          <button class="btn-secondary" onclick="goStep1()">← 返回</button>
-          <button class="btn-primary" onclick="sendSMS()">📱 發送驗證碼</button>
-        </div>
-      </div>
-      <div id="step3" class="step">
-        <label>驗證碼* (已發送至 +852 <span id="smsPhone"></span>)</label>
-        <input id="verifyCode" placeholder="6位數字驗證碼">
-        <div class="sms-timer" id="smsTimer"></div>
-        <div id="bookError" class="error">⚠️ <span id="bookErrorMsg"></span></div>
-        <div class="actions">
-          <button class="btn-secondary" onclick="goStep2()">← 修改資料</button>
-          <button class="btn-primary" id="btnSubmit" onclick="submitBooking()">💳 確認預約及付款</button>
-        </div>
+      <p style="color:var(--yellow);font-size:.78em;margin-bottom:16px">點擊下方按鈕前往官方網站，請自行選擇 <b>${ctn}</b> 及時段 <b>${winStart}–${winEnd}</b></p>
+      <div class="actions">
+        <a class="btn-primary" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>
+        <button class="btn-secondary" onclick="document.getElementById('booking-dialog').remove()">關閉</button>
       </div>
     </div>`;
   document.body.appendChild(ov);
-
-  // Init leave time to start+2h
-  const startVal=document.getElementById('enterTime').value;
-  const sh=parseInt(startVal.split(':')[0]);
-  const leaveH=Math.min(sh+2,22);
-  const leaveVal=`${String(leaveH).padStart(2,'0')}:00`;
-  document.getElementById('leaveTime').value=leaveVal;
-}
-
-async function goStep2(){
-  const enter=document.getElementById('enterTime').value;
-  const leave=document.getElementById('leaveTime').value;
-  const[eh,em]=enter.split(':').map(Number);
-  const[lh,lm]=leave.split(':').map(Number);
-  const dur=(lh+lm/60)-(eh+em/60);
-
-  if(dur<2){
-    document.getElementById('timeError').style.display='block';
-    return;
-  }
-  document.getElementById('timeError').style.display='none';
-  bookingState.enterTime=enter;
-  bookingState.leaveTime=leave;
-  bookingState.duration=dur;
-
-  document.getElementById('step1').classList.remove('active');
-  document.getElementById('step2').classList.add('active');
-
-  // Calculate price
-  try{
-    const r=await fetch('/parking/api/calc',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        zone:bookingState.ct.zone,
-        cartype:bookingState.ct.code,
-        in:`${bookingState.date.replace(/\//g,'-')} ${enter}`,
-        out:`${bookingState.date.replace(/\//g,'-')} ${leave}`
-      })
-    });
-    const d=await r.json();
-    document.getElementById('priceDisplay').style.display='block';
-    if(d.success){
-      bookingState.amount=d.data?.totalAmount||d.data?.amount||0;
-      document.getElementById('priceAmount').textContent=`HK$${parseFloat(bookingState.amount).toFixed(0)}`;
-      document.getElementById('priceDetail').textContent=`${dur.toFixed(1)}小時 · 每小時計算`;
-    }else{
-      document.getElementById('priceAmount').textContent='計算失敗';
-      document.getElementById('priceDetail').textContent=d.message||'';
-    }
-  }catch(e){
-    document.getElementById('priceDisplay').style.display='block';
-    document.getElementById('priceAmount').textContent='計算失敗';
-  }
-}
-
-function goStep1(){
-  document.getElementById('step2').classList.remove('active');
-  document.getElementById('step1').classList.add('active');
-}
-
-async function sendSMS(){
-  const phone=document.getElementById('phone').value.trim();
-  if(!phone||phone.length<8){alert('請輸入正確電話號碼');return}
-  const fullPhone='852'+phone;
-  try{
-    const r=await fetch('/parking/api/sendsms',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({phone:fullPhone})
-    });
-    const d=await r.json();
-    if(d.success){
-      document.getElementById('step2').classList.remove('active');
-      document.getElementById('step3').classList.add('active');
-      document.getElementById('smsPhone').textContent=phone;
-      startSMSTimer();
-    }else{
-      alert(d.message||'發送失敗，請重試');
-    }
-  }catch(e){alert('發送失敗: '+e.message)}
-}
-
-function goStep2(){
-  document.getElementById('step3').classList.remove('active');
-  document.getElementById('step2').classList.add('active');
-}
-
-function startSMSTimer(){
-  let s=120;
-  const el=document.getElementById('smsTimer');
-  const iv=setInterval(()=>{
-    el.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')} 後可重發`;
-    if(s--<=0){clearInterval(iv);el.textContent='可重新發送驗證碼'}
-  },1000);
-}
-
-async function submitBooking(){
-  const verifyCode=document.getElementById('verifyCode').value.trim();
-  const carPlate=document.getElementById('carPlate').value.trim();
-  const phone=document.getElementById('phone').value.trim();
-  const email=document.getElementById('email').value.trim();
-  const octopus=document.getElementById('octopus').value.trim();
-
-  if(!verifyCode){showBookError('請輸入驗證碼');return}
-  if(!carPlate){showBookError('請輸入車牌號碼');return}
-  if(!phone||phone.length<8){showBookError('請輸入正確電話號碼');return}
-  if(!octopus){showBookError('請輸入八達通卡號碼');return}
-
-  document.getElementById('btnSubmit').disabled=true;
-  document.getElementById('btnSubmit').textContent='提交中...';
-
-  try{
-    const r=await fetch('/parking/api/book',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        zoneCode:bookingState.ct.zone,
-        carTypeId:bookingState.ct.id,
-        carTypeCode:bookingState.ct.code,
-        enterTime:`${bookingState.date.replace(/\//g,'-')} ${bookingState.enterTime}`,
-        leaveTime:`${bookingState.date.replace(/\//g,'-')} ${bookingState.leaveTime}`,
-        phone:'852'+phone,
-        verifyCode,
-        amount:bookingState.amount||0,
-        email,
-        cardNumber:octopus,
-        entryMethod:1,
-        carPlate
-      })
-    });
-    const d=await r.json();
-    if(d.success){
-      // Redirect to payment
-      const orderNo=d.data?.orderNo||d.orderNo||'';
-      if(orderNo){
-        window.open(`https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW&order=${orderNo}`, '_blank');
-      }
-      document.getElementById('booking-dialog').remove();
-      alert('✅ 預約已建立！請在新頁面完成付款。');
-    }else{
-      showBookError(d.message||'預約失敗');
-      document.getElementById('btnSubmit').disabled=false;
-      document.getElementById('btnSubmit').textContent='💳 確認預約及付款';
-    }
-  }catch(e){
-    showBookError('網絡錯誤: '+e.message);
-    document.getElementById('btnSubmit').disabled=false;
-    document.getElementById('btnSubmit').textContent='💳 確認預約及付款';
-  }
-}
-
-function showBookError(msg){
-  document.getElementById('bookError').style.display='block';
-  document.getElementById('bookErrorMsg').textContent=msg;
 }
 
 document.addEventListener('DOMContentLoaded',refresh);
