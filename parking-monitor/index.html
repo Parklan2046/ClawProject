@@ -148,9 +148,31 @@ async function refresh(){
   document.getElementById('grid').style.display='block';
   if(!d.ok){document.getElementById('grid').innerHTML='<div class="loading"><p>❌ '+d.error+'</p></div>';return}
   render(d);
+  // Check overnight availability for days ending at 22:00
+  checkAllOvernights(d);
   // Start auto-refresh countdown
   startCD();
   refreshTimer=setTimeout(function(){refresh()},30000);
+}
+
+async function checkAllOvernights(d){
+  for(var i=0;i<d.days.length-1;i++){
+    var day=d.days[i], next=d.days[i+1];
+    if(day.status==='error'||next.status==='error')continue;
+    var lastWin=day.windows&&day.windows.length>0?day.windows[day.windows.length-1]:null;
+    if(!lastWin||lastWin.end!=='22:00')continue;
+    var ymd=day.date.replace(/\//g,'-');
+    var el=document.getElementById('overnight-'+ymd);
+    if(!el)continue;
+    el.style.display='block';
+    if(next.status==='open'||next.status==='available'){
+      el.innerHTML='<span style="color:var(--green);font-size:.72em">🌙 可過夜 → 翌日 '+next.day_label+'</span>';
+    }else if(next.status==='limited'){
+      el.innerHTML='<span style="color:var(--yellow);font-size:.72em">🌙 翌日 '+next.day_label+' 少量時段</span>';
+    }else{
+      el.innerHTML='<span style="color:var(--red);font-size:.72em">🌙 翌日 '+next.day_label+' 已滿</span>';
+    }
+  }
 }
 
 function render(d){
@@ -165,6 +187,9 @@ function render(d){
     else if(ws.length===0) wh='<div class="no-win">❌ 無可預約時段</div>';
     else if(day.full_day_available) wh=`<div class="win full-day" onclick="openDialog('${day.date}','06:00','22:00',${day.quota})"><span class="dot"></span><span class="time">06:00–22:00 全線開放</span> <span style="color:var(--dim);font-size:.75em">${day.quota}位</span></div>`;
     else wh='<div class="windows">'+ws.map(w=>`<div class="win" onclick="openDialog('${day.date}','${w.start}','${w.end}',${w.spaces})"><span class="dot"></span><span class="time">${w.start}–${w.end}</span> <span style="color:var(--dim);font-size:.75em">${w.spaces}位</span></div>`).join('')+'</div>';
+    let ymd2=day.date.replace(/\//g,'-');
+    let overnightHTML='<div id="overnight-'+ymd2+'" style="margin-top:6px;display:none"></div>';
+
     return `<div class="day-card${isToday?' today':''}">
       <div class="day-head">
         <div class="day-icon ${st.cls}">${st.icon}</div>
@@ -175,6 +200,7 @@ function render(d){
         <div class="badge ${st.cls}">${st.label}</div>
       </div>
       ${wh}
+      ${overnightHTML}
     </div>`;
   }).join('');
 }
