@@ -105,7 +105,7 @@ async def scan_routes(config: dict, route_filter: str = None,
                     d = datetime.strptime(start_date, "%Y-%m-%d").date() + timedelta(days=i)
                     route_dates.append(d.strftime("%Y-%m-%d"))
 
-            flights_label = route.get("flights", "all")
+            flights_label = route.get("note", route.get("flights", "all"))
             logger.info(f"Scanning: {route['name']} ({rkey}) [{flights_label}]")
 
             prices_found = 0

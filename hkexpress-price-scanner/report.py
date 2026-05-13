@@ -17,6 +17,7 @@ def generate_report(db, config, output_path: str):
     for route in routes:
         rkey = f"{route['from']}-{route['to']}"
         flights_label = route.get("flights", "")
+        note = route.get("note", "")
         prices = db.get_latest_prices(route["from"], route["to"], limit=30)
         threshold = thresholds.get(rkey) or route.get("threshold")
 
@@ -35,6 +36,7 @@ def generate_report(db, config, output_path: str):
             "to": route["to"],
             "key": rkey,
             "flights": flights_label,
+            "note": note,
             "threshold": threshold,
             "stats": stats,
             "prices": [{
@@ -80,8 +82,16 @@ h1 {{
 .subtitle {{
   text-align: center;
   color: var(--dim);
-  margin-bottom: 30px;
+  margin-bottom: 8px;
   font-size: 0.9em;
+}}
+.source-hint {{
+  text-align: center;
+  color: var(--yellow);
+  font-size: 0.78em;
+  max-width: 700px;
+  margin: 0 auto 30px;
+  line-height: 1.5;
 }}
 .grid {{
   display: grid;
@@ -103,7 +113,13 @@ h1 {{
 .route-code {{
   color: var(--dim);
   font-size: 0.85em;
+  margin-bottom: 4px;
+}}
+.flight-note {{
+  color: var(--blue);
+  font-size: 0.8em;
   margin-bottom: 12px;
+  font-style: italic;
 }}
 .stats {{
   display: flex;
@@ -177,7 +193,8 @@ footer {{
 <body>
 
 <h1>✈️ HKExpress Price Scanner</h1>
-<p class="subtitle">Last updated: {now} · Scans every 6 hours</p>
+<p class="subtitle">Prices via Google Flights · Updated: {now} · Scans every 30 min</p>
+<p class="source-hint">⚠️ HKExpress blocks direct price scraping. Prices shown are the lowest HKExpress fare found on Google Flights for each date. Flight numbers are reference labels — Google Flights shows the best available fare among listed flights.</p>
 
 <div class="grid">
 """
@@ -197,7 +214,8 @@ footer {{
         html += f"""
 <div class="card">
   <h2>{rd['name']}</h2>
-  <div class="route-code">{rd['key']}{" · " + rd['flights'] if rd.get('flights') else ""}</div>
+  <div class="route-code">{rd['key']}{" · " + rd.get('flights','') if rd.get('flights') and rd.get('flights') != 'all' else ""}</div>
+  {"<div class='flight-note'>" + rd['note'] + "</div>" if rd.get('note') else ""}
   <div class="stats">
     <div class="stat"><div class="stat-label">Lowest</div><div class="stat-value {low_cls}">{f"HK${s['min']:,.0f}" if s['min'] else '—'}</div></div>
     <div class="stat"><div class="stat-label">Avg</div><div class="stat-value">{f"HK${s['avg']:,.0f}" if s['avg'] else '—'}</div></div>
