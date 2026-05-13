@@ -4,7 +4,7 @@ Generates a dashboard page showing price history for all routes.
 """
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def generate_report(db, config, output_path: str):
@@ -46,7 +46,7 @@ def generate_report(db, config, output_path: str):
             } for p in prices]
         })
 
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    now = (datetime.utcnow() + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M HKT")
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -82,16 +82,8 @@ h1 {{
 .subtitle {{
   text-align: center;
   color: var(--dim);
-  margin-bottom: 8px;
+  margin-bottom: 30px;
   font-size: 0.9em;
-}}
-.source-hint {{
-  text-align: center;
-  color: var(--yellow);
-  font-size: 0.78em;
-  max-width: 700px;
-  margin: 0 auto 30px;
-  line-height: 1.5;
 }}
 .grid {{
   display: grid;
@@ -194,7 +186,6 @@ footer {{
 
 <h1>✈️ HKExpress Price Scanner</h1>
 <p class="subtitle">Prices via Google Flights · Updated: {now} · Scans every 30 min</p>
-<p class="source-hint">⚠️ HKExpress blocks direct price scraping. Prices shown are the lowest HKExpress fare found on Google Flights for each date. Flight numbers are reference labels — Google Flights shows the best available fare among listed flights.</p>
 
 <div class="grid">
 """
