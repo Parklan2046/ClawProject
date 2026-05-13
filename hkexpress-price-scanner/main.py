@@ -126,14 +126,20 @@ async def scan_routes(config: dict, route_filter: str = None,
                     threshold = thresholds.get(rkey) or route.get("threshold")
                     if prev_price and price < prev_price:
                         drop_pct = ((prev_price - price) / prev_price) * 100
-                        logger.info(
-                            f"  📉 DROP: {route['name']} {flight_date} "
-                            f"HK${prev_price:.0f} → HK${price:.0f} ({drop_pct:.1f}%)"
-                        )
-                        notifier.notify_price_drop(
-                            route["name"], flight_date, prev_price, price,
-                            threshold, flights_label
-                        )
+                        if drop_pct < 1.0:
+                            logger.info(
+                                f"  📉 Tiny drop: {route['name']} {flight_date} "
+                                f"HK${prev_price:.0f} → HK${price:.0f} ({drop_pct:.1f}%) — skipping"
+                            )
+                        else:
+                            logger.info(
+                                f"  📉 DROP: {route['name']} {flight_date} "
+                                f"HK${prev_price:.0f} → HK${price:.0f} ({drop_pct:.1f}%)"
+                            )
+                            notifier.notify_price_drop(
+                                route["name"], flight_date, prev_price, price,
+                                threshold, flights_label
+                            )
                     elif threshold and price <= threshold:
                         logger.info(
                             f"  🎯 BELOW: {route['name']} {flight_date} "
