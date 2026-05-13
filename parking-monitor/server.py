@@ -7,7 +7,7 @@ Consolidates 30-min slot data into readable booking windows.
 import json
 import os
 import requests
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime as dt
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 HOST = os.getenv("PARKING_HOST", "127.0.0.1")
@@ -34,7 +34,16 @@ class ParkingAPI:
         self._init_session()
 
     def _init_session(self):
+        """Warm up session to mimic a real browser visit."""
+        # Step 1: Load main page to get JSESSIONID
         self.session.get(f"{API_BASE}/car-park/carParkBooking?lang=zh_TW", timeout=15)
+        # Step 2: Make the same API calls the official page makes on load
+        try:
+            self.session.get(f"{API_BASE}/flt-booking-query/public/v1/ipinfo", timeout=10)
+        except: pass
+        try:
+            self.session.get(f"{API_BASE}/non-pss-int/public/v1/content-management/list?lang=en&application_code=IBE&channel=web&include_keys=airportCodeToCityName", timeout=10)
+        except: pass
 
     def get_slots(self, target_date: str, zone: str = "1", cartype: int = 1):
         """Get available parking slots for a specific date."""
@@ -69,6 +78,16 @@ class ParkingAPI:
         MIN_BOOKING_HOURS = 2  # Minimum booking is 2 hours
         
         slots = [s for s in slots if BOOKING_START <= s["TimeSlot"][-5:] < BOOKING_END]
+
+        # For today: filter out slots that are < 30 min from now (must book 30 min before entry)
+        now_hkt = dt.utcnow() + timedelta(hours=8)
+        if target_date:
+            target_d = target_date.replace("/", "-")
+            today_str = now_hkt.strftime("%Y-%m-%d")
+            if target_d == today_str:
+                cutoff = now_hkt + timedelta(minutes=30)
+                cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M")
+                slots = [s for s in slots if s["TimeSlot"] >= cutoff_str]
 
         if not slots:
             return {"quota": quota, "total_slots": 0, "available_count": 0, 
@@ -275,6 +294,9 @@ class Handler(BaseHTTPRequestHandler):
                 r = api.session.get(f"{API_BASE}/car-park/carParkBooking?lang=zh_TW", timeout=15)
                 html = r.text
                 
+                # Inject <base> tag so relative URLs resolve to official domain
+                html = html.replace("<head>", "<head><base href='https://hywparking.com.hk/'>")
+                
                 auto_fill_js = """
 <script>
 (function() {
@@ -332,8 +354,14 @@ class Handler(BaseHTTPRequestHandler):
         # Proxy: Send SMS
         if path == "/parking/api/sendsms":
             try:
+                phone = body["phone"]
+                # Official API expects 8-digit HK number (no +852 prefix)
+                if phone.startswith("852"):
+                    phone = phone[3:]
+                elif phone.startswith("+852"):
+                    phone = phone[4:]
                 r = api.session.get(f"{API_BASE}/bookingApi/sendsms", params={
-                    "phone": body["phone"],
+                    "phone": phone,
                     "lang": "zh_TW"
                 }, timeout=15)
                 return send_json(self, r.json())
