@@ -63,6 +63,13 @@ class ParkingAPI:
             date_filter = target_date.replace("/", "-")
             slots = [s for s in slots if s["TimeSlot"].startswith(date_filter)]
 
+        # Filter to booking hours only: 06:00–22:00
+        BOOKING_START = "06:00"
+        BOOKING_END = "22:00"
+        MIN_BOOKING_HOURS = 2  # Minimum booking is 2 hours
+        
+        slots = [s for s in slots if BOOKING_START <= s["TimeSlot"][-5:] < BOOKING_END]
+
         if not slots:
             return {"quota": quota, "total_slots": 0, "available_count": 0, 
                     "status": "full", "windows": [], "full_day_available": False}
@@ -104,6 +111,9 @@ class ParkingAPI:
                 "spaces": min_spaces_in_window,
             })
 
+        # Filter: only windows ≥ 2 hours (minimum booking)
+        windows = [w for w in windows if self._window_duration(w) >= MIN_BOOKING_HOURS]
+
         # Calculate status
         total_slots = len(slots)
         available_count = sum(1 for _, avail, _ in times if avail)
@@ -135,6 +145,12 @@ class ParkingAPI:
             h += 1
             m -= 60
         return f"{h:02d}:{m:02d}"
+
+    def _window_duration(self, window: dict) -> float:
+        """Calculate window duration in hours."""
+        sh, sm = map(int, window["start"].split(":"))
+        eh, em = map(int, window["end"].split(":"))
+        return (eh + em/60) - (sh + sm/60)
 
 
 api = ParkingAPI()
@@ -201,14 +217,24 @@ class Handler(BaseHTTPRequestHandler):
 
         # API: Get availability for a date range
         if path == "/parking/api/availability":
-            days = int(params.get("days", "7"))
             car_type = params.get("type", "private")
             ct = CAR_TYPES.get(car_type, CAR_TYPES["private"])
+            
+            from_date = params.get("from")
+            to_date = params.get("to")
+            
+            if from_date and to_date:
+                # Parse yyyy-MM-dd from the picker
+                from_d = date.fromisoformat(from_date)
+                to_d = date.fromisoformat(to_date)
+            else:
+                days = int(params.get("days", "7"))
+                from_d = date.today()
+                to_d = from_d + timedelta(days=days - 1)
 
             results = []
-            today = date.today()
-            for i in range(days):
-                d = today + timedelta(days=i)
+            d = from_d
+            while d <= to_d:
                 date_str = d.strftime("%Y/%m/%d")
                 try:
                     day_data = api.get_slots(date_str, ct["zone"], ct["id"])
@@ -224,6 +250,7 @@ class Handler(BaseHTTPRequestHandler):
                         "error": str(e),
                         "status": "error",
                     })
+                d += timedelta(days=1)
 
             return send_json(self, {
                 "ok": True,
