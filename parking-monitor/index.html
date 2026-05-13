@@ -191,31 +191,33 @@ function openDialog(date,ws,we,sp){
   dateObj.setDate(dateObj.getDate()+1);
   const nextDate=`${dateObj.getFullYear()}/${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
   const nextLabel=`${dateObj.getFullYear()}年${dateObj.getMonth()+1}月${dateObj.getDate()}日`;
-  const showOvernight = we==='22:00';
+  const showOvernight = we=='22:00';
   
   const ymd=date.replace(/\//g,'-');
   const nextYmd=nextDate.replace(/\//g,'-');
   
+  const overHTML = showOvernight ?
+    '<div style="margin-bottom:12px">'+
+    '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82em;color:var(--dim)">'+
+    '<input type="checkbox" id="chkOvernight" onchange="checkOvernight(\''+ymd+'\',\''+ws+'\',\''+nextYmd+'\',\''+nextLabel+'\')"> 🌙 過夜泊車 (檢查至翌日 '+nextLabel+')'+
+    '</label>'+
+    '<div id="overnightResult" style="margin-top:8px;display:none"></div>'+
+    '</div>' : '';
+  
   const ov=document.createElement('div');
   ov.className='modal-overlay';
   ov.onclick=e=>{if(e.target===ov)ov.remove()};
-  ov.innerHTML=`<div class="modal" style="max-width:420px">
-    <h2>📋 預約詳情</h2>
-    <div class="info"><b>${v.icon} ${v.name}</b><br>📅 ${dd}<br>🕐 ${ws}–${we} (${h.toFixed(1)}小時)<br>🅿️ 剩餘 ≥${sp} 位</div>
-    ${showOvernight?`
-    <div style="margin-bottom:12px">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82em;color:var(--dim)">
-        <input type="checkbox" id="chkOvernight" onchange="checkOvernight('${ymd}','${ws}','${nextYmd}','${nextLabel}')"> 🌙 過夜泊車 (檢查至翌日 ${nextLabel})
-      </label>
-      <div id="overnightResult" style="margin-top:8px;display:none"></div>
-    </div>`:''}
-    <div class="hint">✅ 已複製到剪貼簿<br>在官方網站選擇 <b>${v.name}</b>，再揀時段 <b>${ws}–${we}</b></div>
-    <div class="actions">
-      <a class="btn-go" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>
-      <button class="btn-copy" id="btnCopy">📋</button>
-      <button class="btn-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
-    </div>
-  </div>`;
+  ov.innerHTML='<div class="modal" style="max-width:420px">'+
+    '<h2>📋 預約詳情</h2>'+
+    '<div class="info"><b>'+v.icon+' '+v.name+'</b><br>📅 '+dd+'<br>🕐 '+ws+'–'+we+' ('+h.toFixed(1)+'小時)<br>🅿️ 剩餘 ≥'+sp+' 位</div>'+
+    overHTML+
+    '<div class="hint">✅ 已複製到剪貼簿<br>在官方網站選擇 <b>'+v.name+'</b>，再揀時段 <b>'+ws+'–'+we+'</b></div>'+
+    '<div class="actions">'+
+    '<a class="btn-go" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>'+
+    '<button class="btn-copy" id="btnCopy">📋</button>'+
+    '<button class="btn-close" onclick="this.closest(\'.modal-overlay\').remove()">✕</button>'+
+    '</div>'+
+    '</div>';
   document.body.appendChild(ov);
   
   let txt=`${v.name} | ${dd} | ${ws}–${we}`;
