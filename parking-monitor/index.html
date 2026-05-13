@@ -156,7 +156,7 @@ async function refresh(){
 }
 
 async function checkAllOvernights(d){
-  var MAX_DAYS=7; // Max parking duration
+  var MAX_DAYS=7, ct=window._ct||'private';
   for(var i=0;i<d.days.length-1;i++){
     var day=d.days[i];
     if(day.status==='error')continue;
@@ -166,22 +166,33 @@ async function checkAllOvernights(d){
     var el=document.getElementById('overnight-'+ymd);
     if(!el)continue;
     
-    // Check subsequent days for availability - find the furthest bookable day
-    var daysOK=0;
+    el.style.display='block';
+    el.innerHTML='<span style="color:var(--dim);font-size:.72em">🌙 檢查中...</span>';
+    
+    // Check continuous availability via range API - start from today's window start, try each day as end
+    var daysOK=0, lastLabel='';
     for(var j=i+1;j<Math.min(d.days.length,i+MAX_DAYS);j++){
       var nd=d.days[j];
       if(nd.status==='error')break;
-      if(nd.status==='full')break;
-      daysOK++;
+      var toYmd=nd.date.replace(/\//g,'-');
+      try{
+        var r=await fetch('/parking/api/range?type='+ct+'&from_date='+ymd+'&from_time='+lastWin.start+'&to_date='+toYmd+'&to_time=22:00');
+        var rd=await r.json();
+        if(rd.ok&&rd.available){
+          daysOK=j-i;
+          lastLabel=nd.day_label;
+        }else{
+          break; // Gap found - stop here
+        }
+      }catch(e){break;}
     }
-    el.style.display='block';
+    
     if(daysOK>0){
-      var lastOK=d.days[i+daysOK];
-      var maxLabel=lastOK.day_label;
-      if(daysOK>=MAX_DAYS-1) maxLabel+=' (上限7天)';
-      el.innerHTML='<span style="color:var(--green);font-size:.72em">🌙 可過夜 → 至 '+maxLabel+' ('+(daysOK+1)+'天)</span>';
+      var totalDays=daysOK+1;
+      var maxTxt=lastLabel+(totalDays>=MAX_DAYS?' (上限7天)':'');
+      el.innerHTML='<span style="color:var(--green);font-size:.72em">🌙 可過夜 → 至 '+maxTxt+' ('+totalDays+'天)</span>';
     }else{
-      el.innerHTML='<span style="color:var(--red);font-size:.72em">🌙 翌日已滿</span>';
+      el.innerHTML='<span style="color:var(--red);font-size:.72em">🌙 翌日不適用</span>';
     }
   }
 }
