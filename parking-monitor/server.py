@@ -327,6 +327,54 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 return send_json(self, {"ok": False, "error": str(e)}, 500)
 
+        # Cross-date range check (overnight parking)
+        if path == "/parking/api/range":
+            car_type = params.get("type", "private")
+            ct = CAR_TYPES.get(car_type, CAR_TYPES["private"])
+            from_d = params.get("from_date", "")
+            from_t = params.get("from_time", "")
+            to_d = params.get("to_date", "")
+            to_t = params.get("to_time", "")
+            if not from_d or not to_d:
+                return send_json(self, {"ok": False, "error": "Missing dates"}, 400)
+            try:
+                all_slots = []
+                fd = date.fromisoformat(from_d)
+                td = date.fromisoformat(to_d)
+                d = fd
+                while d <= td:
+                    ds = d.strftime("%Y/%m/%d")
+                    resp = api.session.get(f"{API_BASE}/bookingApi/available-space",
+                        params={"zone": ct["zone"], "cartype": ct["id"], "in": ds, "lang": "zh_TW"}, timeout=15)
+                    dd = resp.json()
+                    if dd.get("success"):
+                        df = ds.replace("/", "-")
+                        for s in dd["data"]["AvailableSpaces"]:
+                            if s["TimeSlot"].startswith(df) and "06:00" <= s["TimeSlot"][-5:] < "22:00":
+                                all_slots.append(s)
+                    d += timedelta(days=1)
+                from_dt = from_d + " " + from_t
+                to_dt = to_d + " " + to_t
+                in_range, full_slots, min_sp = [], [], 9999
+                for s in all_slots:
+                    if from_dt <= s["TimeSlot"] < to_dt:
+                        in_range.append(s)
+                        if s.get("Spaces", 0) > 0:
+                            min_sp = min(min_sp, s["Spaces"])
+                        else:
+                            full_slots.append(s["TimeSlot"])
+                avail = len(full_slots) == 0 and len(in_range) > 0
+                return send_json(self, {
+                    "ok": True, "available": avail,
+                    "hours": len(in_range) * 0.5,
+                    "total_slots": len(in_range),
+                    "full_slots": full_slots[-5:],
+                    "min_spaces": min_sp if min_sp < 9999 else 0,
+                    "from": from_dt, "to": to_dt,
+                })
+            except Exception as e:
+                return send_json(self, {"ok": False, "error": str(e)}, 500)
+
         return send_json(self, {"ok": False, "error": "Not found"}, 404)
 
     def do_POST(self):
