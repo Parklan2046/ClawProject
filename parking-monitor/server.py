@@ -116,7 +116,7 @@ class ParkingAPI:
                 if current_start is not None:
                     windows.append({
                         "start": current_start[-5:],  # HH:MM
-                        "end": self._add_30min(current_end),
+                        "end": current_end[-5:],     # Last slot START (not +30min)
                         "spaces": min_spaces_in_window,
                     })
                     current_start = None
@@ -126,7 +126,7 @@ class ParkingAPI:
         if current_start is not None:
             windows.append({
                 "start": current_start[-5:],
-                "end": self._add_30min(current_end),
+                "end": current_end[-5:],
                 "spaces": min_spaces_in_window,
             })
 
@@ -166,10 +166,10 @@ class ParkingAPI:
         return f"{h:02d}:{m:02d}"
 
     def _window_duration(self, window: dict) -> float:
-        """Calculate window duration in hours."""
+        """Calculate window duration in hours (adds 30min to end since end=last slot start)."""
         sh, sm = map(int, window["start"].split(":"))
         eh, em = map(int, window["end"].split(":"))
-        return (eh + em/60) - (sh + sm/60)
+        return (eh + em/60 + 0.5) - (sh + sm/60)  # +0.5hr for the last slot
 
 
 api = ParkingAPI()

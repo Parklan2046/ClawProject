@@ -160,7 +160,7 @@ async function checkAllOvernights(d){
     var day=d.days[i], next=d.days[i+1];
     if(day.status==='error'||next.status==='error')continue;
     var lastWin=day.windows&&day.windows.length>0?day.windows[day.windows.length-1]:null;
-    if(!lastWin||lastWin.end!=='22:00')continue;
+    if(!lastWin||lastWin.end!=='21:30')continue;
     var ymd=day.date.replace(/\//g,'-');
     var el=document.getElementById('overnight-'+ymd);
     if(!el)continue;
@@ -185,7 +185,7 @@ function render(d){
     let wh='';
     if(day.status==='error') wh=`<div class="no-win">⚠️ ${day.error||'無法載入'}</div>`;
     else if(ws.length===0) wh='<div class="no-win">❌ 無可預約時段</div>';
-    else if(day.full_day_available) wh=`<div class="win full-day" onclick="openDialog('${day.date}','06:00','22:00',${day.quota})"><span class="dot"></span><span class="time">06:00–22:00 全線開放</span> <span style="color:var(--dim);font-size:.75em">${day.quota}位</span></div>`;
+    else if(day.full_day_available) wh=`<div class="win full-day" onclick="openDialog('${day.date}','06:00','21:30',${day.quota})"><span class="dot"></span><span class="time">06:00–22:00 全線開放</span> <span style="color:var(--dim);font-size:.75em">${day.quota}位</span></div>`;
     else wh='<div class="windows">'+ws.map(w=>`<div class="win" onclick="openDialog('${day.date}','${w.start}','${w.end}',${w.spaces})"><span class="dot"></span><span class="time">${w.start}–${w.end}</span> <span style="color:var(--dim);font-size:.75em">${w.spaces}位</span></div>`).join('')+'</div>';
     let ymd2=day.date.replace(/\//g,'-');
     let overnightHTML='<div id="overnight-'+ymd2+'" style="margin-top:6px;display:none"></div>';
@@ -210,7 +210,8 @@ function openDialog(date,ws,we,sp){
   const p=date.split('/');
   const dd=`${p[0]}年${parseInt(p[1])}月${parseInt(p[2])}日`;
   const [sh,sm]=ws.split(':').map(Number),[eh,em]=we.split(':').map(Number);
-  const h=eh+em/60-(sh+sm/60);
+  // we = last slot START, actual departure = we + 30min
+  const h=eh+em/60+0.5-(sh+sm/60);
   
   // Next day for overnight
   const dateObj=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
