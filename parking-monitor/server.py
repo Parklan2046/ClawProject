@@ -262,6 +262,71 @@ class Handler(BaseHTTPRequestHandler):
 
         return send_json(self, {"ok": False, "error": "Not found"}, 404)
 
+    def do_POST(self):
+        path = self.path.rstrip("/").split("?")[0]
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode()) if length else {}
+        except:
+            body = {}
+
+        # Proxy: Calculate fee
+        if path == "/parking/api/calc":
+            try:
+                r = api.session.get(f"{API_BASE}/bookingApi/calc", params={
+                    "zone": body.get("zone", "1"),
+                    "cartype": body.get("cartype", "1"),
+                    "in": body["in"].replace("-","/"),
+                    "out": body["out"].replace("-","/"),
+                    "lang": "zh_TW"
+                }, timeout=15)
+                return send_json(self, r.json())
+            except Exception as e:
+                return send_json(self, {"ok": False, "error": str(e)}, 500)
+
+        # Proxy: Send SMS
+        if path == "/parking/api/sendsms":
+            try:
+                r = api.session.get(f"{API_BASE}/bookingApi/sendsms", params={
+                    "phone": body["phone"],
+                    "lang": "zh_TW"
+                }, timeout=15)
+                return send_json(self, r.json())
+            except Exception as e:
+                return send_json(self, {"ok": False, "error": str(e)}, 500)
+
+        # Proxy: Create booking
+        if path == "/parking/api/book":
+            try:
+                booking = {
+                    "zoneCode": body.get("zoneCode", "1"),
+                    "carTypeId": int(body.get("carTypeId", 1)),
+                    "carTypeCode": int(body.get("carTypeCode", 1)),
+                    "enterTime": body["enterTime"].replace("-","/"),
+                    "leaveTime": body["leaveTime"].replace("-","/"),
+                    "phone": body["phone"],
+                    "permitNumber": body.get("permitNumber", ""),
+                    "permitType": body.get("permitType"),
+                    "verifyCode": body["verifyCode"],
+                    "amount": float(body.get("amount", 0)),
+                    "email": body.get("email", ""),
+                    "lang": "zh_TW",
+                    "cardNumber": body.get("cardNumber", ""),
+                    "entryMethod": int(body.get("entryMethod", 1)),
+                    "payGateway": "Cybersource",
+                    "existsBooking": body.get("existsBooking"),
+                    "carPlate": body.get("carPlate", ""),
+                }
+                r = api.session.post(f"{API_BASE}/bookingApi/create",
+                    json=booking,
+                    headers={"Content-Type": "application/json"},
+                    timeout=15)
+                return send_json(self, r.json())
+            except Exception as e:
+                return send_json(self, {"success": False, "message": str(e)}, 500)
+
+        return send_json(self, {"ok": False, "error": "Not found"}, 404)
+
 
 if __name__ == "__main__":
     print(f"Parking Monitor on http://{HOST}:{PORT}")
