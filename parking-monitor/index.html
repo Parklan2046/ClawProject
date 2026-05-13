@@ -92,7 +92,7 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 <div id="timer" class="timer" style="display:none">
   <div class="timer-ring">
     <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2.5"/><circle id="tArc" cx="16" cy="16" r="13" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="81.68" stroke-dashoffset="0" stroke-linecap="round"/></svg>
-    <span id="tNum" class="num">10</span>
+    <span id="tNum" class="num">30</span>
   </div>
   <span class="timer-label">秒後更新</span>
 </div>
@@ -114,10 +114,10 @@ function initDates(){
 }
 initDates();
 
-var refreshTimer=null,cdTimer=null,cdVal=10;
+var refreshTimer=null,cdTimer=null,cdVal=30;
 
 function startCD(){
-  cdVal=10;
+  cdVal=30;
   var timer=document.getElementById('timer'), num=document.getElementById('tNum'), arc=document.getElementById('tArc');
   if(!timer||!num||!arc)return;
   console.log('startCD: showing timer');
@@ -126,7 +126,7 @@ function startCD(){
   cdTimer=setInterval(function(){
     cdVal--; if(cdVal<0){num.textContent='0';return;}
     num.textContent=cdVal;
-    arc.style.strokeDashoffset=(81.68*(1-cdVal/10)).toString();
+    arc.style.strokeDashoffset=(81.68*(1-cdVal/30)).toString();
     if(cdVal<=3){num.classList.add('timer-pulse');arc.style.stroke='var(--red)';}else{num.classList.remove('timer-pulse');arc.style.stroke='var(--accent)';}
   },1000);
 }
@@ -150,7 +150,7 @@ async function refresh(){
   render(d);
   // Start auto-refresh countdown
   startCD();
-  refreshTimer=setTimeout(function(){refresh()},10000);
+  refreshTimer=setTimeout(function(){refresh()},30000);
 }
 
 function render(d){
