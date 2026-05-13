@@ -56,6 +56,16 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 .loading{text-align:center;padding:40px;color:var(--dim)}
 .spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.06);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Refresh timer */
+.timer{position:fixed;bottom:16px;left:16px;background:rgba(17,18,36,.96);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:49;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.timer.hidden{display:none}
+.timer-ring{position:relative;width:32px;height:32px;flex-shrink:0}
+.timer-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.timer-ring .num{font-size:.85rem;font-weight:900;color:var(--accent);position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.timer-label{color:var(--dim);font-size:.72rem}
+.timer-pulse{animation:tp 1s ease infinite}
+@keyframes tp{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
 </head>
 <body>
@@ -80,6 +90,14 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 <div id="loading" class="loading"><div class="spinner"></div><p>載入中...</p></div>
 <div id="grid" class="grid" style="display:none"></div>
 
+<div id="timer" class="timer hidden">
+  <div class="timer-ring">
+    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2.5"/><circle id="tArc" cx="16" cy="16" r="13" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="81.68" stroke-dashoffset="0" stroke-linecap="round"/></svg>
+    <span id="tNum" class="num">10</span>
+  </div>
+  <span class="timer-label">秒後更新</span>
+</div>
+
 <div class="notes">
   📋 泊車收費以每小時計算 · 入場前30分鐘至7天預約 · 最少2小時 · 私家車/電單車最長7天 · 客貨車最長3天 · 更改/取消 HK$100
 </div>
@@ -97,17 +115,41 @@ function initDates(){
 }
 initDates();
 
+var refreshTimer=null,cdTimer=null,cdVal=10;
+
+function startCD(){
+  cdVal=10;
+  var timer=document.getElementById('timer'), num=document.getElementById('tNum'), arc=document.getElementById('tArc');
+  timer.classList.remove('hidden'); num.textContent=cdVal; arc.style.strokeDashoffset='0'; arc.style.stroke='var(--accent)';
+  if(cdTimer)clearInterval(cdTimer);
+  cdTimer=setInterval(function(){
+    cdVal--; if(cdVal<0){num.textContent='0';return;}
+    num.textContent=cdVal;
+    arc.style.strokeDashoffset=(81.68*(1-cdVal/10)).toString();
+    if(cdVal<=3){num.classList.add('timer-pulse');arc.style.stroke='var(--red)';}else{num.classList.remove('timer-pulse');arc.style.stroke='var(--accent)';}
+  },1000);
+}
+
+function clearTimers(){
+  if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}
+  if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
+}
+
 async function refresh(){
+  clearTimers();
   document.getElementById('loading').style.display='block';
   document.getElementById('grid').style.display='none';
-  const ct=document.getElementById('carType').value;
-  const from=document.getElementById('dateFrom').value, to=document.getElementById('dateTo').value;
-  const r=await fetch(`/parking/api/availability?type=${ct}&from=${from}&to=${to}`);
-  const d=await r.json();
+  var ct=document.getElementById('carType').value;
+  var from=document.getElementById('dateFrom').value, to=document.getElementById('dateTo').value;
+  var r=await fetch('/parking/api/availability?type='+ct+'&from='+from+'&to='+to);
+  var d=await r.json();
   document.getElementById('loading').style.display='none';
   document.getElementById('grid').style.display='block';
-  if(!d.ok){document.getElementById('grid').innerHTML=`<div class="loading"><p>❌ ${d.error}</p></div>`;return}
+  if(!d.ok){document.getElementById('grid').innerHTML='<div class="loading"><p>❌ '+d.error+'</p></div>';return}
   render(d);
+  // Start auto-refresh countdown
+  startCD();
+  refreshTimer=setTimeout(function(){refresh()},10000);
 }
 
 function render(d){
