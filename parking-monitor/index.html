@@ -156,21 +156,32 @@ async function refresh(){
 }
 
 async function checkAllOvernights(d){
+  var MAX_DAYS=7; // Max parking duration
   for(var i=0;i<d.days.length-1;i++){
-    var day=d.days[i], next=d.days[i+1];
-    if(day.status==='error'||next.status==='error')continue;
+    var day=d.days[i];
+    if(day.status==='error')continue;
     var lastWin=day.windows&&day.windows.length>0?day.windows[day.windows.length-1]:null;
     if(!lastWin||lastWin.end!=='21:30')continue;
     var ymd=day.date.replace(/\//g,'-');
     var el=document.getElementById('overnight-'+ymd);
     if(!el)continue;
+    
+    // Check subsequent days for availability - find the furthest bookable day
+    var daysOK=0;
+    for(var j=i+1;j<Math.min(d.days.length,i+MAX_DAYS);j++){
+      var nd=d.days[j];
+      if(nd.status==='error')break;
+      if(nd.status==='full')break;
+      daysOK++;
+    }
     el.style.display='block';
-    if(next.status==='open'||next.status==='available'){
-      el.innerHTML='<span style="color:var(--green);font-size:.72em">🌙 可過夜 → 翌日 '+next.day_label+'</span>';
-    }else if(next.status==='limited'){
-      el.innerHTML='<span style="color:var(--yellow);font-size:.72em">🌙 翌日 '+next.day_label+' 少量時段</span>';
+    if(daysOK>0){
+      var lastOK=d.days[i+daysOK];
+      var maxLabel=lastOK.day_label;
+      if(daysOK>=MAX_DAYS-1) maxLabel+=' (上限7天)';
+      el.innerHTML='<span style="color:var(--green);font-size:.72em">🌙 可過夜 → 至 '+maxLabel+' ('+(daysOK+1)+'天)</span>';
     }else{
-      el.innerHTML='<span style="color:var(--red);font-size:.72em">🌙 翌日 '+next.day_label+' 已滿</span>';
+      el.innerHTML='<span style="color:var(--red);font-size:.72em">🌙 翌日已滿</span>';
     }
   }
 }
