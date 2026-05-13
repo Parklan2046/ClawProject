@@ -169,20 +169,23 @@ async function checkAllOvernights(d){
     el.style.display='block';
     el.innerHTML='<span style="color:var(--dim);font-size:.72em">🌙 檢查中...</span>';
     
-    // Check continuous availability via range API - start from today's window start, try each day as end
+    // Check continuous availability via range API - use each day's actual last bookable slot
     var daysOK=0, lastLabel='';
     for(var j=i+1;j<Math.min(d.days.length,i+MAX_DAYS);j++){
       var nd=d.days[j];
       if(nd.status==='error')break;
+      if(nd.status==='full')break;
+      var ndLastWin=nd.windows&&nd.windows.length>0?nd.windows[nd.windows.length-1]:null;
+      var toTime=ndLastWin?ndLastWin.end:'22:00'; // Use actual last slot, not 22:00
       var toYmd=nd.date.replace(/\//g,'-');
       try{
-        var r=await fetch('/parking/api/range?type='+ct+'&from_date='+ymd+'&from_time='+lastWin.start+'&to_date='+toYmd+'&to_time=22:00');
+        var r=await fetch('/parking/api/range?type='+ct+'&from_date='+ymd+'&from_time='+lastWin.start+'&to_date='+toYmd+'&to_time='+toTime);
         var rd=await r.json();
         if(rd.ok&&rd.available){
           daysOK=j-i;
           lastLabel=nd.day_label;
         }else{
-          break; // Gap found - stop here
+          break;
         }
       }catch(e){break;}
     }
