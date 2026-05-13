@@ -132,7 +132,7 @@ async def scan_routes(config: dict, route_filter: str = None,
                         )
                         notifier.notify_price_drop(
                             route["name"], flight_date, prev_price, price,
-                            threshold
+                            threshold, flights_label
                         )
                     elif threshold and price <= threshold:
                         logger.info(
@@ -141,18 +141,12 @@ async def scan_routes(config: dict, route_filter: str = None,
                         )
                         notifier.notify_price_drop(
                             route["name"], flight_date, prev_price, price,
-                            threshold
+                            threshold, flights_label
                         )
 
             logger.info(
                 f"  Done: {route['name']} — {prices_found}/{len(route_dates)} dates"
             )
-
-            # Brief summary if prices found
-            if prices_found > 0:
-                notifier.notify_scan_complete(
-                    route["name"], prices_found, len(route_dates)
-                )
 
     except Exception as e:
         logger.error(f"Scan failed: {e}", exc_info=True)

@@ -47,7 +47,8 @@ class Notifier:
     def notify_price_drop(
         self, route_name: str, flight_date: str,
         old_price: Optional[float], new_price: float,
-        threshold: Optional[float] = None
+        threshold: Optional[float] = None,
+        flights: str = ""
     ):
         """Notify about a price drop."""
         drop_text = ""
@@ -57,9 +58,12 @@ class Notifier:
         else:
             drop_text = "first recorded price"
 
+        flights_line = f"✈️ Flight: <b>{flights}</b>\n" if flights else ""
+
         message = (
             f"✈️ <b>HKExpress Price Drop!</b>\n\n"
             f"<b>{route_name}</b>\n"
+            f"{flights_line}"
             f"🛫 Date: <b>{flight_date}</b>\n"
             f"💰 New price: <b>HK${new_price:,.0f}</b>\n"
         )
