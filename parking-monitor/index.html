@@ -161,7 +161,7 @@ function openDialog(date,winStart,winEnd,spaces){
       </div>
       <p style="color:var(--yellow);font-size:.78em;margin-bottom:16px">點擊下方按鈕前往官方網站，請自行選擇 <b>${ctn}</b> 及時段 <b>${winStart}–${winEnd}</b></p>
       <div class="actions">
-        <a class="btn-primary" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>
+        <a class="btn-primary" href="/parking/book?type=${ct}&date=${date}&start=${winStart}&end=${winEnd}" target="_blank">🔗 前往官方預約</a>
         <button class="btn-secondary" onclick="document.getElementById('booking-dialog').remove()">關閉</button>
       </div>
     </div>`;

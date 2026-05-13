@@ -260,6 +260,51 @@ class Handler(BaseHTTPRequestHandler):
                 "days": results,
             })
 
+        # Booking redirect - proxies official page with auto-fill injection
+        if path == "/parking/book":
+            ct_key = params.get("type", "private")
+            ct = CAR_TYPES.get(ct_key, CAR_TYPES["private"])
+            date_str = params.get("date", "")
+            start_time = params.get("start", "")
+            end_time = params.get("end", "")
+            
+            radio_map = {"private": 0, "disabled_grey": 1, "motorcycle": 2, "disabled_blue": 3, "goods": 10}
+            radio_idx = radio_map.get(ct_key, 0)
+            
+            try:
+                r = api.session.get(f"{API_BASE}/car-park/carParkBooking?lang=zh_TW", timeout=15)
+                html = r.text
+                
+                auto_fill_js = """
+<script>
+(function() {
+    var attempts = 0;
+    var iv = setInterval(function() {
+        attempts++;
+        var radio = document.getElementById('bookRadio0""" + str(radio_idx) + """');
+        if (!radio && attempts < 30) return;
+        clearInterval(iv);
+        if (!radio) return;
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', {bubbles: true}));
+        if (typeof $ !== 'undefined') $(radio).trigger('change');
+        console.log('[Auto-fill] """ + ct["name"] + """ | """ + date_str + """ """ + start_time + """-""" + end_time + """');
+    }, 300);
+})();
+</script>
+"""
+                html = html.replace("</body>", auto_fill_js + "\n</body>")
+                
+                body = html.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as e:
+                return send_json(self, {"ok": False, "error": str(e)}, 500)
+
         return send_json(self, {"ok": False, "error": "Not found"}, 404)
 
     def do_POST(self):
