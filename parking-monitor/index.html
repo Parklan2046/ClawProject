@@ -3,96 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>香園圍停車場監察</title>
+<title>香園圍停車場 · 即時車位</title>
 <style>
-:root{--bg:#0f0f1a;--card:#1a1a2e;--accent:#4de8ff;--text:#eaeaea;--dim:#8888aa;--green:#00d68f;--yellow:#ffaa00;--red:#e94560}
+:root {
+  --bg:#080912; --card:#111224; --card2:#161832;
+  --accent:#4de8ff; --accent2:#7c5cff; --text:#e8e6f0; --dim:#6b6990;
+  --green:#00e396; --yellow:#ffb627; --red:#ff4d6a; --orange:#ff884d;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:20px;min-height:100vh}
-h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:var(--accent)}
-.subtitle{text-align:center;color:var(--dim);margin-bottom:20px;font-size:.85em}
-.controls{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-.controls select,.controls input,.controls button{background:var(--card);color:var(--text);border:1px solid rgba(255,255,255,.1);padding:10px 14px;border-radius:10px;font-size:.88em;cursor:pointer}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Header */
+.header{background:linear-gradient(180deg,#111224 0%,var(--bg) 100%);padding:32px 20px 24px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04)}
+.header h1{font-size:1.8em;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.header h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .sub{color:var(--dim);font-size:.88em}
+.header .sub b{color:var(--accent)}
+
+/* Stats bar */
+.stats-bar{display:flex;justify-content:center;gap:24px;padding:20px;max-width:700px;margin:0 auto;flex-wrap:wrap}
+.stat-item{text-align:center;min-width:70px}
+.stat-icon{font-size:1.5em;margin-bottom:2px}
+.stat-val{font-size:1.6em;font-weight:800;line-height:1.1}
+.stat-label{font-size:.7em;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+
+/* Controls */
+.controls{display:flex;justify-content:center;align-items:center;gap:8px;padding:0 20px 20px;flex-wrap:wrap}
+.controls select,.controls input,.controls button{
+  background:var(--card2);color:var(--text);border:1px solid rgba(255,255,255,.08);
+  padding:10px 14px;border-radius:12px;font-size:.88em;cursor:pointer;outline:none;
+  transition:border-color .2s;
+}
+.controls select:hover,.controls input:hover{border-color:rgba(255,255,255,.15)}
 .controls input[type="date"]{color-scheme:dark}
-.controls button{background:linear-gradient(135deg,var(--accent),#0077b6);border:none;font-weight:700;color:#000}
-.controls button:hover{opacity:.85}
-.loading{text-align:center;padding:40px;color:var(--dim)}
-.grid{max-width:900px;margin:0 auto}
-.day-card{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;border:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:110px 1fr;gap:14px;align-items:start}
-.day-left{text-align:center}
-.day-name{font-size:.78em;color:var(--dim);text-transform:uppercase}
-.day-date{font-size:1.2em;font-weight:700}
-.day-label{font-size:.72em;color:var(--dim)}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7em;font-weight:700;letter-spacing:.5px;margin-bottom:6px}
-.badge-open{background:rgba(0,214,143,.15);color:var(--green)}
-.badge-available{background:rgba(77,232,255,.12);color:var(--accent)}
-.badge-limited{background:rgba(255,170,0,.15);color:var(--yellow)}
-.badge-full{background:rgba(233,69,96,.15);color:var(--red)}
-.windows{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
-.window-block{background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.2);border-radius:8px;padding:5px 10px;font-size:.82em;white-space:nowrap;cursor:pointer;transition:all .15s}
-.window-block:hover{background:rgba(0,214,143,.18);border-color:rgba(0,214,143,.4);transform:translateY(-1px)}
-.full-day{background:rgba(77,232,255,.08);border:1px solid rgba(77,232,255,.2);border-radius:8px;padding:5px 12px;font-size:.85em;cursor:pointer}
-.full-day:hover{background:rgba(77,232,255,.15)}
-.full-day .time{font-weight:700;color:var(--accent)}
-.no-windows{color:var(--dim);font-size:.82em}
+.controls button{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;font-weight:700;color:#fff;letter-spacing:.02em;
+}
+.sep{color:var(--dim);font-size:.85em}
 
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;color-scheme:dark}
-.modal{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;max-width:400px;width:100%}
-.modal h2{color:var(--accent);margin-bottom:12px;font-size:1.1em}
-.modal .info{color:var(--dim);font-size:.85em;margin-bottom:20px;line-height:1.8;background:rgba(255,255,255,.03);padding:14px;border-radius:10px}
+/* Grid */
+.grid{max-width:800px;margin:0 auto;padding:0 16px}
+.day-card{
+  background:var(--card);border:1px solid rgba(255,255,255,.05);
+  border-radius:16px;padding:20px 24px;margin-bottom:10px;
+  transition:border-color .2s,transform .15s;
+}
+.day-card:hover{border-color:rgba(255,255,255,.1)}
+.day-card.today{border-color:rgba(77,232,255,.2);background:linear-gradient(135deg,rgba(77,232,255,.04),rgba(124,92,255,.03),var(--card))}
+
+.day-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.day-icon{font-size:1.4em;width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.day-icon.open{background:rgba(0,227,150,.12)}
+.day-icon.available{background:rgba(77,232,255,.1)}
+.day-icon.limited{background:rgba(255,182,39,.12)}
+.day-icon.full{background:rgba(255,77,106,.1)}
+
+.day-info{flex:1;min-width:0}
+.day-info .date{font-weight:700;font-size:1.05em}
+.day-info .weekday{font-size:.78em;color:var(--dim);margin-top:2px}
+.day-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7em;font-weight:700;letter-spacing:.5px}
+.day-badge.open{background:rgba(0,227,150,.15);color:var(--green)}
+.day-badge.available{background:rgba(77,232,255,.12);color:var(--accent)}
+.day-badge.limited{background:rgba(255,182,39,.15);color:var(--yellow)}
+.day-badge.full{background:rgba(255,77,106,.15);color:var(--red)}
+
+/* Availability bar */
+.avail-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-bottom:14px}
+.avail-fill{height:100%;border-radius:3px;transition:width .5s}
+.avail-fill.open{background:linear-gradient(90deg,var(--green),#00cc7a)}
+.avail-fill.available{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.avail-fill.limited{background:linear-gradient(90deg,var(--yellow),var(--orange))}
+.avail-fill.full{background:linear-gradient(90deg,var(--red),#ff2d55)}
+
+/* Time windows */
+.windows{display:flex;flex-wrap:wrap;gap:6px}
+.win{
+  background:rgba(0,227,150,.06);border:1px solid rgba(0,227,150,.15);
+  border-radius:10px;padding:7px 14px;font-size:.84em;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.win:hover{background:rgba(0,227,150,.14);border-color:rgba(0,227,150,.3);transform:translateY(-1px)}
+.win .win-time{font-weight:700;color:var(--green)}
+.win .win-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.win.full-day{background:rgba(77,232,255,.08);border-color:rgba(77,232,255,.18)}
+.win.full-day .win-time{color:var(--accent)}
+.win.full-day .win-dot{background:var(--accent)}
+
+.no-windows{color:var(--dim);font-size:.82em;padding:4px 0}
+
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;max-width:400px;width:100%;color-scheme:dark}
+.modal h2{font-size:1.15em;margin-bottom:16px;color:var(--accent)}
+.modal .info{background:rgba(255,255,255,.03);padding:16px;border-radius:14px;margin-bottom:20px;font-size:.88em;line-height:2}
 .modal .info b{color:var(--text)}
-.modal .actions{display:flex;gap:10px}
-.modal .actions button,.modal .actions a{padding:12px 20px;border-radius:10px;border:none;font-size:.9em;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;text-align:center;flex:1}
-.btn-primary{background:linear-gradient(135deg,var(--accent),#0077b6);color:#000}
-.btn-primary:hover{opacity:.85}
-.btn-secondary{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.1)!important}
+.modal .hint{color:var(--yellow);font-size:.78em;margin-bottom:18px;line-height:1.6}
+.modal .actions{display:flex;gap:8px}
+.modal .actions a,.modal .actions button{padding:12px 18px;border-radius:12px;font-size:.88em;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;flex:1;transition:all .15s}
+.btn-go{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none}
+.btn-go:hover{opacity:.9;transform:translateY(-1px)}
+.btn-copy{background:rgba(255,255,255,.04);color:var(--text);border:1px solid rgba(255,255,255,.08)}
+.btn-copy:hover{background:rgba(255,255,255,.08)}
+.btn-close{background:transparent;color:var(--dim);border:1px solid rgba(255,255,255,.05)}
+.btn-close:hover{color:var(--text)}
 
-.notes{max-width:900px;margin:24px auto 0;padding:16px 20px;background:var(--card);border-radius:12px;border:1px solid rgba(255,255,255,.06);font-size:.78em;color:var(--dim)}
-.notes h3{color:var(--accent);font-size:.95em;margin-bottom:8px}
-.notes ol{padding-left:20px;line-height:1.8}
-.last-updated{text-align:center;color:var(--dim);font-size:.72em;margin-top:12px}
-.footer{text-align:center;color:var(--dim);font-size:.72em;margin-top:20px}
+/* Notes */
+.notes{max-width:800px;margin:24px auto 0;padding:0 16px 40px}
+.notes-inner{background:var(--card);border-radius:14px;padding:18px 22px;border:1px solid rgba(255,255,255,.04)}
+.notes h3{font-size:.9em;color:var(--accent);margin-bottom:10px}
+.notes ol{padding-left:18px;color:var(--dim);font-size:.78em;line-height:2}
+.notes ol b{color:var(--text)}
+
+.footer{text-align:center;color:var(--dim);font-size:.72em;padding:20px;border-top:1px solid rgba(255,255,255,.03)}
 .footer a{color:var(--accent);text-decoration:none}
+
+.loading{text-align:center;padding:60px 20px}
+.spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,.08);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:var(--dim);font-size:.85em}
+
+@media(max-width:500px){
+  .header h1{font-size:1.4em}
+  .day-card{padding:14px 16px}
+  .stats-bar{gap:12px}
+}
 </style>
 </head>
 <body>
 
-<h1>🅿️ 香園圍邊境停車場</h1>
-<p class="subtitle">Heung Yuen Wai Border Parking · 可預約時段 (06:00 – 22:00)</p>
+<div class="header">
+  <h1>🅿️ <span>香園圍邊境停車場</span></h1>
+  <p class="sub">Heung Yuen Wai Border Parking · 可預約時段 <b>06:00–22:00</b></p>
+</div>
+
+<div class="stats-bar" id="statsBar" style="display:none">
+  <div class="stat-item"><div class="stat-icon">🟢</div><div class="stat-val" style="color:var(--green)" id="statOpen">-</div><div class="stat-label">全線開放</div></div>
+  <div class="stat-item"><div class="stat-icon">🔵</div><div class="stat-val" style="color:var(--accent)" id="statAvail">-</div><div class="stat-label">大部份開</div></div>
+  <div class="stat-item"><div class="stat-icon">🟡</div><div class="stat-val" style="color:var(--yellow)" id="statLimited">-</div><div class="stat-label">少量時段</div></div>
+  <div class="stat-item"><div class="stat-icon">🔴</div><div class="stat-val" style="color:var(--red)" id="statFull">-</div><div class="stat-label">已滿</div></div>
+</div>
 
 <div class="controls">
   <select id="carType" onchange="refresh()">
-    <option value="private">私家車</option>
-    <option value="goods">客貨車 (二號停車場)</option>
-    <option value="motorcycle">電單車</option>
-    <option value="disabled_blue">傷殘人士 (藍證)</option>
-    <option value="disabled_grey">接載殘疾人士 (灰證)</option>
+    <option value="private">🚗 私家車</option>
+    <option value="goods">🚛 客貨車</option>
+    <option value="motorcycle">🏍️ 電單車</option>
+    <option value="disabled_blue">♿ 傷殘人士 (藍證)</option>
+    <option value="disabled_grey">♿ 接載殘疾 (灰證)</option>
   </select>
   <input type="date" id="dateFrom" onchange="refresh()">
-  <span style="color:var(--dim)">至</span>
+  <span class="sep">→</span>
   <input type="date" id="dateTo" onchange="refresh()">
   <button onclick="refresh()">🔄 查詢</button>
 </div>
 
-<div id="loading" class="loading">載入中...</div>
+<div id="loading" class="loading"><div class="spinner"></div><p>載入車位資訊...</p></div>
 <div id="grid" class="grid" style="display:none"></div>
-<div id="updated" class="last-updated" style="display:none"></div>
 
 <div class="notes">
-  <h3>📋 預約須知</h3>
-  <ol>
-    <li>泊車收費以每一小時計算，不足一小時亦作一小時收費</li>
-    <li>可於入場前 <b>30分鐘至7天</b> 預約車位 · 最短<b>2小時</b></li>
-    <li>私家車/電單車最長<b>7天</b> · 客貨車最長<b>3天</b></li>
-    <li>更改或取消：入場前2小時 · 行政費 HK$100</li>
-  </ol>
+  <div class="notes-inner">
+    <h3>📋 預約須知</h3>
+    <ol>
+      <li>泊車收費以<b>每小時</b>計算，不足一小時亦作一小時收費</li>
+      <li>可於入場前 <b>30分鐘至7天</b> 預約 · 最少 <b>2小時</b></li>
+      <li>私家車/電單車最長<b>7天</b> · 客貨車最長<b>3天</b></li>
+      <li>更改或取消：入場前2小時 · 行政費 <b>HK$100</b></li>
+    </ol>
+  </div>
 </div>
+
 <div class="footer">Parklan Clawhub · <a href="/">← Back</a></div>
 
 <script>
-const STATUS_MAP={open:{cls:'badge-open',label:'全日可訂'},available:{cls:'badge-available',label:'大部份可訂'},limited:{cls:'badge-limited',label:'少量時段'},full:{cls:'badge-full',label:'已滿'},error:{cls:'badge-error',label:'無法載入'}};
-
-const CAR_TYPE_NAMES={private:'私家車',goods:'客貨車',motorcycle:'電單車',disabled_blue:'傷殘人士(藍證)',disabled_grey:'接載殘疾人士(灰證)'};
-const CAR_TYPE_RADIOS={private:'bookRadio00',goods:'bookRadio10',motorcycle:'bookRadio02',disabled_blue:'bookRadio03',disabled_grey:'bookRadio01'};
+const STATUS={open:{icon:'🟢',label:'全線開放',cls:'open',pct:100},available:{icon:'🔵',label:'大部份可訂',cls:'available',pct:75},limited:{icon:'🟡',label:'少量時段',cls:'limited',pct:35},full:{icon:'🔴',label:'無時段',cls:'full',pct:0},error:{icon:'⚫',label:'錯誤',cls:'full',pct:0}};
+const VT={private:{name:'私家車',icon:'🚗'},goods:{name:'客貨車',icon:'🚛'},motorcycle:{name:'電單車',icon:'🏍️'},disabled_blue:{name:'傷殘人士(藍證)',icon:'♿'},disabled_grey:{name:'接載殘疾(灰證)',icon:'♿'}};
 
 function initDates(){
   const hkt=new Date(Date.now()+8*3600000);
@@ -102,71 +188,86 @@ function initDates(){
 initDates();
 
 async function refresh(){
-  document.getElementById('loading').style.display='block';
-  document.getElementById('grid').style.display='none';
-  document.getElementById('updated').style.display='none';
-  const carType=document.getElementById('carType').value;
-  const from=document.getElementById('dateFrom').value;
-  const to=document.getElementById('dateTo').value;
-  const resp=await fetch(`/parking/api/availability?type=${carType}&from=${from}&to=${to}`);
-  const data=await resp.json();
-  document.getElementById('loading').style.display='none';
-  document.getElementById('grid').style.display='block';
-  if(!data.ok){document.getElementById('grid').innerHTML=`<p class="loading">❌ ${data.error}</p>`;return}
-  renderGrid(data);
+  const ld=document.getElementById('loading'), g=document.getElementById('grid'), sb=document.getElementById('statsBar');
+  ld.style.display='block';g.style.display='none';sb.style.display='none';
+  const ct=document.getElementById('carType').value;
+  const from=document.getElementById('dateFrom').value, to=document.getElementById('dateTo').value;
+  const r=await fetch(`/parking/api/availability?type=${ct}&from=${from}&to=${to}`);
+  const d=await r.json();
+  ld.style.display='none';g.style.display='block';
+  if(!d.ok){g.innerHTML=`<div class="loading"><p>❌ ${d.error}</p></div>`;return}
+  render(d);
 }
 
-function renderGrid(data){
-  const grid=document.getElementById('grid');
+function render(d){
   const todayStr=new Date(Date.now()+8*3600000).toISOString().split('T')[0];
-  window._carType=data.car_type_key;
-  window._vehicleName=data.vehicle;
-  grid.innerHTML=data.days.map(day=>{
+  window._ct=d.car_type_key; window._vn=d.vehicle;
+
+  // Stats
+  const days=d.days.filter(x=>x.status!=='error');
+  document.getElementById('statOpen').textContent=days.filter(x=>x.status==='open').length;
+  document.getElementById('statAvail').textContent=days.filter(x=>x.status==='available').length;
+  document.getElementById('statLimited').textContent=days.filter(x=>x.status==='limited').length;
+  document.getElementById('statFull').textContent=days.filter(x=>x.status==='full').length;
+  document.getElementById('statsBar').style.display='flex';
+
+  document.getElementById('grid').innerHTML=d.days.map(day=>{
     const isToday=day.date.includes(todayStr.replace(/-/g,'/'));
-    const st=STATUS_MAP[day.status]||STATUS_MAP.error;
+    const st=STATUS[day.status]||STATUS.error;
     const ws=day.windows||[];
+
+    // Availability % for the bar
+    const pct=day.total_slots>0?Math.round(day.available_count/day.total_slots*100):0;
+
     let wh='';
     if(day.status==='error') wh=`<div class="no-windows">⚠️ ${day.error||'無法載入'}</div>`;
-    else if(ws.length===0) wh='<div class="no-windows">❌ 無可預約時段</div>';
-    else if(day.full_day_available) wh=`<div class="full-day" onclick="openDialog('${day.date}','06:00','22:00',${day.quota})"><span class="time">06:00 – 22:00 全線開放</span> <span class="spaces">${day.quota} 個車位</span></div>`;
-    else wh='<div class="windows">'+ws.map(w=>`<div class="window-block" onclick="openDialog('${day.date}','${w.start}','${w.end}',${w.spaces})"><span class="time">${w.start} – ${w.end}</span> <span class="spaces">· ${w.spaces} 位</span></div>`).join('')+'</div>';
-    return `<div class="day-card" style="${isToday?'border-color:rgba(77,232,255,.25)':''}"><div class="day-left"><div class="day-name">${day.day_name}${isToday?' ⬅':''}</div><div class="day-date">${day.day_label}</div></div><div class="day-right"><span class="badge ${st.cls}">${st.label}</span>${wh}</div></div>`;
+    else if(ws.length===0) wh='<div class="no-windows">❌ 全日無可預約時段</div>';
+    else if(day.full_day_available) wh=`<div class="win full-day" onclick="openDialog('${day.date}','06:00','22:00',${day.quota})"><span class="win-dot"></span><span class="win-time">06:00–22:00 全線開放</span> <span style="color:var(--dim);font-size:.75em">${day.quota}位</span></div>`;
+    else wh='<div class="windows">'+ws.map(w=>`<div class="win" onclick="openDialog('${day.date}','${w.start}','${w.end}',${w.spaces})"><span class="win-dot"></span><span class="win-time">${w.start}–${w.end}</span> <span style="color:var(--dim);font-size:.75em">${w.spaces}位</span></div>`).join('')+'</div>';
+
+    return `<div class="day-card${isToday?' today':''}">
+      <div class="day-head">
+        <div class="day-icon ${st.cls}">${st.icon}</div>
+        <div class="day-info">
+          <div class="date">${day.day_label} ${isToday?'<span style="font-size:.7em;color:var(--accent);margin-left:4px">今天</span>':''}</div>
+          <div class="weekday">${day.day_name} · ${day.available_count}/${day.total_slots} 時段可用</div>
+        </div>
+        <div class="day-badge ${st.cls}">${st.label}</div>
+      </div>
+      <div class="avail-bar"><div class="avail-fill ${st.cls}" style="width:${pct}%"></div></div>
+      ${wh}
+    </div>`;
   }).join('');
-  document.getElementById('updated').style.display='block';
-  document.getElementById('updated').textContent=`最後更新: ${new Date(Date.now()+8*3600000).toLocaleString('zh-HK',{timeZone:'Asia/Hong_Kong'})} HKT`;
 }
 
-function openDialog(date,winStart,winEnd,spaces){
-  const ct=window._carType||'private';
-  const ctn=CAR_TYPE_NAMES[ct]||'私家車';
-  const radio=CAR_TYPE_RADIOS[ct]||'bookRadio00';
-  const parts=date.split('/');
-  const displayDate=`${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`;
-  const[sh,sm]=winStart.split(':').map(Number);
-  const[eh,em]=winEnd.split(':').map(Number);
-  const hours=eh+em/60-(sh+sm/60);
+function openDialog(date,ws,we,sp){
+  const ct=window._ct||'private', v=VT[ct]||VT.private;
+  const p=date.split('/');
+  const dd=`${p[0]}年${parseInt(p[1])}月${parseInt(p[2])}日`;
+  const [sh,sm]=ws.split(':').map(Number),[eh,em]=we.split(':').map(Number);
+  const h=eh+em/60-(sh+sm/60);
+  const copyText=`${v.name} | ${dd} | ${ws}–${we}`;
 
   const ov=document.createElement('div');
-  ov.id='booking-dialog';
   ov.className='modal-overlay';
   ov.onclick=e=>{if(e.target===ov)ov.remove()};
-  ov.innerHTML=`
-    <div class="modal">
-      <h2>📋 預約詳情</h2>
-      <div class="info">
-        <b>車輛類別：</b>${ctn}<br>
-        <b>日期：</b>${displayDate}<br>
-        <b>時段：</b>${winStart} – ${winEnd} (${hours.toFixed(1)}小時)<br>
-        <b>剩餘車位：</b>至少 ${spaces} 個
-      </div>
-      <p style="color:var(--yellow);font-size:.78em;margin-bottom:16px">點擊下方按鈕前往官方網站，請自行選擇 <b>${ctn}</b> 及時段 <b>${winStart}–${winEnd}</b></p>
-      <div class="actions">
-        <a class="btn-primary" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>
-        <button class="btn-secondary" onclick="navigator.clipboard.writeText('${ctn} | ${displayDate} | ${winStart}–${winEnd}').then(()=>{this.textContent='✅ 已複製！';setTimeout(()=>{this.textContent='📋 複製'},2000)})">📋 複製</button>
-        <button class="btn-secondary" onclick="document.getElementById('booking-dialog').remove()">關閉</button>
-      </div>
-    </div>`;
+  ov.innerHTML=`<div class="modal">
+    <h2>📋 前往官方網站預約</h2>
+    <div class="info">
+      <b>${v.icon} ${v.name}</b><br>
+      📅 ${dd}<br>
+      🕐 ${ws} – ${we} (${h.toFixed(1)}小時)<br>
+      🅿️ 剩餘 ≥${sp} 個車位
+    </div>
+    <div class="hint">✅ 已複製到剪貼簿<br>在官方網站選擇 <b>${v.name}</b>，再揀時段 <b>${ws}–${we}</b></div>
+    <div class="actions">
+      <a class="btn-go" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>
+      <button class="btn-copy" onclick="navigator.clipboard.writeText('${copyText}');this.textContent='✅'">📋</button>
+      <button class="btn-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+    </div>
+  </div>`;
   document.body.appendChild(ov);
+  navigator.clipboard.writeText(copyText).catch(()=>{});
 }
 
 document.addEventListener('DOMContentLoaded',refresh);
