@@ -41,7 +41,7 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:var(--accent)}
 
 /* Modal */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto}
+.modal{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;color-scheme:dark}
 .modal h2{color:var(--accent);margin-bottom:12px;font-size:1.1em}
 .modal .step{display:none}
 .modal .step.active{display:block}
@@ -49,8 +49,9 @@ h1{text-align:center;font-size:1.5em;margin-bottom:4px;color:var(--accent)}
 .modal .info b{color:var(--text)}
 .modal label{display:block;font-size:.82em;color:var(--dim);margin-bottom:4px;margin-top:14px}
 .modal label:first-child{margin-top:0}
-.modal input,.modal select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:var(--input-bg);color:var(--text);font-size:.9em;outline:none}
-.modal input:focus{border-color:var(--accent)}
+.modal input,.modal select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#12121f;color:#fff;font-size:.9em;outline:none;-webkit-appearance:none;appearance:none}
+.modal select{background:#12121f url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e") no-repeat right 10px center/16px;padding-right:32px}
+.modal input:focus,.modal select:focus{border-color:var(--accent)}
 .modal .row{display:flex;gap:10px}
 .modal .row>*{flex:1}
 .modal .error{color:var(--red);font-size:.78em;margin-top:4px;display:none}
