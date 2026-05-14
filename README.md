@@ -1,150 +1,155 @@
-# Parklan Clawhub
+<p align="center">
+  <img src="assets/claw-icon.jpg" width="80" alt="ClawHub" style="border-radius: 18px" />
+</p>
 
-> A curated hub of AI-powered tools, experiments, and dashboards — built with a retro-futuristic pulse.
+<h1 align="center">╔══ PARKLAN CLAWHUB ══╗</h1>
+<p align="center"><em>Retro-futuristic AI toolkit — one server, many machines.</em></p>
 
-**Live at [on9claw.com](https://on9claw.com)** · **GitHub Actions auto-deploy to DigitalOcean**
+<p align="center">
+  <a href="https://on9claw.com"><img src="https://img.shields.io/badge/LIVE-on9claw.com-ff3ea5?style=for-the-badge&logo=vercel&logoColor=white" alt="Live" /></a>
+  <a href="https://github.com/parklan/ClawProject/actions"><img src="https://img.shields.io/badge/DEPLOY-GitHub_Actions-33e6ff?style=for-the-badge&logo=githubactions&logoColor=white" alt="Deploy" /></a>
+  <img src="https://img.shields.io/badge/STACK-Python_|_Vanilla_JS-8b5cf6?style=for-the-badge&logo=python&logoColor=white" alt="Stack" />
+  <img src="https://img.shields.io/badge/AI-OpenRouter_|_MiMo_v2-00e676?style=for-the-badge&logo=openai&logoColor=white" alt="AI" />
+</p>
 
----
-
-## Projects
-
-### Transport & Commute
-
-#### 🚌 Bus ETA (`722-eta/`) — Ready
-Real-time bus arrival checker for KMB (九巴) and Citybus (城巴).
-- Dual-operator ETA lookup with route / stop search
-- Joint-route auto-merge for shared stops
-- Bookmarked stops with auto-refresh countdown
-- Built-in Cantonese AI chatbot for bus route enquiries
-- Data source: data.gov.hk Transport APIs
-
-#### 🅿️ Parking Monitor (`parking-monitor/`) — Ready
-Real-time parking slot availability at Heung Yuen Wai (香園圍) border checkpoint.
-- Live slot counts by vehicle type (private car, motorcycle, goods vehicle, disabled)
-- Day-by-day booking window display
-- Deep-link to official booking site
+<p align="center">
+  <img src="https://img.shields.io/badge/projects-11-ff3ea5?style=flat-square" />
+  <img src="https://img.shields.io/badge/servers-7_python_micro--services-33e6ff?style=flat-square" />
+  <img src="https://img.shields.io/badge/infra-DigitalOcean-8b5cf6?style=flat-square" />
+  <img src="https://img.shields.io/badge/status-hacking%20at%203am-ffd166?style=flat-square" />
+</p>
 
 ---
 
-### Financial / Markets
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--   TRANSPORT                                                       -->
+<!-- ──────────────────────────────────────────────────────────────── -->
 
-#### 📊 AI Stock Investment Report (`stock-report/`) — POC
-AI-generated Cantonese stock analysis report. Enter a ticker (HK/US) — get fundamentals, technicals, risk, and recommendation.
-- HK & US stock autocomplete search with validation
-- yfinance data: PE, EPS, ROE, beta, MA20/50, RSI, analyst ratings
-- Cantonese AI report via OpenRouter (MiMo v2 Pro)
-- Visual score circle, buy/hold/sell banner, sectioned report cards
+<h3 align="center">🚏 TRANSPORT & COMMUTE</h3>
 
-#### 📈 US Market Radar (`us-market-radar/`) — Beta
-US market snapshot dashboard for key indices (SPY, QQQ, DIA, IWM, VIX).
-- 6-index summary grid (price, change %, open monitor)
-- Individual stock quote lookup
-- Server-side Yahoo Finance quote fetcher via cron / GitHub Actions
-- Dark-mode panel UI
-
-#### 🧪 BTC 5m Strategy Lab (`btc-5m-strategy-lab/`) — Beta
-Paper-trading sandbox for 5-minute BTC prediction market strategies (Polymarket).
-- Strategy rule builder (entry price, take profit %, stop loss %)
-- Break-even win rate calculator
-- Simulated trade journal and expectancy tracking
-- Paper-only mode — no real orders
-
-#### 🔒 Polymarket Execution (`polymarket-execution/`) — Private
-Private execution dashboard for Polymarket trading (Phase 1 — staging).
-- Account connection plumbing (wallet / API auth placeholders)
-- Execution modes: Paper / Preview / Live (disabled)
-- Risk controls: stake cap, max trades, loss limits, kill-switch
-- Log panel and order preview UI
+| Project | Status | What it does | Tech |
+|---------|:------:|--------------|------|
+| **[Bus ETA](722-eta/)** — 巴膠仔 | `✅ Ready` | Real-time KMB + Citybus arrival checker. Route/stop search, joint-route merging, bookmarked stops with live countdown. Built-in Cantonese AI chatbot for bus routes. | `Python` `data.gov.hk API` `OpenRouter` |
+| **[Parking Monitor](parking-monitor/)** | `🚀 Ready` | Live parking slot availability at Heung Yuen Wai (香園圍) border — per vehicle type, with booking window display. | `Python` `hywparking API` |
 
 ---
 
-### AI & Productivity
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--   FINANCIAL / MARKETS                                             -->
+<!-- ──────────────────────────────────────────────────────────────── -->
 
-#### 📝 QuickNotes (`quicknotes/`) — Ready
-AI-powered personal note organizer. Send notes via Signal — AI auto-organizes.
-- Captures notes from Signal messaging
-- AI auto-categorization, tagging, and summarization
-- Searchable timeline dashboard with smart date/reminder detection
-- Private, local JSON storage
+<h3 align="center">📈 FINANCIAL & MARKETS</h3>
 
-#### 🎧 Ebook Cantonese Narration (`ebook-canto-poc/`) — POC
-Convert EPUB / text into natural spoken Cantonese narration.
-- EPUB / plain text import
-- AI-powered Cantonese rewriting (MiniMax M2.5)
-- Text-to-speech playback (MiniMax TTS + browser SpeechSynthesis)
-- Emotion and prosody tagging
+| Project | Status | What it does | Tech |
+|---------|:------:|--------------|------|
+| **[AI Stock Report](stock-report/)** — 投資報告 | `🚀 POC` | AI Cantonese investment analysis. Autocomplete ticker search → fundamentals + technicals (MA, RSI, PE, EPS) → full AI report with buy/hold/sell score. | `yfinance` `OpenRouter` `Python` |
+| **[US Market Radar](us-market-radar/)** | `🧪 Beta` | US index dashboard: SPY, QQQ, DIA, IWM, VIX + open monitor. Real-time quotes from Yahoo Finance, updated via cron. | `yfinance` `Python` `JSON` |
+| **[BTC 5m Strategy Lab](btc-5m-strategy-lab/)** | `🧪 Beta` | Paper-trade 5-minute BTC prediction markets. Strategy builder → break-even math → simulated trade journal. No real orders. | `Vanilla JS` `Polymarket` |
+| **[Polymarket Execution](polymarket-execution/)** | `🔒 Private` | Private Polymarket execution staging. Wallet auth, risk controls (stake cap, loss limit, kill-switch), log panel. Live auto-trading **disabled**. | `Vanilla JS` `CLOB API` |
 
 ---
 
-### Office & Social
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--   AI & PRODUCTIVITY                                               -->
+<!-- ──────────────────────────────────────────────────────────────── -->
 
-#### 🧋 Tea Treat (`tea-treat/`) — POC
-Office group tea/drink ordering helper. Create, share, auto-consolidate.
-- Generate a shareable order link
-- Scrape menus from Foodpanda / Keeta links
-- Colleagues pick their drinks individually
-- Automatic master order consolidation
-- SQLite storage for order data
+<h3 align="center">🧠 AI & PRODUCTIVITY</h3>
 
-#### 💰 Lunch Wallet (`lunch-wallet/`) — Private
-Shared wallet tool for group lunch expense tracking and balance settling.
-- Multi-member group tracking
-- Expense entry per person
-- Balance / owe summaries
-- Password-protected, localStorage persistence
+| Project | Status | What it does | Tech |
+|---------|:------:|--------------|------|
+| **[QuickNotes](quicknotes/)** | `✅ Ready` | Capture notes via Signal → AI auto-categorizes, tags, summarizes. Searchable timeline dashboard with smart reminder detection. | `Flask` `Signal` `OpenClaw` |
+| **[Ebook Canto Narration](ebook-canto-poc/)** | `🧪 Beta` | EPUB / text → AI Cantonese rewriting → spoken narration with emotion tags. Proof-of-concept demo. | `MiniMax API` `TTS` `Python` |
 
 ---
 
-### Entertainment
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--   OFFICE & SOCIAL                                                 -->
+<!-- ──────────────────────────────────────────────────────────────── -->
 
-#### 🎵 Spotify AI Dashboard (`spotify-dashboard/`) — Beta
-Polished Spotify control panel with now-playing and device management.
-- Now-playing display with album art
-- Active devices list and queue preview
-- Play / pause / skip / search controls
-- Access-code protected (OAuth proxy behind `spotify_dashboard_server.py`)
+<h3 align="center">🧋 OFFICE & SOCIAL</h3>
 
----
-
-### Price Tracking
-
-#### ✈️ HKExpress Price Scanner (`hkexpress-price-scanner/`) — Ready
-Periodic flight price scanner for configured HKExpress routes.
-- Configurable route definitions (`config.yaml`)
-- Playwright-based web scraping
-- Historical price tracking in SQLite
-- Telegram / email price-drop alerts
-- APScheduler continuous scanning
-- Auto-generated HTML price history report
+| Project | Status | What it does | Tech |
+|---------|:------:|--------------|------|
+| **[Tea Treat](tea-treat/)** — 請食 Tea | `🚀 POC` | Office tea ordering engine. Generate shareable link → scrape Foodpanda / Keeta menus → colleagues pick → auto-consolidate master order. | `Python` `SQLite` `Playwright` |
+| **[Lunch Wallet](lunch-wallet/)** | `🔒 Private` | Shared group lunch expense tracker. Multi-member balances, per-person expense entry, owe/settlement summaries. Password-protected. | `Vanilla JS` `localStorage` |
 
 ---
 
-## Tech Stack
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--   ENTERTAINMENT                                                   -->
+<!-- ──────────────────────────────────────────────────────────────── -->
 
-| Layer | Tech |
-|-------|------|
-| **Backend** | Python 3 (`http.server`, Flask), OpenRouter API, yfinance, Playwright, APScheduler |
-| **Frontend** | Vanilla HTML5 / CSS3 / JS (no frameworks), glass-morphism dark themes, CSS grid layouts |
-| **AI** | OpenRouter (MiMo v2 Pro), MiniMax (M2.5 chat + TTS) |
-| **Data** | Yahoo Finance, Polymarket CLOB, Spotify Web API, data.gov.hk, SQLite, JSON |
-| **Infra** | DigitalOcean VPS, GitHub Actions CI/CD, Nginx reverse proxy |
+<h3 align="center">🎵 ENTERTAINMENT</h3>
 
----
-
-## Deployment
-
-Push to `main` triggers GitHub Actions (`.github/workflows/deploy.yml`) which:
-1. SSH into a DigitalOcean Droplet
-2. Pulls latest code
-3. Restarts all Python micro-servers (ports 8766–8770, 5000)
-4. Serves static files via Nginx at `on9claw.com`
+| Project | Status | What it does | Tech |
+|---------|:------:|--------------|------|
+| **[Spotify AI Dashboard](spotify-dashboard/)** | `🧪 Beta` | Polished now-playing panel with album art, device list, queue preview. Play/skip/search behind access code. | `Spotify Web API` `OAuth` `Python` |
 
 ---
 
-## Disclaimer
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--   PRICE TRACKING                                                  -->
+<!-- ──────────────────────────────────────────────────────────────── -->
 
-All projects are **personal tools and experiments**. Financial tools (stock report, BTC lab, Polymarket execution) are for educational / paper-trading use only and do not constitute investment advice. Private projects are access-controlled.
+<h3 align="center">✈️ PRICE TRACKING</h3>
+
+| Project | Status | What it does | Tech |
+|---------|:------:|--------------|------|
+| **[HKExpress Scanner](hkexpress-price-scanner/)** | `🚀 Ready` | Automated flight price scanner. Configurable routes, Playwright scraping, SQLite history, Telegram/email alerts, auto-generated HTML report. | `Playwright` `SQLite` `APScheduler` |
 
 ---
 
-<p align="center">Built with 🦞 by Parklan</p>
+## 🏗 ARCHITECTURE
+
+```
+on9claw.com (Nginx)
+├── /                     → index.html (landing page)
+├── /722-eta/             → Bus ETA app
+├── /stock-report/        → AI stock report
+├── /us-market-radar/     → US market dashboard
+├── /btc-5m-strategy-lab/ → BTC strategy lab
+├── /polymarket-execution/→ Polymarket dashboard
+├── /quicknotes/          → QuickNotes app
+├── /spotify-dashboard/   → Spotify control panel
+├── /ebook-canto-poc/     → Cantonese narration demo
+├── /tea-treat/           → Tea ordering engine
+├── /parking-monitor/     → Parking availability
+├── /lunch-wallet/        → Lunch wallet (🔒)
+│
+├── :8766  private_lunch_server.py       🔒 Lunch wallet auth gateway
+├── :8767  spotify_dashboard_server.py   🎵 Spotify OAuth proxy
+├── :8768  chatbot_server.py             💬 Laura chatbot (MiMo)
+├── :8769  btc_strategy_server.py        📊 Polymarket BTC data proxy
+├── :8770  stock_report_server.py        📈 Stock report AI engine
+├── :5000  eta_proxy.py                  🚌 Bus ETA API proxy
+└── cron   us-market-radar/update-quotes.py   📊 US quotes fetcher
+```
+
+---
+
+## ⚡ DEPLOYMENT
+
+```mermaid
+graph LR
+    A[Push to main] --> B[GitHub Actions]
+    B --> C[SSH → DigitalOcean]
+    C --> D[Pull latest code]
+    D --> E[Restart 6 Python servers]
+    D --> F[Nginx serves static files]
+    E --> G[🟢 on9claw.com]
+    F --> G
+```
+
+Push to `main` triggers `.github/workflows/deploy.yml` — zero downtime, continuous delivery.
+
+---
+
+## ⚠️ DISCLAIMER
+
+Financial tools (stock report, BTC lab, Polymarket execution) are **educational / paper-trading only**. Nothing here constitutes investment advice. Private projects are access-controlled and require authentication.
+
+---
+
+<p align="center">
+  <sub>Built with 🦞 by Parklan · powered by <a href="https://openclaw.ai">OpenClaw</a></sub>
+</p>
