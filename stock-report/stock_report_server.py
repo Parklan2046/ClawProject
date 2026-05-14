@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """
 Stock Investment Report Server
-Accepts a stock ticker/name, fetches data via yfinance,
-and generates a full investment report in Cantonese using MiMo.
+Accepts a stock ticker/name, fetches data via yfinance + web search,
+and generates a full investment report in Cantonese via OpenRouter.
 """
 
 import json
 import os
+import re
+import time
 import traceback
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib import request, error
+from urllib import request, error, parse
 
-import yfinance as yf
+import numpy as np
 import pandas as pd
+import yfinance as yf
 
 HOST = os.getenv('REPORT_HOST', '127.0.0.1')
 PORT = int(os.getenv('REPORT_PORT', '8770'))
@@ -21,7 +25,9 @@ OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
 OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 REPORT_MODEL = os.getenv('REPORT_MODEL', 'xiaomi/mimo-v2-pro')
 
-# HK stock name → ticker mapping (common ones)
+CACHE_TTL = int(os.getenv('REPORT_CACHE_TTL', '300'))
+_data_cache: dict = {}
+
 HK_NAME_MAP = {
     '騰訊': '0700.HK', '腾讯': '0700.HK', 'tencent': '0700.HK',
     '阿里巴巴': '9988.HK', '阿里': '9988.HK', 'alibaba': '9988.HK',
@@ -43,6 +49,17 @@ HK_NAME_MAP = {
     '百度': '9888.HK', 'baidu': '9888.HK',
     '泡泡瑪特': '9992.HK', '泡泡玛特': '9992.HK', 'pop mart': '9992.HK',
     '農夫山泉': '9633.HK', '农夫山泉': '9633.HK',
+    '快手': '1024.HK', 'kuaishou': '1024.HK',
+    '中芯國際': '0981.HK', '中芯国际': '0981.HK', 'smic': '0981.HK',
+    '平安保險': '2318.HK', '平安': '2318.HK', 'ping an': '2318.HK',
+    '吉利': '0175.HK', 'geely': '0175.HK',
+    '海底撈': '6862.HK', '海底捞': '6862.HK', 'haidilao': '6862.HK',
+    '聯想': '0992.HK', '联想': '0992.HK', 'lenovo': '0992.HK',
+    '商湯': '0020.HK', '商汤': '0020.HK', 'sensetime': '0020.HK',
+    '李寧': '2331.HK', '李宁': '2331.HK', 'li ning': '2331.HK',
+    '理想汽車': '2015.HK', '理想汽车': '2015.HK', 'li auto': '2015.HK',
+    '小鵬': '9868.HK', '小鹏': '9868.HK', 'xpeng': '9868.HK',
+    '蔚來': '9866.HK', '蔚来': '9866.HK', 'nio': '9866.HK',
     '蘋果': 'AAPL', '苹果': 'AAPL', 'apple': 'AAPL',
     '英偉達': 'NVDA', '英伟达': 'NVDA', 'nvidia': 'NVDA',
     '特斯拉': 'TSLA', 'tesla': 'TSLA',
@@ -51,87 +68,167 @@ HK_NAME_MAP = {
     '亞馬遜': 'AMZN', '亚马逊': 'AMZN', 'amazon': 'AMZN',
     'meta': 'META', 'facebook': 'META',
     '台積電': 'TSM', '台积电': 'TSM', 'tsmc': 'TSM',
+    'amd': 'AMD', 'intel': 'INTC', 'netflix': 'NFLX',
+    'uber': 'UBER', 'palantir': 'PLTR', 'coinbase': 'COIN',
+    'snap': 'SNAP', 'shopify': 'SHOP',
+    'spy': 'SPY', 'qqq': 'QQQ', 'iwm': 'IWM',
 }
 
 
 def resolve_ticker(query: str) -> str:
-    """Resolve a stock name or ticker to a yfinance ticker."""
     q = query.strip().lower()
     if q in HK_NAME_MAP:
         return HK_NAME_MAP[q]
-    # If it looks like a HK stock number (e.g. "700" or "0700")
     if q.isdigit():
-        padded = q.zfill(4)
-        return f"{padded}.HK"
-    # Return as-is (already a ticker)
+        return f"{q.zfill(4)}.HK"
     return query.strip().upper()
+
+
+def cache_get(key: str):
+    entry = _data_cache.get(key)
+    if entry and (time.time() - entry['ts']) < CACHE_TTL:
+        return entry['data']
+    return None
+
+
+def cache_set(key: str, data):
+    _data_cache[key] = {'data': data, 'ts': time.time()}
+
+
+def fetch_web_news(company_name: str, ticker: str) -> list:
+    """Fetch latest news from Google News RSS for the given company/ticker."""
+    news = []
+    queries = [company_name, ticker.replace('.HK', '')]
+    seen = set()
+    for query in queries:
+        if not query or query in seen:
+            continue
+        seen.add(query)
+        try:
+            encoded = parse.quote(f"{query} stock")
+            url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+            req = request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with request.urlopen(req, timeout=10) as resp:
+                root = ET.fromstring(resp.read().decode('utf-8', 'ignore'))
+                for item in root.iter('item'):
+                    title = item.findtext('title', '')
+                    link = item.findtext('link', '')
+                    source = item.findtext('source', '')
+                    pubdate = item.findtext('pubDate', '')
+                    if title and link:
+                        news.append({
+                            'title': title,
+                            'link': link,
+                            'source': source,
+                            'date': pubdate,
+                            'provider': 'google_news',
+                        })
+        except Exception:
+            pass
+    return news[:10]
 
 
 def fetch_stock_data(ticker: str) -> dict:
     """Fetch comprehensive stock data using yfinance."""
+    cached = cache_get(f"stock:{ticker}")
+    if cached:
+        return cached
+
     stock = yf.Ticker(ticker)
     info = stock.info or {}
 
-    # Price history (6 months)
     end = datetime.now()
-    start = end - timedelta(days=180)
+    start = end - timedelta(days=365)
     hist = stock.history(start=start.strftime('%Y-%m-%d'), end=end.strftime('%Y-%m-%d'))
 
-    # Technical indicators
     tech = {}
     if len(hist) > 0:
-        close = hist['Close']
-        tech['current_price'] = round(float(close.iloc[-1]), 2)
-        tech['price_6m_ago'] = round(float(close.iloc[0]), 2)
-        tech['change_6m_pct'] = round((tech['current_price'] / tech['price_6m_ago'] - 1) * 100, 2)
-        tech['high_6m'] = round(float(close.max()), 2)
-        tech['low_6m'] = round(float(close.min()), 2)
+        close = hist['Close'].astype(float)
+        vol = hist['Volume'].astype(float)
 
-        # Moving averages
+        tech['current_price'] = round(float(close.iloc[-1]), 2)
+        tech['prev_close'] = round(float(close.iloc[-2]), 2) if len(close) >= 2 else None
+        tech['change_pct'] = round(float((close.iloc[-1] / close.iloc[-2] - 1) * 100), 2) if len(close) >= 2 else None
+        tech['price_1y_ago'] = round(float(close.iloc[0]), 2)
+        tech['change_1y_pct'] = round((tech['current_price'] / tech['price_1y_ago'] - 1) * 100, 2) if tech['price_1y_ago'] else None
+        tech['high_1y'] = round(float(close.max()), 2)
+        tech['low_1y'] = round(float(close.min()), 2)
+
         if len(close) >= 20:
             tech['ma20'] = round(float(close.tail(20).mean()), 2)
         if len(close) >= 50:
             tech['ma50'] = round(float(close.tail(50).mean()), 2)
+        if len(close) >= 200:
+            tech['ma200'] = round(float(close.tail(200).mean()), 2)
 
-        # Volume
-        vol = hist['Volume']
-        tech['avg_volume'] = int(vol.tail(20).mean())
-        tech['latest_volume'] = int(vol.iloc[-1])
+        tech['avg_volume'] = int(vol.tail(20).mean()) if len(vol) >= 20 else None
+        tech['latest_volume'] = int(vol.iloc[-1]) if len(vol) > 0 else None
 
-        # RSI (14-day)
-        if len(close) >= 14:
-            delta = close.diff()
-            gain = delta.clip(lower=0).tail(14).mean()
-            loss = (-delta.clip(upper=0)).tail(14).mean()
-            if loss != 0:
-                rs = gain / loss
-                tech['rsi_14'] = round(float(100 - (100 / (1 + rs))), 1)
+        # Volume ratio
+        if tech['avg_volume'] and tech['latest_volume'] and tech['avg_volume'] > 0:
+            tech['vol_ratio'] = round(tech['latest_volume'] / tech['avg_volume'], 2)
 
-        # Recent price trend (last 5 days)
+        # RSI (14-day, Wilder's smoothing)
+        if len(close) >= 15:
+            tech['rsi_14'] = _calc_rsi(close, 14)
+
+        # MACD
+        if len(close) >= 26:
+            macd_line, signal_line, macd_hist = _calc_macd(close)
+            tech['macd'] = round(float(macd_line.iloc[-1]), 4) if not macd_line.empty else None
+            tech['macd_signal'] = round(float(signal_line.iloc[-1]), 4) if not signal_line.empty else None
+            tech['macd_hist'] = round(float(macd_hist.iloc[-1]), 4) if not macd_hist.empty else None
+            tech['macd_bullish'] = bool(tech['macd'] and tech['macd_signal'] and tech['macd'] > tech['macd_signal'])
+
+        # Bollinger Bands (20,2)
+        if len(close) >= 20:
+            bb_upper, bb_mid, bb_lower = _calc_bollinger(close)
+            tech['bb_upper'] = round(float(bb_upper.iloc[-1]), 2) if not bb_upper.empty else None
+            tech['bb_mid'] = round(float(bb_mid.iloc[-1]), 2) if not bb_mid.empty else None
+            tech['bb_lower'] = round(float(bb_lower.iloc[-1]), 2) if not bb_lower.empty else None
+            if tech['bb_lower'] and tech['bb_upper'] and tech['bb_lower'] != tech['bb_upper']:
+                tech['bb_position'] = round((tech['current_price'] - tech['bb_lower']) / (tech['bb_upper'] - tech['bb_lower']) * 100, 1)
+
+        # ATR (14)
+        if len(hist) >= 15:
+            tech['atr_14'] = round(float(_calc_atr(hist, 14).iloc[-1]), 2)
+
+        # Historical prices for chart (last 60 trading days)
+        chart_close = close.tail(60).tolist()
+        tech['chart_prices'] = [round(float(p), 2) for p in chart_close]
+
+        # Recent 5-day trend
         if len(close) >= 5:
             last5 = close.tail(5).tolist()
             tech['recent_prices'] = [round(float(p), 2) for p in last5]
 
-    # Fundamentals
     fund = {
         'name': info.get('longName') or info.get('shortName') or ticker,
         'sector': info.get('sector', 'N/A'),
         'industry': info.get('industry', 'N/A'),
         'market_cap': info.get('marketCap'),
+        'enterprise_value': info.get('enterpriseValue'),
         'pe_ratio': info.get('trailingPE'),
         'forward_pe': info.get('forwardPE'),
+        'peg_ratio': info.get('pegRatio'),
         'pb_ratio': info.get('priceToBook'),
         'dividend_yield': info.get('dividendYield'),
         'eps': info.get('trailingEps'),
         'forward_eps': info.get('forwardEps'),
         'revenue': info.get('totalRevenue'),
+        'revenue_growth': info.get('revenueGrowth'),
+        'earnings_growth': info.get('earningsGrowth'),
         'profit_margin': info.get('profitMargins'),
+        'operating_margin': info.get('operatingMargins'),
         'roe': info.get('returnOnEquity'),
+        'roa': info.get('returnOnAssets'),
         'debt_to_equity': info.get('debtToEquity'),
         'current_ratio': info.get('currentRatio'),
         'beta': info.get('beta'),
         'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
         'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
+        'fifty_day_avg': info.get('fiftyDayAverage'),
+        'two_hundred_day_avg': info.get('twoHundredDayAverage'),
         'recommendation': info.get('recommendationKey'),
         'target_price': info.get('targetMeanPrice'),
         'target_high': info.get('targetHighPrice'),
@@ -139,33 +236,96 @@ def fetch_stock_data(ticker: str) -> dict:
         'num_analysts': info.get('numberOfAnalystOpinions'),
         'currency': info.get('currency', 'USD'),
         'exchange': info.get('exchange', ''),
+        'pre_market_price': info.get('preMarketPrice'),
+        'post_market_price': info.get('postMarketPrice'),
+        'regular_market_previous_close': info.get('regularMarketPreviousClose'),
     }
 
-    # Recent news (from yfinance)
-    news = []
+    # yfinance built-in news
+    yf_news = []
     try:
-        raw_news = stock.news or []
-        for n in raw_news[:5]:
+        raw_news = getattr(stock, 'news', None) or []
+        for n in raw_news[:8]:
             content = n.get('content', n)
-            news.append({
+            yf_news.append({
                 'title': content.get('title', ''),
-                'publisher': content.get('publisher', content.get('provider', {}).get('displayName', '')),
+                'source': content.get('publisher', content.get('provider', {}).get('displayName', '')),
                 'link': content.get('clickThroughUrl', content.get('canonicalUrl', {}).get('url', '')),
+                'provider': 'yfinance',
             })
     except Exception:
         pass
 
-    return {
+    # Web news
+    web_news = fetch_web_news(fund['name'], ticker)
+
+    # Merge & deduplicate
+    all_news = []
+    seen_titles = set()
+    for n in web_news + yf_news:
+        key = n['title'][:80].lower()
+        if key not in seen_titles:
+            seen_titles.add(key)
+            all_news.append(n)
+
+    result = {
         'ticker': ticker,
         'fundamentals': fund,
         'technicals': tech,
-        'news': news,
+        'news': all_news[:12],
         'fetch_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
     }
+    cache_set(f"stock:{ticker}", result)
+    return result
+
+
+def _calc_rsi(series: pd.Series, period: int = 14) -> float:
+    """RSI using Wilder's smoothing."""
+    delta = series.diff()
+    gain = delta.clip(lower=0)
+    loss = (-delta).clip(lower=0)
+    avg_gain = gain.iloc[1:period + 1].mean()
+    avg_loss = loss.iloc[1:period + 1].mean()
+    for i in range(period + 1, len(gain)):
+        avg_gain = (avg_gain * (period - 1) + gain.iloc[i]) / period
+        avg_loss = (avg_loss * (period - 1) + loss.iloc[i]) / period
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    return round(float(100 - (100 / (1 + rs))), 1)
+
+
+def _calc_macd(series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9):
+    ema_fast = series.ewm(span=fast, adjust=False).mean()
+    ema_slow = series.ewm(span=slow, adjust=False).mean()
+    macd_line = ema_fast - ema_slow
+    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+    macd_hist = macd_line - signal_line
+    return macd_line, signal_line, macd_hist
+
+
+def _calc_bollinger(series: pd.Series, period: int = 20, std: float = 2.0):
+    mid = series.rolling(window=period).mean()
+    std_dev = series.rolling(window=period).std()
+    upper = mid + std * std_dev
+    lower = mid - std * std_dev
+    return upper, mid, lower
+
+
+def _calc_atr(hist: pd.DataFrame, period: int = 14):
+    high = hist['High'].astype(float)
+    low = hist['Low'].astype(float)
+    close = hist['Close'].astype(float)
+    prev_close = close.shift(1)
+    tr1 = high - low
+    tr2 = (high - prev_close).abs()
+    tr3 = (low - prev_close).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    atr = tr.ewm(span=period, adjust=False).mean()
+    return atr
 
 
 def format_number(n):
-    """Format large numbers with units."""
     if n is None:
         return 'N/A'
     if abs(n) >= 1e12:
@@ -177,94 +337,120 @@ def format_number(n):
     return f"{n:,.2f}"
 
 
+def safe_pct(n):
+    """Safely format a ratio as percentage string. Returns 'N/A' if None."""
+    if n is None:
+        return 'N/A'
+    return f"{n * 100:.2f}%"
+
+
 def build_analysis_prompt(data: dict) -> str:
-    """Build the analysis prompt from stock data."""
     f = data['fundamentals']
     t = data['technicals']
     currency = f.get('currency', 'USD')
 
     lines = [
-        f"股票代號: {data['ticker']}",
-        f"公司名稱: {f['name']}",
-        f"行業: {f['sector']} / {f['industry']}",
-        f"貨幣: {currency}",
+        f"▸ 股票代號: {data['ticker']}",
+        f"▸ 公司名稱: {f['name']}",
+        f"▸ 行業: {f['sector']} / {f['industry']}",
+        f"▸ 交易所: {f['exchange']}  貨幣: {currency}",
+        f"▸ 數據時間: {data['fetch_time']}",
         "",
-        "== 基本面 ==",
-        f"現價: {t.get('current_price', 'N/A')} {currency}",
-        f"市值: {format_number(f['market_cap'])} {currency}",
-        f"市盈率 (PE): {f['pe_ratio']}",
-        f"預測市盈率 (Forward PE): {f['forward_pe']}",
-        f"市淨率 (PB): {f['pb_ratio']}",
-        f"每股盈利 (EPS): {f['eps']}",
-        f"預測EPS: {f['forward_eps']}",
-        f"股息率: {f'{f['dividend_yield']*100:.2f}%' if f['dividend_yield'] else 'N/A'}",
-        f"淨利潤率: {f'{f['profit_margin']*100:.2f}%' if f['profit_margin'] else 'N/A'}",
-        f"ROE: {f'{f['roe']*100:.2f}%' if f['roe'] else 'N/A'}",
-        f"負債/股東權益比: {f['debt_to_equity']}",
-        f"Beta: {f['beta']}",
-        f"收入: {format_number(f['revenue'])} {currency}",
+        "═══ 基本面 ═══",
+        f"- 現價: {t.get('current_price', 'N/A')} {currency}",
+        f"- 前收: {t.get('prev_close', 'N/A')} {currency}  變動: {t.get('change_pct', 'N/A')}%",
+        f"- 市值: {format_number(f['market_cap'])} {currency}",
+        f"- 市盈率 (PE): {f['pe_ratio'] or 'N/A'}",
+        f"- 預測市盈率: {f['forward_pe'] or 'N/A'}",
+        f"- PEG: {f['peg_ratio'] or 'N/A'}",
+        f"- 市淨率 (PB): {f['pb_ratio'] or 'N/A'}",
+        f"- 每股盈利 (EPS): {f['eps'] or 'N/A'}",
+        f"- 預測 EPS: {f['forward_eps'] or 'N/A'}",
+        f"- 股息率: {safe_pct(f['dividend_yield'])}",
+        f"- 淨利潤率: {safe_pct(f['profit_margin'])}",
+        f"- 營業利潤率: {safe_pct(f['operating_margin'])}",
+        f"- ROE: {safe_pct(f['roe'])}",
+        f"- ROA: {safe_pct(f['roa'])}",
+        f"- 負債/權益比: {f['debt_to_equity'] or 'N/A'}",
+        f"- 流動比率: {f['current_ratio'] or 'N/A'}",
+        f"- Beta: {f['beta'] or 'N/A'}",
+        f"- 收入: {format_number(f['revenue'])} {currency}",
+        f"- 收入增長: {safe_pct(f['revenue_growth'])}",
+        f"- 盈利增長: {safe_pct(f['earnings_growth'])}",
         "",
-        "== 技術面 ==",
-        f"現價: {t.get('current_price', 'N/A')} {currency}",
-        f"半年最高: {t.get('high_6m', 'N/A')} {currency}",
-        f"半年最低: {t.get('low_6m', 'N/A')} {currency}",
-        f"半年升跌: {t.get('change_6m_pct', 'N/A')}%",
-        f"20天線: {t.get('ma20', 'N/A')} {currency}",
-        f"50天線: {t.get('ma50', 'N/A')} {currency}",
-        f"RSI(14): {t.get('rsi_14', 'N/A')}",
-        f"52週高位: {f['fifty_two_week_high']} {currency}",
-        f"52週低位: {f['fifty_two_week_low']} {currency}",
-        f"平均成交量(20日): {format_number(t.get('avg_volume', 0))}",
-        "",
-        "== 分析師評級 ==",
-        f"評級: {f['recommendation']}",
-        f"目標價: {f['target_price']} {currency} (高: {f['target_high']}, 低: {f['target_low']})",
-        f"分析師人數: {f['num_analysts']}",
+        "═══ 技術面 ═══",
+        f"- 現價: {t.get('current_price', 'N/A')} {currency}",
+        f"- 1年最高: {t.get('high_1y', 'N/A')} {currency}",
+        f"- 1年最低: {t.get('low_1y', 'N/A')} {currency}",
+        f"- 1年升跌: {t.get('change_1y_pct', 'N/A')}%",
+        f"- 20天線 (MA20): {t.get('ma20', 'N/A')} {currency}",
+        f"- 50天線 (MA50): {t.get('ma50', 'N/A')} {currency}",
+        f"- 200天線 (MA200): {t.get('ma200', 'N/A')} {currency}",
+        f"- 52週高位: {f['fifty_two_week_high'] or 'N/A'} {currency}",
+        f"- 52週低位: {f['fifty_two_week_low'] or 'N/A'} {currency}",
+        f"- RSI(14): {t.get('rsi_14', 'N/A')}",
+        f"- MACD: {t.get('macd', 'N/A')}  Signal: {t.get('macd_signal', 'N/A')}  柱: {t.get('macd_hist', 'N/A')}  {'(黃金交叉 bullish)' if t.get('macd_bullish') else '(死亡交叉 bearish)'}",
+        f"- Bollinger 上軌: {t.get('bb_upper', 'N/A')}  中軌: {t.get('bb_mid', 'N/A')}  下軌: {t.get('bb_lower', 'N/A')}  位置: {t.get('bb_position', 'N/A')}%",
+        f"- ATR(14): {t.get('atr_14', 'N/A')} {currency}",
+        f"- 平均成交量(20日): {format_number(t.get('avg_volume', 0))}  最新: {format_number(t.get('latest_volume', 0))}  比率: {t.get('vol_ratio', 'N/A')}x",
     ]
 
+    pre = f.get('pre_market_price')
+    post = f.get('post_market_price')
+    if pre or post:
+        lines.append(f"- 盤前價: {pre or 'N/A'} / 盤後價: {post or 'N/A'} {currency}")
+
     if t.get('recent_prices'):
-        lines.append(f"\n最近5日價格: {' → '.join(str(p) for p in t['recent_prices'])} {currency}")
+        trend = ' → '.join(str(p) for p in t['recent_prices'])
+        lines.append(f"\n最近5日走勢: {trend} {currency}")
 
     if data['news']:
-        lines.append("\n== 最新新聞 ==")
+        lines.append("\n═══ 最新新聞 (網路搜尋) ═══")
         for n in data['news']:
-            lines.append(f"- {n['title']} ({n['publisher']})")
+            lines.append(f"- [{n.get('source', '')}] {n['title']}")
+
+    lines.append("\n═══ 分析師評級 ═══")
+    lines.append(f"- 評級: {f.get('recommendation', 'N/A')}")
+    lines.append(f"- 目標價: {f.get('target_price', 'N/A')} {currency} (高: {f.get('target_high', 'N/A')}, 低: {f.get('target_low', 'N/A')})")
+    lines.append(f"- 分析師人數: {f.get('num_analysts', 'N/A')}")
 
     return '\n'.join(lines)
 
 
 def generate_report(data: dict) -> str:
-    """Generate investment report via OpenRouter/MiMo."""
     stock_info = build_analysis_prompt(data)
 
     system_prompt = (
         "你係一位資深港股同美股投資分析師，專門用香港廣東話（繁體中文）撰寫投資報告。\n"
-        "請根據以下股票資料，撰寫一份完整嘅投資分析報告。\n\n"
+        "你嘅分析會考慮基本面、技術面、最新新聞、市場情緒同宏觀因素。\n\n"
         "報告結構必須包括以下章節（用 ## 標題）：\n"
         "## 公司簡介\n"
         "## 基本面分析\n"
         "## 技術面分析\n"
-        "## 市場情緒\n"
+        "## 市場情緒同新聞分析\n"
         "## 風險因素\n"
         "## 投資建議\n"
         "## 綜合評分\n\n"
         "要求：\n"
-        "- 用香港廣東話書面語，可以用少少口語化表達\n"
-        "- 數字要清晰，用港式表達（如「$XX蚊」、「XX億」）\n"
-        "- 建議要具體，唔好模稜兩可\n"
-        "- 投資建議必須明確講「買入」/「持有」/「賣出」其中一個\n"
-        "- 綜合評分係必須嘅最後一節，必須用「X/10」格式（例如 7/10），並附上簡短評分理由\n"
-        "- 如果資料不足，要講明邊度資料唔夠\n"
+        "- 用香港廣東話書面語，可以適量用口語化表達\n"
+        "- 引述具體數字，用港式表達（如「$XX蚊」、「XX億」）\n"
+        "- 技術分析要講清楚趨勢、支持位、阻力位\n"
+        "- 新聞部分要綜合最新消息，講出對股價嘅潛在影響\n"
+        "- 投資建議要具體明確，唔好模稜兩可\n"
+        "- 投資建議必須明確講「買入」/「持有」/「賣出」，唔可以用「中性」\n"
+        "- 綜合評分係必須嘅最後一節，必須用「X/10」格式（例如 7/10），並附上簡短評分理由同結論\n"
+        "- 如果資料不足，要講明邊度資料唔夠同原因\n"
         "- 唔好用 markdown 粗體（**），直接用普通文字\n"
-        "- 唔好寫太長，每節精簡扼要，確保寫到最尾嘅綜合評分"
+        "- 唔好寫太長，每節精簡扼要，但必須寫到最尾嘅綜合評分"
     )
 
     payload = {
         'model': REPORT_MODEL,
-        'max_tokens': 3500,
+        'max_tokens': 4000,
+        'temperature': 0.3,
         'messages': [
             {'role': 'system', 'content': system_prompt},
-            {'role': 'user', 'content': f'請分析以下股票並撰寫投資報告：\n\n{stock_info}'},
+            {'role': 'user', 'content': f'請根據以下股票數據同最新新聞，撰寫一份完整嘅投資報告：\n\n{stock_info}'},
         ],
     }
 
@@ -273,36 +459,26 @@ def generate_report(data: dict) -> str:
         data=json.dumps(payload).encode('utf-8'),
         method='POST',
         headers={
-            'content-type': 'application/json',
-            'authorization': f'Bearer {OPENROUTER_API_KEY}',
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {OPENROUTER_API_KEY}',
         },
     )
-    with request.urlopen(req, timeout=120) as resp:
+    with request.urlopen(req, timeout=150) as resp:
         raw = json.loads(resp.read().decode('utf-8', 'ignore'))
 
     choices = raw.get('choices') or []
     if choices:
-        return choices[0].get('message', {}).get('content', '').strip()
+        content = choices[0].get('message', {}).get('content', '').strip()
+        cached = cache_get(f"report:{data['ticker']}")
+        if not cached:
+            cache_set(f"report:{data['ticker']}", content)
+        return content
     return '報告生成失敗，請稍後再試。'
 
 
-def send_json(h, payload, status=200):
-    body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-    h.send_response(status)
-    h.send_header('Content-Type', 'application/json; charset=utf-8')
-    h.send_header('Content-Length', str(len(body)))
-    h.send_header('Access-Control-Allow-Origin', '*')
-    h.send_header('Access-Control-Allow-Headers', 'Content-Type')
-    h.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    h.end_headers()
-    h.wfile.write(body)
-
-
 def search_stocks(query: str) -> list:
-    """Search for stocks using yfinance search API."""
     results = []
     try:
-        import yfinance as yf
         search = yf.Search(query, max_results=8)
         quotes = getattr(search, 'quotes', []) or []
         for q in quotes:
@@ -316,10 +492,10 @@ def search_stocks(query: str) -> list:
     except Exception:
         pass
 
-    # Also check our local name map
     q_lower = query.strip().lower()
+    matched_tickers = set(r['ticker'] for r in results)
     for name, ticker in HK_NAME_MAP.items():
-        if q_lower in name and ticker not in [r['ticker'] for r in results]:
+        if q_lower in name and ticker not in matched_tickers:
             try:
                 stock = yf.Ticker(ticker)
                 info = stock.info or {}
@@ -346,7 +522,6 @@ def search_stocks(query: str) -> list:
 def validate_ticker(ticker: str) -> dict:
     """Validate a ticker exists and return basic info."""
     try:
-        import yfinance as yf
         resolved = resolve_ticker(ticker)
         stock = yf.Ticker(resolved)
         info = stock.info or {}
@@ -362,6 +537,18 @@ def validate_ticker(ticker: str) -> dict:
     except Exception:
         pass
     return {'valid': False}
+
+
+def send_json(h, payload, status=200):
+    body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+    h.send_response(status)
+    h.send_header('Content-Type', 'application/json; charset=utf-8')
+    h.send_header('Content-Length', str(len(body)))
+    h.send_header('Access-Control-Allow-Origin', '*')
+    h.send_header('Access-Control-Allow-Headers', 'Content-Type')
+    h.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    h.end_headers()
+    h.wfile.write(body)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -407,7 +594,12 @@ class Handler(BaseHTTPRequestHandler):
 
                 ticker = resolve_ticker(query)
                 data = fetch_stock_data(ticker)
-                report = generate_report(data)
+
+                cached_report = cache_get(f"report:{ticker}")
+                if cached_report:
+                    report = cached_report
+                else:
+                    report = generate_report(data)
 
                 return send_json(self, {
                     'ok': True,
@@ -416,9 +608,20 @@ class Handler(BaseHTTPRequestHandler):
                     'report': report,
                     'data': {
                         'current_price': data['technicals'].get('current_price'),
+                        'prev_close': data['technicals'].get('prev_close'),
+                        'change_pct': data['technicals'].get('change_pct'),
                         'currency': data['fundamentals'].get('currency', 'USD'),
                         'market_cap': data['fundamentals'].get('market_cap'),
                         'pe_ratio': data['fundamentals'].get('pe_ratio'),
+                        'exchange': data['fundamentals'].get('exchange', ''),
+                        'sector': data['fundamentals'].get('sector', ''),
+                        'chart_prices': data['technicals'].get('chart_prices', []),
+                        'ma20': data['technicals'].get('ma20'),
+                        'ma50': data['technicals'].get('ma50'),
+                        'rsi_14': data['technicals'].get('rsi_14'),
+                        'macd_bullish': data['technicals'].get('macd_bullish'),
+                        'bb_upper': data['technicals'].get('bb_upper'),
+                        'bb_lower': data['technicals'].get('bb_lower'),
                     },
                     'fetch_time': data['fetch_time'],
                 })
@@ -431,5 +634,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    print(f'stock report server on http://{HOST}:{PORT}')
+    print(f'🦞 stock report server on http://{HOST}:{PORT}')
+    print(f'   model: {REPORT_MODEL}  |  cache TTL: {CACHE_TTL}s')
     HTTPServer((HOST, PORT), Handler).serve_forever()
