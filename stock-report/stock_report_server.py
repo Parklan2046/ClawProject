@@ -299,7 +299,9 @@ def _calc_rsi(series: pd.Series, period: int = 14) -> float:
         avg_gain = (avg_gain * (period - 1) + gain.iloc[i]) / period
         avg_loss = (avg_loss * (period - 1) + loss.iloc[i]) / period
     if avg_loss == 0:
-        return 100.0
+        return 100.0 if avg_gain > 0 else 50.0
+    if avg_gain == 0:
+        return 0.0
     rs = avg_gain / avg_loss
     return round(float(100 - (100 / (1 + rs))), 1)
 
