@@ -27,6 +27,9 @@ jobs:
             echo "📥 Pulling latest changes..."
             git pull origin main
 
+            echo "🔑 Writing API key..."
+            echo "OPENCODE_GO_API_KEY=${{ secrets.OPENCODE_GO_API_KEY }}" > stock-report/.env
+
             echo "✅ Successfully updated at $(date)"
             echo "📁 Current directory contents:"
             ls -la

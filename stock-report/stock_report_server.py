@@ -2,7 +2,7 @@
 """
 Stock Investment Report Server
 Accepts a stock ticker/name, fetches data via yfinance + web search,
-and generates a full investment report in Cantonese via OpenRouter.
+and generates a full investment report in Cantonese via OpenCode Go (DeepSeek V4 Pro).
 """
 
 import json
@@ -15,15 +15,24 @@ from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import request, error, parse
 
+_env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+if os.path.exists(_env_path):
+    with open(_env_path, 'r', encoding='utf-8') as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith('#') and '=' in _line:
+                _k, _v = _line.split('=', 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
 
 HOST = os.getenv('REPORT_HOST', '127.0.0.1')
 PORT = int(os.getenv('REPORT_PORT', '8770'))
-OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
-OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
-REPORT_MODEL = os.getenv('REPORT_MODEL', 'xiaomi/mimo-v2-pro')
+OPENCODE_GO_API_KEY = os.getenv('OPENCODE_GO_API_KEY', '')
+OPENCODE_GO_URL = 'https://opencode.ai/zen/go/v1/chat/completions'
+REPORT_MODEL = os.getenv('REPORT_MODEL', 'deepseek-v4-pro')
 
 CACHE_TTL = int(os.getenv('REPORT_CACHE_TTL', '300'))
 _data_cache: dict = {}
@@ -455,12 +464,12 @@ def generate_report(data: dict) -> str:
     }
 
     req = request.Request(
-        OPENROUTER_URL,
+        OPENCODE_GO_URL,
         data=json.dumps(payload).encode('utf-8'),
         method='POST',
         headers={
             'Content-Type': 'application/json',
-            'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+            'Authorization': f'Bearer {OPENCODE_GO_API_KEY}',
         },
     )
     with request.urlopen(req, timeout=150) as resp:
@@ -635,5 +644,5 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     print(f'🦞 stock report server on http://{HOST}:{PORT}')
-    print(f'   model: {REPORT_MODEL}  |  cache TTL: {CACHE_TTL}s')
+    print(f'   model: {REPORT_MODEL} (OpenCode Go)  |  cache TTL: {CACHE_TTL}s')
     HTTPServer((HOST, PORT), Handler).serve_forever()
