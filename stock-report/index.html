@@ -509,11 +509,11 @@ async function analyze(){
       {label:'升跌',val:d.change_pct!=null?(d.change_pct>=0?'+':'')+d.change_pct.toFixed(2)+'%':'N/A',cls:changeCls,sub:''},
       {label:'市值',val:fmtNum(d.market_cap),sub:''},
       {label:'市盈率',val:d.pe_ratio?d.pe_ratio.toFixed(1):'N/A',cls:d.pe_ratio>30?'down':d.pe_ratio<15?'up':'',sub:''},
-      {label:'RSI(14)',val:rsi?rsi.toFixed(0):'N/A',cls:rsiCls,sub:rsi>70?'超買':rsi<30?'超賣':''},
+      {label:'RSI(14)',val:rsi!=null?rsi.toFixed(0):'N/A',cls:rsiCls,sub:rsi!=null?(rsi>70?'超買':rsi<30?'超賣':''):''},
       {label:'MACD',val:d.macd_bullish!=null?(d.macd_bullish?'Bullish':'Bearish'):'N/A',cls:d.macd_bullish?'up':'down',sub:''},
-      {label:'MA20',val:d.ma20?'$'+d.ma20.toLocaleString():'N/A',sub:d.current_price>d.ma20?'> MA20':d.current_price<d.ma20?'< MA20':''},
-      {label:'MA50',val:d.ma50?'$'+d.ma50.toLocaleString():'N/A',sub:d.current_price>d.ma50?'> MA50':d.current_price<d.ma50?'< MA50':''},
-      {label:'Bollinger',val:d.bb_upper?'$'+d.bb_upper.toLocaleString():'N/A',sub:'上軌'},
+      {label:'MA20',val:d.ma20!=null?'$'+d.ma20.toLocaleString():'N/A',sub:d.ma20!=null?(d.current_price>d.ma20?'> MA20':d.current_price<d.ma20?'< MA20':''):''},
+      {label:'MA50',val:d.ma50!=null?'$'+d.ma50.toLocaleString():'N/A',sub:d.ma50!=null?(d.current_price>d.ma50?'> MA50':d.current_price<d.ma50?'< MA50':''):''},
+      {label:'Bollinger',val:d.bb_upper!=null?'$'+d.bb_upper.toLocaleString():'N/A',sub:'上軌'},
     ].forEach(m=>{
       grid.innerHTML+=`<div class="metric"><div class="mlabel">${m.label}</div><div class="mval ${m.cls||''}">${m.val}</div>${m.sub?`<div class="msub">${m.sub}</div>`:''}</div>`;
     });
