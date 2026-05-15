@@ -30,7 +30,7 @@ import yfinance as yf
 
 HOST = os.getenv('REPORT_HOST', '127.0.0.1')
 PORT = int(os.getenv('REPORT_PORT', '8770'))
-OPENCODE_GO_API_KEY = os.getenv('OPENCODE_GO_API_KEY', '')
+OPENCODE_GO_API_KEY = os.getenv('OPENCODE_API_KEY', '')
 OPENCODE_GO_URL = 'https://opencode.ai/zen/go/v1/chat/completions'
 REPORT_MODEL = os.getenv('REPORT_MODEL', 'deepseek-v4-pro')
 
@@ -472,6 +472,7 @@ def generate_report(data: dict) -> str:
         headers={
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {OPENCODE_GO_API_KEY}',
+            'User-Agent': 'Mozilla/5.0',
         },
     )
     with request.urlopen(req, timeout=150) as resp:
