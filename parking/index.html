@@ -29,15 +29,6 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 .badge.available{background:rgba(77,232,255,.1);color:var(--accent)}
 .badge.limited{background:rgba(255,182,39,.12);color:var(--yellow)}
 .badge.full{background:rgba(255,77,106,.12);color:var(--red)}
-.windows{display:flex;flex-wrap:wrap;gap:5px}
-.win{background:rgba(0,227,150,.06);border:1px solid rgba(0,227,150,.14);border-radius:8px;padding:5px 12px;font-size:.8em;cursor:pointer;transition:all .12s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
-.win:hover{background:rgba(0,227,150,.13);border-color:rgba(0,227,150,.28)}
-.win .dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
-.win .time{font-weight:700;color:var(--green)}
-.win.full-day{background:rgba(77,232,255,.06);border-color:rgba(77,232,255,.15)}
-.win.full-day .time{color:var(--accent)}
-.win.full-day .dot{background:var(--accent)}
-.no-win{color:var(--dim);font-size:.78em}
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
 .modal{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;max-width:380px;width:100%;color-scheme:dark}
 .modal h2{font-size:1.05em;margin-bottom:12px;color:var(--accent)}
@@ -57,6 +48,42 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 .spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.06);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* Help / Legend */
+.help-toggle{max-width:780px;margin:0 auto 14px;text-align:right}
+.help-toggle button{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--dim);padding:5px 12px;border-radius:8px;font-size:.72em;cursor:pointer}
+.help-toggle button:hover{color:var(--text)}
+.help-box{max-width:780px;margin:0 auto 14px;background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px 18px;font-size:.74em;color:var(--dim);line-height:1.9;display:none}
+.help-box b{color:var(--text)}
+.help-box .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* Visual timeline bar */
+.timeline{display:flex;gap:1px;margin-bottom:10px;height:14px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,.03)}
+.timeline .seg{flex:1;min-width:0;transition:background .15s}
+.timeline .seg.avail{background:var(--green);opacity:.7}
+.timeline .seg.full{background:var(--red);opacity:.25}
+
+/* Window cards */
+.windows{display:flex;flex-wrap:wrap;gap:7px}
+.win{display:flex;flex-direction:column;gap:2px;background:rgba(0,227,150,.05);border:1px solid rgba(0,227,150,.14);border-radius:10px;padding:7px 14px;font-size:.82em;cursor:pointer;transition:all .12s}
+.win:hover{background:rgba(0,227,150,.12);border-color:rgba(0,227,150,.3)}
+.win .win-time{font-weight:700;font-size:1.05em;color:var(--green)}
+.win .win-spots{font-size:.75em;color:var(--dim)}
+.win .win-spots .n{font-weight:700}
+.win .win-spots .n.urgent{color:var(--red)}
+.win .win-spots .n.low{color:var(--yellow)}
+.win .win-spots .n.ok{color:var(--green)}
+.win.full-day{background:rgba(77,232,255,.05);border-color:rgba(77,232,255,.15)}
+.win.full-day .win-time{color:var(--accent)}
+.no-win{color:var(--dim);font-size:.78em;padding:4px 0}
+
+/* Overnight */
+.ov-box{border-radius:10px;padding:8px 14px;margin-top:10px;font-size:.76em;line-height:1.6}
+.ov-box.ok{background:rgba(0,227,150,.06);border:1px solid rgba(0,227,150,.15)}
+.ov-box.ok .ov-label{color:var(--green);font-weight:700}
+.ov-box.no{background:rgba(255,77,106,.04);border:1px solid rgba(255,77,106,.1)}
+.ov-box.no .ov-label{color:var(--red);font-weight:700}
+.ov-box .ov-detail{color:var(--dim);font-size:.92em}
+
 /* Refresh timer */
 .timer{position:fixed;top:16px;right:16px;background:rgba(17,18,36,.96);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .timer-ring{position:relative;width:32px;height:32px;flex-shrink:0}
@@ -65,6 +92,9 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 .timer-label{color:var(--dim);font-size:.72rem}
 .timer-pulse{animation:tp 1s ease infinite}
 @keyframes tp{0%,100%{opacity:1}50%{opacity:.4}}
+.timer-pause{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--dim);border-radius:8px;padding:4px 10px;font-size:.72rem;cursor:pointer;transition:all .15s}
+.timer-pause:hover{background:rgba(255,255,255,.12);color:var(--text)}
+.timer-pause.paused{background:rgba(255,182,39,.1);border-color:rgba(255,182,39,.25);color:var(--yellow)}
 </style>
 </head>
 <body>
@@ -87,6 +117,20 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
 </div>
 
 <div id="loading" class="loading"><div class="spinner"></div><p>載入中...</p></div>
+
+<div class="help-toggle"><button onclick="var h=document.getElementById('helpBox');h.style.display=h.style.display==='block'?'none':'block';this.textContent=h.style.display==='block'?'✕ 收起說明':'ℹ️ 使用說明'">ℹ️ 使用說明</button></div>
+<div id="helpBox" class="help-box">
+  <b>📊 狀態顏色：</b><br>
+  <span class="row">🟢 <b style="color:var(--green)">全線開放</b> — 全日所有時段有位</span>
+  <span class="row">🔵 <b style="color:var(--accent)">大部份可訂</b> — 超過一半時段有位</span>
+  <span class="row">🟡 <b style="color:var(--yellow)">少量時段</b> — 少於一半時段有位</span>
+  <span class="row">🔴 <b style="color:var(--red)">無時段</b> — 全日爆滿</span><br>
+  <b>📅 時間線：</b> <span style="color:var(--green)">■ 有位</span> <span style="color:var(--red)">■ 已滿</span> — 一條bar快速睇晒全日邊段時間有位<br>
+  <b>⚠️ 車位數字顏色：</b> <span style="color:var(--red)">紅色 ≤2</span> · <span style="color:var(--yellow)">黃色 3–5</span> · <span style="color:var(--green)">綠色 ≥6</span><br>
+  <b>🌙 過夜：</b> 當日最尾時段有位 + 翌日早上有位 = 可過夜泊車<br>
+  <b>💡 點擊時段</b> 可以睇詳情同複製資訊 · <b>⏸ 按鈕</b> 可以暫停自動更新
+</div>
+
 <div id="grid" class="grid" style="display:none"></div>
 
 <div id="timer" class="timer" style="display:none">
@@ -94,7 +138,8 @@ h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
     <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2.5"/><circle id="tArc" cx="16" cy="16" r="13" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="81.68" stroke-dashoffset="0" stroke-linecap="round"/></svg>
     <span id="tNum" class="num">30</span>
   </div>
-  <span class="timer-label">秒後更新</span>
+  <span id="tLabel" class="timer-label">秒後更新</span>
+  <button id="btnPause" class="timer-pause" onclick="togglePause()">⏸</button>
 </div>
 
 <div class="notes">
@@ -114,13 +159,12 @@ function initDates(){
 }
 initDates();
 
-var refreshTimer=null,cdTimer=null,cdVal=30;
+var refreshTimer=null,cdTimer=null,cdVal=30,paused=false;
 
 function startCD(){
   cdVal=30;
   var timer=document.getElementById('timer'), num=document.getElementById('tNum'), arc=document.getElementById('tArc');
   if(!timer||!num||!arc)return;
-  console.log('startCD: showing timer');
   timer.style.display='flex'; num.textContent=cdVal; arc.style.strokeDashoffset='0'; arc.style.stroke='var(--accent)';
   if(cdTimer)clearInterval(cdTimer);
   cdTimer=setInterval(function(){
@@ -136,6 +180,21 @@ function clearTimers(){
   if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
 }
 
+function togglePause(){
+  paused=!paused;
+  var btn=document.getElementById('btnPause'), label=document.getElementById('tLabel');
+  if(paused){
+    btn.textContent='▶'; btn.classList.add('paused');
+    if(label)label.textContent='已暫停';
+    clearTimers();
+  }else{
+    btn.textContent='⏸'; btn.classList.remove('paused');
+    if(label)label.textContent='秒後更新';
+    startCD();
+    refreshTimer=setTimeout(function(){refresh()},30000);
+  }
+}
+
 async function refresh(){
   clearTimers();
   document.getElementById('loading').style.display='block';
@@ -148,15 +207,18 @@ async function refresh(){
   document.getElementById('grid').style.display='block';
   if(!d.ok){document.getElementById('grid').innerHTML='<div class="loading"><p>❌ '+d.error+'</p></div>';return}
   render(d);
-  // Check overnight availability for days ending at 22:00
   checkAllOvernights(d);
-  // Start auto-refresh countdown
-  startCD();
-  refreshTimer=setTimeout(function(){refresh()},30000);
+  if(!paused){
+    startCD();
+    refreshTimer=setTimeout(function(){refresh()},30000);
+  }else{
+    document.getElementById('timer').style.display='flex';
+    document.getElementById('tNum').textContent='--';
+  }
 }
 
-async function checkAllOvernights(d){
-  var MAX_DAYS=7, ct=window._ct||'private';
+function checkAllOvernights(d){
+  var MAX_DAYS=7;
   for(var i=0;i<d.days.length-1;i++){
     var day=d.days[i];
     if(day.status==='error')continue;
@@ -165,140 +227,153 @@ async function checkAllOvernights(d){
     var ymd=day.date.replace(/\//g,'-');
     var el=document.getElementById('overnight-'+ymd);
     if(!el)continue;
-    
     el.style.display='block';
-    el.innerHTML='<span style="color:var(--dim);font-size:.72em">🌙 檢查中...</span>';
-    
-    // Check continuous availability via range API - use each day's actual last bookable slot
-    var daysOK=0, lastLabel='';
+
+    var daysOK=0, lastLabel='', lastToTime='';
     for(var j=i+1;j<Math.min(d.days.length,i+MAX_DAYS);j++){
       var nd=d.days[j];
-      if(nd.status==='error')break;
-      if(nd.status==='full')break;
-      var ndLastWin=nd.windows&&nd.windows.length>0?nd.windows[nd.windows.length-1]:null;
-      var toTime=ndLastWin?ndLastWin.end:'22:00'; // Use actual last slot, not 22:00
-      var toYmd=nd.date.replace(/\//g,'-');
-      try{
-        var r=await fetch('/parking/api/range?type='+ct+'&from_date='+ymd+'&from_time='+lastWin.start+'&to_date='+toYmd+'&to_time='+toTime);
-        var rd=await r.json();
-        if(rd.ok&&rd.available){
-          daysOK=j-i;
-          lastLabel=nd.day_label;
-        }else{
-          break;
-        }
-      }catch(e){break;}
+      if(nd.status==='error'||nd.status==='full')break;
+      var ndFirstWin=nd.windows&&nd.windows.length>0?nd.windows[0]:null;
+      if(!ndFirstWin||ndFirstWin.start!=='06:00')break;
+      if(j>i+1){
+        var allOpen=true;
+        for(var k=i+1;k<j;k++){if(!d.days[k].full_day_available){allOpen=false;break;}}
+        if(!allOpen)break;
+      }
+      daysOK=j-i;
+      lastLabel=nd.day_label;
+      lastToTime=ndFirstWin.end;
     }
-    
+
     if(daysOK>0){
-      var totalDays=daysOK+1;
-      var maxTxt=lastLabel+(totalDays>=MAX_DAYS?' (上限7天)':'');
-      el.innerHTML='<span style="color:var(--green);font-size:.72em">🌙 可過夜 → 至 '+maxTxt+' ('+totalDays+'天)</span>';
+      var nights=daysOK;
+      var nightLabel=nights===1?'一晚':nights+'晚';
+      var fromInfo=day.day_label+' '+lastWin.start+'–'+lastWin.end;
+      var toInfo=lastToTime?' → '+lastLabel+' 至 '+lastToTime:'';
+      var maxDays=nights>=MAX_DAYS?' (上限7晚)':'';
+      el.innerHTML='<div class=\"ov-box ok\"><span class=\"ov-label\">🌙 可過夜泊車</span> <span class=\"ov-detail\">'+fromInfo+toInfo+' · '+nightLabel+maxDays+'</span></div>';
     }else{
-      el.innerHTML='<span style="color:var(--red);font-size:.72em">🌙 翌日不適用</span>';
+      el.innerHTML='<div class=\"ov-box no\"><span class=\"ov-label\">🌙 不可過夜</span> <span class=\"ov-detail\">翌日早上無連續車位</span></div>';
     }
   }
 }
 
 function render(d){
   const todayStr=new Date(Date.now()+8*3600000).toISOString().split('T')[0];
-  window._ct=d.car_type_key; window._vn=d.vehicle;
-  document.getElementById('grid').innerHTML=d.days.map(day=>{
+  window._ct=d.car_type_key; window._vn=d.vehicle; window._days=d.days;
+  function sc(n){return n<=2?'urgent':n<=5?'low':'ok';}
+  document.getElementById('grid').innerHTML=d.days.map(function(day){
     const isToday=day.date.includes(todayStr.replace(/-/g,'/'));
     const st=STATUS[day.status]||{icon:'⚫',label:'錯誤',cls:'full'};
     const ws=day.windows||[];
-    let wh='';
-    if(day.status==='error') wh=`<div class="no-win">⚠️ ${day.error||'無法載入'}</div>`;
-    else if(ws.length===0) wh='<div class="no-win">❌ 無可預約時段</div>';
-    else if(day.full_day_available) wh=`<div class="win full-day" onclick="openDialog('${day.date}','06:00','21:30',${day.quota})"><span class="dot"></span><span class="time">06:00–22:00 全線開放</span> <span style="color:var(--dim);font-size:.75em">${day.quota}位</span></div>`;
-    else wh='<div class="windows">'+ws.map(w=>`<div class="win" onclick="openDialog('${day.date}','${w.start}','${w.end}',${w.spaces})"><span class="dot"></span><span class="time">${w.start}–${w.end}</span> <span style="color:var(--dim);font-size:.75em">${w.spaces}位</span></div>`).join('')+'</div>';
-    let ymd2=day.date.replace(/\//g,'-');
-    let overnightHTML='<div id="overnight-'+ymd2+'" style="margin-top:6px;display:none"></div>';
+    const ymd2=day.date.replace(/\//g,'-');
 
-    return `<div class="day-card${isToday?' today':''}">
-      <div class="day-head">
-        <div class="day-icon ${st.cls}">${st.icon}</div>
-        <div class="day-info">
-          <div class="date">${day.day_label} ${isToday?'<span style="font-size:.7em;color:var(--accent)">今天</span>':''}</div>
-          <div class="meta">${day.day_name} · ${day.available_count}/${day.total_slots} 時段可用</div>
-        </div>
-        <div class="badge ${st.cls}">${st.label}</div>
-      </div>
-      ${wh}
-      ${overnightHTML}
-    </div>`;
+    // Timeline bar: 32 segments x 30min (06:00-22:00)
+    var tlHTML='';
+    if(day.status!=='error'&&day.total_slots>0){
+      var segs='';
+      for(var h=6;h<22;h++)for(var m=0;m<60;m+=30){
+        var t=(h<10?'0':'')+h+':'+(m?'30':'00');
+        var avail=false;
+        for(var wi=0;wi<ws.length;wi++){if(t>=ws[wi].start&&t<=ws[wi].end){avail=true;break;}}
+        segs+='<div class="seg '+(avail?'avail':'full')+'"></div>';
+      }
+      tlHTML='<div class="timeline">'+segs+'</div>';
+    }
+
+    // Window cards
+    var winHTML='';
+    if(day.status==='error') winHTML='<div class="no-win">⚠️ '+(day.error||'無法載入')+'</div>';
+    else if(ws.length===0) winHTML='<div class="no-win">❌ 無可預約時段</div>';
+    else if(day.full_day_available) winHTML='<div class="windows"><div class="win full-day" onclick="openDialog(\''+day.date+'\',\'06:00\',\'21:30\','+day.quota+')"><span class="win-time">06:00 — 22:00 全線開放</span><span class="win-spots">🅿️ <span class="n '+sc(day.quota)+'\">'+day.quota+'</span> 位</span></div></div>';
+    else winHTML='<div class="windows">'+ws.map(function(w){return '<div class="win" onclick="openDialog(\''+day.date+'\',\''+w.start+'\',\''+w.end+'\','+w.spaces+')"><span class="win-time">'+w.start+' — '+w.end+'</span><span class="win-spots">🅿️ <span class="n '+sc(w.spaces)+'\">'+w.spaces+'</span> 位</span></div>';}).join('')+'</div>';
+
+    return '<div class="day-card'+(isToday?' today':'')+'">'
+      +'<div class="day-head">'
+        +'<div class="day-icon '+st.cls+'">'+st.icon+'</div>'
+        +'<div class="day-info">'
+          +'<div class="date">'+day.day_label+(isToday?' <span style="font-size:.7em;color:var(--accent)">今天</span>':'')+'</div>'
+          +'<div class="meta">'+day.day_name+' · '+day.available_count+'/'+day.total_slots+' 時段可用</div>'
+        +'</div>'
+        +'<div class="badge '+st.cls+'">'+st.label+'</div>'
+      +'</div>'
+      +tlHTML
+      +winHTML
+      +'<div id="overnight-'+ymd2+'" style="display:none"></div>'
+    +'</div>';
   }).join('');
 }
 
 function openDialog(date,ws,we,sp){
   const ct=window._ct||'private', v=VT[ct]||VT.private;
   const p=date.split('/');
-  const dd=`${p[0]}年${parseInt(p[1])}月${parseInt(p[2])}日`;
-  const [sh,sm]=ws.split(':').map(Number),[eh,em]=we.split(':').map(Number);
-  // we = last slot START, actual departure = we + 30min
+  const dd=p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日';
+  const sh=parseInt(ws.split(':')[0]),sm=parseInt(ws.split(':')[1]);
+  const eh=parseInt(we.split(':')[0]),em=parseInt(we.split(':')[1]);
   const h=eh+em/60+0.5-(sh+sm/60);
-  
-  // Next day for overnight
   const dateObj=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
   dateObj.setDate(dateObj.getDate()+1);
-  const nextDate=`${dateObj.getFullYear()}/${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
-  const nextLabel=`${dateObj.getFullYear()}年${dateObj.getMonth()+1}月${dateObj.getDate()}日`;
+  const nextDate=dateObj.getFullYear()+'/'+String(dateObj.getMonth()+1).padStart(2,'0')+'/'+String(dateObj.getDate()).padStart(2,'0');
+  const nextLabel=dateObj.getFullYear()+'年'+(dateObj.getMonth()+1)+'月'+dateObj.getDate()+'日';
   const ymd=date.replace(/\//g,'-');
   const nextYmd=nextDate.replace(/\//g,'-');
-  
+
   const ov=document.createElement('div');
   ov.className='modal-overlay';
-  ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
   ov.id='bookingDialog';
-  ov.innerHTML=[
-    '<div class="modal" style="max-width:420px">',
-    '<h2>📋 預約詳情</h2>',
-    '<div class="info"><b>',v.icon,' ',v.name,'</b><br>📅 ',dd,'<br>🕐 ',ws,'–',we,' (',h.toFixed(1),'小時)<br>🅿️ 剩餘 ≥',sp,' 位</div>',
-    '<div style="margin-bottom:12px" id="overnightBox">',
-    '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82em;color:var(--dim)">',
-    '<input type="checkbox" id="chkOvernight" data-ymd="',ymd,'" data-ws="',ws,'" data-nextymd="',nextYmd,'" data-nextlabel="',nextLabel,'" onchange="var d=this.dataset;checkOvernight(d.ymd,d.ws,d.nextymd,d.nextlabel)">',
-    ' 🌙 過夜泊車 (檢查至翌日 ',nextLabel,')',
-    '</label>',
-    '<div id="overnightResult" style="margin-top:8px;display:none"></div>',
-    '</div>',
-    '<div class="hint">✅ 已複製到剪貼簿</div>',
-    '<div class="actions">',
-    '<a class="btn-go" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>',
-    '<button class="btn-copy" id="btnCopy">📋</button>',
-    '<button class="btn-close" onclick="document.getElementById(\'bookingDialog\').remove()">✕</button>',
-    '</div></div>'
-  ].join('');
+  ov.innerHTML='<div class="modal" style="max-width:420px">'
+    +'<h2>📋 預約詳情</h2>'
+    +'<div class="info"><b>'+v.icon+' '+v.name+'</b><br>📅 '+dd+'<br>🕐 '+ws+'–'+we+' ('+h.toFixed(1)+'小時)<br>🅿️ 剩餘 ≥'+sp+' 位</div>'
+    +'<div style="margin-bottom:12px" id="overnightBox">'
+      +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82em;color:var(--dim)">'
+      +'<input type="checkbox" id="chkOvernight" data-ymd="'+ymd+'" data-ws="'+ws+'" data-nextymd="'+nextYmd+'" data-nextlabel="'+nextLabel+'" onchange="var d=this.dataset;checkOvernight(d.ymd,d.ws,d.nextymd,d.nextlabel)">'
+      +' 🌙 過夜泊車 (檢查至翌日 '+nextLabel+')'
+      +'</label>'
+      +'<div id="overnightResult" style="margin-top:8px;display:none"></div>'
+    +'</div>'
+    +'<div class="hint">✅ 已複製到剪貼簿</div>'
+    +'<div class="actions">'
+      +'<a class="btn-go" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>'
+      +'<button class="btn-copy" id="btnCopy">📋</button>'
+      +'<button class="btn-close" onclick="document.getElementById(\'bookingDialog\').remove()">✕</button>'
+    +'</div></div>';
   document.body.appendChild(ov);
-  
-  let txt=`${v.name} | ${dd} | ${ws}–${we}`;
+
+  var txt=v.name+' | '+dd+' | '+ws+'–'+we;
   window._dialogTxt=txt;
   document.getElementById('btnCopy').onclick=function(){
     navigator.clipboard.writeText(window._dialogTxt||txt);this.textContent='✅';
   };
-  navigator.clipboard.writeText(txt).catch(()=>{});
+  navigator.clipboard.writeText(txt).catch(function(){});
 }
 
-async function checkOvernight(fromYmd,fromTime,toYmd,toLabel){
+function checkOvernight(fromYmd,fromTime,toYmd,toLabel){
   const chk=document.getElementById('chkOvernight');
   const res=document.getElementById('overnightResult');
   if(!chk.checked){res.style.display='none';return}
   res.style.display='block';
-  res.innerHTML='<span style="color:var(--dim)">檢查中...</span>';
-  const ct=window._ct||'private';
-  try{
-    const r=await fetch(`/parking/api/range?type=${ct}&from_date=${fromYmd}&from_time=${fromTime}&to_date=${toYmd}&to_time=22:00`);
-    const d=await r.json();
-    if(d.ok && d.available){
-      const label=d.hours>=24?'過夜':'翌日早上';
-      res.innerHTML=`<div style="background:rgba(0,227,150,.08);border:1px solid rgba(0,227,150,.2);border-radius:10px;padding:10px;font-size:.82em">🌙 <b style="color:var(--green)">可過夜泊車</b><br>📅 ${fromYmd} ${fromTime} → ${toLabel} 06:00–22:00<br>🕐 連續 ${d.hours.toFixed(0)}小時 · ≥${d.min_spaces}位</div>`;
-      window._dialogTxt=`${window._dialogTxt} → 翌日06:00–22:00 (過夜OK)`;
-    }else{
-      const reason=d.full_slots&&d.full_slots.length>0?`❌ 翌日 ${d.full_slots[0].slice(-5)} 已滿`:'❌ 翌日不適用';
-      res.innerHTML=`<div style="background:rgba(255,77,106,.06);border:1px solid rgba(255,77,106,.15);border-radius:10px;padding:10px;font-size:.82em">${reason}</div>`;
-    }
-  }catch(e){
-    res.innerHTML='<span style="color:var(--red)">檢查失敗</span>';
+  const days=window._days||[];
+  var nextDay=null;
+  for(var i=0;i<days.length;i++){
+    if(days[i].date.replace(/\//g,'-')===toYmd){nextDay=days[i];break;}
   }
+  if(!nextDay||nextDay.status==='error'||nextDay.status==='full'){
+    res.innerHTML='<div style="background:rgba(255,77,106,.06);border:1px solid rgba(255,77,106,.15);border-radius:10px;padding:10px;font-size:.82em">❌ 翌日不適用</div>';
+    return;
+  }
+  var firstWin=nextDay.windows&&nextDay.windows.length>0?nextDay.windows[0]:null;
+  if(!firstWin||firstWin.start!=='06:00'){
+    res.innerHTML='<div style="background:rgba(255,77,106,.06);border:1px solid rgba(255,77,106,.15);border-radius:10px;padding:10px;font-size:.82em">❌ 翌日早上無車位</div>';
+    return;
+  }
+  var endTime=firstWin.end;
+  var fh=parseInt(fromTime.split(':')[0]),fm=parseInt(fromTime.split(':')[1]);
+  var eh=parseInt(endTime.split(':')[0]),em=parseInt(endTime.split(':')[1]);
+  var hours=(22-(fh+fm/60))+(eh+em/60-6);
+  var label=hours>=24?'過夜':'翌日早上';
+  res.innerHTML='<div style="background:rgba(0,227,150,.08);border:1px solid rgba(0,227,150,.2);border-radius:10px;padding:10px;font-size:.82em">🌙 <b style="color:var(--green)">可過夜泊車</b><br>📅 '+fromYmd+' '+fromTime+' → '+toLabel+' 06:00–'+endTime+'<br>🕐 約'+hours.toFixed(0)+'小時 · ≥'+firstWin.spaces+'位</div>';
+  window._dialogTxt=window._dialogTxt+' → 翌日06:00–'+endTime+' (過夜OK)';
 }
 document.addEventListener('DOMContentLoaded',refresh);
 </script>
