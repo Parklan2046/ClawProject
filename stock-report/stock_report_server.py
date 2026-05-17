@@ -36,6 +36,7 @@ REPORT_MODEL = os.getenv('REPORT_MODEL', 'deepseek-v4-pro')
 
 CACHE_TTL = int(os.getenv('REPORT_CACHE_TTL', '300'))
 _data_cache: dict = {}
+REPORTS_LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reports_log.json')
 
 HK_NAME_MAP = {
     '騰訊': '0700.HK', '腾讯': '0700.HK', 'tencent': '0700.HK',
@@ -558,9 +559,51 @@ def send_json(h, payload, status=200):
     h.send_header('Content-Length', str(len(body)))
     h.send_header('Access-Control-Allow-Origin', '*')
     h.send_header('Access-Control-Allow-Headers', 'Content-Type')
-    h.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    h.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
     h.end_headers()
     h.wfile.write(body)
+
+
+def load_report_log() -> dict:
+    if os.path.exists(REPORTS_LOG_FILE):
+        try:
+            with open(REPORTS_LOG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+
+def save_report_to_log(ticker: str, company_name: str, report: str, price_data: dict, fetch_time: str):
+    log = load_report_log()
+    score = None
+    score_match = re.search(r'(\d+(?:\.\d+)?)\s*/\s*10', report)
+    if score_match:
+        try:
+            score = float(score_match.group(1))
+        except ValueError:
+            pass
+    rec = '持有'
+    if re.search(r'(?:強烈建議買入|建議買入|買入|強力買入)', report):
+        rec = '買入'
+    elif re.search(r'(?:建議賣出|賣出|減持)', report):
+        rec = '賣出'
+    log[ticker] = {
+        'ticker': ticker,
+        'company_name': company_name,
+        'report': report,
+        'score': score,
+        'recommendation': rec,
+        'current_price': price_data.get('current_price'),
+        'change_pct': price_data.get('change_pct'),
+        'currency': price_data.get('currency', 'USD'),
+        'fetch_time': fetch_time,
+    }
+    if len(log) > 200:
+        sorted_items = sorted(log.items(), key=lambda x: x[1].get('fetch_time', ''), reverse=True)
+        log = dict(sorted_items[:200])
+    with open(REPORTS_LOG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(log, f, ensure_ascii=False, indent=2)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -568,8 +611,29 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(204)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.end_headers()
+
+    def do_GET(self):
+        if self.path == '/stock-report/api/history':
+            try:
+                log = load_report_log()
+                items = sorted(log.values(), key=lambda x: x.get('fetch_time', ''), reverse=True)
+                return send_json(self, {'ok': True, 'reports': items})
+            except Exception as e:
+                return send_json(self, {'ok': False, 'error': str(e)}, 500)
+
+        if self.path.startswith('/stock-report/api/report/'):
+            try:
+                ticker = parse.unquote(self.path.split('/')[-1])
+                log = load_report_log()
+                if ticker in log:
+                    return send_json(self, {'ok': True, 'report': log[ticker]})
+                return send_json(self, {'ok': False, 'error': 'Report not found'}, 404)
+            except Exception as e:
+                return send_json(self, {'ok': False, 'error': str(e)}, 500)
+
+        return send_json(self, {'ok': False, 'error': 'Not found'}, 404)
 
     def do_POST(self):
         if self.path == '/stock-report/api/search':
@@ -612,6 +676,14 @@ class Handler(BaseHTTPRequestHandler):
                     report = cached_report
                 else:
                     report = generate_report(data)
+
+                # Save report to persistent log
+                fetch_time = data['fetch_time']
+                save_report_to_log(ticker, data['fundamentals']['name'], report, {
+                    'current_price': data['technicals'].get('current_price'),
+                    'change_pct': data['technicals'].get('change_pct'),
+                    'currency': data['fundamentals'].get('currency', 'USD'),
+                }, fetch_time)
 
                 return send_json(self, {
                     'ok': True,
