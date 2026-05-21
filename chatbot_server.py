@@ -8,7 +8,7 @@ HOST = os.getenv('CHATBOT_HOST', '127.0.0.1')
 PORT = int(os.getenv('CHATBOT_PORT', '8768'))
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
 OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
-CHATBOT_MODEL = os.getenv('CHATBOT_MODEL', 'xiaomi/mimo-v2-pro')
+CHATBOT_MODEL = os.getenv('CHATBOT_MODEL', 'deepseek/deepseek-v4-pro')
 
 ROLE_PROMPTS = {
     'laura': (
