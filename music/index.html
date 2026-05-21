@@ -604,7 +604,13 @@
       renderHistory();
 
     } catch (e) {
-      coverStatus.textContent = '❌ Cover 失敗：' + e.message;
+      let em = e.message;
+    if (em.includes('Sign in') || em.includes('bot')) {
+      em += '
+
+💡 Fix: go to ytmp3.la, convert your YouTube link to MP3, paste the MP3 link in the Direct Audio URL field above.';
+    }
+    coverStatus.textContent = '❌ Cover 失敗：' + em;
       coverStatus.className = 'status error';
     } finally {
       coverBtn.disabled = false;
