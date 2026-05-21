@@ -244,6 +244,10 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
+    def do_HEAD(self):
+        """Handle HEAD requests."""
+        self.do_GET()
+
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
