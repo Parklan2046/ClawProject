@@ -587,7 +587,11 @@
   coverBtn.addEventListener('click', async () => {
     const ytUrl = ytUrlInput.value.trim();
     const audioUrl = audioUrlInput.value.trim();
-    if (!ytUrl && !audioUrl) return alert('請貼上 YouTube link 先');
+    if (!ytUrl && !audioUrl) {
+      coverStatus.textContent = '⚠️ 請先 upload MP3 檔案 或者 貼上 audio URL';
+      coverStatus.className = 'status error';
+      return;
+    }
 
     coverBtn.disabled = true;
     coverSpinner.style.display = '';
