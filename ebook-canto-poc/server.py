@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+ebook-canto-poc — Ebook to Spoken Cantonese Narration
+Voice config: Laura-quality — Professional Host female reporter (Cantonese)
+"""
 import base64
 import html
 import json
@@ -16,7 +20,14 @@ PORT = int(os.getenv("EBOOK_POC_PORT", "8765"))
 MINIMAX_URL = "https://api.minimax.io/anthropic/v1/messages"
 MINIMAX_MODEL = os.getenv("EBOOK_POC_MODEL", "MiniMax-M2.5")
 MINIMAX_TTS_URL = "https://api.minimax.io/v1/t2a_v2"
+
+# ── Voice config — same quality as Laura ────────────────
 MINIMAX_TTS_MODEL = os.getenv("EBOOK_POC_TTS_MODEL", "speech-2.8-hd")
+MINIMAX_DEFAULT_VOICE = "Cantonese_ProfessionalHost（F)"  # Female reporter
+MINIMAX_DEFAULT_SPEED = 0.96   # Laura-quality pacing
+MINIMAX_DEFAULT_PITCH = 0      # Natural pitch
+MINIMAX_DEFAULT_VOLUME = 1.0
+
 MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY", "")
 MAX_SOURCE_CHARS = 6000
 MAX_TTS_CHARS = 2500
@@ -224,47 +235,52 @@ Source passage:
     }
 
 
-def minimax_tts(text: str, voice_id: str = "Cantonese_ProfessionalHost（F)", emotion: str = "calm", model: str | None = None):
+def minimax_tts(text: str, voice_id: str = None, emotion: str = "calm",
+                model: str = None, speed: float = None, pitch: int = None, vol: float = None):
+    """Generate TTS audio with Laura-quality voice config."""
     if not MINIMAX_API_KEY:
         raise RuntimeError("MINIMAX_API_KEY is missing on this machine.")
     text = chunk_source_text(text, MAX_TTS_CHARS)
     if not text:
         raise RuntimeError("No text provided for speech synthesis.")
 
-    speed = 0.96
-    pitch = 0
-    volume = 1.0
-    if emotion == "excited":
-        speed = 1.06
-        pitch = 1
-        volume = 1.05
-    elif emotion == "dialogue":
-        speed = 1.02
-        pitch = 1
-    elif emotion == "mysterious":
-        speed = 0.88
-        pitch = -1
-    elif emotion == "sad":
-        speed = 0.87
-        pitch = -1
-        volume = 0.96
-    elif emotion == "tense":
-        speed = 1.0
-        pitch = -1
-    elif emotion == "warm":
-        speed = 0.93
-        pitch = 1
-
+    voice_id = (voice_id or MINIMAX_DEFAULT_VOICE).strip() or MINIMAX_DEFAULT_VOICE
     resolved_model = (model or MINIMAX_TTS_MODEL).strip() or MINIMAX_TTS_MODEL
+    base_speed = speed if speed is not None else MINIMAX_DEFAULT_SPEED
+    base_pitch = pitch if pitch is not None else MINIMAX_DEFAULT_PITCH
+    base_vol = vol if vol is not None else MINIMAX_DEFAULT_VOLUME
+
+    # Laura-style emotion tuning on top of base settings (skip if explicit overrides provided)
+    if pitch is None and vol is None:
+        if emotion == "excited":
+            base_speed = min(base_speed * 1.1, 1.2)
+            base_pitch = min(base_pitch + 1, 2)
+        elif emotion == "dialogue":
+            base_speed = min(base_speed * 1.06, 1.15)
+            base_pitch = min(base_pitch + 1, 2)
+        elif emotion == "mysterious":
+            base_speed = max(base_speed * 0.92, 0.75)
+            base_pitch = max(base_pitch - 1, -2)
+        elif emotion == "sad":
+            base_speed = max(base_speed * 0.9, 0.7)
+            base_pitch = max(base_pitch - 1, -2)
+            base_vol = 0.95
+        elif emotion == "tense":
+            base_pitch = max(base_pitch - 1, -2)
+        elif emotion == "warm":
+            base_speed = max(base_speed * 0.97, 0.85)
+            base_pitch = min(base_pitch + 1, 2)
+
     payload = {
         "model": resolved_model,
         "text": text,
         "voice_setting": {
             "voice_id": voice_id,
-            "speed": speed,
-            "vol": volume,
-            "pitch": pitch,
+            "speed": round(base_speed, 3),
+            "vol": round(base_vol, 3),
+            "pitch": int(base_pitch),
         },
+        "language_boost": "Chinese,Yue",
         "audio_setting": {
             "sample_rate": 32000,
             "bitrate": 128000,
@@ -311,7 +327,7 @@ def minimax_tts(text: str, voice_id: str = "Cantonese_ProfessionalHost（F)", em
     }
 
 
-def minimax_tts_segments(segments, voice_id: str = "Cantonese_ProfessionalHost（F)", model: str | None = None):
+def minimax_tts_segments(segments, voice_id: str = None, model: str = None, speed: float = None, pitch: int = None, vol: float = None):
     out = []
     for idx, seg in enumerate(segments, 1):
         if not isinstance(seg, dict):
@@ -320,7 +336,7 @@ def minimax_tts_segments(segments, voice_id: str = "Cantonese_ProfessionalHost�
         emotion = str(seg.get("emotion", "calm")).strip().lower() or "calm"
         if not text:
             continue
-        audio = minimax_tts(text, voice_id=voice_id, emotion=emotion, model=model)
+        audio = minimax_tts(text, voice_id=voice_id, emotion=emotion, model=model, speed=speed, pitch=pitch, vol=vol)
         out.append({
             "index": idx,
             "text": text,
@@ -357,6 +373,7 @@ class Handler(BaseHTTPRequestHandler):
                 "minimax_configured": bool(MINIMAX_API_KEY),
                 "model": MINIMAX_MODEL,
                 "tts_model": MINIMAX_TTS_MODEL,
+                "tts_voice": MINIMAX_DEFAULT_VOICE,
                 "max_source_chars": MAX_SOURCE_CHARS,
             })
         self.send_response(404)
@@ -392,10 +409,19 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 payload = read_json(self)
                 text = str(payload.get("text", "")).strip()
-                voice_id = str(payload.get("voice_id", "Cantonese_ProfessionalHost（F)")).strip() or "Cantonese_ProfessionalHost（F)"
+                voice_id = str(payload.get("voice_id", MINIMAX_DEFAULT_VOICE)).strip() or MINIMAX_DEFAULT_VOICE
                 emotion = str(payload.get("emotion", "calm")).strip().lower() or "calm"
                 model = str(payload.get("model", MINIMAX_TTS_MODEL)).strip() or MINIMAX_TTS_MODEL
-                result = minimax_tts(text, voice_id=voice_id, emotion=emotion, model=model)
+                speed = payload.get("speed", None)
+                if speed is not None:
+                    speed = float(speed)
+                pitch = payload.get("pitch", None)
+                if pitch is not None:
+                    pitch = int(pitch)
+                vol = payload.get("vol", None)
+                if vol is not None:
+                    vol = float(vol)
+                result = minimax_tts(text, voice_id=voice_id, emotion=emotion, model=model, speed=speed, pitch=pitch, vol=vol)
                 return json_response(self, {"ok": True, **result})
             except Exception as e:
                 return json_response(self, {"ok": False, "error": str(e)}, 400)
@@ -403,10 +429,19 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/tts_segments":
             try:
                 payload = read_json(self)
-                voice_id = str(payload.get("voice_id", "Cantonese_ProfessionalHost（F)")).strip() or "Cantonese_ProfessionalHost（F)"
+                voice_id = str(payload.get("voice_id", MINIMAX_DEFAULT_VOICE)).strip() or MINIMAX_DEFAULT_VOICE
                 model = str(payload.get("model", MINIMAX_TTS_MODEL)).strip() or MINIMAX_TTS_MODEL
                 segments = payload.get("segments") or []
-                result = minimax_tts_segments(segments, voice_id=voice_id, model=model)
+                speed = payload.get("speed", None)
+                if speed is not None:
+                    speed = float(speed)
+                pitch = payload.get("pitch", None)
+                if pitch is not None:
+                    pitch = int(pitch)
+                vol = payload.get("vol", None)
+                if vol is not None:
+                    vol = float(vol)
+                result = minimax_tts_segments(segments, voice_id=voice_id, model=model, speed=speed, pitch=pitch, vol=vol)
                 return json_response(self, {"ok": True, "segments": result, "voice_id": voice_id, "model": model})
             except Exception as e:
                 return json_response(self, {"ok": False, "error": str(e)}, 400)
@@ -415,5 +450,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"ebook-canto-poc running on http://{HOST}:{PORT}")
+    print(f"📖 ebook-canto-poc — Laura voice config (female reporter)")
+    print(f"🎙️  Voice: {MINIMAX_DEFAULT_VOICE} · Model: {MINIMAX_TTS_MODEL}")
+    print(f"🚀 Listening on http://{HOST}:{PORT}")
     HTTPServer((HOST, PORT), Handler).serve_forever()

@@ -1,354 +1,669 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="zh-HK">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ebook Cantonese POC</title>
-  <style>
-    :root { color-scheme: dark; }
-    body { font-family: Inter, system-ui, sans-serif; margin: 0; background:#0b1020; color:#e8eefc; }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
-    h1 { margin: 0 0 8px; font-size: 28px; }
-    .sub { color:#9fb0d9; margin-bottom: 20px; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .card { background:#121933; border:1px solid #263052; border-radius:16px; padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
-    textarea { width:100%; min-height:220px; background:#0c1329; color:#edf3ff; border:1px solid #30406b; border-radius:12px; padding:12px; box-sizing:border-box; font: 15px/1.45 system-ui, sans-serif; }
-    input, select, button { font: inherit; }
-    input[type=file] { width:100%; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    button { background:#4b7cff; color:white; border:none; border-radius:10px; padding:10px 14px; cursor:pointer; }
-    button.secondary { background:#24345f; }
-    button:disabled { opacity:.55; cursor:not-allowed; }
-    .status { margin-top:10px; color:#9fb0d9; font-size:14px; white-space:pre-wrap; }
-    .segments { display:grid; gap:10px; margin-top:12px; }
-    .seg { border:1px solid #2e3b62; border-radius:12px; padding:12px; background:#0d1430; }
-    .emotion { display:inline-block; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#8ab4ff; margin-bottom:8px; }
-    .controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    .pill { display:inline-block; padding:3px 8px; border-radius:999px; background:#223156; color:#b9caf2; font-size:12px; }
-    .full { grid-column: 1 / -1; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>📖 廣東話有聲書</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --sidebar: #141414;
+    --surface: #1a1a1a;
+    --border: #262626;
+    --text: #e8e8e8;
+    --dim: #777;
+    --accent: #ff6b9d;
+    --accent-dim: rgba(255,107,157,0.15);
+    --gold: #d4a843;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: -apple-system, 'Noto Sans HK', 'PingFang HK', 'SF Pro Display', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh; min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  /* ── Header ────────────────────── */
+  .head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top:0; background: rgba(15,15,15,0.85);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    z-index: 10;
+  }
+  .head-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, #ff6b9d, #c44569);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .head-info { flex: 1; }
+  .head-title { font-weight: 700; font-size: 16px; }
+  .head-sub { font-size: 11px; color: var(--dim); }
+
+  .status-badge {
+    font-size: 10px; padding: 4px 10px; border-radius: 999px;
+    background: #1a3326; color: #4ade80; border: 1px solid #224433;
+  }
+
+  /* ── Main Layout ──────────────── */
+  .main {
+    max-width: 960px; margin: 0 auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  /* ── Card ─────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .card-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px;
+    font-weight: 600; font-size: 15px;
+    color: var(--accent);
+  }
+  .card-head .emoji { font-size: 18px; }
+
+  /* ── Controls ─────────────────── */
+  .row {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+
+  textarea {
+    width: 100%; min-height: 180px;
+    background: #0c0c0c; color: var(--text);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; font: 14px/1.6 system-ui, 'Noto Sans HK', sans-serif;
+    resize: vertical; outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+
+  input[type=file] {
+    flex: 1; min-width: 200px;
+    color: var(--dim); font: inherit;
+  }
+  input[type=file]::file-selector-button {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 14px; border-radius: 8px;
+    cursor: pointer; font: inherit; margin-right: 10px;
+  }
+
+  select {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: 8px;
+    font: inherit; cursor: pointer; outline: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23777' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    padding-right: 30px;
+  }
+  select:focus { border-color: var(--accent); }
+
+  button {
+    padding: 9px 16px; border: none; border-radius: 10px;
+    font: 13px system-ui, 'Noto Sans HK', sans-serif;
+    font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-secondary {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-secondary:hover { background: #252525; }
+  .btn-secondary:active { transform: scale(0.97); }
+  .btn-secondary.active {
+    border-color: var(--accent); color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Status ───────────────────── */
+  .status {
+    margin-top: 10px; color: var(--dim); font-size: 12px;
+    white-space: pre-wrap; line-height: 1.6;
+    padding: 8px 12px; background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+  }
+  .status.error { color: #f87171; background: rgba(248,113,113,0.08); }
+
+  /* ── Segments ─────────────────── */
+  .segments {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-top: 14px;
+  }
+  .seg {
+    background: #0c0c0c; border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+    transition: border-color 0.2s;
+  }
+  .seg:hover { border-color: #333; }
+  .seg-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .seg-emo {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--accent);
+    padding: 2px 8px; background: var(--accent-dim);
+    border-radius: 999px;
+  }
+  .seg-idx {
+    font-size: 10px; color: var(--dim);
+    padding: 2px 8px; background: rgba(255,255,255,0.04);
+    border-radius: 999px;
+  }
+  .seg-text {
+    font-size: 14px; line-height: 1.7;
+    color: var(--text);
+  }
+  .seg-ctrls {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .seg-audio {
+    width: 100%; margin-top: 8px;
+    border-radius: 8px; background: #0a0a0a;
+  }
+
+  /* ── Voice Tabs ───────────────── */
+  .voice-tabs {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .voice-chip {
+    padding: 6px 12px; border-radius: 999px;
+    font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--dim);
+    transition: all 0.2s;
+  }
+  .voice-chip:hover { border-color: #444; color: var(--text); }
+  .voice-chip.active {
+    border-color: var(--accent); color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .voice-chip.star::after { content: ' ★'; color: var(--gold); }
+
+  /* ── Laura config badge ───────── */
+  .preset-badge {
+    padding: 8px 12px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    font-size: 11px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .audio-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px; background: #0c0c0c;
+    border: 1px solid var(--border); border-radius: 12px;
+  }
+  .audio-bar audio {
+    flex: 1; height: 36px;
+    border-radius: 8px;
+  }
+
+  /* ── Responsive ───────────────── */
+  @media (max-width: 640px) {
+    .main { padding: 12px; gap: 14px; }
+    .card { padding: 14px; border-radius: 12px; }
+    textarea { min-height: 140px; font-size: 15px; }
+    .row { gap: 8px; }
+    button { padding: 8px 14px; font-size: 12px; }
+    select { font-size: 12px; }
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Ebook → Spoken Cantonese POC</h1>
-    <div class="sub">Proof of concept: import text/EPUB, rewrite into natural Cantonese narration with MiniMax, then read it aloud with browser speech synthesis.</div>
 
-    <div class="grid">
-      <div class="card">
-        <h3>1. Import book text</h3>
-        <div class="row">
-          <input id="fileInput" type="file" accept=".txt,.md,.epub" />
-          <button id="extractBtn" class="secondary">Extract</button>
-        </div>
-        <div class="status" id="health"></div>
-        <div style="margin-top:12px;">
-          <label for="sourceText">Or paste text</label>
-          <textarea id="sourceText" placeholder="Paste a passage from an ebook here..."></textarea>
-        </div>
-      </div>
+<!-- ── Header ───────────────────────── -->
+<div class="head">
+  <div class="head-icon">💋</div>
+  <div class="head-info">
+    <div class="head-title">廣東話有聲書</div>
+    <div class="head-sub">文字 → 廣東話旁白 → Laura 為你朗讀</div>
+  </div>
+  <div class="status-badge" id="apiStatus">連線中…</div>
+</div>
 
-      <div class="card">
-        <h3>2. Rewrite for Cantonese listening</h3>
-        <div class="row">
-          <label>Style</label>
-          <select id="styleSelect">
-            <option value="story">Storytelling</option>
-            <option value="gentle">Gentle bedtime</option>
-            <option value="dramatic">More dramatic</option>
-          </select>
-          <button id="rewriteBtn">Rewrite to Cantonese</button>
-        </div>
-        <div class="status" id="rewriteStatus"></div>
-        <div style="margin-top:12px;">
-          <label for="narrationText">Combined narration</label>
-          <textarea id="narrationText" placeholder="MiniMax Cantonese narration will appear here..."></textarea>
-        </div>
-      </div>
+<!-- ── Main ─────────────────────────── -->
+<div class="main">
 
-      <div class="card full">
-        <h3>3. TTS test</h3>
-        <div class="row">
-          <button id="loadVoicesBtn" class="secondary">Load browser voices</button>
-          <select id="voiceSelect"></select>
-          <button id="speakBtn">Speak with browser TTS</button>
-          <button id="stopBtn" class="secondary">Stop</button>
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <select id="minimaxModelSelect">
-            <option value="speech-2.8-hd">MiniMax speech-2.8-hd</option>
-            <option value="speech-2.8-turbo">MiniMax speech-2.8-turbo</option>
-            <option value="speech-02-hd">MiniMax speech-02-hd</option>
-            <option value="speech-02-turbo">MiniMax speech-02-turbo</option>
-          </select>
-          <select id="minimaxVoiceSelect">
-            <optgroup label="Native Cantonese voices">
-              <option value="Cantonese_ProfessionalHost（F)">Professional Host (F) · best current Cantonese</option>
-              <option value="Cantonese_ProfessionalHost（M)">Professional Host (M) · male reporter</option>
-              <option value="Cantonese_GentleLady">Gentle Lady · soft female</option>
-              <option value="Cantonese_KindWoman">Kind Woman · warm female</option>
-              <option value="Cantonese_CuteGirl">Cute Girl · younger female</option>
-              <option value="Cantonese_PlayfulMan">Playful Man · lively male</option>
-            </optgroup>
-          </select>
-          <button id="minimaxSpeakBtn">Generate MiniMax speech</button>
-          <button id="minimaxSegmentsBtn" class="secondary">Generate segment audio</button>
-          <button id="compareVoicesBtn" class="secondary">Compare voices</button>
-          <audio id="minimaxAudio" controls style="max-width:100%;"></audio>
-        </div>
-        <div class="status" id="voiceHelp">I checked your full MiniMax API voice list: only 6 native Cantonese voices are exposed on this account right now. <strong>Professional Host (F)</strong> currently sounds best in your testing, so I moved it to the top.</div>
-        <div class="status" id="ttsStatus">Browser TTS note: quality depends on the voices installed on your browser/device. On desktop Chrome/Safari with Cantonese voices, this is enough for a first proof of concept.</div>
-        <div class="segments" id="segments"></div>
-      </div>
+  <!-- 1. Source -->
+  <div class="card">
+    <div class="card-head"><span class="emoji">📥</span> 匯入文本</div>
+    <div class="row">
+      <input id="fileInput" type="file" accept=".txt,.md,.epub" />
+      <button id="extractBtn" class="btn-secondary">擷取文字</button>
     </div>
+    <div class="status" id="health"></div>
+    <textarea id="sourceText" placeholder="貼上你想轉換嘅文字…&#10;&#10;或者上載 .txt / .md / .epub 檔案" style="margin-top:12px;"></textarea>
   </div>
 
-  <script>
-    const healthEl = document.getElementById('health');
-    const sourceText = document.getElementById('sourceText');
-    const narrationText = document.getElementById('narrationText');
-    const rewriteStatus = document.getElementById('rewriteStatus');
-    const segmentsEl = document.getElementById('segments');
-    const voiceSelect = document.getElementById('voiceSelect');
-    const minimaxModelSelect = document.getElementById('minimaxModelSelect');
-    const minimaxVoiceSelect = document.getElementById('minimaxVoiceSelect');
-    const minimaxAudio = document.getElementById('minimaxAudio');
-    const ttsStatus = document.getElementById('ttsStatus');
+  <!-- 2. Rewrite -->
+  <div class="card">
+    <div class="card-head"><span class="emoji">✍️</span> 轉成廣東話旁白</div>
+    <div class="row">
+      <select id="styleSelect">
+        <option value="story">📖 講故模式</option>
+        <option value="gentle">🌙 溫柔睡前</option>
+        <option value="dramatic">🎭 戲劇化</option>
+      </select>
+      <button id="rewriteBtn" class="btn-primary">改寫成廣東話</button>
+    </div>
+    <div class="status" id="rewriteStatus"></div>
+    <textarea id="narrationText" placeholder="MiniMax 廣東話旁白會喺呢度出現…" style="margin-top:12px;"></textarea>
+  </div>
 
-    let lastSegments = [];
-    let lastMiniMaxSegments = [];
-    let voices = [];
+  <!-- 3. Voice & Playback -->
+  <div class="card">
+    <div class="card-head"><span class="emoji">💋</span> Laura 聲線 · 朗讀</div>
 
-    async function api(path, body) {
-      const res = await fetch(path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || 'Request failed');
-      return json;
+    <!-- Voice chips -->
+    <div class="voice-tabs" id="voiceTabs">
+      <button class="voice-chip active star" data-voice="Cantonese_CuteGirl" data-preset="laura">💋 Laura (推薦)</button>
+      <button class="voice-chip star" data-voice="Cantonese_ProfessionalHost（F)">🎤 女記者</button>
+      <button class="voice-chip" data-voice="Cantonese_ProfessionalHost（M)">🎤 男記者</button>
+      <button class="voice-chip" data-voice="Cantonese_GentleLady">🌸 溫柔女聲</button>
+      <button class="voice-chip" data-voice="Cantonese_KindWoman">💕 暖心女聲</button>
+      <button class="voice-chip" data-voice="Cantonese_PlayfulMan">🎭 活潑男聲</button>
+    </div>
+
+    <!-- Laura preset config indicator -->
+    <div id="lauraConfig" class="preset-badge">
+      💋 <strong>Laura 配置：</strong>voice=CuteGirl · speed=0.83 · pitch=+1 · vol=0.90 · lang=Chinese,Yue
+    </div>
+
+    <div class="row" style="margin-bottom:10px;">
+      <select id="minimaxModelSelect">
+        <option value="speech-2.8-hd" selected>🎵 speech-2.8-hd (高質)</option>
+        <option value="speech-2.8-turbo">⚡ speech-2.8-turbo (快)</option>
+        <option value="speech-02-hd">🎵 speech-02-hd</option>
+        <option value="speech-02-turbo">⚡ speech-02-turbo</option>
+      </select>
+
+      <select id="speedSelect">
+        <option value="0.83" selected>💋 語速: Laura (0.83)</option>
+        <option value="0.92">語速: 慢 (0.92)</option>
+        <option value="0.96">語速: 正常 (0.96)</option>
+        <option value="1.02">語速: 快 (1.02)</option>
+        <option value="1.08">語速: 更快 (1.08)</option>
+      </select>
+
+      <select id="pitchSelect">
+        <option value="1" selected>🎵 Pitch: +1 (Laura)</option>
+        <option value="0">Pitch: 0</option>
+        <option value="-1">Pitch: −1</option>
+        <option value="2">Pitch: +2</option>
+        <option value="-2">Pitch: −2</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <button id="minimaxSpeakBtn" class="btn-primary">💋 生成 Laura 語音</button>
+      <button id="minimaxSegmentsBtn" class="btn-secondary">📻 逐段生成</button>
+      <button id="compareVoicesBtn" class="btn-secondary">🔄 試聽對比</button>
+      <button id="speakBtn" class="btn-secondary">🔊 瀏覽器 TTS</button>
+      <button id="stopBtn" class="btn-secondary">⏹ 停止</button>
+    </div>
+
+    <div class="status" id="ttsStatus">💋 <strong>預設 Laura 聲線</strong>（Cantonese CuteGirl · speed 0.83 · pitch +1 · vol 0.90 · Chinese,Yue）</div>
+
+    <div class="audio-bar" style="margin-top: 12px;">
+      <span style="font-size: 12px; color: var(--dim);">▶️</span>
+      <audio id="minimaxAudio" controls style="max-width:100%;"></audio>
+    </div>
+
+    <div class="segments" id="segments"></div>
+  </div>
+
+</div>
+
+<script>
+  const healthEl = document.getElementById('health');
+  const sourceText = document.getElementById('sourceText');
+  const narrationText = document.getElementById('narrationText');
+  const rewriteStatus = document.getElementById('rewriteStatus');
+  const segmentsEl = document.getElementById('segments');
+  const minimaxModelSelect = document.getElementById('minimaxModelSelect');
+  const speedSelect = document.getElementById('speedSelect');
+  const minimaxAudio = document.getElementById('minimaxAudio');
+  const ttsStatus = document.getElementById('ttsStatus');
+  const voiceTabs = document.getElementById('voiceTabs');
+  const apiStatus = document.getElementById('apiStatus');
+  const lauraConfigEl = document.getElementById('lauraConfig');
+
+  let lastSegments = [];
+  let lastMiniMaxSegments = [];
+  let selectedVoice = 'Cantonese_CuteGirl';
+  let lauraPreset = true;  // Laura config active by default
+
+  // ── Laura preset: exact config from user ──
+  const LAURA_CONFIG = { speed: 0.83, pitch: 1, vol: 0.90 };
+
+  function applyLauraPreset() {
+    lauraPreset = true;
+    speedSelect.value = '0.83';
+    document.getElementById('pitchSelect').value = '1';
+    lauraConfigEl.style.display = '';
+  }
+
+  function clearLauraPreset() {
+    lauraPreset = false;
+    lauraConfigEl.style.display = 'none';
+  }
+
+  // ── Voice Selection ──────────────
+  voiceTabs.addEventListener('click', (e) => {
+    const chip = e.target.closest('.voice-chip');
+    if (!chip) return;
+    document.querySelectorAll('.voice-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    selectedVoice = chip.dataset.voice;
+
+    if (chip.dataset.preset === 'laura') {
+      applyLauraPreset();
+    } else {
+      clearLauraPreset();
     }
 
-    async function loadHealth() {
+    ttsStatus.innerHTML = `🎙️ 已揀：<strong>${chip.textContent.trim()}</strong> · 生成語音就會用呢把聲`;
+  });
+
+  // ── When speed/pitch manually changed, clear Laura preset ──
+  speedSelect.addEventListener('change', () => {
+    if (lauraPreset && speedSelect.value !== '0.83') clearLauraPreset();
+  });
+  document.getElementById('pitchSelect').addEventListener('change', () => {
+    if (lauraPreset && document.getElementById('pitchSelect').value !== '1') clearLauraPreset();
+  });
+
+  // ── API Helper ───────────────────
+  async function api(path, body) {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Request failed');
+    return json;
+  }
+
+  // ── Pass voice params to API ────
+  async function apiWithVoice(path, body) {
+    if (lauraPreset) {
+      body.speed = LAURA_CONFIG.speed;
+      body.pitch = LAURA_CONFIG.pitch;
+      body.vol = LAURA_CONFIG.vol;
+    } else {
+      body.speed = parseFloat(speedSelect.value) || 0.96;
+      body.pitch = parseInt(document.getElementById('pitchSelect').value) || 0;
+    }
+    return api(path, body);
+  }
+
+  async function loadHealth() {
+    try {
       const res = await fetch('api/health');
       const j = await res.json();
-      healthEl.textContent = `MiniMax configured: ${j.minimax_configured ? 'yes' : 'no'} · model: ${j.model} · max chars: ${j.max_source_chars}`;
+      healthEl.textContent = `✅ MiniMax 已連接 · LLM: ${j.model} · TTS: ${j.tts_model} · 上限 ${j.max_source_chars} 字`;
+      apiStatus.textContent = '✅ 就緒';
+      apiStatus.style.background = '#1a3326';
+      apiStatus.style.color = '#4ade80';
+      apiStatus.style.borderColor = '#224433';
+    } catch (e) {
+      healthEl.textContent = '⚠️ 未能連接後端服務';
+      apiStatus.textContent = '⚠️ 離線';
+      apiStatus.style.background = '#33221a';
+      apiStatus.style.color = '#fbbf24';
+      apiStatus.style.borderColor = '#443322';
     }
+  }
 
-    async function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const out = String(reader.result || '');
-          const comma = out.indexOf(',');
-          resolve(comma >= 0 ? out.slice(comma + 1) : out);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+  async function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const out = String(reader.result || '');
+        const comma = out.indexOf(',');
+        resolve(comma >= 0 ? out.slice(comma + 1) : out);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ── Extract ──────────────────────
+  document.getElementById('extractBtn').onclick = async () => {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) return alert('請先選擇一個 .txt / .md / .epub 檔案');
+    try {
+      healthEl.textContent = '擷取緊檔案…';
+      const b64 = await fileToBase64(file);
+      const j = await api('api/extract', { filename: file.name, file_base64: b64 });
+      sourceText.value = j.text;
+      healthEl.textContent = `✅ 已載入 ${file.name} · ${j.text.length} 字`;
+    } catch (e) {
+      healthEl.textContent = '擷取失敗：' + e.message;
     }
+  };
 
-    document.getElementById('extractBtn').onclick = async () => {
-      const file = document.getElementById('fileInput').files[0];
-      if (!file) return alert('Choose a .txt, .md, or .epub file first.');
-      try {
-        healthEl.textContent = 'Extracting file...';
-        const b64 = await fileToBase64(file);
-        const j = await api('api/extract', { filename: file.name, file_base64: b64 });
-        sourceText.value = j.text;
-        healthEl.textContent = `Loaded ${file.name} · ${j.text.length} chars extracted`;
-      } catch (e) {
-        healthEl.textContent = 'Extract failed: ' + e.message;
+  // ── Rewrite ──────────────────────
+  document.getElementById('rewriteBtn').onclick = async () => {
+    const text = sourceText.value.trim();
+    if (!text) return alert('請先貼上文字或擷取檔案');
+    try {
+      rewriteStatus.textContent = '✍️ 改寫緊成廣東話旁白…';
+      rewriteStatus.className = 'status';
+      const j = await api('api/rewrite', { text, style: document.getElementById('styleSelect').value });
+      lastSegments = j.segments || [];
+      narrationText.value = lastSegments.map(s => s.text).join('\n\n');
+      renderSegments(lastSegments);
+      rewriteStatus.textContent = `✅ 完成 · ${j.title} · LLM: ${j.model} · 共 ${lastSegments.length} 段`;
+    } catch (e) {
+      rewriteStatus.textContent = '改寫失敗：' + e.message;
+      rewriteStatus.className = 'status error';
+    }
+  };
+
+  // ── Render Segments ──────────────
+  function renderSegments(segments) {
+    segmentsEl.innerHTML = '';
+    segments.forEach((seg, idx) => {
+      const div = document.createElement('div');
+      div.className = 'seg';
+      const hasAudio = !!lastMiniMaxSegments[idx]?.audio_base64;
+      div.innerHTML = `
+        <div class="seg-head">
+          <span class="seg-idx">第 ${idx + 1} 段</span>
+          <span class="seg-emo">${seg.emotion || 'calm'}</span>
+        </div>
+        <div class="seg-text">${escapeHtml(seg.text || '')}</div>
+        <div class="seg-ctrls">
+          <button data-speak-idx="${idx}" class="btn-secondary">🔊 瀏覽器朗讀</button>
+          <button data-mmx-idx="${idx}" class="btn-primary" style="font-size:11px;padding:6px 12px;">💋 MiniMax 生成呢段</button>
+          ${hasAudio ? `<audio controls class="seg-audio" src="data:${lastMiniMaxSegments[idx].mime_type};base64,${lastMiniMaxSegments[idx].audio_base64}"></audio>` : ''}
+        </div>`;
+      segmentsEl.appendChild(div);
+    });
+
+    document.querySelectorAll('[data-speak-idx]').forEach(btn => {
+      btn.onclick = () => speakText(lastSegments[Number(btn.dataset.speakIdx)]?.text || '');
+    });
+    document.querySelectorAll('[data-mmx-idx]').forEach(btn => {
+      btn.onclick = async () => {
+        const i = Number(btn.dataset.mmxIdx);
+        const seg = lastSegments[i];
+        if (!seg) return;
+        await generateMiniMaxSpeech(seg.text || '', seg.emotion || 'calm');
+      };
+    });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ── Browser TTS ──────────────────
+  let voices = [];
+  function loadVoices() {
+    voices = speechSynthesis.getVoices();
+  }
+
+  function speakText(text) {
+    if (!text.trim()) return;
+    speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    const cantonese = voices.filter(v => {
+      const t = `${v.name} ${v.lang}`.toLowerCase();
+      return t.includes('yue') || t.includes('zh-hk') || t.includes('canton');
+    });
+    if (cantonese.length) {
+      utt.voice = cantonese[0];
+      utt.lang = cantonese[0].lang;
+    } else {
+      utt.lang = 'zh-HK';
+    }
+    utt.rate = 0.95;
+    utt.pitch = 1.0;
+    speechSynthesis.speak(utt);
+  }
+
+  // ── MiniMax TTS ──────────────────
+  async function generateMiniMaxSpeech(text, emotion = 'calm') {
+    if (!text.trim()) return;
+    ttsStatus.innerHTML = '💋 生成緊 Laura 語音…';
+    ttsStatus.className = 'status';
+    try {
+      const body = { text, emotion, voice_id: selectedVoice, model: minimaxModelSelect.value };
+      const j = await apiWithVoice('api/tts', body);
+      minimaxAudio.src = `data:${j.mime_type};base64,${j.audio_base64}`;
+      minimaxAudio.play().catch(() => {});
+      const voiceName = document.querySelector('.voice-chip.active')?.textContent?.trim() || selectedVoice;
+      ttsStatus.innerHTML = `✅ 語音已生成 · <strong>${voiceName}</strong> · ${j.model}`;
+    } catch (e) {
+      ttsStatus.textContent = '生成失敗：' + e.message;
+      ttsStatus.className = 'status error';
+    }
+  }
+
+  async function generateMiniMaxSegmentAudio() {
+    if (!lastSegments.length) {
+      ttsStatus.textContent = '未有旁白段落。請先改寫文本。';
+      ttsStatus.className = 'status error';
+      return;
+    }
+    ttsStatus.textContent = '💋 逐段生成緊語音…';
+    ttsStatus.className = 'status';
+    try {
+      const body = { segments: lastSegments, voice_id: selectedVoice, model: minimaxModelSelect.value };
+      const j = await apiWithVoice('api/tts_segments', body);
+      lastMiniMaxSegments = j.segments || [];
+      renderSegments(lastSegments);
+      if (lastMiniMaxSegments[0]?.audio_base64) {
+        minimaxAudio.src = `data:${lastMiniMaxSegments[0].mime_type};base64,${lastMiniMaxSegments[0].audio_base64}`;
       }
-    };
+      const voiceName = document.querySelector('.voice-chip.active')?.textContent?.trim() || selectedVoice;
+      ttsStatus.innerHTML = `✅ 全部 ${lastMiniMaxSegments.length} 段已生成 · <strong>${voiceName}</strong>`;
+    } catch (e) {
+      ttsStatus.textContent = '生成失敗：' + e.message;
+      ttsStatus.className = 'status error';
+    }
+  }
 
-    document.getElementById('rewriteBtn').onclick = async () => {
-      const text = sourceText.value.trim();
-      if (!text) return alert('Paste text or extract a file first.');
+  // ── Compare Voices ───────────────
+  async function compareVoices() {
+    const text = narrationText.value.trim() || (lastSegments[0]?.text || sourceText.value.trim());
+    const emotion = lastSegments[0]?.emotion || 'calm';
+    if (!text) {
+      ttsStatus.textContent = '請先加入文字或改寫。';
+      ttsStatus.className = 'status error';
+      return;
+    }
+    ttsStatus.textContent = '🔄 試聽緊唔同嘅聲…';
+    ttsStatus.className = 'status';
+
+    const voiceChips = document.querySelectorAll('.voice-chip');
+    const voiceList = Array.from(voiceChips).map(chip => ({
+      id: chip.dataset.voice,
+      label: chip.textContent.trim().replace(' ★', ''),
+      isLaura: chip.dataset.preset === 'laura',
+    }));
+
+    segmentsEl.innerHTML = '';
+
+    // Generate all voice samples
+    for (const { id, label, isLaura } of voiceList) {
       try {
-        rewriteStatus.textContent = 'Rewriting into spoken Cantonese...';
-        const j = await api('api/rewrite', { text, style: document.getElementById('styleSelect').value });
-        lastSegments = j.segments || [];
-        narrationText.value = lastSegments.map(s => s.text).join('\n\n');
-        renderSegments(lastSegments);
-        rewriteStatus.textContent = `Done · ${j.title} · source model ${j.model}`;
-      } catch (e) {
-        rewriteStatus.textContent = 'Rewrite failed: ' + e.message;
-      }
-    };
-
-    function renderSegments(segments) {
-      segmentsEl.innerHTML = '';
-      segments.forEach((seg, idx) => {
+        const body = { text, emotion, voice_id: id, model: minimaxModelSelect.value };
+        // Use Laura config only for Laura chip, else manual settings
+        if (isLaura) {
+          body.speed = LAURA_CONFIG.speed;
+          body.pitch = LAURA_CONFIG.pitch;
+          body.vol = LAURA_CONFIG.vol;
+        } else {
+          body.speed = parseFloat(speedSelect.value) || 0.96;
+          body.pitch = parseInt(document.getElementById('pitchSelect').value) || 0;
+        }
+        const j = await api('api/tts', body);
         const div = document.createElement('div');
         div.className = 'seg';
-        const hasMiniMax = !!lastMiniMaxSegments[idx]?.audio_base64;
         div.innerHTML = `
-          <div class="emotion">${seg.emotion || 'calm'}</div>
-          <div>${escapeHtml(seg.text || '')}</div>
-          <div class="controls">
-            <span class="pill">segment ${idx + 1}</span>
-            <button data-speak-index="${idx}">Speak this</button>
-            <button data-minimax-index="${idx}" class="secondary">MiniMax this</button>
-            ${hasMiniMax ? `<audio controls src="data:${lastMiniMaxSegments[idx].mime_type};base64,${lastMiniMaxSegments[idx].audio_base64}" style="max-width:100%;"></audio>` : ''}
-          </div>`;
+          <div class="seg-head">
+            <span class="seg-emo">${label}</span>
+            <span class="seg-idx">${id}</span>
+          </div>
+          <div class="seg-text">${escapeHtml(text.slice(0, 120))}${text.length > 120 ? '…' : ''}</div>
+          <audio controls class="seg-audio" src="data:${j.mime_type};base64,${j.audio_base64}"></audio>`;
         segmentsEl.appendChild(div);
-      });
-      document.querySelectorAll('[data-speak-index]').forEach(btn => {
-        btn.onclick = () => speakText(lastSegments[Number(btn.dataset.speakIndex)]?.text || '');
-      });
-      document.querySelectorAll('[data-minimax-index]').forEach(btn => {
-        btn.onclick = async () => {
-          const i = Number(btn.dataset.minimaxIndex);
-          const seg = lastSegments[i];
-          if (!seg) return;
-          await generateMiniMaxSpeech(seg.text || '', seg.emotion || 'calm');
-        };
-      });
-    }
-
-    function escapeHtml(s) {
-      return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-
-    function loadVoices() {
-      voices = speechSynthesis.getVoices();
-      voiceSelect.innerHTML = '';
-      const preferred = voices.filter(v => {
-        const t = `${v.name} ${v.lang}`.toLowerCase();
-        return t.includes('yue') || t.includes('zh-hk') || t.includes('canton');
-      });
-      const shown = preferred.length ? preferred : voices;
-      shown.forEach((v, i) => {
-        const opt = document.createElement('option');
-        opt.value = String(i);
-        opt.textContent = `${v.name} · ${v.lang}`;
-        voiceSelect.appendChild(opt);
-      });
-      ttsStatus.textContent = preferred.length
-        ? `Found ${preferred.length} Cantonese-ish browser voices.`
-        : `No obvious Cantonese voice found; showing all ${voices.length} browser voices.`;
-    }
-
-    function pickVoice() {
-      const shown = Array.from(voiceSelect.options).map(opt => opt.textContent);
-      const preferred = voices.filter(v => {
-        const t = `${v.name} ${v.lang}`.toLowerCase();
-        return t.includes('yue') || t.includes('zh-hk') || t.includes('canton');
-      });
-      const list = preferred.length ? preferred : voices;
-      return list[Number(voiceSelect.value) || 0] || null;
-    }
-
-    function speakText(text) {
-      if (!text.trim()) return;
-      speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(text);
-      const v = pickVoice();
-      if (v) { utt.voice = v; utt.lang = v.lang; }
-      else { utt.lang = 'zh-HK'; }
-      utt.rate = 0.95;
-      utt.pitch = 1.0;
-      speechSynthesis.speak(utt);
-    }
-
-    async function generateMiniMaxSpeech(text, emotion='calm') {
-      if (!text.trim()) return;
-      ttsStatus.textContent = 'Generating MiniMax speech...';
-      try {
-        const j = await api('api/tts', {
-          text,
-          emotion,
-          voice_id: minimaxVoiceSelect.value,
-          model: minimaxModelSelect.value
-        });
-        minimaxAudio.src = `data:${j.mime_type};base64,${j.audio_base64}`;
-        minimaxAudio.play().catch(() => {});
-        ttsStatus.textContent = `MiniMax speech ready · ${j.voice_id} · ${j.model} · emotion ${j.emotion}`;
       } catch (e) {
-        ttsStatus.textContent = 'MiniMax speech failed: ' + e.message;
+        const div = document.createElement('div');
+        div.className = 'seg';
+        div.innerHTML = `<div class="seg-head"><span class="seg-emo">${label}</span></div><div style="color:#f87171;font-size:12px;">❌ ${escapeHtml(e.message)}</div>`;
+        segmentsEl.appendChild(div);
       }
     }
+    ttsStatus.innerHTML = '✅ 試聽對比準備好 · 撳 play 聽下邊把聲最啱你';
+  }
 
-    async function generateMiniMaxSegmentAudio() {
-      if (!lastSegments.length) {
-        ttsStatus.textContent = 'No narration segments yet. Rewrite text first.';
-        return;
-      }
-      ttsStatus.textContent = 'Generating MiniMax audio for each segment...';
-      try {
-        const j = await api('api/tts_segments', {
-          segments: lastSegments,
-          voice_id: minimaxVoiceSelect.value,
-          model: minimaxModelSelect.value
-        });
-        lastMiniMaxSegments = j.segments || [];
-        renderSegments(lastSegments);
-        if (lastMiniMaxSegments[0]?.audio_base64) {
-          minimaxAudio.src = `data:${lastMiniMaxSegments[0].mime_type};base64,${lastMiniMaxSegments[0].audio_base64}`;
-        }
-        ttsStatus.textContent = `MiniMax segment audio ready · ${lastMiniMaxSegments.length} segments · ${j.voice_id}`;
-      } catch (e) {
-        ttsStatus.textContent = 'MiniMax segment audio failed: ' + e.message;
-      }
-    }
+  // ── Button Bindings ──────────────
+  document.getElementById('speakBtn').onclick = () => speakText(narrationText.value.trim());
+  document.getElementById('stopBtn').onclick = () => speechSynthesis.cancel();
+  document.getElementById('minimaxSpeakBtn').onclick = () => {
+    const text = narrationText.value.trim() || (lastSegments[0]?.text || sourceText.value.trim());
+    const emotion = lastSegments[0]?.emotion || 'calm';
+    generateMiniMaxSpeech(text, emotion);
+  };
+  document.getElementById('minimaxSegmentsBtn').onclick = () => generateMiniMaxSegmentAudio();
+  document.getElementById('compareVoicesBtn').onclick = () => compareVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
 
-    async function compareVoices() {
-      const text = narrationText.value.trim() || (lastSegments[0]?.text || sourceText.value.trim());
-      const emotion = lastSegments[0]?.emotion || 'calm';
-      if (!text) {
-        ttsStatus.textContent = 'Add or rewrite some text first.';
-        return;
-      }
-      const voices = [
-        ['cantonese_female', 'Cantonese Female'],
-        ['female-yujie', 'Female Yujie'],
-        ['female-tianmei', 'Female Tianmei'],
-        ['female-shaonv', 'Female Shaonv']
-      ];
-      ttsStatus.textContent = 'Comparing voices...';
-      const blocks = [];
-      for (const [voiceId, label] of voices) {
-        try {
-          const j = await api('api/tts', { text, emotion, voice_id: voiceId, model: minimaxModelSelect.value });
-          blocks.push(`
-            <div class="seg">
-              <div class="emotion">${label}</div>
-              <div>${escapeHtml(text.slice(0, 140))}${text.length > 140 ? '…' : ''}</div>
-              <div class="controls">
-                <span class="pill">${voiceId}</span>
-                <audio controls src="data:${j.mime_type};base64,${j.audio_base64}" style="max-width:100%;"></audio>
-              </div>
-            </div>
-          `);
-        } catch (e) {
-          blocks.push(`
-            <div class="seg">
-              <div class="emotion">${label}</div>
-              <div>Failed: ${escapeHtml(e.message)}</div>
-            </div>
-          `);
-        }
-      }
-      segmentsEl.innerHTML = blocks.join('');
-      ttsStatus.textContent = 'Voice comparison ready.';
-    }
-
-    document.getElementById('loadVoicesBtn').onclick = loadVoices;
-    document.getElementById('speakBtn').onclick = () => speakText(narrationText.value.trim());
-    document.getElementById('stopBtn').onclick = () => speechSynthesis.cancel();
-    document.getElementById('minimaxSpeakBtn').onclick = () => {
-      const text = narrationText.value.trim() || (lastSegments[0]?.text || '');
-      const emotion = lastSegments[0]?.emotion || 'calm';
-      generateMiniMaxSpeech(text, emotion);
-    };
-    document.getElementById('minimaxSegmentsBtn').onclick = () => generateMiniMaxSegmentAudio();
-    document.getElementById('compareVoicesBtn').onclick = () => compareVoices();
-    speechSynthesis.onvoiceschanged = loadVoices;
-
-    loadHealth();
-    loadVoices();
-  </script>
+  // ── Init ──────────────────────────
+  loadHealth();
+  loadVoices();
+</script>
 </body>
 </html>

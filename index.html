@@ -1,752 +1,533 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Parklan Clawhub</title>
-  <meta name="description" content="Parklan Clawhub — a retro-futuristic techno landing page for tools, experiments, and dashboards." />
-  <link rel="icon" type="image/jpeg" href="assets/favicon.jpg" />
-  <link rel="shortcut icon" type="image/jpeg" href="assets/favicon.jpg" />
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg-top: #1a0630;
-      --bg-bottom: #070312;
-      --panel: rgba(18, 10, 40, 0.72);
-      --panel-2: rgba(25, 10, 50, 0.84);
-      --line: rgba(255, 255, 255, 0.12);
-      --text: #f8ecff;
-      --muted: #d0a9d9;
-      --pink: #ff3ea5;
-      --hotpink: #ff00d4;
-      --cyan: #33e6ff;
-      --purple: #8b5cf6;
-      --gold: #ffd166;
-      --shadow: 0 24px 80px rgba(0,0,0,0.42);
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Parklan Clawhub</title>
+<meta name="description" content="Parklan Clawhub — retro-futuristic techno hub for tools, experiments, and dashboards.">
+<link rel="icon" type="image/jpeg" href="assets/favicon.jpg">
+<style>
+  :root {
+    --pink: #ff3ea5;
+    --cyan: #33e6ff;
+    --purple: #8b5cf6;
+    --text: #f8ecff;
+    --muted: #d0a9d9;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    color: #f8ecff;
+    background: linear-gradient(180deg, #2a0845 0%, #140321 42%, #070312 100%);
+    min-height: 100%;
+    overflow-x: hidden;
+  }
 
-    * { box-sizing: border-box; }
+  .container { max-width: 800px; margin:0 auto; padding: 20px 16px 60px; }
 
-    html, body {
-      margin: 0;
-      min-height: 100%;
-      font-family: Inter, system-ui, sans-serif;
-      color: var(--text);
-      overflow-x: hidden;
-      background:
-        radial-gradient(circle at top, rgba(255, 62, 165, 0.12), transparent 18%),
-        radial-gradient(circle at 75% 10%, rgba(51, 230, 255, 0.12), transparent 16%),
-        linear-gradient(180deg, #2a0845 0%, #140321 42%, #070312 100%);
-    }
+  /* ── HERO ── */
+  .hero {
+    text-align: center; padding: 30px 0 20px;
+  }
+  .hero-mark {
+    width: 80px; height: 80px; border-radius: 22px;
+    display: grid; place-items: center; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 18px 40px rgba(255,0,212,0.12);
+    margin: 0 auto 16px;
+    background: rgba(255,255,255,0.04);
+  }
+  .hero-mark img { width: 100%; height: 100%; object-fit: cover; }
+  .hero-tag {
+    display: inline-block; padding: 6px 14px; border-radius: 999px;
+    background: rgba(51,230,255,0.08);
+    border: 1px solid rgba(51,230,255,0.2);
+    color: #33e6ff; font-weight: 800; font-size: 0.7em;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .hero h1 {
+    font-size: 2em; letter-spacing: -0.03em; line-height: 1;
+    text-shadow: 0 0 18px rgba(255,62,165,0.2);
+    margin-bottom: 8px; text-transform: uppercase;
+  }
+  .hero .subtitle {
+    color: #d0a9d9; font-size: 0.92em; line-height: 1.6;
+    max-width: 480px; margin: 0 auto;
+  }
 
-    .bg {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
+  /* ── LAURA FLOATING CHAT ── */
+  .chatbot-launch {
+    position: fixed; right: 16px; bottom: 16px; z-index: 30;
+    width: 64px; height: 64px; border-radius: 50%;
+    overflow: hidden; padding: 0;
+    border: 2px solid rgba(255,62,165,0.5);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 0 20px rgba(255,0,212,0.15);
+    background: linear-gradient(135deg, rgba(255,62,165,0.2), rgba(51,230,255,0.15));
+    cursor: pointer;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 0.08s ease-out, box-shadow 0.2s;
+    perspective: 400px;
+  }
+  .chatbot-launch img { width:100%; height:100%; object-fit:cover; }
+  .chatbot-launch:active { transform: scale(0.92); }
 
-    .sun {
-      position: absolute;
-      width: 460px;
-      height: 460px;
-      left: 50%;
-      top: 110px;
-      transform: translateX(-50%);
-      border-radius: 50%;
-      background: radial-gradient(circle at center, rgba(255,93,177,0.95), rgba(255,26,131,0.8) 45%, rgba(120,0,80,0.15) 70%, transparent 74%);
-      filter: blur(4px);
-      opacity: 0.22;
-    }
+  .chatbot-panel {
+    position: fixed; right: 8px; bottom: 90px; z-index: 31;
+    width: min(360px, calc(100vw - 16px));
+    max-height: 60vh;
+    display: none; flex-direction: column;
+    background: #1a0f38;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(255,0,212,0.1);
+  }
+  .chatbot-panel.open { display: flex; }
+  .chatbot-panel-head {
+    background: linear-gradient(135deg, rgba(255,62,165,0.12), rgba(51,230,255,0.08));
+    padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .chatbot-panel-head img {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid rgba(255,62,165,0.4); object-fit: cover;
+  }
+  .chatbot-panel-head .info { flex:1; min-width:0; }
+  .chatbot-panel-head .info h3 { font-size:0.88em; font-weight:700; }
+  .chatbot-panel-head .info span { font-size:0.65em; color:#d0a9d9; }
+  .chatbot-panel-head select {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; color: #f8ecff;
+    padding: 4px 8px; font-size: 0.7em; font-family: inherit; outline: none;
+  }
+  .chatbot-panel-head .chatbot-close {
+    background: none; border: none; color: #d0a9d9; cursor: pointer;
+    font-size: 1em; padding: 2px 6px;
+  }
+  .chatbot-msgs {
+    flex: 1; padding: 12px; overflow-y: auto; max-height: 240px;
+    display: flex; flex-direction: column; gap: 8px;
+    background: rgba(0,0,0,0.15);
+  }
+  .chatbot-msg {
+    max-width: 85%; padding: 8px 12px; border-radius: 14px;
+    font-size: 0.82em; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+  }
+  .chatbot-msg.bot {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-bottom-left-radius: 4px;
+  }
+  .chatbot-msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #8b2f6e, #4a3f8a);
+    border-bottom-right-radius: 4px;
+  }
+  .chatbot-msg .who {
+    font-size: 0.6em; text-transform: uppercase; letter-spacing: 0.05em;
+    opacity: 0.5; margin-bottom: 1px; font-weight: 700;
+  }
+  .chatbot-form {
+    padding: 8px 12px; display: flex; gap: 6px;
+    background: #0f0a24; border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .chatbot-form textarea {
+    flex: 1; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 8px 12px;
+    color: #f8ecff; font-family: inherit; font-size: 0.8em;
+    resize: none; min-height: 36px; max-height: 80px; outline: none;
+  }
+  .chatbot-form textarea:focus { border-color: rgba(255,62,165,0.4); }
+  .chatbot-form button {
+    padding: 8px 14px;
+    background: #ff3ea5; border: none; border-radius: 10px;
+    color: #fff; font-weight: 700; cursor: pointer;
+    font-family: inherit; font-size: 0.8em;
+  }
+  .chatbot-status {
+    padding: 4px 12px; font-size: 0.65em; color: #d0a9d9;
+    background: #0f0a24; text-align: center;
+  }
 
-    .grid-floor {
-      position: absolute;
-      left: -10%;
-      right: -10%;
-      bottom: -8vh;
-      height: 48vh;
-      background:
-        linear-gradient(to top, rgba(255,0,212,0.14), transparent 30%),
-        repeating-linear-gradient(to right, rgba(51,230,255,0.18) 0 2px, transparent 2px 80px),
-        repeating-linear-gradient(to top, rgba(51,230,255,0.16) 0 2px, transparent 2px 60px);
-      transform: perspective(700px) rotateX(74deg);
-      transform-origin: bottom center;
-      opacity: 0.5;
-      mask-image: linear-gradient(to top, black 35%, transparent 100%);
-    }
+  /* ── SECTION TITLE ── */
+  .section-title {
+    margin: 28px 0 14px; font-size: 1em;
+    font-weight: 900; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #33e6ff;
+    text-shadow: 0 0 10px rgba(51,230,255,0.15);
+  }
 
-    .scanlines {
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.03) 0 1px, transparent 1px 4px);
-      opacity: 0.1;
-      mix-blend-mode: screen;
-    }
+  /* ── PROJECT CARDS ── */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .card {
+    background: #1a0f38;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 18px;
+    transition: border-color 0.15s;
+    display: flex; flex-direction: column;
+  }
+  .card:hover { border-color: rgba(255,62,165,0.2); }
+  .card .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.65em; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #33e6ff;
+    margin-bottom: 8px;
+  }
+  .card .tag .badge {
+    padding: 2px 8px; border-radius: 999px; font-size: 0.9em;
+  }
+  .badge-ready { background: rgba(0,230,118,.12); color: #4dff88; }
+  .badge-beta { background: rgba(77,232,255,.12); color: #4de8ff; }
+  .badge-private { background: rgba(255,82,82,.12); color: #ff5252; }
+  .badge-poc { background: rgba(255,171,64,.12); color: #ffab40; }
+  .card h3 {
+    font-size: 1em; letter-spacing: -0.01em; margin-bottom: 4px;
+  }
+  .card p {
+    color: #d0a9d9; font-size: 0.8em; line-height: 1.6;
+    flex: 1; margin-bottom: 12px;
+  }
+  .card a {
+    text-decoration: none; color: #fff; font-weight: 700;
+    font-size: 0.8em; display: inline-flex; align-items: center; gap: 4px;
+    opacity: 0.8;
+  }
+  .card a:hover { opacity: 1; color: #ff3ea5; }
+  .card.hidden-card { display: none; }
+  .card.hidden-card.show { display: flex; }
 
-    .wrap {
-      position: relative;
-      z-index: 1;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 26px 20px 72px;
-    }
+  .footer {
+    margin-top: 32px; text-align: center;
+    color: #9e7aaa; font-size: 0.8em;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
 
-    .private-launch {
-      position: fixed;
-      top: 18px;
-      right: 18px;
-      z-index: 20;
-      width: 48px;
-      height: 48px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(255,62,165,0.32);
-      background: linear-gradient(135deg, rgba(255,62,165,0.18), rgba(51,230,255,0.12));
-      color: var(--text);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 0 22px rgba(255,0,212,0.18);
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .private-launch:hover { transform: translateY(-1px); }
-
-    .private-dialog {
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 24px;
-      padding: 0;
-      width: min(380px, calc(100vw - 28px));
-      background: transparent;
-      color: var(--text);
-    }
-    .private-dialog::backdrop { background: rgba(4,0,12,0.6); backdrop-filter: blur(8px); }
-    .private-dialog-panel {
-      padding: 18px;
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(28,12,52,.92), rgba(12,5,22,.92));
-      border: 1px solid rgba(255,255,255,.08);
-      box-shadow: 0 24px 80px rgba(0,0,0,.45), 0 0 30px rgba(255,0,212,.12);
-    }
-    .private-dialog-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
-    .private-dialog-title { font-size:1rem; font-weight:900; letter-spacing:-.02em; }
-    .private-dialog-close {
-      width: 34px; height: 34px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06); color: var(--text); cursor: pointer;
-    }
-    .private-dialog-sub, .private-error { color: var(--muted); font-size:.88rem; line-height:1.55; margin-bottom:14px; }
-    .private-error { color:#ffb4ce; display:none; margin-top:10px; }
-    .private-dialog-form { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; }
-    .private-dialog-form input {
-      width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:var(--text);
-      padding:12px 14px; font:inherit; outline:none; box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-    }
-    .private-dialog-form button {
-      border:1px solid rgba(255,62,165,.28); background:linear-gradient(135deg, rgba(255,62,165,.2), rgba(51,230,255,.12)); color:var(--text);
-      border-radius:14px; padding:12px 14px; font:inherit; font-weight:900; cursor:pointer;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
-    }
-
-    .hero {
-      padding: 34px 30px;
-      border-radius: 34px;
-      overflow: hidden;
-      position: relative;
-      margin-bottom: 26px;
-      background: linear-gradient(180deg, rgba(25,10,50,0.74), rgba(9,5,18,0.58));
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: var(--shadow), 0 0 40px rgba(255,0,212,0.08);
-      backdrop-filter: blur(16px) saturate(130%);
-      -webkit-backdrop-filter: blur(16px) saturate(130%);
-    }
-
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent 45%);
-      pointer-events: none;
-    }
-
-    .hero-mark {
-      width: 86px;
-      height: 86px;
-      border-radius: 24px;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 18px 40px rgba(255,0,212,0.12);
-      margin-bottom: 18px;
-      background: rgba(255,255,255,0.04);
-    }
-
-    .hero-mark img { width: 100%; height: 100%; object-fit: cover; }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: var(--cyan);
-      font-weight: 800;
-      font-size: 12px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 20px rgba(51,230,255,0.08);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(2.2rem, 4.8vw, 4.1rem);
-      line-height: .92;
-      letter-spacing: -0.05em;
-      max-width: 860px;
-      text-transform: uppercase;
-      text-shadow: 0 0 12px rgba(255,62,165,0.22), 0 0 24px rgba(51,230,255,0.1);
-    }
-
-    .lead {
-      margin-top: 18px;
-      max-width: 760px;
-      color: var(--muted);
-      font-size: 1.02rem;
-      line-height: 1.82;
-    }
-
-    .section-title {
-      margin: 30px 0 14px;
-      font-size: 1.05rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--cyan);
-      text-shadow: 0 0 10px rgba(51,230,255,0.18);
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 16px;
-    }
-
-    .card {
-      grid-column: span 6;
-      position: relative;
-      padding: 22px;
-      border-radius: 24px;
-      overflow: hidden;
-      background: linear-gradient(180deg, rgba(26,9,48,0.72), rgba(10,5,22,0.72));
-      border: 1px solid rgba(255,255,255,0.09);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
-      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-      transform-style: preserve-3d;
-      will-change: transform;
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.06), transparent 45%);
-      pointer-events: none;
-    }
-
-    .card:hover {
-      box-shadow: 0 26px 70px rgba(0,0,0,0.45), 0 0 28px rgba(255,0,212,0.08);
-      border-color: rgba(255,62,165,0.18);
-    }
-
-    .status-badge {
-      display: inline-flex;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      margin-left: 6px;
-    }
-    .status-ready { background: rgba(0,230,118,.15); color: #4dff88; }
-    .status-poc { background: rgba(255,171,64,.15); color: #ffab40; }
-    .status-beta { background: rgba(77,232,255,.15); color: #4de8ff; }
-    .status-private { background: rgba(255,82,82,.15); color: #ff5252; }
-    .card-tag {
-      display: inline-flex;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      margin-bottom: 12px;
-      color: var(--cyan);
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .card h3 {
-      margin: 0 0 8px;
-      font-size: 1.28rem;
-      letter-spacing: -0.02em;
-      text-transform: uppercase;
-    }
-
-    .card p {
-      margin: 0 0 18px;
-      color: var(--muted);
-      font-size: 0.97rem;
-      line-height: 1.75;
-    }
-
-    .card a {
-      text-decoration: none;
-      color: #fff;
-      font-weight: 900;
-      letter-spacing: 0.02em;
-    }
-
-    .card a:hover { text-decoration: underline; }
-
-    .card.hidden-card { display: none; }
-    .card.hidden-card.show { display: block; }
-
-    .footer {
-      margin-top: 32px;
-      text-align: center;
-      color: #9e7aaa;
-      font-size: 0.88rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-
-    .chatbot-launch {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 30;
-      width: 68px;
-      height: 68px;
-      border-radius: 999px;
-      overflow: hidden;
-      border: 2px solid rgba(255,255,255,0.16);
-      box-shadow: 0 18px 40px rgba(0,0,0,0.38), 0 0 24px rgba(255,0,212,0.16);
-      background: linear-gradient(135deg, rgba(255,62,165,0.18), rgba(51,230,255,0.14));
-      cursor: pointer;
-      padding: 0;
-    }
-    .chatbot-launch img { width:100%; height:100%; object-fit:cover; }
-    .chatbot-panel {
-      position: fixed;
-      right: 18px;
-      bottom: 96px;
-      z-index: 31;
-      width: min(390px, calc(100vw - 24px));
-      height: min(620px, 72vh);
-      display: none;
-      border-radius: 24px;
-      overflow: hidden;
-      background: linear-gradient(180deg, rgba(24,10,42,0.94), rgba(10,5,18,0.94));
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.46), 0 0 28px rgba(255,0,212,0.12);
-      backdrop-filter: blur(18px) saturate(140%);
-      -webkit-backdrop-filter: blur(18px) saturate(140%);
-    }
-    .chatbot-panel.show { display:flex; flex-direction:column; }
-    .chatbot-head {
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.08);
-      background: linear-gradient(135deg, rgba(255,62,165,0.1), rgba(51,230,255,0.06));
-    }
-    .chatbot-head-left { display:flex; align-items:center; gap:12px; min-width:0; }
-    .chatbot-mini-avatar { width:42px; height:42px; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.12); }
-    .chatbot-mini-avatar img { width:100%; height:100%; object-fit:cover; }
-    .chatbot-title { font-weight:900; letter-spacing:-0.02em; }
-    .chatbot-sub { color: var(--muted); font-size: .8rem; }
-    .chatbot-close { border:none; background:rgba(255,255,255,0.06); color:var(--text); width:34px; height:34px; border-radius:999px; cursor:pointer; }
-    .chatbot-toolbar { padding:10px 14px; display:flex; gap:8px; border-bottom:1px solid rgba(255,255,255,0.06); }
-    .chatbot-toolbar select { width:auto; min-width:140px; background:rgba(255,255,255,0.06); color:var(--text); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:8px 10px; }
-    .chatbot-messages { flex:1; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
-    .chatbot-msg { max-width:88%; padding:12px 14px; border-radius:18px; line-height:1.7; white-space:pre-wrap; }
-    .chatbot-msg.bot { align-self:flex-start; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); }
-    .chatbot-msg.user { align-self:flex-end; background:linear-gradient(135deg, rgba(255,62,165,0.18), rgba(51,230,255,0.12)); border:1px solid rgba(255,255,255,0.08); }
-    .chatbot-form { display:grid; grid-template-columns:1fr auto; gap:8px; padding:14px; border-top:1px solid rgba(255,255,255,0.06); }
-    .chatbot-form textarea { min-height:48px; max-height:140px; resize:vertical; border-radius:14px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.06); color:var(--text); padding:12px 14px; font:inherit; outline:none; }
-    .chatbot-form button { border:none; border-radius:14px; padding:12px 16px; font:inherit; font-weight:900; color:#fff; background:linear-gradient(135deg, rgba(255,62,165,0.9), rgba(51,230,255,0.75)); cursor:pointer; }
-    .chatbot-status { padding:0 14px 10px; color:var(--muted); font-size:.8rem; }
-
-
-    .chatbot-tease {
-      position: fixed;
-      right: 96px;
-      bottom: 28px;
-      z-index: 29;
-      max-width: min(260px, calc(100vw - 120px));
-      padding: 10px 14px;
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(28,12,52,0.92), rgba(12,5,22,0.92));
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 18px 40px rgba(0,0,0,0.34), 0 0 20px rgba(255,0,212,0.12);
-      color: var(--text);
-      font-size: 0.9rem;
-      line-height: 1.55;
-      cursor: pointer;
-      display: none;
-    }
-    .chatbot-tease.show { display: block; animation: teasePop .35s ease; }
-    .chatbot-tease::after {
-      content: "";
-      position: absolute;
-      right: -6px;
-      bottom: 16px;
-      width: 12px;
-      height: 12px;
-      background: inherit;
-      border-right: 1px solid rgba(255,255,255,0.08);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      transform: rotate(-45deg);
-    }
-    @keyframes teasePop {
-      from { opacity: 0; transform: translateY(6px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-
-    .chatbot-panel.fullscreen {
-      top: max(12px, env(safe-area-inset-top));
-      left: 12px;
-      right: 12px;
-      bottom: max(12px, env(safe-area-inset-bottom));
-      width: auto !important;
-      height: auto !important;
-      max-width: none;
-      border-radius: 26px;
-    }
-    .chatbot-head-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .chatbot-expand {
-      border: none;
-      background: rgba(255,255,255,0.06);
-      color: var(--text);
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 920px) {
-      .card { grid-column: span 12; }
-      .hero { padding: 28px 22px; }
-    }
-  </style>
+  @media (max-width: 560px) {
+    .cards { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.5em; }
+    .hero-mark { width: 64px; height: 64px; border-radius: 16px; }
+  }
+</style>
 </head>
 <body>
-  <button class="private-launch" id="privateLaunch" aria-label="Private Access" title="Private Access">🔒</button>
+<div class="container">
 
-  <dialog class="private-dialog" id="privateDialog">
-    <div class="private-dialog-panel">
-      <div class="private-dialog-header">
-        <div class="private-dialog-title">Private Access</div>
-        <button class="private-dialog-close" id="privateDialogClose" aria-label="Close">✕</button>
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-mark"><img src="assets/claw-icon.jpg" alt="Claw"></div>
+    <div class="hero-tag">✦ Parklan Clawhub</div>
+    <h1>Parklan<br>Clawhub</h1>
+    <p class="subtitle">
+      Retro-futuristic techno hub for tools, experiments, and dashboards.
+    </p>
+  </div>
+
+  <!-- Laura floating button -->
+  <button class="chatbot-launch" id="chatbotLaunch" title="同 Laura 傾偈">
+    <img src="assets/chatbot-avatar.jpg" alt="Laura">
+  </button>
+  <!-- Laura chat panel (hidden slide-up) -->
+  <div class="chatbot-panel" id="chatbotPanel">
+    <div class="chatbot-panel-head">
+      <img src="assets/chatbot-avatar.jpg" alt="Laura">
+      <div class="info">
+        <h3>Laura 羅拉</h3>
+        <span>MiMo v2 Pro · 廣東話角色聊天</span>
       </div>
-      <div class="private-dialog-sub">Enter the password to reveal your private project on this page.</div>
-      <form class="private-dialog-form" id="privateRevealForm">
-        <input type="password" name="password" placeholder="Enter password" aria-label="Password" />
-        <button type="submit">Reveal</button>
-      </form>
-      <div class="private-error" id="privateError">Wrong password. Try again.</div>
+      <select id="chatbotRole">
+        <option value="laura">Laura 模式</option>
+        <option value="guide">Clawhub Guide</option>
+        <option value="tech">Tech Helper</option>
+      </select>
+      <button class="chatbot-close" id="chatbotClose">✕</button>
     </div>
-  </dialog>
-
-  <div class="bg">
-    <div class="sun"></div>
-    <div class="grid-floor"></div>
-    <div class="scanlines"></div>
+    <div class="chatbot-msgs" id="chatbotMsgs">
+      <div class="chatbot-msg bot"><span class="who">Laura</span><br>你好呀～我係Laura，柏林嘅秘書。有咩可以幫到你呀？😏</div>
+    </div>
+    <form class="chatbot-form" id="chatbotForm">
+      <textarea id="chatbotInput" placeholder="打字同 Laura 傾偈…" rows="1"></textarea>
+      <button type="submit">Send</button>
+    </form>
+    <div class="chatbot-status" id="chatbotStatus"></div>
   </div>
 
-  <div class="wrap">
-    <section class="hero">
-      <div class="hero-mark"><img src="assets/claw-icon.jpg" alt="Claw icon" /></div>
-      <div class="eyebrow">Parklan Clawhub</div>
-      <h1>Quiet tools. Neon experiments. One polished system.</h1>
-      <p class="lead">
-        A curated hub for practical tools, playful experiments, dashboards, and small AI projects — rebuilt with a retro-futuristic pulse.
-      </p>
-    </section>
+  <!-- ── PROJECTS ── -->
+  <h2 class="section-title">╳ Projects</h2>
+  <div class="cards">
 
-    <h2 id="projects" class="section-title">Projects</h2>
-    <section class="cards">
-      <article class="card tilt-card">
-        <div class="card-tag">Transport</div><span class="status-badge status-ready">✅ Ready</span>
-        <h3>🚌 Bus ETA</h3>
-        <p>Real-time bus arrival checker for Citybus (城巴) and KMB (九巴). Guided route search, auto-merge joint route stops, and live countdown refresh.</p>
-        <a href="722-eta/">Open project →</a>
-      </article>
+    <div class="card">
+      <div class="tag">Transport <span class="badge badge-ready">Ready</span></div>
+      <h3>🚌 Bus ETA</h3>
+      <p>Real-time Citybus & KMB arrival checker with route search and live countdown.</p>
+      <a href="722-eta/">Open →</a>
+    </div>
 
-      <article class="card tilt-card hidden-card" id="lunchWalletCard">
-        <div class="card-tag">Private Utility</div><span class="status-badge status-ready">✅ Ready</span>
-        <h3>Lunch Wallet 🔒</h3>
-        <p>A simple shared wallet tool for lunch spending, balances, and lightweight group cost tracking.</p>
-        <a href="lunch-wallet/">Private access →</a>
-      </article>
+    <div class="card hidden-card" id="lunchWalletCard">
+      <div class="tag">Private <span class="badge badge-private">🔒</span></div>
+      <h3>Lunch Wallet</h3>
+      <p>Shared wallet tool for lunch spending, balances, and group cost tracking.</p>
+      <a href="lunch-wallet/">Access →</a>
+    </div>
 
-      <article class="card tilt-card">
-        <div class="card-tag">AI Storytelling</div><span class="status-badge status-beta">🧪 Beta</span>
-        <h3>Ebook Cantonese Narration</h3>
-        <p>Import text or EPUB content, rewrite it into spoken Cantonese, and test playback in a live narration demo.</p>
-        <a href="ebook-canto-poc/">Open project →</a>
-      </article>
+    <div class="card">
+      <div class="tag">Music <span class="badge badge-beta">Beta</span></div>
+      <h3>🎵 MiniMax Music 2.6</h3>
+      <p>AI music generation + YouTube cover with MiniMax music-2.6 & music-cover models.</p>
+      <a href="music/">Open →</a>
+    </div>
 
-      <article class="card tilt-card">
-        <div class="card-tag">AI Music</div><span class="status-badge status-ready">✅ Ready</span>
-        <h3>Spotify AI Dashboard</h3>
-        <p>A polished dashboard for now playing, queue intelligence, device status, and private Spotify controls.</p>
-        <a href="spotify-dashboard/">Open project →</a>
-      </article>
+    <div class="card">
+      <div class="tag">AI <span class="badge badge-beta">Beta</span></div>
+      <h3>Ebook Cantonese Narration</h3>
+      <p>Import text/EPUB, rewrite into spoken Cantonese, test playback.</p>
+      <a href="ebook-canto-poc/">Open →</a>
+    </div>
 
+    <div class="card">
+      <div class="tag">Music <span class="badge badge-ready">Ready</span></div>
+      <h3>Spotify AI Dashboard</h3>
+      <p>Now playing, queue intelligence, device status, and controls dashboard.</p>
+      <a href="spotify-dashboard/">Open →</a>
+    </div>
 
+    <div class="card">
+      <div class="tag">Market <span class="badge badge-ready">Ready</span></div>
+      <h3>📈 HSI Live Stream</h3>
+      <p>Real-time HKEX HSI Futures — live price, bid/ask, volume via WebSocket.</p>
+      <a href="hsi-stream/">Open →</a>
+    </div>
 
-      <article class="card tilt-card">
-        <div class="card-tag">Private Trading</div><span class="status-badge status-private">🔒 Private</span>
-        <h3>Polymarket Execution</h3>
-        <p>A private execution-ready dashboard for connection notes, risk controls, market snapshots, and order preview.</p>
-        <a href="polymarket-execution/">Open project →</a>
-      </article>
-      <article class="card tilt-card">
-        <div class="card-tag">Strategy Lab</div><span class="status-badge status-beta">🧪 Beta</span>
-        <h3>BTC 5m Strategy Lab</h3>
-        <p>Paper-test your 5-minute BTC market ideas with rule inputs, expectancy math, and a simulated trade journal.</p>
-        <a href="btc-5m-strategy-lab/">Open project →</a>
-      </article>
-      <article class="card tilt-card">
-        <div class="card-tag">Market</div><span class="status-badge status-beta">🧪 Beta</span>
-        <h3>US Market Radar</h3>
-        <p>A compact dashboard experiment for tracking market context, structure, and quick-glance signals.</p>
-        <a href="us-market-radar/">Open project →</a>
-      </article>
-      <article class="card tilt-card">
-        <div class="card-tag">AI 分析</div><span class="status-badge status-poc">🚀 POC</span>
-        <h3>📊 投資報告</h3>
-        <p>輸入股票代號或名稱，AI 即時生成廣東話投資分析報告，涵蓋基本面、技術面、風險同建議。</p>
-        <a href="stock-report/">Open project →</a>
-      </article>
-      <article class="card tilt-card">
-        <div class="card-tag">辦公室</div><span class="status-badge status-poc">🚀 POC</span>
-        <h3>🧋 請食 Tea</h3>
-        <p>搞 tea 訂單神器！開單 → 分享 link → 同事揀嘢 → 自動整合 order，唔使再開 Google Form。</p>
-        <a href="tea-treat/">Open project →</a>
-      </article>
-      <article class="card tilt-card hidden-card" id="chatbotLogsCard">
-        <div class="card-tag">Private</div><span class="status-badge status-private">🔒 Private</span>
-        <h3>📊 Laura 對話記錄</h3>
-        <p>即時查看 on9claw.com chatbot 所有對話記錄，包含用戶同 Laura 嘅完整對話。</p>
-        <a href="chatbot-logs/">Open project →</a>
-      </article>
-    </section>
+    <div class="card">
+      <div class="tag">Trading <span class="badge badge-private">Private</span></div>
+      <h3>Polymarket Execution</h3>
+      <p>Execution-ready dashboard for connection notes, risk, and order preview.</p>
+      <a href="polymarket-execution/">Open →</a>
+    </div>
 
-    <div class="footer">Parklan Clawhub · retro techno edition · Powered by GitHub</div>
+    <div class="card">
+      <div class="tag">Strategy <span class="badge badge-beta">Beta</span></div>
+      <h3>BTC 5m Strategy Lab</h3>
+      <p>Paper-test 5-min BTC market ideas with rule inputs and trade journal.</p>
+      <a href="btc-5m-strategy-lab/">Open →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">Market <span class="badge badge-beta">Beta</span></div>
+      <h3>US Market Radar</h3>
+      <p>Compact dashboard experiment for market context and quick-glance signals.</p>
+      <a href="us-market-radar/">Open →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">AI <span class="badge badge-ready">Ready</span></div>
+      <h3>💋 Laura Standalone</h3>
+      <p>Full Laura chat with session memory and MiniMax voice — standalone version.</p>
+      <a href="laura/">Open →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">AI <span class="badge badge-poc">POC</span></div>
+      <h3>📊 投資報告</h3>
+      <p>AI 生成廣東話投資分析報告 — 基本面、技術面、風險同建議。</p>
+      <a href="stock-report/">Open →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">工具 <span class="badge badge-poc">POC</span></div>
+      <h3>🧋 請食 Tea</h3>
+      <p>搞 tea 訂單神器！開單 → 分享 link → 同事揀嘢 → 自動整合。</p>
+      <a href="tea-treat/">Open →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">工具 <span class="badge badge-ready">Live</span></div>
+      <h3>🅿️ 香園圍停車場</h3>
+      <p>監察邊境停車場車位，自動整合可預約時段，支援過夜跨日檢查。</p>
+      <a href="parking/">查看 →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">Transport <span class="badge badge-ready">Ready</span></div>
+      <h3>✈️ HK Express Deals</h3>
+      <p>Track HK Express flight prices across routes with auto-refresh scanner.</p>
+      <a href="hkexpress/">Open →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">Chat <span class="badge badge-ready">Ready</span></div>
+      <h3>💬 Conversation Vault</h3>
+      <p>Google sign-in conversation storage. Only you can see your chats.</p>
+      <a href="chat/">Open →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">Stocks <span class="badge badge-ready">Live</span></div>
+      <h3>🏠 OPEN Stock</h3>
+      <p>Real-time Opendoor Technologies (NYSE: OPEN) price streaming.</p>
+      <a href="open/">Open →</a>
+    </div>
+
+    <div class="card">
+      <div class="tag">Stocks <span class="badge badge-ready">Live</span></div>
+      <h3>🍚 美團 Meituan</h3>
+      <p>Real-time 美團 (HKEX: 3690) stock price streaming temple.</p>
+      <a href="meituan/">Open →</a>
+    </div>
+
   </div>
 
-  
-  <div class="chatbot-tease" id="chatbotTease">想搵我傾兩句？</div>
-  <button class="chatbot-launch" id="chatbotLaunch" aria-label="Open chatbot" title="Open chatbot">
-      <img src="assets/chatbot-avatar.jpg" alt="Chatbot avatar" />
-    </button>
+  <div class="footer">Parklan Clawhub · on9claw.com</div>
+</div>
 
-    <section class="chatbot-panel" id="chatbotPanel" aria-label="Chatbot panel">
-      <div class="chatbot-head">
-        <div class="chatbot-head-left">
-          <div class="chatbot-mini-avatar"><img src="assets/chatbot-avatar.jpg" alt="Chatbot avatar" /></div>
-          <div>
-            <div class="chatbot-title">Laura Chat</div>
-            <div class="chatbot-sub">MiMo v2 Pro · 廣東話角色聊天</div>
-          </div>
-        </div>
-        <div class="chatbot-head-actions">
-          <button class="chatbot-expand" id="chatbotExpand" title="Expand">⤢</button>
-          <button class="chatbot-close" id="chatbotClose">✕</button>
-        </div>
-      </div>
-      <div class="chatbot-toolbar">
-        <select id="chatbotRole">
-          <option value="laura">Laura 模式</option>
-          <option value="guide">Clawhub Guide</option>
-          <option value="tech">Tech Helper</option>
-        </select>
-      </div>
-      <div class="chatbot-messages" id="chatbotMessages">
-        <div class="chatbot-msg bot">你好呀～我係Laura，柏林嘅秘書。有咩可以幫到你呀？😏</div>
-      </div>
-      <form class="chatbot-form" id="chatbotForm">
-        <textarea id="chatbotInput" placeholder="用廣東話打俾我…"></textarea>
-        <button type="submit">Send</button>
-      </form>
-      <div class="chatbot-status" id="chatbotStatus"></div>
-    </section>
+<!-- Private dialog -->
+<dialog id="privateDialog" style="border:1px solid rgba(255,255,255,0.14);border-radius:20px;background:#1a0f38;color:#f8ecff;padding:24px;max-width:340px;width:90%;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <strong style="letter-spacing:-0.01em;">🔒 Private Access</strong>
+    <button id="privateDialogClose" style="width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#f8ecff;cursor:pointer;">✕</button>
+  </div>
+  <p style="color:#d0a9d9;font-size:0.85em;line-height:1.5;margin-bottom:14px;">Enter the secret password to reveal private projects.</p>
+  <form id="privateRevealForm" style="display:flex;gap:8px;">
+    <input type="password" name="password" placeholder="Password" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;color:#f8ecff;font-family:inherit;font-size:0.9em;outline:none;">
+    <button type="submit" style="padding:10px 16px;background:#ff3ea5;border:none;border-radius:12px;color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:0.85em;">Unlock</button>
+  </form>
+  <div id="privateError" style="display:none;color:#ffb4ce;font-size:0.75em;margin-top:10px;">Wrong password.</div>
+</dialog>
 
+<script>
+(function(){
+  // ── LAURA FLOATING CHAT ──
+  var chatbotMsgs=document.getElementById('chatbotMsgs');
+  var chatbotForm=document.getElementById('chatbotForm');
+  var chatbotInput=document.getElementById('chatbotInput');
+  var chatbotStatus=document.getElementById('chatbotStatus');
+  var chatbotRole=document.getElementById('chatbotRole');
+  var chatHistory=[
+    {role:'assistant',content:'你好呀～我係Laura，柏林嘅秘書。有咩可以幫到你呀？😏'}
+  ];
 
-  <script>
-    (() => {
-      const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
-      const dialog = document.getElementById('privateDialog');
-      const launch = document.getElementById('privateLaunch');
-      const closeBtn = document.getElementById('privateDialogClose');
-      const revealForm = document.getElementById('privateRevealForm');
-      const revealInput = revealForm?.querySelector('input[name="password"]');
-      const errorEl = document.getElementById('privateError');
-      const lunchCard = document.getElementById('lunchWalletCard');
-      const chatbotLogsCard = document.getElementById('chatbotLogsCard');
-      const expectedHash = 'cb69775effd93fc34ef38dfbfcdc4c593b1a3d8e7ab70c0f05d627dbc5cbd298';
+  function addChatMsg(role,content){
+    var cls=role==='user'?'user':'bot';
+    var who=role==='user'?'You':'Laura';
+    var d=document.createElement('div');
+    d.className='chatbot-msg '+cls;
+    d.innerHTML='<span class="who">'+who+'</span><br>'+content.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    chatbotMsgs.appendChild(d);
+    chatbotMsgs.scrollTop=chatbotMsgs.scrollHeight;
+  }
 
-      function setLunchVisible() {
-        lunchCard?.classList.add('show');
-        chatbotLogsCard?.classList.add('show');
-        sessionStorage.setItem('clawhub_lunch_unlocked', '1');
-      }
-      if (sessionStorage.getItem('clawhub_lunch_unlocked') === '1') setLunchVisible();
+  // Toggle panel
+  document.getElementById('chatbotLaunch').addEventListener('click',function(){
+    document.getElementById('chatbotPanel').classList.toggle('open');
+  });
+  document.getElementById('chatbotClose').addEventListener('click',function(){
+    document.getElementById('chatbotPanel').classList.remove('open');
+  });
 
-      launch?.addEventListener('click', () => {
-        if (errorEl) errorEl.style.display = 'none';
-        if (typeof dialog.showModal === 'function') dialog.showModal();
+  chatbotForm.addEventListener('submit',async function(e){
+    e.preventDefault();
+    var text=chatbotInput.value.trim();
+    if(!text) return;
+    addChatMsg('user',text);
+    chatHistory.push({role:'user',content:text});
+    chatbotInput.value='';
+    chatbotStatus.textContent='思考中…';
+    try{
+      var res=await fetch('/chatbot-api/message',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({role:chatbotRole.value,messages:chatHistory})
       });
-      closeBtn?.addEventListener('click', () => dialog.close());
-      dialog?.addEventListener('click', (e) => {
-        const rect = dialog.getBoundingClientRect();
-        const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-        if (!inside) dialog.close();
-      });
+      var data=await res.json();
+      if(!data.ok) throw new Error(data.error||'chat failed');
+      addChatMsg('assistant',data.reply);
+      chatHistory.push({role:'assistant',content:data.reply});
+      chatbotStatus.textContent='';
+    }catch(err){
+      chatbotStatus.textContent=err.message;
+    }
+  });
 
-      revealForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const value = revealInput?.value || '';
-        const data = new TextEncoder().encode(value);
-        const digest = await crypto.subtle.digest('SHA-256', data);
-        const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-        if (hash === expectedHash) {
-          setLunchVisible();
-          dialog.close();
-          lunchCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else if (errorEl) {
-          errorEl.style.display = 'block';
-        }
-      });
+  chatbotInput.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); chatbotForm.requestSubmit(); }
+  });
 
-      if (!isTouch) {
-        document.querySelectorAll('.tilt-card').forEach(card => {
-          let raf = null;
-          card.addEventListener('mousemove', (e) => {
-            if (raf) return;
-            raf = requestAnimationFrame(() => {
-              const rect = card.getBoundingClientRect();
-              const px = (e.clientX - rect.left) / rect.width;
-              const py = (e.clientY - rect.top) / rect.height;
-              const rotY = (px - 0.5) * 4;
-              const rotX = (0.5 - py) * 4;
-              card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-3px)`;
-              raf = null;
-            });
-          });
-          card.addEventListener('mouseleave', () => {
-            card.style.transform = '';
-          });
-        });
-      }
+  // ── PRIVATE ACCESS ──
+  var dialog=document.getElementById('privateDialog');
+  var launch=document.createElement('button');
+  launch.style.cssText='position:fixed;top:12px;right:12px;z-index:20;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,62,165,0.3);background:rgba(255,62,165,0.12);color:#f8ecff;cursor:pointer;font-size:16px;box-shadow:0 0 16px rgba(255,0,212,0.1);';
+  launch.textContent='🔒';
+  launch.title='Private access';
+  document.body.appendChild(launch);
 
-      const chatbotLaunch = document.getElementById('chatbotLaunch');
-      const chatbotPanel = document.getElementById('chatbotPanel');
-      const chatbotClose = document.getElementById('chatbotClose');
-      const chatbotExpand = document.getElementById('chatbotExpand');
-      const chatbotForm = document.getElementById('chatbotForm');
-      const chatbotInput = document.getElementById('chatbotInput');
-      const chatbotMessages = document.getElementById('chatbotMessages');
-      const chatbotStatus = document.getElementById('chatbotStatus');
-      const chatbotRole = document.getElementById('chatbotRole');
-      const chatbotTease = document.getElementById('chatbotTease');
-      const teaseLines = [
-        '想搵我傾兩句？',
-        '我可以陪你用廣東話傾偈呀。',
-        '試下叫我做 Laura？',
-        '有咩問題隨時問我～',
-        '有冇咩想我幫你？'
-      ];
-      let teaseTimer = null;
-      const chatHistory = [
-        { role: 'assistant', content: '你好呀～我係Laura，柏林嘅秘書。有咩可以幫到你呀？😏' }
-      ];
+  var lunchCard=document.getElementById('lunchWalletCard');
+  function setLunchVisible(){
+    lunchCard.classList.add('show');
+    sessionStorage.setItem('clawhub_lunch_unlocked','1');
+  }
+  if(sessionStorage.getItem('clawhub_lunch_unlocked')==='1') setLunchVisible();
 
-      function addChatMessage(role, content) {
-        const div = document.createElement('div');
-        div.className = `chatbot-msg ${role === 'user' ? 'user' : 'bot'}`;
-        div.textContent = content;
-        chatbotMessages.appendChild(div);
-        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-      }
-
-      function openChatbot() {
-        chatbotPanel?.classList.add('show');
-        if (chatbotTease) chatbotTease.classList.remove('show');
-      }
-      function scheduleTease() {
-        if (!chatbotTease || chatbotPanel?.classList.contains('show')) return;
-        clearTimeout(teaseTimer);
-        teaseTimer = setTimeout(() => {
-          const line = teaseLines[Math.floor(Math.random() * teaseLines.length)];
-          chatbotTease.textContent = line;
-          chatbotTease.classList.add('show');
-          setTimeout(() => chatbotTease.classList.remove('show'), 7000);
-          scheduleTease();
-        }, 9000 + Math.random() * 8000);
-      }
-      chatbotLaunch?.addEventListener('click', openChatbot);
-      chatbotTease?.addEventListener('click', openChatbot);
-      chatbotClose?.addEventListener('click', () => { chatbotPanel?.classList.remove('show'); chatbotPanel?.classList.remove('fullscreen'); document.body.style.overflow = ''; if (chatbotExpand) chatbotExpand.textContent = '⤢'; scheduleTease(); });
-      chatbotExpand?.addEventListener('click', () => {
-        chatbotPanel?.classList.toggle('fullscreen');
-        const expanded = chatbotPanel?.classList.contains('fullscreen');
-        chatbotExpand.textContent = expanded ? '⤡' : '⤢';
-        document.body.style.overflow = expanded ? 'hidden' : '';
-      });
-      scheduleTease();
-
-      chatbotForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const text = chatbotInput.value.trim();
-        if (!text) return;
-        addChatMessage('user', text);
-        chatHistory.push({ role: 'user', content: text });
-        chatbotInput.value = '';
-        chatbotStatus.textContent = '思考中…';
-        try {
-          const res = await fetch('/chatbot-api/message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role: chatbotRole.value, messages: chatHistory })
-          });
-          const data = await res.json();
-          if (!data.ok) throw new Error(data.error || 'chat failed');
-          addChatMessage('assistant', data.reply);
-          chatHistory.push({ role: 'assistant', content: data.reply });
-          chatbotStatus.textContent = '';
-        } catch (err) {
-          chatbotStatus.textContent = err.message;
-        }
-      });
-
-      chatbotInput?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          chatbotForm?.requestSubmit();
-        }
-      });
-
-    })();
-  </script>
+  launch.addEventListener('click',function(){
+    document.getElementById('privateError').style.display='none';
+    dialog.showModal();
+  });
+  document.getElementById('privateDialogClose').addEventListener('click',function(){
+    dialog.close();
+  });
+  document.getElementById('privateRevealForm').addEventListener('submit',async function(e){
+    e.preventDefault();
+    var value=this.querySelector('input').value;
+    var data=new TextEncoder().encode(value);
+    var digest=await crypto.subtle.digest('SHA-256',data);
+    var hash=Array.from(new Uint8Array(digest)).map(function(b){return b.toString(16).padStart(2,'0')}).join('');
+    if(hash==='cb69775effd93fc34ef38dfbfcdc4c593b1a3d8e7ab70c0f05d627dbc5cbd298'){
+      setLunchVisible();
+      dialog.close();
+      lunchCard.scrollIntoView({behavior:'smooth',block:'center'});
+    }else{
+      document.getElementById('privateError').style.display='block';
+    }
+  });
+  // ── 3D TILT floating Laura (move phone!) ──
+  (function(){
+    var btn=document.getElementById('chatbotLaunch');
+    if(!btn) return;
+    var raf=null, beta=0, gamma=0, initBeta=null, initGamma=null, gyroReady=false;
+    function upd(){
+      var rx, ry;
+      if(gyroReady){
+        rx=(beta-initBeta)*2; ry=(gamma-initGamma)*2;
+        rx=Math.max(-25,Math.min(25,rx));
+        ry=Math.max(-25,Math.min(25,ry));
+      }else{rx=0;ry=0;}
+      btn.style.transform='rotateX('+rx.toFixed(1)+'deg) rotateY('+ry.toFixed(1)+'deg)';
+      btn.style.boxShadow=ry*2+'px '+rx*1.5+'px 28px rgba(0,0,0,0.4), '+(-ry*3)+'px '+(-rx*2)+'px 20px rgba(255,0,212,'+(0.18+Math.abs(rx+ry)/60).toFixed(2)+')';
+    }
+    function onOrient(e){
+      var b=e.beta||0, g=e.gamma||0;
+      if(initBeta===null){initBeta=b;initGamma=g;gyroReady=true;}
+      beta=b;gamma=g;
+      if(!raf){raf=requestAnimationFrame(function(){upd();raf=null;});}
+    }
+    if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission!=='function'){
+      window.addEventListener('deviceorientation',onOrient);
+    }
+    document.addEventListener('mousemove',function(e){
+      if(gyroReady) return;
+      var mx=(e.clientX/window.innerWidth-0.5)*16;
+      var my=(e.clientY/window.innerHeight-0.5)*16;
+      btn.style.transform='rotateX('+(-my).toFixed(1)+'deg) rotateY('+(mx).toFixed(1)+'deg)';
+    });
+  })();
+})();
+</script>
 </body>
 </html>
