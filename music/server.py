@@ -280,6 +280,31 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
+        if self.path == "/api/upload-audio":
+            try:
+                p = read_json(self)
+                filename = str(p.get("filename", "upload.mp3")).strip()
+                file_b64 = str(p.get("file_base64", "")).strip()
+                if not file_b64:
+                    raise ValueError("No file data provided.")
+                audio_bytes = base64.b64decode(file_b64)
+                job_id = str(uuid.uuid4())[:12]
+                ext = filename.rsplit(".", 1)[-1] if "." in filename else "mp3"
+                if ext not in ("mp3", "wav", "m4a", "ogg", "flac"):
+                    ext = "mp3"
+                save_name = f"up-{job_id}.{ext}"
+                save_path = AUDIO_DIR / save_name
+                save_path.write_bytes(audio_bytes)
+                public_url = f"{MINIMAX_PUBLIC_BASE}/audio/{save_name}"
+                return json_response(self, {
+                    "ok": True,
+                    "filename": save_name,
+                    "size_bytes": len(audio_bytes),
+                    "public_url": public_url,
+                })
+            except Exception as e:
+                return json_response(self, {"ok": False, "error": str(e)}, 400)
+
         if self.path == "/api/generate":
             try:
                 p = read_json(self)

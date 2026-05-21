@@ -248,6 +248,13 @@
     <input id="ytUrlInput" type="url" placeholder="https://www.youtube.com/watch?v=…" style="width:100%;padding:10px 14px;background:#0c0c0c;color:var(--text);border:1px solid var(--border);border-radius:12px;font:14px system-ui,sans-serif;outline:none;" />
     <div style="font-size:10px;color:var(--dim);margin-top:4px;">⚠️ YouTube 可能會 block · 如果失敗，用下面嗰個 direct URL</div>
 
+    <label style="font-size:12px;color:var(--dim);display:block;margin-top:12px;margin-bottom:6px;">📤 或者 Upload MP3 檔案</label>
+    <div class="row">
+      <input id="audioFileInput" type="file" accept=".mp3,.wav,.m4a,.ogg,.flac" style="flex:1;" />
+      <span id="uploadSpinner" style="display:none;font-size:12px;color:var(--dim);"><span class="spinner"></span></span>
+    </div>
+    <div class="status" id="uploadStatus" style="margin-top:4px;"></div>
+
     <label style="font-size:12px;color:var(--dim);display:block;margin-top:12px;margin-bottom:6px;">🔗 或者貼 Direct Audio URL (mp3/wav link)</label>
     <input id="audioUrlInput" type="url" placeholder="https://example.com/song.mp3" style="width:100%;padding:10px 14px;background:#0c0c0c;color:var(--text);border:1px solid var(--border);border-radius:12px;font:14px system-ui,sans-serif;outline:none;" />
     <div style="font-size:10px;color:var(--dim);margin-top:4px;">💡 用 <a href="https://ytmp3.la" target="_blank" style="color:var(--accent);">ytmp3.la</a> 之類嘅 converter 將 YouTube 轉成 mp3 link 再貼上嚟</div>
@@ -546,6 +553,35 @@
   const coverStatus = document.getElementById('coverStatus');
   const coverResults = document.getElementById('coverResults');
   const coverModelSelect = document.getElementById('coverModelSelect');
+  const audioFileInput = document.getElementById('audioFileInput');
+  const uploadSpinner = document.getElementById('uploadSpinner');
+  const uploadStatus = document.getElementById('uploadStatus');
+
+  // Auto-upload when file selected
+  audioFileInput.addEventListener('change', async () => {
+    const file = audioFileInput.files[0];
+    if (!file) return;
+    uploadSpinner.style.display = '';
+    uploadStatus.textContent = 'Uploading ' + file.name + '...';
+    uploadStatus.className = 'status';
+    try {
+      const reader = new FileReader();
+      const b64 = await new Promise((resolve, reject) => {
+        reader.onload = () => { const r = reader.result; resolve(r.slice(r.indexOf(',') + 1)); };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const j = await api('api/upload-audio', { filename: file.name, file_base64: b64 });
+      audioUrlInput.value = j.public_url;
+      uploadStatus.textContent = 'Uploaded ' + file.name + ' (' + Math.round(j.size_bytes/1024) + 'KB)';
+      uploadStatus.className = 'status success';
+    } catch(e) {
+      uploadStatus.textContent = 'Upload failed: ' + e.message;
+      uploadStatus.className = 'status error';
+    } finally {
+      uploadSpinner.style.display = 'none';
+    }
+  });
 
   coverBtn.addEventListener('click', async () => {
     const ytUrl = ytUrlInput.value.trim();
