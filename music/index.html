@@ -244,8 +244,13 @@
     <div class="card-head"><span class="emoji">🎬</span> YouTube Reference Cover</div>
     <p style="font-size:12px;color:var(--dim);margin-bottom:12px;">貼一條 YouTube link，MiniMax 會用佢做 reference 生成全新風格嘅版本</p>
 
-    <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:6px;">🔗 YouTube URL</label>
+    <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:6px;">🔗 YouTube URL (yt-dlp 下載)</label>
     <input id="ytUrlInput" type="url" placeholder="https://www.youtube.com/watch?v=…" style="width:100%;padding:10px 14px;background:#0c0c0c;color:var(--text);border:1px solid var(--border);border-radius:12px;font:14px system-ui,sans-serif;outline:none;" />
+    <div style="font-size:10px;color:var(--dim);margin-top:4px;">⚠️ YouTube 可能會 block · 如果失敗，用下面嗰個 direct URL</div>
+
+    <label style="font-size:12px;color:var(--dim);display:block;margin-top:12px;margin-bottom:6px;">🔗 或者貼 Direct Audio URL (mp3/wav link)</label>
+    <input id="audioUrlInput" type="url" placeholder="https://example.com/song.mp3" style="width:100%;padding:10px 14px;background:#0c0c0c;color:var(--text);border:1px solid var(--border);border-radius:12px;font:14px system-ui,sans-serif;outline:none;" />
+    <div style="font-size:10px;color:var(--dim);margin-top:4px;">💡 用 <a href="https://ytmp3.la" target="_blank" style="color:var(--accent);">ytmp3.la</a> 之類嘅 converter 將 YouTube 轉成 mp3 link 再貼上嚟</div>
 
     <label style="font-size:12px;color:var(--dim);display:block;margin-top:12px;margin-bottom:6px;">🎵 新風格描述 (target style)</label>
     <textarea id="coverPromptInput" placeholder="描述你想轉成咩風格…&#10;&#10;例如：Female vocal, Cantonese pop ballad, piano, emotional" style="min-height:60px;"></textarea>
@@ -544,7 +549,8 @@
 
   coverBtn.addEventListener('click', async () => {
     const ytUrl = ytUrlInput.value.trim();
-    if (!ytUrl) return alert('請貼上 YouTube link 先');
+    const audioUrl = audioUrlInput.value.trim();
+    if (!ytUrl && !audioUrl) return alert('請貼上 YouTube link 先');
 
     coverBtn.disabled = true;
     coverSpinner.style.display = '';
@@ -555,6 +561,7 @@
     try {
       const body = {
         youtube_url: ytUrl,
+        audio_url: audioUrl,
         prompt: coverPromptInput.value.trim(),
         model: coverModelSelect.value,
       };

@@ -156,7 +156,9 @@ def download_youtube_audio(yt_url: str) -> dict:
         "--extract-audio", "--audio-format", "mp3",
         "--audio-quality", "192K",
         "--max-filesize", "50M",
-        "--extractor-args", "youtube:player_client=ios,web",
+        "--user-agent", "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36",
+        "--force-ipv4",
+        "--extractor-args", "youtube:player_client=android,ios",
         "--postprocessor-args", f"{FFMPEG_BIN}:-t 360",  # max 6 min
         "-o", out_template,
         "--no-playlist",
@@ -308,19 +310,31 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 p = read_json(self)
                 yt_url = str(p.get("youtube_url", "")).strip()
+                audio_url_direct = str(p.get("audio_url", "")).strip()
                 prompt = str(p.get("prompt", "")).strip()
                 lyrics = str(p.get("lyrics", "")).strip()
                 model = str(p.get("model", "music-cover-free")).strip() or "music-cover-free"
 
-                if not yt_url:
-                    raise ValueError("Please provide a YouTube URL.")
+                if audio_url_direct:
+                    # Direct audio URL — skip yt-dlp
+                    source_info = {"audio_url": audio_url_direct}
+                    cover_audio_url = audio_url_direct
+                elif yt_url:
+                    # YouTube URL — download first
+                    yt_info = download_youtube_audio(yt_url)
+                    source_info = {
+                        "youtube_url": yt_url,
+                        "filename": yt_info["filename"],
+                        "duration_s": yt_info["duration_s"],
+                        "size_bytes": yt_info["size_bytes"],
+                    }
+                    cover_audio_url = yt_info["public_url"]
+                else:
+                    raise ValueError("Please provide a YouTube URL or direct audio URL.")
 
-                # Step 1: Download YouTube audio
-                yt_info = download_youtube_audio(yt_url)
-
-                # Step 2: Generate cover
+                # Generate cover
                 cover = generate_cover(
-                    audio_url=yt_info["public_url"],
+                    audio_url=cover_audio_url,
                     prompt=prompt,
                     lyrics=lyrics,
                     model=model,
@@ -328,12 +342,7 @@ class Handler(BaseHTTPRequestHandler):
 
                 return json_response(self, {
                     "ok": True,
-                    "source": {
-                        "youtube_url": yt_url,
-                        "filename": yt_info["filename"],
-                        "duration_s": yt_info["duration_s"],
-                        "size_bytes": yt_info["size_bytes"],
-                    },
+                    "source": source_info,
                     **cover,
                 })
             except Exception as e:
