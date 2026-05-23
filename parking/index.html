@@ -386,20 +386,6 @@ function checkOvernight(fromYmd,fromTime,toYmd,toLabel){
 }
 document.addEventListener('DOMContentLoaded',refresh);
 
-/* ══ 泊車仔 Chatbot ══ */
-(function(){
-  var h=[{role:"assistant",content:"嗨～我係泊車仔🚌 有咩巴士或者泊車問題隨時問我！"}];
-  var pan=document.getElementById("busbotPanel");
-  var inp=document.getElementById("busbotInput");
-  var msg=document.getElementById("busbotMsgs");
-  document.getElementById("busbotToggle").onclick=function(){pan.style.display=pan.style.display==="flex"?"none":"flex";if(pan.style.display==="flex")inp.focus()};
-  document.getElementById("busbotClose").onclick=function(){pan.style.display="none"};
-  inp.onkeydown=function(e){if(e.key==="Enter")send()};
-  document.getElementById("busbotSend").onclick=send;
-  function addMsg(r,t){var d=document.createElement("div");d.style.cssText="max-width:85%;padding:10px 14px;border-radius:14px;font-size:.88rem;line-height:1.5;align-self:"+(r==="user"?"flex-end":"flex-start")+";background:"+(r==="user"?"linear-gradient(135deg,var(--accent),var(--accent2));color:#fff":"rgba(77,232,255,.08)");d.textContent=t;msg.appendChild(d);msg.scrollTop=9e9}
-  function send(){var t=inp.value.trim();if(!t)return;inp.value="";addMsg("user",t);h.push({role:"user",content:t});var ld=document.createElement("div");ld.style.cssText="display:flex;gap:4px;padding:10px 14px;align-self:flex-start";ld.innerHTML="<span style='width:6px;height:6px;border-radius:50%;background:var(--dim)'></span><span style='width:6px;height:6px;border-radius:50%;background:var(--dim)'></span><span style='width:6px;height:6px;border-radius:50%;background:var(--dim)'></span>";msg.appendChild(ld);msg.scrollTop=9e9;fetch("/chatbot-api/message",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({role:"busfan",messages:h})}).then(function(r){return r.json()}).then(function(d){ld.remove();if(d.ok){addMsg("bot",d.reply);h.push({role:"assistant",content:d.reply})}else addMsg("bot","❌ "+d.error)}).catch(function(){ld.remove();addMsg("bot","❌ 網絡錯誤")})}
-})();
-
 </script>
 
 <!-- ══ 泊車仔 Chatbot ══ -->
@@ -418,6 +404,22 @@ document.addEventListener('DOMContentLoaded',refresh);
     <button id="busbotSend" style="background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;padding:10px 16px;color:#fff;font-weight:700;cursor:pointer;font-size:.85rem">發送</button>
   </div>
 </div>
+
+<script>
+/* ══ 泊車仔 Chatbot ══ */
+(function(){
+  var h=[{role:"assistant",content:"嗨～我係泊車仔🚌 有咩巴士或者泊車問題隨時問我！"}];
+  var pan=document.getElementById("busbotPanel");
+  var inp=document.getElementById("busbotInput");
+  var msg=document.getElementById("busbotMsgs");
+  document.getElementById("busbotToggle").onclick=function(){pan.style.display=pan.style.display==="flex"?"none":"flex";if(pan.style.display==="flex")inp.focus()};
+  document.getElementById("busbotClose").onclick=function(){pan.style.display="none"};
+  inp.onkeydown=function(e){if(e.key==="Enter")send()};
+  document.getElementById("busbotSend").onclick=send;
+  function addMsg(r,t){var d=document.createElement("div");d.style.cssText="max-width:85%;padding:10px 14px;border-radius:14px;font-size:.88rem;line-height:1.5;align-self:"+(r==="user"?"flex-end":"flex-start")+";background:"+(r==="user"?"linear-gradient(135deg,var(--accent),var(--accent2));color:#fff":"rgba(77,232,255,.08)");d.textContent=t;msg.appendChild(d);msg.scrollTop=9e9}
+  function send(){var t=inp.value.trim();if(!t)return;inp.value="";addMsg("user",t);h.push({role:"user",content:t});var ld=document.createElement("div");ld.style.cssText="display:flex;gap:4px;padding:10px 14px;align-self:flex-start";ld.innerHTML="<span style='width:6px;height:6px;border-radius:50%;background:var(--dim)'></span><span style='width:6px;height:6px;border-radius:50%;background:var(--dim)'></span><span style='width:6px;height:6px;border-radius:50%;background:var(--dim)'></span>";msg.appendChild(ld);msg.scrollTop=9e9;fetch("/chatbot-api/message",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({role:"busfan",messages:h})}).then(function(r){return r.json()}).then(function(d){ld.remove();if(d.ok){addMsg("bot",d.reply);h.push({role:"assistant",content:d.reply})}else addMsg("bot","❌ "+d.error)}).catch(function(){ld.remove();addMsg("bot","❌ 網絡錯誤")})}
+})();
+</script>
 
 </body>
 </html>
