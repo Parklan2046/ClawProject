@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>awesomeOpenCode · Agent & Skill Catalog</title>
+<style>
+:root{--pink:#ff3ea5;--cyan:#33e6ff;--purple:#8b5cf6;--green:#00e676;--gold:#ffd166;--orange:#ff9100;--red:#ff3d3d;--bg:#070312;--panel:rgba(14,6,30,.94);--text:#e8d4ff;--muted:#9e7aaa;--card:rgba(22,8,48,.85)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:'Courier New',Consolas,monospace;background:var(--bg);color:var(--text);min-height:100vh}
+body{background:linear-gradient(180deg,#0f0828 0%,#070312 40%,#060211 100%)}
+.scanlines{position:fixed;inset:0;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.015) 0 1px,transparent 1px 3px);pointer-events:none;z-index:999}
+.container{max-width:1100px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:1}
+.hero{text-align:center;padding:30px 0 20px}
+.hero h1{font-size:2em;letter-spacing:.08em;text-transform:uppercase;color:var(--pink);text-shadow:0 0 18px rgba(255,62,165,.5),0 0 40px rgba(255,62,165,.2);animation:glitch 5s infinite}
+@keyframes glitch{0%,90%,100%{opacity:1;transform:translateX(0)}92%{opacity:.85;transform:translateX(-1px);text-shadow:1px 0 var(--cyan),-1px 0 var(--pink)}94%{opacity:.9;transform:translateX(1px);text-shadow:-1px 0 var(--cyan),1px 0 var(--pink)}96%{opacity:.8;transform:translateX(0)}}
+.hero .sub{color:var(--muted);margin-top:8px;font-size:.85em;letter-spacing:.06em}
+.stats-bar{display:flex;justify-content:center;gap:24px;margin:16px 0 24px;flex-wrap:wrap}
+.stats-bar .s{text-align:center;padding:6px 16px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.03)}
+.stats-bar .s .n{font-size:1.4em;font-weight:900;color:var(--cyan);text-shadow:0 0 8px rgba(51,230,255,.3)}
+.stats-bar .s .l{font-size:.55em;text-transform:uppercase;color:var(--muted);letter-spacing:.06em}
+.search-wrap{text-align:center;margin-bottom:20px}
+.search-wrap input{width:100%;max-width:500px;padding:12px 18px;border-radius:12px;border:1px solid rgba(255,62,165,.25);background:rgba(255,255,255,.04);color:var(--text);font-family:inherit;font-size:.9em;outline:none;box-shadow:0 0 20px rgba(139,92,246,.08)}
+.search-wrap input:focus{border-color:var(--cyan);box-shadow:0 0 24px rgba(51,230,255,.15)}
+.cat-nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:24px}
+.cat-nav button{padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--muted);cursor:pointer;font-family:inherit;font-size:.6em;text-transform:uppercase;letter-spacing:.05em;transition:all .15s}
+.cat-nav button:hover,.cat-nav button.active{border-color:var(--cyan);color:var(--cyan);background:rgba(51,230,255,.06);box-shadow:0 0 12px rgba(51,230,255,.1)}
+.cat-section{margin-bottom:28px}
+.cat-header{font-size:.85em;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--cyan);text-shadow:0 0 10px rgba(51,230,255,.2);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,62,165,.15);display:flex;align-items:center;gap:8px}
+.cat-header .count{font-size:.65em;color:var(--muted);font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px 16px;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:rgba(255,62,165,.18);box-shadow:0 0 16px rgba(139,92,246,.06)}
+.card .name{font-weight:900;font-size:.85em;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.card .desc{font-size:.7em;color:var(--muted);line-height:1.55}
+.card .meta{margin-top:6px;display:flex;gap:8px;align-items:center}
+.card .badge{font-size:.55em;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.badge-core{background:rgba(51,230,255,.12);color:var(--cyan)}
+.badge-lang{background:rgba(139,92,246,.12);color:var(--purple)}
+.badge-infra{background:rgba(255,145,0,.12);color:var(--orange)}
+.badge-quality{background:rgba(0,230,118,.12);color:var(--green)}
+.badge-data{background:rgba(255,209,102,.12);color:var(--gold)}
+.badge-dx{background:rgba(255,62,165,.12);color:var(--pink)}
+.badge-domain{background:rgba(255,61,61,.12);color:var(--red)}
+.badge-business{background:rgba(77,232,255,.12);color:#4de8ff}
+.badge-meta{background:rgba(255,171,64,.12);color:#ffab40}
+.badge-research{background:rgba(200,180,255,.12);color:#c8b4ff}
+.badge-manager{background:rgba(255,62,165,.15);color:var(--pink);box-shadow:0 0 8px rgba(255,62,165,.2)}
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.skill-card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px 16px}
+.skill-card .name{font-weight:900;font-size:.8em;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.skill-card .desc{font-size:.68em;color:var(--muted);line-height:1.5}
+.hidden{display:none!important}
+.footer{text-align:center;margin-top:40px;color:var(--muted);font-size:.7em;letter-spacing:.06em;text-transform:uppercase}
+@media(max-width:600px){.hero h1{font-size:1.4em}.grid{grid-template-columns:1fr}.skill-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="container">
+<div class="hero">
+<h1>awesomeOpenCode</h1>
+<p class="sub">111 Agents · 15 Skills · One Neon Catalog</p>
+<div class="stats-bar">
+<div class="s"><div class="n">111</div><div class="l">Agents</div></div>
+<div class="s"><div class="n">15</div><div class="l">Skills</div></div>
+<div class="s"><div class="n">12</div><div class="l">Categories</div></div>
+<div class="s"><div class="n">5</div><div class="l">Config Presets</div></div>
+</div>
+</div>
+
+<div class="search-wrap"><input type="text" id="search" placeholder="Search agents & skills..." autocomplete="off"></div>
+
+<nav class="cat-nav" id="catNav">
+<button data-cat="all" class="active">All</button>
+<button data-cat="core">Core Dev</button>
+<button data-cat="languages">Languages</button>
+<button data-cat="infra">Infrastructure</button>
+<button data-cat="quality">Quality & Sec</button>
+<button data-cat="data">Data & AI</button>
+<button data-cat="dx">DevEx</button>
+<button data-cat="domain">Domains</button>
+<button data-cat="business">Business</button>
+<button data-cat="manager">Manager</button>
+<button data-cat="meta">Meta</button>
+<button data-cat="research">Research</button>
+<button data-cat="skills">Skills</button>
+</nav>
+
+<div id="content"></div>
+
+<div class="footer">awesomeOpenCode · Powered by OpenCode + ClawProject · MIT</div>
+</div>
+
+<script>
+const AGENTS = [
+// Core Development
+{cat:"core",name:"api-designer",desc:"REST/GraphQL API design and schema-first approach",badge:"core"},
+{cat:"core",name:"backend-developer",desc:"Server-side expert for scalable APIs and backend systems",badge:"core"},
+{cat:"core",name:"frontend-developer",desc:"UI/UX specialist for React, Vue, Angular and modern web",badge:"core"},
+{cat:"core",name:"fullstack-developer",desc:"End-to-end feature development across frontend and backend",badge:"core"},
+{cat:"core",name:"graphql-architect",desc:"GraphQL schema design, federation, and resolver patterns",badge:"core"},
+{cat:"core",name:"microservices-architect",desc:"Distributed systems design and service decomposition",badge:"core"},
+{cat:"core",name:"mobile-developer",desc:"Cross-platform mobile development",badge:"core"},
+{cat:"core",name:"websocket-engineer",desc:"Real-time communication and event-driven systems",badge:"core"},
+// Language Specialists
+{cat:"languages",name:"angular-architect",desc:"Angular 15+ enterprise patterns, signals, RxJS",badge:"lang"},
+{cat:"languages",name:"cpp-pro",desc:"Modern C++20/23, RAII, templates, memory management",badge:"lang"},
+{cat:"languages",name:"csharp-developer",desc:"ASP.NET Core, EF Core, LINQ, async patterns",badge:"lang"},
+{cat:"languages",name:"django-developer",desc:"Django 4+ ORM, REST framework, Celery",badge:"lang"},
+{cat:"languages",name:"elixir-expert",desc:"Elixir/OTP, GenServer, Phoenix, LiveView",badge:"lang"},
+{cat:"languages",name:"fastapi-developer",desc:"FastAPI, Pydantic, dependency injection",badge:"lang"},
+{cat:"languages",name:"flutter-expert",desc:"Flutter 3+ widgets, state management",badge:"lang"},
+{cat:"languages",name:"golang-pro",desc:"Go concurrency, goroutines, channels, interfaces",badge:"lang"},
+{cat:"languages",name:"java-architect",desc:"Enterprise Java, Spring patterns, JVM tuning",badge:"lang"},
+{cat:"languages",name:"javascript-pro",desc:"ES2024+, async patterns, module systems",badge:"lang"},
+{cat:"languages",name:"kotlin-specialist",desc:"Coroutines, Kotlin Multiplatform, DSLs",badge:"lang"},
+{cat:"languages",name:"laravel-specialist",desc:"Laravel 10+ Eloquent, Livewire, queues",badge:"lang"},
+{cat:"languages",name:"nextjs-developer",desc:"Next.js 14+ App Router, Server Actions, RSC",badge:"lang"},
+{cat:"languages",name:"php-pro",desc:"PHP 8.x, Composer, PSR standards",badge:"lang"},
+{cat:"languages",name:"python-pro",desc:"Python typing, asyncio, packaging",badge:"lang"},
+{cat:"languages",name:"react-specialist",desc:"React 18+ hooks, server components, Suspense",badge:"lang"},
+{cat:"languages",name:"ruby-pro",desc:"Ruby metaprogramming, Rails patterns",badge:"lang"},
+{cat:"languages",name:"rust-engineer",desc:"Ownership, lifetimes, async Rust",badge:"lang"},
+{cat:"languages",name:"spring-boot-engineer",desc:"Spring Boot 3+ WebFlux, Security, Data JPA",badge:"lang"},
+{cat:"languages",name:"swift-expert",desc:"SwiftUI, Combine, async/await",badge:"lang"},
+{cat:"languages",name:"typescript-pro",desc:"Strict typing, generics, utility types",badge:"lang"},
+{cat:"languages",name:"vue-expert",desc:"Vue 3 Composition API, Pinia, Nuxt",badge:"lang"},
+// Infrastructure
+{cat:"infra",name:"azure-infra-engineer",desc:"Azure ARM/Bicep, AKS, Azure DevOps",badge:"infra"},
+{cat:"infra",name:"cloud-architect",desc:"AWS/GCP/Azure multi-cloud architecture",badge:"infra"},
+{cat:"infra",name:"database-administrator",desc:"DB replication, backup, recovery",badge:"infra"},
+{cat:"infra",name:"deployment-engineer",desc:"Blue/green, canary, rollback automation",badge:"infra"},
+{cat:"infra",name:"devops-engineer",desc:"CI/CD pipelines and build automation",badge:"infra"},
+{cat:"infra",name:"docker-expert",desc:"Dockerfile optimization and container security",badge:"infra"},
+{cat:"infra",name:"incident-responder",desc:"System incident triage and recovery",badge:"infra"},
+{cat:"infra",name:"kubernetes-specialist",desc:"K8s, Helm, service mesh, cluster management",badge:"infra"},
+{cat:"infra",name:"network-engineer",desc:"DNS, load balancing, firewalls",badge:"infra"},
+{cat:"infra",name:"platform-engineer",desc:"Internal developer platform and golden paths",badge:"infra"},
+{cat:"infra",name:"security-engineer",desc:"IAM, encryption, network segmentation",badge:"infra"},
+{cat:"infra",name:"sre-engineer",desc:"SLI/SLO, observability, incident response",badge:"infra"},
+{cat:"infra",name:"terraform-engineer",desc:"Infrastructure as Code with Terraform",badge:"infra"},
+// Quality & Security
+{cat:"quality",name:"accessibility-tester",desc:"WCAG 2.1 compliance and inclusive design",badge:"quality"},
+{cat:"quality",name:"architect-reviewer",desc:"Architecture review and ADR creation",badge:"quality"},
+{cat:"quality",name:"chaos-engineer",desc:"Resilience testing and failure injection",badge:"quality"},
+{cat:"quality",name:"code-reviewer",desc:"Code quality, security, and performance review",badge:"quality"},
+{cat:"quality",name:"compliance-auditor",desc:"GDPR, SOC2, HIPAA, and OSS license audit",badge:"quality"},
+{cat:"quality",name:"debugger",desc:"Bug investigation and root cause analysis",badge:"quality"},
+{cat:"quality",name:"error-detective",desc:"Systemic error pattern analysis",badge:"quality"},
+{cat:"quality",name:"penetration-tester",desc:"OWASP testing and ethical hacking",badge:"quality"},
+{cat:"quality",name:"performance-engineer",desc:"Performance profiling and optimization",badge:"quality"},
+{cat:"quality",name:"security-auditor",desc:"Security vulnerability scanning",badge:"quality"},
+{cat:"quality",name:"test-automator",desc:"E2E/integration test framework design",badge:"quality"},
+// Data & AI
+{cat:"data",name:"ai-engineer",desc:"AI system design and deployment architecture",badge:"data"},
+{cat:"data",name:"data-analyst",desc:"Data insights, visualization, BI",badge:"data"},
+{cat:"data",name:"data-engineer",desc:"ETL/ELT pipelines, streaming, data lakes",badge:"data"},
+{cat:"data",name:"data-scientist",desc:"Statistical analysis, predictive modeling",badge:"data"},
+{cat:"data",name:"database-optimizer",desc:"Schema, query, and index optimization",badge:"data"},
+{cat:"data",name:"llm-architect",desc:"RAG, fine-tuning, prompt engineering, evaluation",badge:"data"},
+{cat:"data",name:"machine-learning-engineer",desc:"ML model training and optimization",badge:"data"},
+{cat:"data",name:"mlops-engineer",desc:"ML deployment, monitoring, lifecycle",badge:"data"},
+{cat:"data",name:"nlp-engineer",desc:"Tokenization, embeddings, transformers",badge:"data"},
+{cat:"data",name:"postgres-pro",desc:"PostgreSQL advanced queries, extensions, tuning",badge:"data"},
+{cat:"data",name:"prompt-engineer",desc:"Prompt optimization and chain-of-thought design",badge:"data"},
+{cat:"data",name:"sql-pro",desc:"Window functions, CTEs, query optimization",badge:"data"},
+// Developer Experience
+{cat:"dx",name:"build-engineer",desc:"Build systems (webpack, vite, esbuild, gradle)",badge:"dx"},
+{cat:"dx",name:"cli-developer",desc:"Command-line tool design and implementation",badge:"dx"},
+{cat:"dx",name:"dependency-manager",desc:"Dependency audit, CVEs, license checks",badge:"dx"},
+{cat:"dx",name:"docs-writer",desc:"Technical documentation writer",badge:"dx"},
+{cat:"dx",name:"dx-optimizer",desc:"Developer experience and workflow optimization",badge:"dx"},
+{cat:"dx",name:"git-workflow-manager",desc:"Branching strategy and commit hygiene",badge:"dx"},
+{cat:"dx",name:"legacy-modernizer",desc:"Incremental legacy codebase modernization",badge:"dx"},
+{cat:"dx",name:"mcp-developer",desc:"MCP server development and integration",badge:"dx"},
+{cat:"dx",name:"refactorer",desc:"Code refactoring with test verification",badge:"dx"},
+{cat:"dx",name:"test-writer",desc:"Test generation following project patterns",badge:"dx"},
+{cat:"dx",name:"tooling-engineer",desc:"Linters, formatters, IDE plugins",badge:"dx"},
+// Specialized Domains
+{cat:"domain",name:"blockchain-developer",desc:"Solidity, smart contracts, DeFi",badge:"domain"},
+{cat:"domain",name:"embedded-systems",desc:"Firmware, RTOS, hardware interfaces",badge:"domain"},
+{cat:"domain",name:"fintech-engineer",desc:"Payment processing, compliance, ledgers",badge:"domain"},
+{cat:"domain",name:"game-developer",desc:"Game loops, physics, rendering",badge:"domain"},
+{cat:"domain",name:"iot-engineer",desc:"MQTT, edge computing, sensor data",badge:"domain"},
+{cat:"domain",name:"mobile-app-developer",desc:"Native iOS/Android, app store deployment",badge:"domain"},
+{cat:"domain",name:"payment-integration",desc:"Stripe, PayPal, PCI compliance",badge:"domain"},
+{cat:"domain",name:"seo-specialist",desc:"Technical SEO, Core Web Vitals",badge:"domain"},
+// Business & Product
+{cat:"business",name:"business-analyst",desc:"Requirements, user stories, process analysis",badge:"business"},
+{cat:"business",name:"content-marketer",desc:"Content strategy, SEO writing",badge:"business"},
+{cat:"business",name:"legal-advisor",desc:"Software licensing and compliance",badge:"business"},
+{cat:"business",name:"product-manager",desc:"Product strategy and roadmaps",badge:"business"},
+{cat:"business",name:"project-manager",desc:"Project planning and timelines",badge:"business"},
+{cat:"business",name:"sales-engineer",desc:"Technical demos and proof-of-concept",badge:"business"},
+{cat:"business",name:"scrum-master",desc:"Agile ceremonies and sprint planning",badge:"business"},
+{cat:"business",name:"technical-writer",desc:"API docs, tutorials, guides",badge:"business"},
+{cat:"business",name:"ux-researcher",desc:"User research and usability testing",badge:"business"},
+// Manager (NEW)
+{cat:"manager",name:"process-designer",desc:"BPMN process mapping, SIPOC, gap analysis, and digital transformation design",badge:"manager"},
+{cat:"manager",name:"workflow-architect",desc:"End-to-end workflow automation, state machines, integration patterns, saga orchestration",badge:"manager"},
+{cat:"manager",name:"roadmap-strategist",desc:"Product/tech roadmaps (Now/Next/Later), RICE/WSJF prioritization, executive summaries",badge:"manager"},
+// Meta & Orchestration
+{cat:"meta",name:"agent-organizer",desc:"Multi-agent coordination and task routing",badge:"meta"},
+{cat:"meta",name:"context-manager",desc:"Token optimization and context management",badge:"meta"},
+{cat:"meta",name:"error-coordinator",desc:"Cross-system error handling and recovery",badge:"meta"},
+{cat:"meta",name:"knowledge-synthesizer",desc:"Multi-source knowledge aggregation",badge:"meta"},
+{cat:"meta",name:"multi-agent-coordinator",desc:"Complex workflow orchestration",badge:"meta"},
+{cat:"meta",name:"task-distributor",desc:"Task allocation and load balancing",badge:"meta"},
+{cat:"meta",name:"workflow-orchestrator",desc:"End-to-end workflow automation",badge:"meta"},
+// Research & Analysis
+{cat:"research",name:"competitive-analyst",desc:"Competitive intelligence and positioning",badge:"research"},
+{cat:"research",name:"data-researcher",desc:"Dataset evaluation and statistical analysis",badge:"research"},
+{cat:"research",name:"market-researcher",desc:"Market analysis and consumer insights",badge:"research"},
+{cat:"research",name:"research-analyst",desc:"Comprehensive research and source evaluation",badge:"research"},
+{cat:"research",name:"scientific-literature-researcher",desc:"Paper search and evidence synthesis",badge:"research"},
+{cat:"research",name:"search-specialist",desc:"Advanced information retrieval",badge:"research"},
+{cat:"research",name:"trend-analyst",desc:"Technology trend forecasting",badge:"research"},
+];
+
+const SKILLS = [
+{name:"adr-write",desc:"Architecture Decision Records (Nygard template) with context, alternatives, and consequences"},
+{name:"api-contract",desc:"OpenAPI/AsyncAPI spec generation and validation"},
+{name:"changelog-generate",desc:"CHANGELOG.md from git history (Keep a Changelog)"},
+{name:"ci-pipeline",desc:"CI/CD config generation (GitHub Actions, GitLab CI)"},
+{name:"dependency-audit",desc:"CVE scan, license check, unused dependencies"},
+{name:"deploy",desc:"CI/CD pipeline and deployment setup"},
+{name:"docker-optimize",desc:"Dockerfile multi-stage and security hardening"},
+{name:"env-setup",desc:"Developer environment bootstrap"},
+{name:"error-triage",desc:"Stack trace parsing and root cause classification"},
+{name:"git-release",desc:"Release notes and semantic version bumps"},
+{name:"incident-postmortem",desc:"Blameless postmortem with 5 Whys"},
+{name:"migration",desc:"Database/framework migration with rollback"},
+{name:"performance-profile",desc:"Performance hotspot analysis and optimization plan"},
+{name:"pr-review",desc:"Structured PR review checklist"},
+{name:"test-patterns",desc:"Test generation following project conventions"},
+];
+
+const CATS = {
+  all:"All",
+  core:"Core Development",
+  languages:"Language Specialists",
+  infra:"Infrastructure",
+  quality:"Quality & Security",
+  data:"Data & AI",
+  dx:"Developer Experience",
+  domain:"Specialized Domains",
+  business:"Business & Product",
+  manager:"Manager Toolkit",
+  meta:"Meta & Orchestration",
+  research:"Research & Analysis",
+  skills:"Skills"
+};
+
+function render(data,cats){
+  let html='';
+  const sorted=Object.entries(cats).filter(([k])=>k!=='all');
+  sorted.forEach(([cat,label])=>{
+    let items;
+    if(cat==='skills') items=data.skills.filter(s=>s.name.toLowerCase().includes(data.query));
+    else items=data.agents.filter(a=>a.cat===cat&&a.name.toLowerCase().includes(data.query));
+    if(!items.length) return;
+    html+=`<section class="cat-section" data-cat="${cat}"><div class="cat-header">${label} <span class="count">${items.length} items</span></div>`;
+    if(cat==='skills'){
+      html+=`<div class="skill-grid">`;
+      items.forEach(s=>{html+=`<div class="skill-card"><div class="name">@${s.name}</div><div class="desc">${s.desc}</div></div>`});
+      html+=`</div>`;
+    }else{
+      html+=`<div class="grid">`;
+      items.forEach(a=>{html+=`<div class="card"><div class="name">@${a.name}</div><div class="desc">${a.desc}</div><div class="meta"><span class="badge badge-${a.badge}">${a.badge}</span></div></div>`});
+      html+=`</div>`;
+    }
+    html+=`</section>`;
+  });
+  return html;
+}
+
+let activeCat='all';
+let query='';
+
+function update(){
+  const data={agents:AGENTS,skills:SKILLS,query:query.toLowerCase()};
+  document.getElementById('content').innerHTML=render(data, activeCat==='all'?CATS:{[activeCat]:CATS[activeCat]});
+  document.querySelectorAll('.cat-nav button').forEach(b=>b.classList.toggle('active',b.dataset.cat===activeCat));
+}
+
+document.getElementById('catNav').addEventListener('click',e=>{
+  const btn=e.target.closest('button');if(!btn)return;
+  activeCat=btn.dataset.cat;update();
+});
+
+document.getElementById('search').addEventListener('input',e=>{
+  query=e.target.value;update();
+});
+
+update();
+</script>
+</body>
+</html>
