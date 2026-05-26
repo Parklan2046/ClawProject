@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>NEON CITY BUILDER</title>
+  <style>
+    :root {
+      --pink: #ff3ea5;
+      --cyan: #33e6ff;
+      --purple: #8b5cf6;
+      --green: #00e676;
+      --gold: #ffd166;
+      --orange: #ff9100;
+      --red: #ff3d3d;
+      --bg: #060311;
+      --panel: rgba(14, 6, 30, 0.94);
+      --text: #e8d4ff;
+      --muted: #9e7aaa;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100dvh; overflow: hidden;
+      font-family: 'Courier New', Consolas, monospace;
+      background: var(--bg); color: var(--text);
+      user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    }
+
+    canvas#rain { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.35; }
+
+    .scanlines { position: fixed; inset: 0; background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.015) 0 1px, transparent 1px 3px); pointer-events: none; z-index: 100; }
+    .vignette { position: fixed; inset: 0; box-shadow: inset 0 0 120px rgba(0,0,0,0.7); pointer-events: none; z-index: 101; }
+
+    .app { position: relative; z-index: 1; width: 100%; height: 100%; display: flex; flex-direction: column; }
+
+    /* Header */
+    .header {
+      padding: 8px 12px;
+      background: var(--panel);
+      border-bottom: 1px solid rgba(255,62,165,0.18);
+      z-index: 10;
+      backdrop-filter: blur(14px);
+      flex-shrink: 0;
+    }
+    .title-row {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
+    }
+    .title {
+      font-size: 1rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--pink); text-shadow: 0 0 12px rgba(255,62,165,0.5), 0 0 40px rgba(255,62,165,0.2);
+      animation: glitch 4s infinite;
+    }
+    @keyframes glitch {
+      0%,90%,100% { opacity:1; transform:translateX(0); }
+      92% { opacity:.85; transform:translateX(-1px); text-shadow:1px 0 var(--cyan),-1px 0 var(--pink); }
+      94% { opacity:.9; transform:translateX(1px); text-shadow:-1px 0 var(--cyan),1px 0 var(--pink); }
+      96% { opacity:.8; transform:translateX(0); }
+    }
+    .header-actions { display: flex; gap: 6px; }
+    .day {
+      font-size: 0.65rem; color: var(--cyan); text-shadow: 0 0 8px rgba(51,230,255,0.4);
+      letter-spacing: 0.1em;
+    }
+    .btn-reset {
+      border: 1px solid rgba(255,61,61,0.3); border-radius: 6px;
+      background: rgba(255,61,61,0.08); color: var(--red);
+      font-size: 0.55rem; padding: 4px 10px; cursor: pointer;
+      font-family: inherit; text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.15s;
+    }
+    .btn-reset:active { background: rgba(255,61,61,0.2); }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .stat {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px; padding: 4px 6px; text-align: center;
+    }
+    .stat-label { font-size: 0.48rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+    .stat-value { font-size: 0.78rem; font-weight: 900; }
+    .stat-value.cr { color: var(--gold); }
+    .stat-value.pop { color: var(--cyan); }
+    .stat-value.en { color: var(--green); }
+    .stat-value.hap { color: var(--pink); }
+    .stat-value.danger { animation: blink 0.5s ease-in-out infinite alternate; }
+    @keyframes blink { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* City grid */
+    .city-viewport { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 8px; }
+
+    .grid {
+      display: grid; gap: 2px;
+      background: rgba(139,92,246,0.04);
+      border: 1px solid rgba(255,62,165,0.12);
+      border-radius: 4px; padding: 2px;
+      box-shadow: 0 0 40px rgba(139,92,246,0.12), inset 0 0 40px rgba(255,62,165,0.03);
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 2px;
+      transition: all 0.1s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .cell:active { transform: scale(0.93); }
+    .cell.empty { background: rgba(8,4,20,0.5); }
+
+    .cell.b-1 { background: linear-gradient(135deg, rgba(51,230,255,0.4), rgba(51,230,255,0.1)); border-color: rgba(51,230,255,0.35); }
+    .cell.b-2 { background: linear-gradient(135deg, rgba(255,209,102,0.4), rgba(255,209,102,0.1)); border-color: rgba(255,209,102,0.35); }
+    .cell.b-3 { background: linear-gradient(135deg, rgba(255,145,0,0.4), rgba(255,145,0,0.1)); border-color: rgba(255,145,0,0.35); }
+    .cell.b-4 { background: linear-gradient(135deg, rgba(0,230,118,0.45), rgba(0,230,118,0.12)); border-color: rgba(0,230,118,0.4); }
+    .cell.b-5 { background: linear-gradient(135deg, rgba(255,62,165,0.4), rgba(255,62,165,0.1)); border-color: rgba(255,62,165,0.35); }
+
+    .cell.outage { filter: brightness(0.35) saturate(0.3); border-color: rgba(255,61,61,0.3) !important; }
+    .cell.placed { animation: buildPop 0.25s ease; }
+    @keyframes buildPop { 0%{transform:scale(1.2)} 60%{transform:scale(0.9)} 100%{transform:scale(1)} }
+
+    .cell .icon {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      font-size: 0.8rem; opacity: 0.7;
+    }
+    .cell .glow {
+      position: absolute; inset: 0;
+      box-shadow: inset 0 0 6px rgba(255,255,255,0.06);
+      pointer-events: none;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      padding: 8px 10px;
+      background: var(--panel);
+      border-top: 1px solid rgba(255,62,165,0.18);
+      display: flex; gap: 6px; overflow-x: auto; flex-shrink: 0;
+      z-index: 10; backdrop-filter: blur(14px);
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .toolbar::-webkit-scrollbar { display: none; }
+
+    .tool-btn {
+      flex-shrink: 0; min-width: 56px; padding: 6px 8px;
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+      background: rgba(255,255,255,0.03); color: var(--muted);
+      cursor: pointer; text-align: center; transition: all 0.15s ease;
+      font-family: inherit; font-size: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .tool-btn .emo { font-size: 1.2rem; display: block; margin-bottom: 2px; }
+    .tool-btn .price { color: var(--gold); font-size: 0.45rem; margin-top: 1px; }
+    .tool-btn.active {
+      color: var(--cyan); border-color: rgba(51,230,255,0.45);
+      background: rgba(51,230,255,0.08); box-shadow: 0 0 14px rgba(51,230,255,0.15);
+    }
+    .tool-btn:active { transform: scale(0.93); }
+    .tool-btn.demolish { border-color: rgba(255,61,61,0.35); color: var(--red); }
+    .tool-btn.demolish.active { color: var(--red); border-color: rgba(255,61,61,0.6); background: rgba(255,61,61,0.1); box-shadow: 0 0 14px rgba(255,61,61,0.2); }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      padding: 10px 20px; border-radius: 10px;
+      background: var(--panel); border: 1px solid rgba(255,62,165,0.25);
+      color: var(--pink); font-weight: 900; font-size: 0.75rem;
+      text-align: center; white-space: pre-line;
+      z-index: 200; pointer-events: none; opacity: 0;
+      transition: opacity 0.2s ease;
+      box-shadow: 0 0 30px rgba(255,62,165,0.15);
+    }
+    .toast.show { opacity: 1; }
+
+    /* Event log */
+    .event-log {
+      position: fixed; bottom: 110px; left: 10px; right: 10px;
+      pointer-events: none; z-index: 50;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .event-msg {
+      font-size: 0.55rem; padding: 3px 8px; border-radius: 4px;
+      background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--cyan); animation: eventFade 2.5s ease forwards;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    @keyframes eventFade {
+      0%{opacity:0;transform:translateY(6px)} 15%{opacity:1;transform:translateY(0)}
+      75%{opacity:1} 100%{opacity:0;transform:translateY(-4px)}
+    }
+
+    .meter-bar {
+      margin-top: 2px; height: 2px; border-radius: 1px; background: rgba(255,255,255,0.08); overflow: hidden;
+    }
+    .meter-fill { height: 100%; transition: width 0.5s ease; }
+    .meter-fill.good { background: var(--green); box-shadow: 0 0 4px var(--green); }
+    .meter-fill.warn { background: var(--gold); box-shadow: 0 0 4px var(--gold); }
+    .meter-fill.bad { background: var(--red); box-shadow: 0 0 4px var(--red); }
+
+    @media (min-width: 600px) {
+      .grid { max-width: 440px; }
+      .tool-btn { min-width: 72px; padding: 8px 12px; font-size: 0.58rem; }
+      .tool-btn .emo { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="rain"></canvas>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <div class="app">
+    <header class="header">
+      <div class="title-row">
+        <span class="title">/// NEON_CITY ///</span>
+        <div class="header-actions">
+          <span class="day" id="dayLabel">DAY 1</span>
+          <button class="btn-reset" id="btnReset">Reset</button>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Credits</div><div class="stat-value cr" id="creditsVal">500</div></div>
+        <div class="stat"><div class="stat-label">Pop</div><div class="stat-value pop" id="popVal">0</div></div>
+        <div class="stat"><div class="stat-label">Energy</div><div class="stat-value en" id="energyVal">0/0</div></div>
+        <div class="stat"><div class="stat-label">Mood</div><div class="stat-value hap" id="happinessVal">--</div></div>
+      </div>
+      <div class="meter-bar"><div class="meter-fill good" id="meterFill" style="width:0%"></div></div>
+    </header>
+
+    <div class="city-viewport" id="cityViewport">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="event-log" id="eventLog"></div>
+
+    <nav class="toolbar" id="toolbar">
+      <button class="tool-btn demolish" data-tool="0"><span class="emo">💣</span>Demolish</button>
+      <button class="tool-btn active" data-tool="1"><span class="emo">🏠</span>Res<span class="price">50cr</span></button>
+      <button class="tool-btn" data-tool="2"><span class="emo">🏪</span>Com<span class="price">80cr</span></button>
+      <button class="tool-btn" data-tool="3"><span class="emo">🏭</span>Ind<span class="price">120cr</span></button>
+      <button class="tool-btn" data-tool="4"><span class="emo">⚡</span>Power<span class="price">100cr</span></button>
+      <button class="tool-btn" data-tool="5"><span class="emo">🏥</span>Med<span class="price">150cr</span></button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (() => {
+      const SIZE = 8;
+      const TICK_MS = 5000;
+
+      const BUILDINGS = {
+        0: { name:'Lot', cost:0, power:0, pop:0, income:0, hap:0, emoji:'' },
+        1: { name:'Residential', cost:50, power:5, pop:12, income:15, hap:4, emoji:'🏠', color:'cyan' },
+        2: { name:'Commercial', cost:80, power:10, pop:0, income:30, hap:2, emoji:'🏪', color:'gold' },
+        3: { name:'Industrial', cost:120, power:20, pop:0, income:50, hap:-4, emoji:'🏭', color:'orange' },
+        4: { name:'Power Plant', cost:100, power:-45, pop:0, income:0, hap:-3, emoji:'⚡', color:'green' },
+        5: { name:'Med Center', cost:150, power:12, pop:0, income:0, hap:12, emoji:'🏥', color:'pink' },
+      };
+
+      let state = { grid:[], credits:500, day:1, selectedTool:1, tickTimer:null };
+
+      const gridEl = document.getElementById('grid');
+      const creditsVal = document.getElementById('creditsVal');
+      const popVal = document.getElementById('popVal');
+      const energyVal = document.getElementById('energyVal');
+      const happinessVal = document.getElementById('happinessVal');
+      const dayLabel = document.getElementById('dayLabel');
+      const toast = document.getElementById('toast');
+      const eventLog = document.getElementById('eventLog');
+      const toolbar = document.getElementById('toolbar');
+      const meterFill = document.getElementById('meterFill');
+
+      function init() {
+        state.grid = Array.from({length:SIZE},()=>Array(SIZE).fill(0));
+        loadState();
+        renderGrid();
+        updateStats();
+        setActiveTool(state.selectedTool);
+        startTick();
+      }
+
+      function loadState() {
+        try {
+          const s = localStorage.getItem('simcity-neon');
+          if(s){ const p=JSON.parse(s); state.grid=p.grid||state.grid; state.credits=p.credits??500; state.day=p.day||1; }
+        }catch(_){}
+      }
+
+      function saveState() {
+        try { localStorage.setItem('simcity-neon', JSON.stringify({grid:state.grid,credits:state.credits,day:state.day})); }catch(_){}
+      }
+
+      function calcStats() {
+        let pop=0,power=0,income=0,hap=0,bld=0;
+        for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+          const t=state.grid[r][c]; if(!t)continue;
+          const b=BUILDINGS[t]; pop+=b.pop; power+=b.power; income+=b.income; hap+=b.hap; bld++;
+        }
+        const netEnergy=-power;
+        return {pop,power,income,hap,bld,netEnergy,hasPower:netEnergy>=0};
+      }
+
+      function updateStats() {
+        const s=calcStats();
+        creditsVal.textContent=state.credits;
+        popVal.textContent=s.pop;
+        energyVal.textContent=`${Math.max(0,-s.netEnergy)}/${s.power>0?-s.power:0}`;
+        happinessVal.textContent=s.bld>0?`${s.hap}%`:'--';
+
+        if(s.bld>0 && s.netEnergy>0) {
+          energyVal.classList.add('danger');
+        } else {
+          energyVal.classList.remove('danger');
+        }
+
+        const ratio = s.bld>0 ? Math.max(0, s.hap+24)/48 : 0;
+        meterFill.style.width = Math.min(100, ratio*100)+'%';
+        meterFill.className = 'meter-fill ' + (ratio>0.5?'good':ratio>0.25?'warn':'bad');
+      }
+
+      function renderGrid() {
+        const s=calcStats();
+        gridEl.style.gridTemplateColumns=`repeat(${SIZE},1fr)`;
+        const maxPW=s.power>0?-s.power:1;
+        gridEl.innerHTML='';
+
+        for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+          const type=state.grid[r][c];
+          const cell=document.createElement('div');
+          cell.className=`cell ${type>0?'b-'+type:'empty'}${s.netEnergy>0&&type!==4?' outage':''}`;
+          cell.dataset.row=r; cell.dataset.col=c;
+
+          if(type>0){
+            const icon=document.createElement('span');
+            icon.className='icon';
+            icon.textContent=BUILDINGS[type].emoji;
+            cell.appendChild(icon);
+          }
+
+          cell.addEventListener('pointerdown',(e)=>{e.preventDefault();onCellTap(r,c);});
+          cell.addEventListener('pointerenter',(e)=>{if(e.pressure>0)onCellTap(r,c);});
+          gridEl.appendChild(cell);
+        }
+      }
+
+      function onCellTap(r,c) {
+        const tool=state.selectedTool;
+
+        if(tool===0){ demolish(r,c); return; }
+        if(state.grid[r][c]>0){ showInfo(r,c); return; }
+
+        const bld=BUILDINGS[tool];
+        if(!bld) return;
+        if(state.credits<bld.cost){ showToast('⚠ NOT ENOUGH CREDITS'); return; }
+
+        state.credits-=bld.cost;
+        state.grid[r][c]=tool;
+        renderGrid();
+        updateStats();
+        saveState();
+        addEvent(`Built ${bld.name} (-${bld.cost}cr)`);
+
+        const cell=gridEl.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+        if(cell){ cell.classList.add('placed'); setTimeout(()=>cell.classList.remove('placed'),250); }
+      }
+
+      function demolish(r,c) {
+        if(state.grid[r][c]===0) return;
+        const type=state.grid[r][c];
+        state.grid[r][c]=0;
+        renderGrid(); updateStats(); saveState();
+        addEvent(`Demolished ${BUILDINGS[type].name}`);
+      }
+
+      function showInfo(r,c) {
+        const type=state.grid[r][c]; if(!type) return;
+        const b=BUILDINGS[type];
+        showToast(`${b.name}\nPop:${b.pop} | Power:${b.power} | Income:${b.income}/day`);
+      }
+
+      function tick() {
+        const s=calcStats();
+        const income=s.hasPower?s.income:Math.floor(s.income*0.3);
+        state.credits+=Math.max(0,income);
+        state.day++;
+        updateStats(); saveState();
+        dayLabel.textContent=`DAY ${state.day}`;
+        const status=s.hasPower?'':' [LOW POWER]';
+        addEvent(`Day ${state.day} · +${income}cr${status}`);
+      }
+
+      function startTick() {
+        if(state.tickTimer) clearInterval(state.tickTimer);
+        state.tickTimer=setInterval(tick,TICK_MS);
+      }
+
+      function setActiveTool(tool) {
+        state.selectedTool=tool;
+        toolbar.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+        const btn=toolbar.querySelector(`[data-tool="${tool}"]`);
+        if(btn) btn.classList.add('active');
+      }
+
+      function showToast(msg) {
+        toast.textContent=msg; toast.classList.add('show');
+        clearTimeout(toast._t); toast._t=setTimeout(()=>toast.classList.remove('show'),1800);
+      }
+
+      function addEvent(msg) {
+        const el=document.createElement('div'); el.className='event-msg'; el.textContent=msg;
+        eventLog.appendChild(el); setTimeout(()=>el.remove(),2600);
+      }
+
+      toolbar.addEventListener('click',(e)=>{
+        const btn=e.target.closest('.tool-btn'); if(!btn) return;
+        setActiveTool(parseInt(btn.dataset.tool));
+      });
+
+      document.getElementById('btnReset').addEventListener('click',()=>{
+        if(!confirm('Reset your city? This cannot be undone.')) return;
+        state.grid=Array.from({length:SIZE},()=>Array(SIZE).fill(0));
+        state.credits=500; state.day=1;
+        localStorage.removeItem('simcity-neon');
+        renderGrid(); updateStats(); startTick();
+        dayLabel.textContent='DAY 1'; addEvent('City reset · 500cr');
+      });
+
+      window.addEventListener('beforeunload',saveState);
+
+      // Data rain
+      const canvas=document.getElementById('rain');
+      const ctx=canvas.getContext('2d');
+      let drops=[];
+      const glyphs='01アイウエオカキクケコABCDEFGHIJKLMNOPQRSTUVWXYZㄥㄨㄙㄗㄘ';
+
+      function resize() {
+        canvas.width=window.innerWidth;
+        canvas.height=window.innerHeight;
+      }
+      resize(); window.addEventListener('resize',resize);
+
+      const colCount=Math.floor(canvas.width/14);
+      drops=Array.from({length:colCount},()=>({y:Math.random()*-canvas.height,speed:1+Math.random()*2,char:glyphs[Math.floor(Math.random()*glyphs.length)]}));
+
+      function drawRain() {
+        ctx.fillStyle='rgba(6,3,17,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.font='10px monospace';
+        for(let i=0;i<drops.length;i++){
+          const d=drops[i]; const x=i*14;
+          ctx.fillStyle='rgba(139,92,246,0.5)'; ctx.fillText(d.char,x,d.y);
+          ctx.fillStyle='rgba(255,62,165,0.3)'; ctx.fillText(d.char,x,d.y-14);
+          d.y+=d.speed;
+          if(d.y>canvas.height+20){ d.y=-20; d.char=glyphs[Math.floor(Math.random()*glyphs.length)]; }
+        }
+        requestAnimationFrame(drawRain);
+      }
+      drawRain();
+
+      init();
+    })();
+  </script>
+</body>
+</html>
