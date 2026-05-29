@@ -219,6 +219,10 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("", "/parking"):
             return send_html(self, "index.html")
 
+        # V2 Confidence Dashboard
+        if path in ("/v2", "/parking/v2"):
+            return send_html(self, "index_v2.html")
+
         # API: Get availability for a single date
         if path == "/parking/api/slots":
             target = params.get("date", date.today().strftime("%Y/%m/%d"))

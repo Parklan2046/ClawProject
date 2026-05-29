@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>香園圍停車場 v2 · Confidence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   Parking v2 · Confidence Dashboard
+   taste-skill v2 · Direction A
+   ═══════════════════════════════════════ */
+
+:root {
+  --bg: #09090b;
+  --card: #131316;
+  --card-hover: #1a1a20;
+  --card2: #1f1f26;
+  --accent: #22d3ee;
+  --accent-glow: rgba(34,211,238,.15);
+  --accent-dim: rgba(34,211,238,.08);
+  --text: #fafafa;
+  --text-secondary: #d4d4d8;
+  --dim: #a1a1aa;
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,.10);
+  --yellow: #eab308;
+  --yellow-dim: rgba(234,179,8,.10);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,.07);
+  --border: rgba(255,255,255,.06);
+  --border-active: rgba(34,211,238,.2);
+  --radius: 10px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --ease: cubic-bezier(0.16,1,0.3,1);
+  --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding: 20px 16px 100px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+.page { max-width: 640px; margin: 0 auto; }
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+.header-left h1 {
+  font-size: clamp(1.1em, 3vw, 1.35em);
+  font-weight: 700;
+  letter-spacing: -.015em;
+  color: var(--text);
+}
+.header-left .sub {
+  font-size: .72em;
+  color: var(--dim);
+  font-family: var(--font-mono);
+  letter-spacing: .02em;
+  margin-top: 2px;
+}
+.header-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.header-right select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: .78em;
+  font-family: var(--font);
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s var(--ease);
+}
+.header-right select:focus { border-color: var(--accent); }
+
+/* ── CONFIDENCE CARD ── */
+.confidence-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 28px 24px 24px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.confidence-card::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+.confidence-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ── GAUGE RING ── */
+.gauge-wrap { position: relative; flex-shrink: 0; }
+.gauge-ring {
+  width: 120px;
+  height: 120px;
+  transform: rotate(-90deg);
+}
+.gauge-bg {
+  fill: none;
+  stroke: rgba(255,255,255,.04);
+  stroke-width: 8;
+}
+.gauge-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s var(--ease-spring), stroke .5s var(--ease);
+}
+.gauge-fill.warn { stroke: var(--yellow); }
+.gauge-fill.bad  { stroke: var(--red); }
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.gauge-center .big-num {
+  font-size: 2em;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+  transition: color .5s;
+}
+.gauge-center .big-num.good { color: var(--accent); }
+.gauge-center .big-num.warn { color: var(--yellow); }
+.gauge-center .big-num.bad  { color: var(--red); }
+.gauge-center .gauge-label {
+  font-size: .68em;
+  color: var(--dim);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* ── CONFIDENCE TEXT ── */
+.confidence-text { flex: 1; min-width: 0; }
+.confidence-text .status-line {
+  font-size: 1.1em;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  margin-bottom: 4px;
+}
+.confidence-text .status-line.good { color: var(--green); }
+.confidence-text .status-line.warn { color: var(--yellow); }
+.confidence-text .status-line.bad  { color: var(--red); }
+.confidence-text .status-detail {
+  font-size: .78em;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+/* ── BEST WINDOW HIGHLIGHT ── */
+.best-window {
+  background: var(--accent-dim);
+  border: 1px solid rgba(34,211,238,.12);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  transition: background .15s var(--ease), border-color .15s var(--ease);
+}
+.best-window:hover { background: rgba(34,211,238,.12); border-color: rgba(34,211,238,.2); }
+.best-window .best-label {
+  font-size: .66em;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.best-window .best-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.best-window .best-time {
+  font-size: 1.2em;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: -.01em;
+}
+.best-window .best-date {
+  font-size: .82em;
+  color: var(--dim);
+}
+.best-window .best-spots {
+  font-size: .82em;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: rgba(34,197,94,.12);
+  color: var(--green);
+}
+.best-window .best-spots.low {
+  background: var(--yellow-dim);
+  color: var(--yellow);
+}
+.best-window .best-spots.urgent {
+  background: var(--red-dim);
+  color: var(--red);
+}
+.no-best {
+  text-align: center;
+  padding: 16px;
+  color: var(--dim);
+  font-size: .8em;
+  position: relative;
+  z-index: 1;
+  margin-top: 16px;
+}
+
+/* ── DAY STRIP ── */
+.strip-label {
+  font-size: .7em;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--dim);
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+.day-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 2px 8px;
+  margin-bottom: 16px;
+}
+.day-strip::-webkit-scrollbar { display: none; }
+
+.day-chip {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  min-width: 88px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s var(--ease);
+  user-select: none;
+}
+.day-chip:hover { border-color: rgba(255,255,255,.12); background: var(--card-hover); }
+.day-chip:active { transform: scale(.96); }
+.day-chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.day-chip .chip-day {
+  font-size: .72em;
+  font-weight: 600;
+  color: var(--dim);
+  margin-bottom: 4px;
+  letter-spacing: .03em;
+}
+.day-chip.selected .chip-day { color: var(--accent); }
+.day-chip .chip-date {
+  font-size: .88em;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  margin-bottom: 6px;
+}
+.day-chip .chip-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.day-chip .chip-dot.good { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,.4); }
+.day-chip .chip-dot.warn { background: var(--yellow); box-shadow: 0 0 6px rgba(234,179,8,.3); }
+.day-chip .chip-dot.bad  { background: var(--red); }
+
+/* ── DETAIL PANEL ── */
+.detail-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+}
+.detail-panel.empty {
+  opacity: .4;
+  text-align: center;
+  padding: 32px;
+  color: var(--dim);
+  font-size: .82em;
+}
+.detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.detail-head .detail-title {
+  font-weight: 700;
+  font-size: .95em;
+  letter-spacing: -.01em;
+}
+.detail-head .detail-meta {
+  font-size: .7em;
+  color: var(--dim);
+  font-family: var(--font-mono);
+}
+
+/* Timeline bar */
+.detail-timeline {
+  display: flex;
+  gap: 1px;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(255,255,255,.04);
+  margin-bottom: 14px;
+}
+.detail-timeline .tseg { flex: 1; min-width: 0; }
+.detail-timeline .tseg.avail { background: var(--green); opacity: .6; }
+.detail-timeline .tseg.full  { background: var(--red); opacity: .12; }
+
+/* Window cards */
+.detail-windows { display: flex; flex-wrap: wrap; gap: 7px; }
+.detail-win {
+  background: var(--green-dim);
+  border: 1px solid rgba(34,197,94,.12);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: .78em;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.detail-win:hover {
+  background: rgba(34,197,94,.15);
+  border-color: rgba(34,197,94,.25);
+  transform: translateY(-1px);
+}
+.detail-win .dw-time {
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--green);
+  letter-spacing: .01em;
+}
+.detail-win .dw-spots {
+  font-size: .75em;
+  color: var(--dim);
+}
+.detail-win .dw-spots strong { color: var(--text); }
+.detail-win .dw-spots strong.urgent { color: var(--red); }
+.detail-win .dw-spots strong.low { color: var(--yellow); }
+.detail-win .dw-spots strong.ok { color: var(--green); }
+.detail-win.full-day {
+  background: var(--accent-dim);
+  border-color: rgba(34,211,238,.12);
+}
+.detail-win.full-day .dw-time { color: var(--accent); }
+
+/* ── OVERNIGHT ── */
+.ov-box {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-top: 12px;
+  font-size: .74em;
+  line-height: 1.6;
+}
+.ov-box.ok { background: rgba(34,197,94,.06); border: 1px solid rgba(34,197,94,.12); }
+.ov-box.ok .ov-label { color: var(--green); font-weight: 600; }
+.ov-box.no { background: var(--red-dim); border: 1px solid rgba(239,68,68,.08); }
+.ov-box.no .ov-label { color: var(--red); font-weight: 600; }
+
+/* ── BOOKING MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.modal {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  color-scheme: dark;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.modal h2 { font-size: 1em; font-weight: 600; margin-bottom: 14px; letter-spacing: -.01em; }
+.modal .info {
+  background: rgba(255,255,255,.03);
+  padding: 14px;
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  font-size: .82em;
+  line-height: 1.9;
+}
+.modal .info b { color: var(--text); font-weight: 600; }
+.modal .hint { color: var(--yellow); font-size: .72em; margin-bottom: 16px; line-height: 1.5; }
+.modal .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.modal .actions a, .modal .actions button {
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: .82em;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  font-family: var(--font);
+  transition: all .15s var(--ease);
+}
+.btn-go {
+  flex: 1;
+  min-width: 140px;
+  background: var(--accent);
+  color: #09090b;
+  border: none;
+}
+.btn-go:hover { background: #67e8f9; }
+.btn-copy {
+  background: var(--card2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-copy:hover { background: rgba(255,255,255,.08); }
+.btn-close {
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--border);
+}
+.btn-close:hover { color: var(--text); border-color: rgba(255,255,255,.15); }
+
+/* ── HELP ── */
+.help-toggle { text-align: right; margin-bottom: 12px; }
+.help-toggle button {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: 5px 14px;
+  border-radius: var(--radius);
+  font-size: .7em;
+  cursor: pointer;
+  font-family: var(--font);
+  font-weight: 500;
+  transition: color .15s, border-color .15s;
+}
+.help-toggle button:hover { color: var(--text); border-color: rgba(255,255,255,.12); }
+.help-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  font-size: .72em;
+  color: var(--dim);
+  line-height: 2;
+  display: none;
+  margin-bottom: 14px;
+}
+.help-box b { color: var(--text); font-weight: 600; }
+.help-box .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* ── REFRESH BAR ── */
+.refresh-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: .7em;
+  color: var(--dim);
+  font-family: var(--font-mono);
+}
+.refresh-bar .ring-small {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.refresh-bar .ring-small svg { transform: rotate(-90deg); }
+.refresh-bar .ring-small circle { fill: none; }
+.refresh-bar button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: .9em;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all .15s;
+}
+.refresh-bar button:hover { color: var(--text); border-color: rgba(255,255,255,.15); }
+.refresh-bar button.paused { color: var(--yellow); border-color: rgba(234,179,8,.25); }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center;
+  color: var(--dim);
+  font-size: .68em;
+  margin-top: 8px;
+  padding: 8px 0;
+}
+.footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+/* ── CHATBOT ── */
+.busbot-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255,255,255,.1);
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,.5);
+  padding: 0;
+  transition: transform .15s var(--ease), border-color .15s;
+  background: var(--card);
+}
+.busbot-toggle:hover { border-color: var(--accent); box-shadow: 0 4px 24px rgba(0,0,0,.5), 0 0 16px var(--accent-glow); }
+.busbot-toggle:active { transform: scale(.93); }
+.busbot-toggle img { width: 100%; height: 100%; object-fit: cover; }
+.busbot-panel {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 51;
+  width: min(360px, calc(100vw - 32px));
+  height: 440px;
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius-lg);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0,0,0,.6);
+}
+.busbot-panel.open { display: flex; }
+.busbot-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card2);
+}
+.busbot-head img { width: 34px; height: 34px; border-radius: var(--radius); object-fit: cover; border: 1px solid rgba(255,255,255,.08); }
+.busbot-head .close-btn { background: none; border: none; color: var(--dim); font-size: 1.1em; cursor: pointer; transition: color .15s; }
+.busbot-head .close-btn:hover { color: var(--text); }
+.busbot-msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; font-size: .82em; line-height: 1.5; }
+.busbot-msg { max-width: 85%; padding: 10px 14px; border-radius: var(--radius-lg); animation: bbFadeIn .25s var(--ease); }
+.busbot-msg.bot { background: var(--card2); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+.busbot-msg.user { background: var(--accent); align-self: flex-end; border-bottom-right-radius: 4px; color: #09090b; font-weight: 500; }
+.busbot-input-row { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--card2); }
+.busbot-input-row input {
+  flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 14px; font-size: .82em; outline: none;
+  font-family: var(--font); transition: border-color .15s;
+}
+.busbot-input-row input:focus { border-color: var(--accent); }
+.busbot-input-row button {
+  background: var(--accent); border: none; border-radius: var(--radius); padding: 10px 18px;
+  color: #09090b; font-weight: 600; cursor: pointer; font-size: .82em; font-family: var(--font);
+  transition: background .15s;
+}
+.busbot-input-row button:hover { background: #67e8f9; }
+.busbot-typing { display: flex; gap: 4px; padding: 10px 14px; align-self: flex-start; }
+.busbot-typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); animation: bbBounce 1.4s infinite; }
+.busbot-typing span:nth-child(2) { animation-delay:.2s; }
+.busbot-typing span:nth-child(3) { animation-delay:.4s; }
+@keyframes bbBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+@keyframes bbFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── LOADING ── */
+.loading-state { text-align: center; padding: 60px 20px; color: var(--dim); }
+.loading-spinner {
+  width: 32px; height: 32px;
+  border: 2.5px solid rgba(255,255,255,.06);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto 14px;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  body { padding: 14px 10px 100px; }
+  .confidence-card { padding: 22px 16px 20px; }
+  .confidence-inner { gap: 16px; }
+  .gauge-ring { width: 100px; height: 100px; }
+  .gauge-center .big-num { font-size: 1.6em; }
+  .best-window .best-time { font-size: 1em; }
+  .day-chip { padding: 10px 14px; min-width: 76px; }
+  .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .busbot-panel { width: calc(100vw - 16px); right: 8px; bottom: 72px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>香園圍邊境停車場</h1>
+      <div class="sub">Heung Yuen Wai Border Parking · 06:00 至 22:00</div>
+    </div>
+    <div class="header-right">
+      <select id="carType" onchange="refresh()">
+        <option value="private">私家車</option>
+        <option value="goods">客貨車</option>
+        <option value="motorcycle">電單車</option>
+        <option value="disabled_blue">傷殘人士 (藍證)</option>
+        <option value="disabled_grey">接載殘疾 (灰證)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading" class="loading-state"><div class="loading-spinner"></div><p>載入中...</p></div>
+
+  <!-- HELP TOGGLE -->
+  <div class="help-toggle">
+    <button onclick="var h=document.getElementById('helpBox');h.style.display=h.style.display==='block'?'none':'block';this.textContent=h.style.display==='block'?'收起說明':'使用說明'">使用說明</button>
+  </div>
+  <div id="helpBox" class="help-box">
+    <b>狀態顏色：</b><br>
+    <span class="row"><span style="color:var(--green)">●</span> <b style="color:var(--green)">全線開放</b> · 全日所有時段有位</span>
+    <span class="row"><span style="color:var(--accent)">●</span> <b style="color:var(--accent)">大部份可訂</b> · 超過一半時段有位</span>
+    <span class="row"><span style="color:var(--yellow)">●</span> <b style="color:var(--yellow)">少量時段</b> · 少於一半時段有位</span>
+    <span class="row"><span style="color:var(--red)">●</span> <b style="color:var(--red)">無時段</b> · 全日爆滿</span><br>
+    <b>信心環：</b> 顯示未來 7 日有幾多日有位 · 綠色=放心 · 黃色=留意 · 紅色=緊張<br>
+    <b>點擊日期晶片</b> 查看該日詳細時段 · <b>點擊時段</b> 可複製資訊同前往預約<br>
+    泊車收費以每小時計算 · 最少 2 小時 · 入場前 30 分鐘至 7 天預約
+  </div>
+
+  <!-- CONFIDENCE CARD -->
+  <div id="app" style="display:none">
+
+    <div class="confidence-card" id="confidenceCard">
+      <div class="confidence-inner">
+        <div class="gauge-wrap">
+          <svg class="gauge-ring" viewBox="0 0 120 120">
+            <circle class="gauge-bg" cx="60" cy="60" r="52"/>
+            <circle class="gauge-fill" id="gaugeFill" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="326.73"/>
+          </svg>
+          <div class="gauge-center">
+            <div class="big-num" id="gaugeNum">0/7</div>
+            <div class="gauge-label">日有位</div>
+          </div>
+        </div>
+        <div class="confidence-text">
+          <div class="status-line" id="statusLine">載入中...</div>
+          <div class="status-detail" id="statusDetail"></div>
+          <div style="margin-top:8px;font-size:.68em;color:var(--dim);font-family:var(--font-mono)">
+            <span id="vehicleName"></span> · 自動更新中
+          </div>
+        </div>
+      </div>
+
+      <!-- Best window highlight -->
+      <div id="bestWindow"></div>
+    </div>
+
+    <!-- DAY STRIP -->
+    <div class="strip-label">選擇日期查看詳情</div>
+    <div class="day-strip" id="dayStrip"></div>
+
+    <!-- DETAIL PANEL -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-head">
+        <span class="detail-title" id="detailTitle">選擇上方日期</span>
+        <span class="detail-meta" id="detailMeta"></span>
+      </div>
+      <div class="detail-timeline" id="detailTimeline"></div>
+      <div class="detail-windows" id="detailWindows"></div>
+      <div id="detailOvernight"></div>
+    </div>
+
+    <!-- REFRESH BAR -->
+    <div class="refresh-bar">
+      <div class="ring-small">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <circle cx="9" cy="9" r="6.5" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2"/>
+          <circle id="tArc" cx="9" cy="9" r="6.5" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="40.84" stroke-dashoffset="0" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span id="tLabel">30 秒後更新</span>
+      <button id="btnPause" onclick="togglePause()">&#9646;&#9646;</button>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">Parklan Clawhub · <a href="/parking/">v1</a> · <a href="/">Home</a></div>
+  </div>
+</div>
+
+<!-- CHATBOT -->
+<button class="busbot-toggle" id="busbotToggle" onclick="toggleBusbot()"><img src="/assets/parking-bot-avatar.jpg" alt="泊車仔"></button>
+<div class="busbot-panel" id="busbotPanel">
+  <div class="busbot-head">
+    <img src="/assets/parking-bot-avatar.jpg" alt="泊車仔">
+    <div style="flex:1"><div style="font-weight:600;font-size:.88em">泊車仔</div><div style="font-size:.68em;color:var(--green)">巴士 · 泊車助手</div></div>
+    <button class="close-btn" onclick="document.getElementById('busbotPanel').style.display='none'">&times;</button>
+  </div>
+  <div class="busbot-msgs" id="busbotMsgs">
+    <div class="busbot-msg bot">嗨～我係泊車仔<br>有咩巴士或者泊車問題隨時問我！</div>
+  </div>
+  <div class="busbot-input-row">
+    <input id="busbotInput" placeholder="問我巴士/泊車問題..." onkeydown="if(event.key==='Enter')sendBusbot()">
+    <button onclick="sendBusbot()">發送</button>
+  </div>
+</div>
+
+<script>
+// ════════════════ STATE ════════════════
+const STATUS={open:{icon:'🟢',label:'全線開放',cls:'open'},available:{icon:'🔵',label:'大部份可訂',cls:'available'},limited:{icon:'🟡',label:'少量時段',cls:'limited'},full:{icon:'🔴',label:'無時段',cls:'full'}};
+const VT={private:{name:'私家車',icon:'🚗'},goods:{name:'客貨車',icon:'🚛'},motorcycle:{name:'電單車',icon:'🏍️'},disabled_blue:{name:'傷殘人士(藍證)',icon:'♿'},disabled_grey:{name:'接載殘疾(灰證)',icon:'♿'}};
+
+var _days=[], _selectedIdx=0, refreshTimer=null, cdTimer=null, cdVal=30, paused=false;
+
+// ════════════════ INIT ════════════════
+function initDate(){
+  const hkt=new Date(Date.now()+8*3600000);
+  window._fromDate=hkt.toISOString().split('T')[0];
+  window._toDate=new Date(hkt.getTime()+6*86400000).toISOString().split('T')[0];
+}
+
+// ════════════════ REFRESH TIMER ════════════════
+function startCD(){
+  cdVal=30;
+  var arc=document.getElementById('tArc');
+  if(!arc)return;
+  arc.style.strokeDashoffset='0'; arc.style.stroke='var(--accent)';
+  if(cdTimer)clearInterval(cdTimer);
+  cdTimer=setInterval(function(){
+    cdVal--;
+    if(cdVal<0)return;
+    arc.style.strokeDashoffset=(40.84*(1-cdVal/30)).toString();
+    if(cdVal<=3){arc.style.stroke='var(--red)';}else{arc.style.stroke='var(--accent)';}
+  },1000);
+  document.getElementById('tLabel').textContent=cdVal+' 秒後更新';
+}
+
+function clearTimers(){
+  if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}
+  if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
+}
+
+function togglePause(){
+  paused=!paused;
+  var btn=document.getElementById('btnPause'), label=document.getElementById('tLabel');
+  if(paused){
+    btn.textContent='▶'; btn.classList.add('paused'); label.textContent='已暫停';
+    clearTimers();
+  }else{
+    btn.textContent='⏸'; btn.classList.remove('paused'); label.textContent='秒後更新';
+    startCD();
+    refreshTimer=setTimeout(function(){refresh()},30000);
+  }
+}
+
+// ════════════════ MAIN REFRESH ════════════════
+async function refresh(){
+  clearTimers();
+  document.getElementById('loading').style.display='block';
+  document.getElementById('app').style.display='none';
+
+  initDate();
+  var ct=document.getElementById('carType').value;
+  try {
+    var r=await fetch('/parking/api/availability?type='+ct+'&from='+window._fromDate+'&to='+window._toDate);
+    var d=await r.json();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('vehicleName').textContent=VT[ct]?VT[ct].icon+' '+VT[ct].name:ct;
+    if(!d.ok){showError(d.error);return}
+    _days=d.days;
+    _selectedIdx=0;
+    // Auto-select first day with availability
+    for(var i=0;i<_days.length;i++){if(_days[i].status!=='error'&&_days[i].status!=='full'){_selectedIdx=i;break;}}
+    renderAll();
+    if(!paused){
+      startCD();
+      refreshTimer=setTimeout(function(){refresh()},30000);
+    }
+  }catch(e){showError(e.message);}
+}
+
+function showError(msg){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('statusLine').textContent='無法載入';
+  document.getElementById('statusLine').className='status-line bad';
+  document.getElementById('statusDetail').textContent=msg;
+}
+
+// ════════════════ RENDER ALL ════════════════
+function renderAll(){
+  updateGauge();
+  updateBestWindow();
+  renderDayStrip();
+  selectDay(_selectedIdx);
+}
+
+// ════════════════ CONFIDENCE GAUGE ════════════════
+function updateGauge(){
+  var total=_days.length;
+  if(total===0)return;
+  var good=0, warn=0, bad=0;
+  for(var i=0;i<_days.length;i++){
+    var s=_days[i].status;
+    if(s==='error'){bad++;continue;}
+    if(s==='open'||s==='available')good++;
+    else if(s==='limited')warn++;
+    else bad++;
+  }
+  var availCount=good+warn;
+  var ratio=availCount/total;
+  var circumference=326.73; // 2*PI*52
+  var offset=circumference*(1-ratio);
+
+  var fill=document.getElementById('gaugeFill');
+  fill.style.strokeDashoffset=offset;
+  fill.classList.remove('warn','bad');
+  if(ratio<0.3)fill.classList.add('bad');
+  else if(ratio<0.6)fill.classList.add('warn');
+
+  var num=document.getElementById('gaugeNum');
+  num.textContent=availCount+'/'+total;
+  num.className='big-num '+(ratio>=0.6?'good':ratio>=0.3?'warn':'bad');
+
+  var line=document.getElementById('statusLine');
+  var detail=document.getElementById('statusDetail');
+
+  if(good===total){
+    line.textContent='全線暢通';
+    line.className='status-line good';
+    detail.textContent='未來 7 日全部時段有位，放心出發。';
+  }else if(ratio>=0.8){
+    line.textContent='大部份日子有位';
+    line.className='status-line good';
+    detail.textContent=good+' 日全線開放，'+warn+' 日少量時段。建議提早預約熱門時段。';
+  }else if(ratio>=0.4){
+    line.textContent='部份日子緊張';
+    line.className='status-line warn';
+    detail.textContent=good+' 日有位，'+bad+' 日已滿。請揀選有位日子預約。';
+  }else if(ratio>0){
+    line.textContent='大部份日子爆滿';
+    line.className='status-line bad';
+    detail.textContent='只有 '+availCount+' 日有位。建議盡快預約或考慮其他交通方式。';
+  }else{
+    line.textContent='未來 7 日全滿';
+    line.className='status-line bad';
+    detail.textContent='暫無可預約時段。請稍後再檢查或考慮其他口岸。';
+  }
+}
+
+// ════════════════ BEST WINDOW ════════════════
+function updateBestWindow(){
+  var el=document.getElementById('bestWindow');
+  var best=null;
+  for(var i=0;i<_days.length;i++){
+    var day=_days[i];
+    if(day.status==='error'||day.status==='full')continue;
+    var ws=day.windows||[];
+    for(var j=0;j<ws.length;j++){
+      var w=ws[j];
+      var score=w.spaces*10+(w.end===w.start?0:50);
+      if(!best||score>best.score){best={day:day,w:w,score:score,idx:i};}
+    }
+  }
+  if(!best){
+    el.innerHTML='<div class="no-best">暫無可用時段 · 請稍後再檢查</div>';
+    return;
+  }
+  var sc=best.w.spaces<=2?'urgent':best.w.spaces<=5?'low':'';
+  el.innerHTML='<div class="best-window" onclick="selectDay('+best.idx+')">'
+    +'<div class="best-label">最佳時段</div>'
+    +'<div class="best-info">'
+      +'<span class="best-time">'+best.w.start+' 至 '+best.w.end+'</span>'
+      +'<span class="best-date">'+best.day.day_label+'</span>'
+      +'<span class="best-spots '+sc+'">'+best.w.spaces+' 位</span>'
+    +'</div>'
+  +'</div>';
+}
+
+// ════════════════ DAY STRIP ════════════════
+function renderDayStrip(){
+  var strip=document.getElementById('dayStrip');
+  const todayStr=new Date(Date.now()+8*3600000).toISOString().split('T')[0];
+  strip.innerHTML=_days.map(function(day,i){
+    var isToday=day.date.includes(todayStr.replace(/-/g,'/'));
+    var cls=i===_selectedIdx?'selected':'';
+    var st=day.status==='error'?'bad':day.status==='full'?'bad':day.status==='limited'?'warn':'good';
+    var label=(isToday?'今天':day.day_name);
+    return '<div class="day-chip '+cls+'" onclick="selectDay('+i+')" id="chip'+i+'">'
+      +'<div class="chip-day">'+label+'</div>'
+      +'<div class="chip-date">'+day.day_label+'</div>'
+      +'<span class="chip-dot '+st+'"></span>'
+    +'</div>';
+  }).join('');
+}
+
+// ════════════════ SELECT DAY + DETAIL ════════════════
+function selectDay(idx){
+  _selectedIdx=idx;
+  // Update chip selection
+  document.querySelectorAll('.day-chip').forEach(function(el,i){el.classList.toggle('selected',i===idx);});
+  // Scroll chip into view
+  var chip=document.getElementById('chip'+idx);
+  if(chip)chip.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+
+  var day=_days[idx];
+  if(!day){return;}
+
+  var panel=document.getElementById('detailPanel');
+  document.getElementById('detailTitle').textContent=day.day_label+(day.date.includes(new Date(Date.now()+8*3600000).toISOString().split('T')[0].replace(/-/g,'/'))?' · 今天':'');
+  document.getElementById('detailMeta').textContent=day.day_name+' · '+(day.available_count||0)+'/'+(day.total_slots||0)+' 時段可用';
+
+  if(day.status==='error'){
+    document.getElementById('detailTimeline').innerHTML='';
+    document.getElementById('detailWindows').innerHTML='<div style="color:var(--dim);font-size:.82em;padding:12px 0">無法載入數據</div>';
+    document.getElementById('detailOvernight').innerHTML='';
+    return;
+  }
+
+  // Timeline bar
+  var ws=day.windows||[];
+  var tlHTML='';
+  if(day.total_slots>0){
+    var segs='';
+    for(var h=6;h<22;h++)for(var m=0;m<60;m+=30){
+      var t=(h<10?'0':'')+h+':'+(m?'30':'00');
+      var avail=false;
+      for(var wi=0;wi<ws.length;wi++){if(t>=ws[wi].start&&t<=ws[wi].end){avail=true;break;}}
+      segs+='<div class="tseg '+(avail?'avail':'full')+'"></div>';
+    }
+    tlHTML='<div class="detail-timeline">'+segs+'</div>';
+  }
+  document.getElementById('detailTimeline').innerHTML=tlHTML;
+
+  // Window cards
+  function sc(n){return n<=2?'urgent':n<=5?'low':'ok';}
+  var winHTML='';
+  if(day.status==='full'||ws.length===0){
+    winHTML='<div style="color:var(--dim);font-size:.82em;padding:12px 0">無可預約時段</div>';
+  }else if(day.full_day_available){
+    winHTML='<div class="detail-windows"><div class="detail-win full-day" onclick="openDialog(\''+day.date+'\',\'06:00\',\'21:30\','+day.quota+')"><span class="dw-time">06:00 至 22:00 全線開放</span><span class="dw-spots"><strong class="ok">'+day.quota+'</strong> 位</span></div></div>';
+  }else{
+    winHTML='<div class="detail-windows">'+ws.map(function(w){
+      return '<div class="detail-win" onclick="openDialog(\''+day.date+'\',\''+w.start+'\',\''+w.end+'\','+w.spaces+')"><span class="dw-time">'+w.start+' 至 '+w.end+'</span><span class="dw-spots"><strong class="'+sc(w.spaces)+'">'+w.spaces+'</strong> 位</span></div>';
+    }).join('')+'</div>';
+  }
+  document.getElementById('detailWindows').innerHTML=winHTML;
+
+  // Overnight check
+  updateOvernight(idx);
+}
+
+function updateOvernight(idx){
+  var el=document.getElementById('detailOvernight');
+  if(idx>=_days.length-1){el.innerHTML='';return;}
+  var day=_days[idx];
+  if(day.status==='error'||day.status==='full'){el.innerHTML='';return;}
+  var ws=day.windows||[];
+  var lastWin=ws.length>0?ws[ws.length-1]:null;
+  if(!lastWin||lastWin.end!=='21:30'){el.innerHTML='';return;}
+
+  var nextDay=_days[idx+1];
+  if(!nextDay||nextDay.status==='error'||nextDay.status==='full'){
+    el.innerHTML='<div class="ov-box no"><span class="ov-label">不可過夜</span> · 翌日無車位</div>';
+    return;
+  }
+  var firstWin=(nextDay.windows||[]).length>0?nextDay.windows[0]:null;
+  if(!firstWin||firstWin.start!=='06:00'){
+    el.innerHTML='<div class="ov-box no"><span class="ov-label">不可過夜</span> · 翌日早上無位</div>';
+    return;
+  }
+  var fh=parseInt(lastWin.start.split(':')[0]),fm=parseInt(lastWin.start.split(':')[1]);
+  var eh=parseInt(firstWin.end.split(':')[0]),em=parseInt(firstWin.end.split(':')[1]);
+  var hours=(22-(fh+fm/60))+(eh+em/60-6);
+  el.innerHTML='<div class="ov-box ok"><span class="ov-label">可過夜泊車</span> · '+day.day_label+' '+lastWin.start+' 至翌日 06:00 至 '+firstWin.end+' · 約 '+hours.toFixed(0)+' 小時</div>';
+}
+
+// ════════════════ BOOKING DIALOG ════════════════
+function openDialog(date,ws,we,sp){
+  var ct=document.getElementById('carType').value;
+  var v=VT[ct]||VT.private;
+  var p=date.split('/');
+  var dd=p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日';
+  var sh=parseInt(ws.split(':')[0]),sm=parseInt(ws.split(':')[1]);
+  var eh=parseInt(we.split(':')[0]),em=parseInt(we.split(':')[1]);
+  var h=eh+em/60+0.5-(sh+sm/60);
+
+  var ov=document.createElement('div');
+  ov.className='modal-overlay';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  ov.id='bookingDialog';
+  ov.innerHTML='<div class="modal">'
+    +'<h2>'+v.icon+' '+v.name+'</h2>'
+    +'<div class="info"><b>'+dd+'</b><br>'+ws+' 至 '+we+' ('+h.toFixed(1)+'小時)<br>剩餘 &ge;'+sp+' 位</div>'
+    +'<div class="hint">已複製到剪貼簿</div>'
+    +'<div class="actions">'
+      +'<a class="btn-go" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">前往官方預約</a>'
+      +'<button class="btn-copy" id="btnCopy">Copy</button>'
+      +'<button class="btn-close" onclick="document.getElementById(\'bookingDialog\').remove()">Close</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+
+  var txt=v.name+' | '+dd+' | '+ws+' 至 '+we;
+  document.getElementById('btnCopy').onclick=function(){
+    navigator.clipboard.writeText(txt);this.textContent='Done';
+  };
+  navigator.clipboard.writeText(txt).catch(function(){});
+}
+
+// ════════════════ CHATBOT ════════════════
+var busbotMsgs=[];
+function toggleBusbot(){var p=document.getElementById("busbotPanel");p.style.display=p.style.display==="flex"?"none":"flex";if(p.style.display==="flex")document.getElementById("busbotInput").focus()}
+function addBusbotMsg(role,text){var c=document.getElementById("busbotMsgs");var d=document.createElement("div");d.className="busbot-msg "+role;d.textContent=text;c.appendChild(d);c.scrollTop=c.scrollHeight}
+function sendBusbot(){var inp=document.getElementById("busbotInput");var t=inp.value.trim();if(!t)return;inp.value="";addBusbotMsg("user",t);busbotMsgs.push({role:"user",content:t});var ld=document.createElement("div");ld.className="busbot-typing";ld.innerHTML="<span></span><span></span><span></span>";var c=document.getElementById("busbotMsgs");c.appendChild(ld);c.scrollTop=c.scrollHeight;fetch("/chatbot-api/message",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({role:"busfan",messages:busbotMsgs})}).then(function(r){return r.json()}).then(function(d){ld.remove();if(d.ok){addBusbotMsg("bot",d.reply);busbotMsgs.push({role:"assistant",content:d.reply})}else addBusbotMsg("bot","❌ "+d.error)}).catch(function(e){ld.remove();addBusbotMsg("bot","❌ 網絡錯誤")})}
+
+// ════════════════ START ════════════════
+document.addEventListener('DOMContentLoaded',function(){
+  initDate();
+  refresh();
+});
+</script>
+</body>
+</html>
