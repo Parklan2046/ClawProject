@@ -320,9 +320,9 @@ function renderDays(){
         dtl+='<div class=\"detail-timeline\">'+dsegs+'</div>';
       }
       if(day.full_day_available){
-        dtl+='<div class=\"win-cards\"><div class=\"wc full\" onclick=\"openDialog(\\''+day.date+'\\',\\'06:00\\',\\'21:30\\','+day.quota+')\"><span class=\"wt\">06:00 至 22:00</span><span class=\"ws\"><strong class=\"o\">'+day.quota+'</strong> 位</span></div></div>';
+        dtl+='<div class=\"win-cards\"><div class=\"wc full\" onclick=\"openDialog(\''+day.date+'\',\'06:00\',\'21:30\','+day.quota+')\"><span class=\"wt\">06:00 至 22:00</span><span class=\"ws\"><strong class=\"o\">'+day.quota+'</strong> 位</span></div></div>';
       }else if(ws.length>0){
-        dtl+='<div class=\"win-cards\">'+ws.map(function(w){return '<div class=\"wc\" onclick=\"openDialog(\\''+day.date+'\\',\\''+w.start+'\\',\\''+w.end+'\\','+w.spaces+')\"><span class=\"wt\">'+w.start+' 至 '+w.end+'</span><span class=\"ws\"><strong class=\"'+sc(w.spaces)+'\">'+w.spaces+'</strong>位</span></div>'}).join('')+'</div>';
+        dtl+='<div class=\"win-cards\">'+ws.map(function(w){return '<div class=\"wc\" onclick=\"openDialog(\''+day.date+'\',\''+w.start+'\',\''+w.end+'\','+w.spaces+')\"><span class=\"wt\">'+w.start+' 至 '+w.end+'</span><span class=\"ws\"><strong class=\"'+sc(w.spaces)+'\">'+w.spaces+'</strong>位</span></div>'}).join('')+'</div>';
       }else{dtl+='<div style=\"color:var(--dim);font-size:.7em;padding:4px 0\">無可預約時段</div>'}
 
       // Overnight
@@ -377,7 +377,7 @@ function openDialog(date,ws,we,sp){
   var h=eh+em/60+0.5-(sh+sm/60);
   var ov=document.createElement('div');ov.className='modal-overlay';ov.id='bookingDialog';
   ov.onclick=function(e){if(e.target===ov)ov.remove()};
-  ov.innerHTML='<div class=\"modal\"><h2>'+v.icon+' '+v.name+'</h2><div class=\"info\"><b>'+dd+'</b><br>'+ws+' 至 '+we+' ('+h.toFixed(1)+'小時)<br>剩餘 &ge;'+sp+' 位</div><div class=\"hint\">已複製到剪貼簿</div><div class=\"actions\"><a class=\"btn-go\" href=\"https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW\" target=\"_blank\">前往官方預約</a><button class=\"btn-copy\" id=\"btnCopy\">Copy</button><button class=\"btn-close\" onclick=\"document.getElementById(\\'bookingDialog\\').remove()\">Close</button></div></div>';
+  ov.innerHTML='<div class=\"modal\"><h2>'+v.icon+' '+v.name+'</h2><div class=\"info\"><b>'+dd+'</b><br>'+ws+' 至 '+we+' ('+h.toFixed(1)+'小時)<br>剩餘 &ge;'+sp+' 位</div><div class=\"hint\">已複製到剪貼簿</div><div class=\"actions\"><a class=\"btn-go\" href=\"https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW\" target=\"_blank\">前往官方預約</a><button class=\"btn-copy\" id=\"btnCopy\">Copy</button><button class=\"btn-close\" onclick=\"document.getElementById(\'bookingDialog\').remove()\">Close</button></div></div>';
   document.body.appendChild(ov);
   var txt=v.name+' | '+dd+' | '+ws+' 至 '+we;
   document.getElementById('btnCopy').onclick=function(){navigator.clipboard.writeText(txt);this.textContent='Done'};
