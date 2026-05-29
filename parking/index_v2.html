@@ -333,6 +333,24 @@ body {
   color: var(--dim);
   font-size: .82em;
 }
+.detail-panel.today { border-color: var(--border-active); background: var(--card-hover); }
+
+.day-icon-sm {
+  font-size: 1em;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.day-icon-sm.open      { background: var(--green-dim); }
+.day-icon-sm.available { background: var(--accent-dim); }
+.day-icon-sm.limited   { background: var(--yellow-dim); }
+.day-icon-sm.full      { background: var(--red-dim); }
+
+.no-win { color: var(--dim); font-size: .76em; padding: 6px 0; }
 .detail-head {
   display: flex;
   align-items: center;
@@ -718,20 +736,12 @@ body {
       <div id="bestWindow"></div>
     </div>
 
-    <!-- DAY STRIP -->
-    <div class="strip-label">選擇日期查看詳情</div>
+    <!-- DAY STRIP (quick nav) -->
+    <div class="strip-label">快速跳轉</div>
     <div class="day-strip" id="dayStrip"></div>
 
-    <!-- DETAIL PANEL -->
-    <div class="detail-panel" id="detailPanel">
-      <div class="detail-head">
-        <span class="detail-title" id="detailTitle">選擇上方日期</span>
-        <span class="detail-meta" id="detailMeta"></span>
-      </div>
-      <div class="detail-timeline" id="detailTimeline"></div>
-      <div class="detail-windows" id="detailWindows"></div>
-      <div id="detailOvernight"></div>
-    </div>
+    <!-- ALL DAYS VIEW -->
+    <div id="allDays"></div>
 
     <!-- REFRESH BAR -->
     <div class="refresh-bar">
@@ -855,7 +865,7 @@ function renderAll(){
   updateGauge();
   updateBestWindow();
   renderDayStrip();
-  selectDay(_selectedIdx);
+  renderAllDays();
 }
 
 // ════════════════ CONFIDENCE GAUGE ════════════════
@@ -957,85 +967,89 @@ function renderDayStrip(){
   }).join('');
 }
 
-// ════════════════ SELECT DAY + DETAIL ════════════════
+// ════════════════ SELECT DAY (scroll + highlight) ════════════════
 function selectDay(idx){
   _selectedIdx=idx;
-  // Update chip selection
   document.querySelectorAll('.day-chip').forEach(function(el,i){el.classList.toggle('selected',i===idx);});
-  // Scroll chip into view
   var chip=document.getElementById('chip'+idx);
   if(chip)chip.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-
-  var day=_days[idx];
-  if(!day){return;}
-
-  var panel=document.getElementById('detailPanel');
-  document.getElementById('detailTitle').textContent=day.day_label+(day.date.includes(new Date(Date.now()+8*3600000).toISOString().split('T')[0].replace(/-/g,'/'))?' · 今天':'');
-  document.getElementById('detailMeta').textContent=day.day_name+' · '+(day.available_count||0)+'/'+(day.total_slots||0)+' 時段可用';
-
-  if(day.status==='error'){
-    document.getElementById('detailTimeline').innerHTML='';
-    document.getElementById('detailWindows').innerHTML='<div style="color:var(--dim);font-size:.82em;padding:12px 0">無法載入數據</div>';
-    document.getElementById('detailOvernight').innerHTML='';
-    return;
-  }
-
-  // Timeline bar
-  var ws=day.windows||[];
-  var tlHTML='';
-  if(day.total_slots>0){
-    var segs='';
-    for(var h=6;h<22;h++)for(var m=0;m<60;m+=30){
-      var t=(h<10?'0':'')+h+':'+(m?'30':'00');
-      var avail=false;
-      for(var wi=0;wi<ws.length;wi++){if(t>=ws[wi].start&&t<=ws[wi].end){avail=true;break;}}
-      segs+='<div class="tseg '+(avail?'avail':'full')+'"></div>';
-    }
-    tlHTML='<div class="detail-timeline">'+segs+'</div>';
-  }
-  document.getElementById('detailTimeline').innerHTML=tlHTML;
-
-  // Window cards
-  function sc(n){return n<=2?'urgent':n<=5?'low':'ok';}
-  var winHTML='';
-  if(day.status==='full'||ws.length===0){
-    winHTML='<div style="color:var(--dim);font-size:.82em;padding:12px 0">無可預約時段</div>';
-  }else if(day.full_day_available){
-    winHTML='<div class="detail-windows"><div class="detail-win full-day" onclick="openDialog(\''+day.date+'\',\'06:00\',\'21:30\','+day.quota+')"><span class="dw-time">06:00 至 22:00 全線開放</span><span class="dw-spots"><strong class="ok">'+day.quota+'</strong> 位</span></div></div>';
-  }else{
-    winHTML='<div class="detail-windows">'+ws.map(function(w){
-      return '<div class="detail-win" onclick="openDialog(\''+day.date+'\',\''+w.start+'\',\''+w.end+'\','+w.spaces+')"><span class="dw-time">'+w.start+' 至 '+w.end+'</span><span class="dw-spots"><strong class="'+sc(w.spaces)+'">'+w.spaces+'</strong> 位</span></div>';
-    }).join('')+'</div>';
-  }
-  document.getElementById('detailWindows').innerHTML=winHTML;
-
-  // Overnight check
-  updateOvernight(idx);
+  // Scroll the day card into view
+  var card=document.getElementById('daySec'+idx);
+  if(card)card.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function updateOvernight(idx){
-  var el=document.getElementById('detailOvernight');
-  if(idx>=_days.length-1){el.innerHTML='';return;}
-  var day=_days[idx];
-  if(day.status==='error'||day.status==='full'){el.innerHTML='';return;}
-  var ws=day.windows||[];
-  var lastWin=ws.length>0?ws[ws.length-1]:null;
-  if(!lastWin||lastWin.end!=='21:30'){el.innerHTML='';return;}
+// ════════════════ RENDER ALL DAYS ════════════════
+function renderAllDays(){
+  const todayStr=new Date(Date.now()+8*3600000).toISOString().split('T')[0];
+  function sc(n){return n<=2?'urgent':n<=5?'low':'ok';}
 
-  var nextDay=_days[idx+1];
-  if(!nextDay||nextDay.status==='error'||nextDay.status==='full'){
-    el.innerHTML='<div class="ov-box no"><span class="ov-label">不可過夜</span> · 翌日無車位</div>';
-    return;
-  }
-  var firstWin=(nextDay.windows||[]).length>0?nextDay.windows[0]:null;
-  if(!firstWin||firstWin.start!=='06:00'){
-    el.innerHTML='<div class="ov-box no"><span class="ov-label">不可過夜</span> · 翌日早上無位</div>';
-    return;
-  }
-  var fh=parseInt(lastWin.start.split(':')[0]),fm=parseInt(lastWin.start.split(':')[1]);
-  var eh=parseInt(firstWin.end.split(':')[0]),em=parseInt(firstWin.end.split(':')[1]);
-  var hours=(22-(fh+fm/60))+(eh+em/60-6);
-  el.innerHTML='<div class="ov-box ok"><span class="ov-label">可過夜泊車</span> · '+day.day_label+' '+lastWin.start+' 至翌日 06:00 至 '+firstWin.end+' · 約 '+hours.toFixed(0)+' 小時</div>';
+  var html=_days.map(function(day,i){
+    var isToday=day.date.includes(todayStr.replace(/-/g,'/'));
+    var st=STATUS[day.status]||{icon:'',label:'錯誤',cls:'full'};
+    var ws=day.windows||[];
+
+    // Timeline bar
+    var tlHTML='';
+    if(day.status!=='error'&&day.total_slots>0){
+      var segs='';
+      for(var h=6;h<22;h++)for(var m=0;m<60;m+=30){
+        var t=(h<10?'0':'')+h+':'+(m?'30':'00');
+        var avail=false;
+        for(var wi=0;wi<ws.length;wi++){if(t>=ws[wi].start&&t<=ws[wi].end){avail=true;break;}}
+        segs+='<div class="tseg '+(avail?'avail':'full')+'"></div>';
+      }
+      tlHTML='<div class="detail-timeline">'+segs+'</div>';
+    }
+
+    // Window cards
+    var winHTML='';
+    if(day.status==='error'){
+      winHTML='<div class="no-win">無法載入數據</div>';
+    }else if(day.status==='full'||ws.length===0){
+      winHTML='<div class="no-win">無可預約時段</div>';
+    }else if(day.full_day_available){
+      winHTML='<div class="detail-windows"><div class="detail-win full-day" onclick="openDialog(\''+day.date+'\',\'06:00\',\'21:30\','+day.quota+')"><span class="dw-time">06:00 至 22:00 全線開放</span><span class="dw-spots"><strong class="ok">'+day.quota+'</strong> 位</span></div></div>';
+    }else{
+      winHTML='<div class="detail-windows">'+ws.map(function(w){
+        return '<div class="detail-win" onclick="openDialog(\''+day.date+'\',\''+w.start+'\',\''+w.end+'\','+w.spaces+')"><span class="dw-time">'+w.start+' 至 '+w.end+'</span><span class="dw-spots"><strong class="'+sc(w.spaces)+'">'+w.spaces+'</strong> 位</span></div>';
+      }).join('')+'</div>';
+    }
+
+    // Overnight check
+    var ovHTML='';
+    if(i<_days.length-1&&day.status!=='error'&&day.status!=='full'){
+      var lastWin=ws.length>0?ws[ws.length-1]:null;
+      if(lastWin&&lastWin.end==='21:30'){
+        var nextDay=_days[i+1];
+        if(nextDay&&nextDay.status!=='error'&&nextDay.status!=='full'){
+          var firstWin=(nextDay.windows||[]).length>0?nextDay.windows[0]:null;
+          if(firstWin&&firstWin.start==='06:00'){
+            var fh=parseInt(lastWin.start.split(':')[0]),fm=parseInt(lastWin.start.split(':')[1]);
+            var eh=parseInt(firstWin.end.split(':')[0]),em=parseInt(firstWin.end.split(':')[1]);
+            var hours=(22-(fh+fm/60))+(eh+em/60-6);
+            ovHTML='<div class="ov-box ok"><span class="ov-label">可過夜</span> · 翌日 06:00 至 '+firstWin.end+' · 約 '+hours.toFixed(0)+'h</div>';
+          }
+        }
+      }
+    }
+
+    var badgeCls=st.cls==='open'?'open':st.cls==='available'?'available':st.cls==='limited'?'limited':'full';
+    return '<div class="detail-panel'+(isToday?' today':'')+'" id="daySec'+i+'">'
+      +'<div class="detail-head">'
+        +'<div class="day-icon-sm '+st.cls+'">'+st.icon+'</div>'
+        +'<div style="flex:1">'
+          +'<div class="detail-title">'+day.day_label+(isToday?' <span style="font-size:.7em;color:var(--accent);font-weight:500">今天</span>':'')+'</div>'
+          +'<div class="detail-meta">'+day.day_name+' · '+(day.available_count||0)+'/'+(day.total_slots||0)+' 時段可用</div>'
+        +'</div>'
+        +'<span class="badge '+badgeCls+'">'+st.label+'</span>'
+      +'</div>'
+      +tlHTML
+      +winHTML
+      +ovHTML
+    +'</div>';
+  }).join('');
+
+  document.getElementById('allDays').innerHTML=html;
 }
 
 // ════════════════ BOOKING DIALOG ════════════════
