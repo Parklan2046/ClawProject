@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>香園圍停車場 · Business View</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   Parking v3 · Business Light Mode
+   taste-skill: VARIANCE 4 · MOTION 2 · DENSITY 5
+   ═══════════════════════════════════════ */
+:root {
+  --bg:#f4f5f7;
+  --card:#ffffff;
+  --card-hover:#fafbfc;
+  --accent:#2563eb;
+  --accent-light:#eff6ff;
+  --accent-border:rgba(37,99,235,.18);
+  --text:#111827;
+  --text-secondary:#374151;
+  --dim:#6b7280;
+  --green:#059669;
+  --green-bg:#ecfdf5;
+  --green-border:rgba(5,150,105,.18);
+  --amber:#d97706;
+  --amber-bg:#fffbeb;
+  --amber-border:rgba(217,119,6,.18);
+  --red:#dc2626;
+  --red-bg:#fef2f2;
+  --red-border:rgba(220,38,38,.12);
+  --blue:#2563eb;
+  --blue-bg:#eff6ff;
+  --border:#e5e7eb;
+  --border-hover:#d1d5db;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+  --radius:10px;
+  --radius-sm:6px;
+  --radius-lg:16px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  min-height:100dvh;padding:20px 16px 100px;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+.page{max-width:560px;margin:0 auto}
+
+/* ── TOP BAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:16px;flex-wrap:wrap;
+}
+.topbar-brand{display:flex;align-items:baseline;gap:8px}
+.topbar-brand h1{font-size:1.2em;font-weight:700;letter-spacing:-.02em;color:var(--text)}
+.topbar-brand .sub{font-size:.72em;color:var(--dim);font-weight:500}
+.topbar select{
+  background:var(--card);color:var(--text);border:1px solid var(--border);
+  padding:8px 12px;border-radius:var(--radius-sm);font-size:.76em;font-family:var(--font);
+  font-weight:500;cursor:pointer;outline:none;transition:border-color .15s;
+  box-shadow:var(--shadow-sm);
+}
+.topbar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+/* ── LOADING ── */
+.loading-state{text-align:center;padding:64px 20px;color:var(--dim)}
+.loading-spinner{width:28px;height:28px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── OVERVIEW CARD ── */
+.overview{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:22px 20px 16px;margin-bottom:14px;
+  box-shadow:var(--shadow-md);
+}
+.overview-top{display:flex;align-items:flex-start;gap:20px;margin-bottom:14px}
+
+/* Ring gauge */
+.gauge{flex-shrink:0;position:relative;width:96px;height:96px}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .gbg{fill:none;stroke:var(--border);stroke-width:6}
+.gauge .gfill{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1s var(--ease),stroke .4s}
+.gauge .gfill.warn{stroke:var(--amber)}.gauge .gfill.bad{stroke:var(--red)}
+.gauge-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge-num .gn{font-size:1.8em;font-weight:800;letter-spacing:-.03em;line-height:1;transition:color .4s}
+.gauge-num .gn.good{color:var(--accent)}.gauge-num .gn.warn{color:var(--amber)}.gauge-num .gn.bad{color:var(--red)}
+.gauge-num .gu{font-size:.6em;color:var(--dim);font-weight:500;margin-top:1px}
+
+.status-text{flex:1;min-width:0}
+.status-text .st{font-size:.95em;font-weight:700;letter-spacing:-.01em;margin-bottom:2px}
+.status-text .st.good{color:var(--green)}.status-text .st.warn{color:var(--amber)}.status-text .st.bad{color:var(--red)}
+.status-text .sd{font-size:.74em;color:var(--dim);line-height:1.5}
+
+/* Best slot */
+.best-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--accent-light);border:1px solid var(--accent-border);
+  border-radius:var(--radius-sm);padding:10px 14px;font-size:.76em;
+  cursor:pointer;transition:all .15s;
+}
+.best-row:hover{background:#dbeafe;border-color:rgba(37,99,235,.3)}
+.best-row:active{transform:scale(.99)}
+.best-label{font-size:.66em;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);white-space:nowrap}
+.best-info{flex:1;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;min-width:0}
+.best-info .bt{font-weight:700;font-size:.95em;letter-spacing:-.01em}
+.best-info .bd{color:var(--dim);font-size:.85em}
+.best-sp{font-weight:600;font-size:.85em;padding:2px 8px;border-radius:12px}
+.best-sp.ok{background:var(--green-bg);color:var(--green)}
+.best-sp.low{background:var(--amber-bg);color:var(--amber)}
+.best-sp.u{background:var(--red-bg);color:var(--red)}
+
+/* ── DAY CARDS ── */
+.day-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;
+  box-shadow:var(--shadow-sm);transition:border-color .2s,box-shadow .2s;
+}
+.day-card:hover{border-color:var(--border-hover);box-shadow:var(--shadow-md)}
+.day-card.today{border-color:var(--accent-border);box-shadow:0 0 0 1px rgba(37,99,235,.06)}
+
+.day-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.day-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.day-dot.open{background:var(--green)}.day-dot.available{background:var(--blue)}.day-dot.limited{background:var(--amber)}.day-dot.full{background:var(--red)}
+.day-label{font-weight:600;font-size:.84em;letter-spacing:-.01em}
+.day-label.today-suffix{color:var(--accent);font-size:.78em;margin-left:2px}
+.day-date{font-size:.72em;color:var(--dim)}
+.day-badge{
+  margin-left:auto;font-size:.62em;font-weight:600;
+  letter-spacing:.03em;padding:3px 8px;border-radius:10px;text-transform:uppercase;
+}
+.day-badge.open{background:var(--green-bg);color:var(--green)}
+.day-badge.available{background:var(--blue-bg);color:var(--blue)}
+.day-badge.limited{background:var(--amber-bg);color:var(--amber)}
+.day-badge.full{background:var(--red-bg);color:var(--red)}
+
+/* Timeline */
+.day-timeline{display:flex;gap:1px;height:7px;border-radius:4px;overflow:hidden;background:var(--bg);margin-bottom:10px}
+.day-timeline .ts{flex:1;min-width:0}
+.day-timeline .ts.a{background:var(--green);opacity:.7}
+.day-timeline .ts.f{background:#e5e7eb}
+
+/* Window chips */
+.day-windows{display:flex;flex-wrap:wrap;gap:6px}
+.wc{
+  background:var(--green-bg);border:1px solid var(--green-border);
+  border-radius:var(--radius-sm);padding:7px 12px;font-size:.74em;cursor:pointer;
+  transition:all .12s var(--ease);display:flex;align-items:center;gap:8px;
+}
+.wc:hover{background:#d1fae5;border-color:rgba(5,150,105,.3);transform:translateY(-1px)}
+.wc:active{transform:scale(.97)}
+.wc .wct{font-weight:600;color:var(--green);white-space:nowrap;letter-spacing:.01em}
+.wc .wcs{font-size:.82em;color:var(--dim)}
+.wc .wcs strong{font-weight:600}
+.wc .wcs strong.u{color:var(--red)}.wc .wcs strong.l{color:var(--amber)}.wc .wcs strong.o{color:var(--green)}
+.wc.full-day{background:var(--accent-light);border-color:var(--accent-border)}
+.wc.full-day .wct{color:var(--accent)}
+.wc.ov{background:var(--green-bg);border-color:var(--green-border)}
+.wc.ov .wct{font-size:.82em;color:var(--text-secondary)}
+
+/* ── HELP ── */
+.help-row{text-align:right;margin-bottom:8px}
+.help-row button{background:var(--card);border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:var(--radius-sm);font-size:.66em;cursor:pointer;font-family:var(--font);font-weight:500;box-shadow:var(--shadow-sm)}
+.help-row button:hover{color:var(--text);border-color:var(--border-hover)}
+.help-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:.68em;color:var(--dim);line-height:1.9;display:none;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+.help-box b{color:var(--text);font-weight:600}
+
+/* ── FOOTER ── */
+.footer-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-top:4px;font-size:.66em;color:var(--dim)}
+.footer-bar a{color:var(--accent);text-decoration:none;font-weight:500}
+.footer-bar button{background:var(--card);border:1px solid var(--border);color:var(--dim);padding:4px 12px;border-radius:var(--radius-sm);font-size:.9em;cursor:pointer;font-family:var(--font);font-weight:500;box-shadow:var(--shadow-sm);transition:all .15s}
+.footer-bar button:hover{color:var(--text);border-color:var(--border-hover)}
+.footer-bar button.paused{color:var(--amber);border-color:var(--amber-border);background:var(--amber-bg)}
+.ref-ind{display:inline-flex;align-items:center;gap:5px}
+.ref-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:rdot 1s ease infinite;display:inline-block}
+.ref-dot.paused{background:var(--dim);animation:none}
+@keyframes rdot{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.12)}
+.modal h2{font-size:.92em;font-weight:600;margin-bottom:12px;letter-spacing:-.01em}
+.modal .info{background:var(--bg);padding:12px;border-radius:var(--radius-sm);margin-bottom:12px;font-size:.78em;line-height:1.8}
+.modal .info b{color:var(--text)}
+.modal .hint{color:var(--dim);font-size:.68em;margin-bottom:14px}
+.modal .actions{display:flex;gap:8px;flex-wrap:wrap}
+.modal .actions a,.modal .actions button{padding:10px 16px;border-radius:var(--radius-sm);font-size:.78em;font-weight:600;cursor:pointer;text-decoration:none;text-align:center;font-family:var(--font);transition:all .15s}
+.btn-go{flex:1;min-width:120px;background:var(--accent);color:#fff;border:none}.btn-go:hover{background:#1d4ed8}
+.btn-copy{background:var(--bg);color:var(--text);border:1px solid var(--border)}.btn-copy:hover{background:var(--border)}
+.btn-close-btn{background:transparent;color:var(--dim);border:1px solid var(--border)}.btn-close-btn:hover{color:var(--text)}
+
+/* ── CHATBOT ── */
+.chat-toggle{position:fixed;bottom:18px;right:18px;z-index:50;width:48px;height:48px;border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;overflow:hidden;box-shadow:var(--shadow-md);padding:0;background:var(--card);transition:all .2s}
+.chat-toggle:hover{border-color:var(--accent);box-shadow:0 2px 16px rgba(37,99,235,.15)}
+.chat-toggle:active{transform:scale(.93)}
+.chat-toggle img{width:100%;height:100%;object-fit:cover}
+.chat-panel{position:fixed;bottom:76px;right:18px;z-index:51;width:min(340px,calc(100vw - 28px));height:400px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);display:none;flex-direction:column;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.1)}
+.chat-panel.open{display:flex}
+.chat-head{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg)}
+.chat-head img{width:28px;height:28px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border)}
+.chat-head .close-btn{background:none;border:none;color:var(--dim);font-size:1em;cursor:pointer}.chat-head .close-btn:hover{color:var(--text)}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:.78em;line-height:1.5;background:var(--bg)}
+.chat-msg{max-width:85%;padding:8px 12px;border-radius:var(--radius-sm);animation:fIn .25s var(--ease)}
+.chat-msg.bot{background:var(--card);align-self:flex-start;border:1px solid var(--border)}
+.chat-msg.user{background:var(--accent);align-self:flex-end;color:#fff;font-weight:500}
+.chat-input-row{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:var(--card)}
+.chat-input-row input{flex:1;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:.78em;outline:none;font-family:var(--font)}
+.chat-input-row input:focus{border-color:var(--accent)}
+.chat-input-row button{background:var(--accent);border:none;border-radius:var(--radius-sm);padding:8px 14px;color:#fff;font-weight:600;cursor:pointer;font-size:.78em;font-family:var(--font)}
+.chat-input-row button:hover{background:#1d4ed8}
+.chat-typing{display:flex;gap:4px;padding:8px 12px;align-self:flex-start}
+.chat-typing span{width:5px;height:5px;border-radius:50%;background:var(--dim);animation:bb 1.4s infinite}
+.chat-typing span:nth-child(2){animation-delay:.2s}.chat-typing span:nth-child(3){animation-delay:.4s}
+@keyframes bb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+@keyframes fIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:380px){body{padding:14px 10px 100px}.overview{padding:16px 14px 12px}.gauge{width:80px;height:80px}.day-card{padding:12px 12px}.wc{padding:6px 8px;font-size:.7em}}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <h1>香園圍邊境停車場</h1>
+      <span class="sub">Heung Yuen Wai Border Parking</span>
+    </div>
+    <select id="carType" onchange="refresh()">
+      <option value="private">私家車</option>
+      <option value="goods">客貨車</option>
+      <option value="motorcycle">電單車</option>
+      <option value="disabled_blue">傷殘人士 (藍證)</option>
+      <option value="disabled_grey">接載殘疾 (灰證)</option>
+    </select>
+  </div>
+
+  <div id="loading" class="loading-state"><div class="loading-spinner"></div><p>載入中...</p></div>
+
+  <div id="app" style="display:none">
+    <!-- OVERVIEW -->
+    <div class="overview">
+      <div class="overview-top">
+        <div class="gauge">
+          <svg viewBox="0 0 96 96">
+            <circle class="gbg" cx="48" cy="48" r="41"/>
+            <circle class="gfill" id="gf" cx="48" cy="48" r="41" stroke-dasharray="257.61" stroke-dashoffset="257.61"/>
+          </svg>
+          <div class="gauge-num">
+            <span class="gn" id="gn">0/7</span>
+            <span class="gu">days open</span>
+          </div>
+        </div>
+        <div class="status-text">
+          <div class="st" id="gs">Loading...</div>
+          <div class="sd" id="gd"></div>
+        </div>
+      </div>
+      <div class="best-row" id="best" onclick="scrollToBest()">
+        <span class="best-label">Recommended</span>
+        <span class="best-info"><span class="bt" id="bt">--</span><span class="bd" id="bd"></span></span>
+        <span class="best-sp" id="bp"></span>
+      </div>
+    </div>
+
+    <!-- DAY CARDS -->
+    <div id="days"></div>
+
+    <!-- HELP -->
+    <div class="help-row">
+      <button onclick="var h=document.getElementById('hb');h.style.display=h.style.display==='block'?'none':'block';this.textContent=h.style.display==='block'?'Close':'Info'">Info</button>
+    </div>
+    <div id="hb" class="help-box">
+      <b>Ring:</b> Available days in next 7 days<br>
+      <b>Timeline:</b> <span style="color:var(--green)">■</span> open <span style="color:#d1d5db">■</span> full<br>
+      <b>Tap a window</b> to copy details &amp; book at official site<br>
+      Hourly rate · Min 2 hours · Book 30 min before entry · Up to 7 days advance
+    </div>
+
+    <div class="footer-bar">
+      <span class="ref-ind"><span class="ref-dot" id="rd"></span><span id="tl">30s</span></span>
+      <button id="bpBtn" onclick="togglePause()">Pause</button>
+      <span><a href="/parking/">v1</a> · <a href="/parking/v2">v2</a> · <a href="/">Home</a></span>
+    </div>
+  </div>
+</div>
+
+<!-- ASSISTANT CHAT -->
+<button class="chat-toggle" id="chatToggle" onclick="toggleChat()"><img src="/assets/parking-bot-avatar.jpg" alt="Assistant"></button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <img src="/assets/parking-bot-avatar.jpg" alt="Assistant">
+    <div style="flex:1"><div style="font-weight:600;font-size:.82em">Parking Assistant</div><div style="font-size:.64em;color:var(--dim)">Online</div></div>
+    <button class="close-btn" onclick="document.getElementById('chatPanel').style.display='none'">&times;</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs">
+    <div class="chat-msg bot">Hello, how can I help with your parking today?</div>
+  </div>
+  <div class="chat-input-row">
+    <input id="chatInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()">Send</button>
+  </div>
+</div>
+
+<script>
+const STATUS={open:{label:'Open',cls:'open'},available:{label:'Available',cls:'available'},limited:{label:'Limited',cls:'limited'},full:{label:'Full',cls:'full'}};
+var _days=[],_best=null,_bestIdx=-1,rt=null,cti=null,cd=30,paused=false;
+
+function initDate(){var h=new Date(Date.now()+8*3600000);window._fd=h.toISOString().split('T')[0];window._td=new Date(h.getTime()+6*86400000).toISOString().split('T')[0];}
+function startCD(){cd=30;if(cti)clearInterval(cti);document.getElementById('rd').classList.remove('paused');cti=setInterval(function(){cd--;if(cd<0){document.getElementById('tl').textContent='0';return}document.getElementById('tl').textContent=cd+'s';},1000);}
+function clearAll(){if(rt)clearTimeout(rt);if(cti)clearInterval(cti);rt=null;cti=null;}
+function togglePause(){paused=!paused;var b=document.getElementById('bpBtn'),r=document.getElementById('rd');if(paused){b.textContent='Resume';b.classList.add('paused');r.classList.add('paused');document.getElementById('tl').textContent='--';clearAll();}else{b.textContent='Pause';b.classList.remove('paused');r.classList.remove('paused');startCD();rt=setTimeout(refresh,30000);}}
+
+async function refresh(){
+  clearAll();document.getElementById('loading').style.display='block';document.getElementById('app').style.display='none';initDate();
+  try{
+    var r=await fetch('/parking/api/availability?type='+document.getElementById('carType').value+'&from='+window._fd+'&to='+window._td);
+    var d=await r.json();document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';
+    if(!d.ok){showErr(d.error);return;}
+    _days=d.days;findBest();updateOverview();renderDays();
+    if(!paused){startCD();rt=setTimeout(refresh,30000);}
+  }catch(e){showErr(e.message);}
+}
+function showErr(m){document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';document.getElementById('gs').textContent='Error';document.getElementById('gs').className='st bad';document.getElementById('gd').textContent=m;}
+
+function findBest(){_best=null;_bestIdx=-1;for(var i=0;i<_days.length;i++){var day=_days[i];if(day.status==='error'||day.status==='full')continue;var ws=day.windows||[];for(var j=0;j<ws.length;j++){var w=ws[j],s=w.spaces*10+50;if(!_best||s>_best.score){_best={day:day,w:w,score:s};_bestIdx=i;}}}}
+
+function updateOverview(){
+  var t=_days.length,g=0,w=0,b=0;
+  for(var i=0;i<t;i++){var s=_days[i].status;if(s==='error'){b++;continue;}if(s==='open'||s==='available')g++;else if(s==='limited')w++;else b++;}
+  var a=g+w,ratio=a/t,circ=257.61,off=circ*(1-ratio);
+  var f=document.getElementById('gf');f.style.strokeDashoffset=off;f.classList.remove('warn','bad');if(ratio<.3)f.classList.add('bad');else if(ratio<.6)f.classList.add('warn');
+  var n=document.getElementById('gn');n.textContent=a+'/'+t;n.className='gn '+(ratio>=.6?'good':ratio>=.3?'warn':'bad');
+  var s=document.getElementById('gs'),dl=document.getElementById('gd');
+  if(g===t){s.textContent='All Clear';s.className='st good';dl.textContent='All 7 days have open slots. Book with confidence.';}
+  else if(ratio>=.8){s.textContent='Mostly Available';s.className='st good';dl.textContent=g+' days fully open, '+w+' limited. Recommend booking early.';}
+  else if(ratio>=.4){s.textContent='Mixed Availability';s.className='st warn';dl.textContent=g+' days open, '+b+' full. Check available dates carefully.';}
+  else if(ratio>0){s.textContent='Limited Availability';s.className='st bad';dl.textContent='Only '+a+' days available. Book now or consider alternatives.';}
+  else{s.textContent='No Availability';s.className='st bad';dl.textContent='Zero slots available. Please check back later.';}
+
+  if(_best){var bw=_best;document.getElementById('bt').textContent=bw.w.start+' to '+bw.w.end;document.getElementById('bd').textContent=bw.day.day_label;var sc2=bw.w.spaces<=2?'u':bw.w.spaces<=5?'low':'ok';document.getElementById('bp').textContent=bw.w.spaces+' slots';document.getElementById('bp').className='best-sp '+sc2;document.getElementById('best').style.display='flex';}
+  else{document.getElementById('best').style.display='none';}
+}
+function scrollToBest(){if(_bestIdx>=0){var el=document.getElementById('gc'+_bestIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}}
+
+function dcl(s){return s==='error'||s==='full'?'full':s==='limited'?'limited':s==='available'?'available':'open';}
+function sc(n){return n<=2?'u':n<=5?'l':'o';}
+
+function renderDays(){
+  var ts=new Date(Date.now()+8*3600000).toISOString().split('T')[0];
+  document.getElementById('days').innerHTML=_days.map(function(day,i){
+    var it=day.date.includes(ts.replace(/-/g,'/'));var st=STATUS[day.status]||{label:'Error',cls:'full'};
+    var dc=dcl(day.status),ws=day.windows||[],ac=day.available_count||0;
+
+    var tl='';if(day.status!=='error'&&day.total_slots>0){var segs='';for(var h=6;h<22;h++)for(var m=0;m<60;m+=30){var t=(h<10?'0':'')+h+':'+(m?'30':'00'),av=false;for(var wi=0;wi<ws.length;wi++){if(t>=ws[wi].start&&t<=ws[wi].end){av=true;break;}}segs+='<div class=\"ts '+(av?'a':'f')+'\"></div>';}tl='<div class=\"day-timeline\">'+segs+'</div>';}
+
+    var wh='';if(day.status==='error'){wh='<div style=\"color:var(--dim);font-size:.68em;padding:2px 0\">Unable to load</div>';}
+    else if(day.status==='full'||ws.length===0){wh='<div style=\"color:var(--dim);font-size:.68em;padding:2px 0\">No slots available</div>';}
+    else if(day.full_day_available){wh='<div class=\"day-windows\"><div class=\"wc full-day\" onclick=\"openDlg(\''+day.date+'\',\'06:00\',\'21:30\','+day.quota+')\"><span class=\"wct\">06:00 to 22:00 All Open</span><span class=\"wcs\"><strong class=\"o\">'+day.quota+'</strong> slots</span></div></div>';}
+    else{wh='<div class=\"day-windows\">'+ws.map(function(w){return '<div class=\"wc\" onclick=\"openDlg(\''+day.date+'\',\''+w.start+'\',\''+w.end+'\','+w.spaces+')\"><span class=\"wct\">'+w.start+' to '+w.end+'</span><span class=\"wcs\"><strong class=\"'+sc(w.spaces)+'\">'+w.spaces+'</strong> slots</span></div>';}).join('')+'</div>';}
+
+    if(i<_days.length-1&&day.status!=='error'&&day.status!=='full'){var lw=ws.length>0?ws[ws.length-1]:null;if(lw&&lw.end==='21:30'){var nd=_days[i+1];if(nd&&nd.status!=='error'&&nd.status!=='full'){var fw=(nd.windows||[]).length>0?nd.windows[0]:null;if(fw&&fw.start==='06:00'){var fh=parseInt(lw.start.split(':')[0]),fm=parseInt(lw.start.split(':')[1]),eh=parseInt(fw.end.split(':')[0]),em=parseInt(fw.end.split(':')[1]),hrs=(22-(fh+fm/60))+(eh+em/60-6);wh+='<div class=\"day-windows\" style=\"margin-top:5px\"><div class=\"wc ov\"><span class=\"wct\">Overnight: next day 06:00 to '+fw.end+' ('+hrs.toFixed(0)+'h)</span></div></div>';}}}}
+
+    return '<div class=\"day-card'+(it?' today':'')+'\" id=\"gc'+i+'\">'
+      +'<div class=\"day-head\">'
+        +'<span class=\"day-dot '+dc+'\"></span>'
+        +'<span class=\"day-label\">'+(it?'Today':'')+'<span class=\"today-suffix\">'+(it?' · '+day.day_label:'')+'</span></span>'
+        +(!it?'<span class=\"day-date\">'+day.day_label+'</span>':'')
+        +'<span class=\"day-badge '+st.cls+'\">'+st.label+'</span>'
+      +'</div>'
+      +tl+wh
+    +'</div>';
+  }).join('');
+}
+
+function openDlg(d,ws,we,sp){
+  var ct=document.getElementById('carType').value;
+  var vn={private:'Private Car',goods:'Goods Vehicle',motorcycle:'Motorcycle',disabled_blue:'Disabled (Blue)',disabled_grey:'Disabled (Grey)'}[ct]||'Vehicle';
+  var p=d.split('/'),dd=p[0]+'/'+parseInt(p[1])+'/'+parseInt(p[2]);
+  var sh=parseInt(ws.split(':')[0]),sm=parseInt(ws.split(':')[1]),eh=parseInt(we.split(':')[0]),em=parseInt(we.split(':')[1]),h=eh+em/60+.5-(sh+sm/60);
+  var ov=document.createElement('div');ov.className='modal-overlay';ov.id='bdg';ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  ov.innerHTML='<div class=\"modal\"><h2>'+vn+'</h2><div class=\"info\"><b>'+dd+'</b><br>'+ws+' to '+we+' ('+h.toFixed(1)+' hours)<br>'+sp+'+ slots remaining</div><div class=\"hint\">Details copied to clipboard</div><div class=\"actions\"><a class=\"btn-go\" href=\"https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW\" target=\"_blank\">Book Now</a><button class=\"btn-copy\" id=\"bcp\">Copy</button><button class=\"btn-close-btn\" onclick=\"document.getElementById(\'bdg\').remove()\">Close</button></div></div>';
+  document.body.appendChild(ov);var txt=vn+' | '+dd+' | '+ws+' to '+we;document.getElementById('bcp').onclick=function(){navigator.clipboard.writeText(txt);this.textContent='Done';};navigator.clipboard.writeText(txt).catch(function(){});
+}
+
+var bms=[];
+function toggleChat(){var p=document.getElementById("chatPanel");p.style.display=p.style.display==="flex"?"none":"flex";if(p.style.display==="flex")document.getElementById("chatInput").focus();}
+function addCm(r,t){var c=document.getElementById("chatMsgs"),d=document.createElement("div");d.className="chat-msg "+r;d.textContent=t;c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function sendChat(){var i=document.getElementById("chatInput"),t=i.value.trim();if(!t)return;i.value="";addCm("user",t);bms.push({role:"user",content:t});var ld=document.createElement("div");ld.className="chat-typing";ld.innerHTML="<span></span><span></span><span></span>";var c=document.getElementById("chatMsgs");c.appendChild(ld);c.scrollTop=c.scrollHeight;fetch("/chatbot-api/message",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({role:"busfan",messages:bms})}).then(function(r){return r.json()}).then(function(d){ld.remove();if(d.ok){addCm("bot",d.reply);bms.push({role:"assistant",content:d.reply});}else addCm("bot","Error: "+d.error);}).catch(function(e){ld.remove();addCm("bot","Network error");});}
+
+document.addEventListener('DOMContentLoaded',function(){initDate();refresh();});
+</script>
+</body>
+</html>

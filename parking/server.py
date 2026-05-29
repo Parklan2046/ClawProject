@@ -219,6 +219,10 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("", "/parking"):
             return send_html(self, "index.html")
 
+        # V3 Business Light Mode
+        if path in ("/v3", "/parking/v3"):
+            return send_html(self, "index_v3.html")
+
         # V2 Confidence Dashboard
         if path in ("/v2", "/parking/v2"):
             return send_html(self, "index_v2.html")
