@@ -6,534 +6,1193 @@
 <title>Parklan Clawhub</title>
 <meta name="description" content="Parklan Clawhub — retro-futuristic techno hub for tools, experiments, and dashboards.">
 <link rel="icon" type="image/jpeg" href="assets/favicon.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --pink: #ff3ea5;
-    --cyan: #33e6ff;
-    --purple: #8b5cf6;
-    --text: #f8ecff;
-    --muted: #d0a9d9;
+/* ═══════════════════════════════════════════════════
+   PARKLAN CLAWHUB · CYBERPUNK TERMINAL
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  --pink: #ff3ea5;
+  --pink-dim: #c42d7e;
+  --cyan: #33e6ff;
+  --cyan-dim: #1fa8bd;
+  --green: #00e676;
+  --yellow: #ffb627;
+  --red: #ff4d6a;
+  --text: #e0dce8;
+  --text-dim: #6b6990;
+  --bg: #000000;
+  --bg-alt: #0a0a0f;
+  --border: rgba(255,255,255,0.08);
+  --border-active: rgba(255,62,165,0.25);
+  --chrome: #111118;
+  --chrome-border: #1e1e2a;
+  --scanline-opacity: 0.03;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  font-family: 'JetBrains Mono', 'Share Tech Mono', monospace;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── BACKGROUND: Grid Dots ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── CRT SCANLINES OVERLAY ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,var(--scanline-opacity)) 2px,
+    rgba(0,0,0,var(--scanline-opacity)) 4px
+  );
+  animation: scanline-drift 8s linear infinite;
+}
+
+@keyframes scanline-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+/* ── CONTAINER ── */
+.container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 20px 16px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════
+   TERMINAL WINDOW COMPONENT
+   ═══════════════════════════════════════════════════ */
+
+.term-window {
+  border: 1px solid var(--chrome-border);
+  background: rgba(10,10,15,0.92);
+  margin-bottom: 20px;
+  position: relative;
+  backdrop-filter: blur(4px);
+}
+
+.term-window::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255,255,255,0.03);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.term-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--chrome-border);
+  user-select: none;
+}
+
+.term-dots {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.term-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid;
+}
+
+.term-dot.red    { background: #ff5f57; border-color: #e0443e; }
+.term-dot.yellow { background: #febc2e; border-color: #dea123; }
+.term-dot.green  { background: #28c840; border-color: #1ea835; }
+
+.term-title {
+  flex: 1;
+  font-size: 0.7em;
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.term-body {
+  padding: 18px 22px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── LINE NUMBERS (optional, for code-block vibes) ── */
+.term-body.lined {
+  padding-left: 50px;
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO: BOOT SCREEN
+   ═══════════════════════════════════════════════════ */
+
+.hero-window {
+  border: 1px solid var(--border-active);
+  box-shadow: 0 0 40px rgba(255,62,165,0.06), 0 0 80px rgba(51,230,255,0.03);
+}
+
+.hero-body {
+  padding: 36px 28px 28px;
+  text-align: left;
+}
+
+.boot-line {
+  color: var(--text-dim);
+  font-size: 0.72em;
+  line-height: 1.8;
+  opacity: 0;
+  animation: boot-reveal 0.04s forwards;
+}
+
+.boot-line:nth-child(1)  { animation-delay: 0.1s; }
+.boot-line:nth-child(2)  { animation-delay: 0.2s; }
+.boot-line:nth-child(3)  { animation-delay: 0.3s; }
+.boot-line:nth-child(4)  { animation-delay: 0.4s; }
+.boot-line:nth-child(5)  { animation-delay: 0.5s; }
+
+@keyframes boot-reveal {
+  to { opacity: 1; }
+}
+
+.boot-line .ok { color: var(--green); }
+.boot-line .warn { color: var(--yellow); }
+.boot-line .key { color: var(--cyan); }
+
+.boot-sep {
+  margin: 18px 0;
+  color: var(--text-dim);
+  font-size: 0.7em;
+  letter-spacing: 0.3em;
+  animation: boot-reveal 0.04s forwards;
+  animation-delay: 0.7s;
+  opacity: 0;
+}
+
+/* ── ASCII GLITCH TITLE ── */
+.glitch-title {
+  font-family: 'JetBrains Mono', 'Share Tech Mono', monospace;
+  font-size: clamp(1.6em, 4.5vw, 3.2em);
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.05;
+  text-shadow:
+    0 0 7px rgba(255,62,165,0.6),
+    0 0 20px rgba(255,62,165,0.3),
+    0 0 40px rgba(255,62,165,0.15),
+    0 0 80px rgba(51,230,255,0.1);
+  letter-spacing: -0.03em;
+  margin: 8px 0 4px;
+  position: relative;
+  animation: title-flicker 5s linear infinite;
+}
+
+@keyframes title-flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% {
+    opacity: 1;
+    transform: none;
   }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html, body {
-    font-family: Inter, system-ui, -apple-system, sans-serif;
-    color: #f8ecff;
-    background: linear-gradient(180deg, #2a0845 0%, #140321 42%, #070312 100%);
-    min-height: 100%;
-    overflow-x: hidden;
+  20%, 21.999% { opacity: 0.85; transform: translate(-1px, 1px); }
+  63%, 63.999% { opacity: 0.65; transform: translate(2px, -1px); }
+  65%, 69.999% { opacity: 0.55; transform: translate(-1px, 0); }
+}
+
+.glitch-title::before,
+.glitch-title::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.glitch-title::before {
+  color: var(--cyan);
+  z-index: -1;
+  animation: glitch-cyan 5s linear infinite;
+}
+
+.glitch-title::after {
+  color: var(--pink);
+  z-index: -2;
+  animation: glitch-pink 5s linear infinite;
+}
+
+@keyframes glitch-cyan {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 0; transform: none; }
+  20%, 21.999% { opacity: 0.7; transform: translate(-3px, 0); }
+  63% { opacity: 0; }
+  65%, 69.999% { opacity: 0.5; transform: translate(2px, -1px); }
+}
+
+@keyframes glitch-pink {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 0; transform: none; }
+  20%, 21.999% { opacity: 0.7; transform: translate(3px, 1px); }
+  63% { opacity: 0; }
+  65%, 69.999% { opacity: 0.5; transform: translate(-2px, -1px); }
+}
+
+.tagline {
+  color: var(--cyan);
+  font-size: 0.82em;
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+  text-shadow: 0 0 8px rgba(51,230,255,0.3);
+}
+
+.prompt-line {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  color: var(--text-dim);
+  font-size: 0.76em;
+  margin-top: 6px;
+}
+
+.prompt-user { color: var(--green); }
+.prompt-at { color: var(--text-dim); }
+.prompt-host { color: var(--cyan); }
+.prompt-path { color: var(--pink); }
+
+.cursor-blink {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: var(--cyan);
+  margin-left: 2px;
+  animation: cursor-blink 1s step-end infinite;
+  vertical-align: middle;
+  box-shadow: 0 0 6px var(--cyan);
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════
+   STATUS BAR
+   ═══════════════════════════════════════════════════ */
+
+.status-strip {
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome);
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 0.68em;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+}
+
+.status-strip .label { color: var(--text-dim); }
+.status-strip .val   { color: var(--text); font-weight: 500; }
+.status-strip .val.ok { color: var(--green); }
+.status-strip .val.warn { color: var(--yellow); }
+.status-strip .val.info { color: var(--cyan); }
+.status-sep { color: var(--border); }
+
+/* ═══════════════════════════════════════════════════
+   PROJECT DIRECTORY (LS -LA STYLE)
+   ═══════════════════════════════════════════════════ */
+
+.dir-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--chrome-border);
+  font-size: 0.7em;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dir-header .prompt-user { color: var(--green); }
+.dir-header .prompt-host { color: var(--cyan); }
+.dir-header .prompt-path { color: var(--pink); }
+
+.dir-listing {
+  /* terminal-style rows */
+}
+
+.dir-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 9px 16px;
+  font-size: 0.76em;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  transition: background 0.12s, color 0.12s;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+
+.dir-row:hover {
+  background: rgba(255,62,165,0.06);
+  color: var(--pink);
+}
+
+.dir-row:hover .dir-icon {
+  color: var(--pink);
+  text-shadow: 0 0 6px rgba(255,62,165,0.4);
+}
+
+.dir-row:hover .dir-name {
+  color: var(--text);
+}
+
+.dir-icon {
+  font-size: 1em;
+  color: var(--text-dim);
+  text-align: center;
+  transition: color 0.12s, text-shadow 0.12s;
+}
+
+.dir-name {
+  font-weight: 500;
+  transition: color 0.12s;
+}
+
+.dir-desc {
+  color: var(--text-dim);
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+}
+
+.dir-badge {
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.badge-ready { color: var(--green); border-color: rgba(0,230,118,0.3); }
+.badge-beta  { color: var(--cyan); border-color: rgba(51,230,255,0.3); }
+.badge-poc   { color: var(--yellow); border-color: rgba(255,182,39,0.3); }
+.badge-priv  { color: var(--red); border-color: rgba(255,77,106,0.3); }
+
+.dir-total {
+  padding: 8px 16px;
+  font-size: 0.66em;
+  color: var(--text-dim);
+  border-top: 1px solid var(--chrome-border);
+}
+
+/* Hidden project row */
+.dir-row.hidden-row { display: none; }
+.dir-row.hidden-row.show { display: grid; }
+
+/* ═══════════════════════════════════════════════════
+   SECTION HEADERS
+   ═══════════════════════════════════════════════════ */
+
+.section-label {
+  font-size: 0.68em;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  padding: 8px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label::before {
+  content: '#';
+  color: var(--pink);
+}
+
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--chrome-border);
+}
+
+/* ═══════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════ */
+
+.footer-term {
+  text-align: center;
+  font-size: 0.66em;
+  color: var(--text-dim);
+  padding: 16px;
+  letter-spacing: 0.04em;
+}
+
+.footer-term .highlight { color: var(--pink); }
+
+/* ═══════════════════════════════════════════════════
+   LAURA CHATBOT ── FLOATING TERMINAL
+   ═══════════════════════════════════════════════════ */
+
+.chatbot-launch {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  width: 58px;
+  height: 58px;
+  border-radius: 2px;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--border-active);
+  box-shadow: 0 0 20px rgba(255,62,165,0.15), 0 4px 20px rgba(0,0,0,0.5);
+  background: var(--chrome);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: grid;
+  place-items: center;
+}
+
+.chatbot-launch:hover {
+  border-color: var(--pink);
+  box-shadow: 0 0 30px rgba(255,62,165,0.3), 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.chatbot-launch img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(20%) contrast(1.1);
+}
+
+.chatbot-launch::after {
+  content: 'CHAT';
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.45em;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--green);
+  letter-spacing: 0.1em;
+  background: var(--bg);
+  padding: 1px 4px;
+}
+
+.chatbot-panel {
+  position: fixed;
+  right: 8px;
+  bottom: 88px;
+  z-index: 31;
+  width: min(380px, calc(100vw - 16px));
+  max-height: 62dvh;
+  display: none;
+  flex-direction: column;
+  background: var(--bg-alt);
+  border: 1px solid var(--chrome-border);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 30px rgba(255,62,165,0.1);
+}
+
+.chatbot-panel.open { display: flex; }
+
+.chatbot-panel-head {
+  background: var(--chrome);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--chrome-border);
+}
+
+.chatbot-panel-head img {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  border: 1px solid var(--border-active);
+  object-fit: cover;
+  filter: grayscale(15%) contrast(1.1);
+}
+
+.chatbot-panel-head .info { flex: 1; min-width: 0; }
+.chatbot-panel-head .info h3 {
+  font-size: 0.78em;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.03em;
+}
+.chatbot-panel-head .info span {
+  font-size: 0.6em;
+  color: var(--text-dim);
+}
+
+.chatbot-panel-head select {
+  background: var(--bg);
+  border: 1px solid var(--chrome-border);
+  color: var(--text-dim);
+  padding: 3px 6px;
+  font-size: 0.62em;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  cursor: pointer;
+}
+
+.chatbot-panel-head select:focus {
+  border-color: var(--border-active);
+  color: var(--text);
+}
+
+.chatbot-panel-head .chatbot-close {
+  background: none;
+  border: 1px solid var(--chrome-border);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.8em;
+  padding: 2px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.chatbot-panel-head .chatbot-close:hover {
+  color: var(--red);
+  border-color: rgba(255,77,106,0.4);
+}
+
+.chatbot-msgs {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0,0,0,0.3);
+}
+
+.chatbot-msg {
+  max-width: 85%;
+  padding: 8px 12px;
+  font-size: 0.75em;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  letter-spacing: 0.02em;
+}
+
+.chatbot-msg.bot {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--chrome-border);
+  border-left: 2px solid var(--cyan);
+}
+
+.chatbot-msg.user {
+  align-self: flex-end;
+  background: rgba(255,62,165,0.08);
+  border: 1px solid rgba(255,62,165,0.2);
+  border-right: 2px solid var(--pink);
+}
+
+.chatbot-msg .who {
+  font-size: 0.62em;
+  letter-spacing: 0.08em;
+  opacity: 0.5;
+  margin-bottom: 2px;
+  font-weight: 700;
+}
+
+.chatbot-form {
+  padding: 8px 12px;
+  display: flex;
+  gap: 6px;
+  background: var(--chrome);
+  border-top: 1px solid var(--chrome-border);
+}
+
+.chatbot-form textarea {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--chrome-border);
+  padding: 8px 10px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72em;
+  resize: none;
+  min-height: 34px;
+  max-height: 70px;
+  outline: none;
+  letter-spacing: 0.02em;
+}
+
+.chatbot-form textarea:focus {
+  border-color: var(--border-active);
+}
+
+.chatbot-form button {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--pink);
+  color: var(--pink);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72em;
+  letter-spacing: 0.06em;
+  transition: background 0.15s, color 0.15s;
+}
+
+.chatbot-form button:hover {
+  background: var(--pink);
+  color: var(--bg);
+}
+
+.chatbot-status {
+  padding: 4px 14px;
+  font-size: 0.6em;
+  color: var(--text-dim);
+  background: var(--bg);
+}
+
+/* ═══════════════════════════════════════════════════
+   PRIVATE ACCESS DIALOG
+   ═══════════════════════════════════════════════════ */
+
+dialog {
+  border: 1px solid var(--chrome-border);
+  background: var(--bg-alt);
+  color: var(--text);
+  padding: 24px;
+  max-width: 360px;
+  width: 90%;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+dialog::backdrop {
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(2px);
+}
+
+dialog h3 {
+  font-size: 0.85em;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+dialog p {
+  color: var(--text-dim);
+  font-size: 0.72em;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+dialog form {
+  display: flex;
+  gap: 8px;
+}
+
+dialog input[type="password"] {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--chrome-border);
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78em;
+  outline: none;
+}
+
+dialog input[type="password"]:focus {
+  border-color: var(--border-active);
+}
+
+dialog button[type="submit"] {
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid var(--pink);
+  color: var(--pink);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75em;
+  letter-spacing: 0.06em;
+  transition: background 0.15s, color 0.15s;
+}
+
+dialog button[type="submit"]:hover {
+  background: var(--pink);
+  color: var(--bg);
+}
+
+dialog .close-btn {
+  background: none;
+  border: 1px solid var(--chrome-border);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.8em;
+  padding: 4px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  transition: color 0.15s;
+}
+
+dialog .close-btn:hover { color: var(--red); }
+
+.private-error {
+  display: none;
+  color: var(--red);
+  font-size: 0.68em;
+  margin-top: 12px;
+}
+
+/* ── LOCK BUTTON FLOATING ── */
+.lock-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.lock-btn:hover {
+  border-color: var(--border-active);
+  color: var(--pink);
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .container { padding: 12px 10px 60px; }
+
+  .term-body { padding: 14px 14px; }
+  .hero-body { padding: 24px 16px 20px; }
+
+  .glitch-title {
+    font-size: 1.4em;
   }
 
-  .container { max-width: 800px; margin:0 auto; padding: 20px 16px 60px; }
-
-  /* ── HERO ── */
-  .hero {
-    text-align: center; padding: 30px 0 20px;
-  }
-  .hero-mark {
-    width: 80px; height: 80px; border-radius: 22px;
-    display: grid; place-items: center; overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.14);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 18px 40px rgba(255,0,212,0.12);
-    margin: 0 auto 16px;
-    background: rgba(255,255,255,0.04);
-  }
-  .hero-mark img { width: 100%; height: 100%; object-fit: cover; }
-  .hero-tag {
-    display: inline-block; padding: 6px 14px; border-radius: 999px;
-    background: rgba(51,230,255,0.08);
-    border: 1px solid rgba(51,230,255,0.2);
-    color: #33e6ff; font-weight: 800; font-size: 0.7em;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-  .hero h1 {
-    font-size: 2em; letter-spacing: -0.03em; line-height: 1;
-    text-shadow: 0 0 18px rgba(255,62,165,0.2);
-    margin-bottom: 8px; text-transform: uppercase;
-  }
-  .hero .subtitle {
-    color: #d0a9d9; font-size: 0.92em; line-height: 1.6;
-    max-width: 480px; margin: 0 auto;
+  .dir-row {
+    grid-template-columns: 20px 1fr auto;
+    gap: 8px;
+    padding: 8px 10px;
+    font-size: 0.7em;
   }
 
-  /* ── LAURA FLOATING CHAT ── */
-  .chatbot-launch {
-    position: fixed; right: 16px; bottom: 16px; z-index: 30;
-    width: 64px; height: 64px; border-radius: 50%;
-    overflow: hidden; padding: 0;
-    border: 2px solid rgba(255,62,165,0.5);
-    box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 0 20px rgba(255,0,212,0.15);
-    background: linear-gradient(135deg, rgba(255,62,165,0.2), rgba(51,230,255,0.15));
-    cursor: pointer;
-    transform-style: preserve-3d;
-    will-change: transform;
-    transition: transform 0.08s ease-out, box-shadow 0.2s;
-    perspective: 400px;
+  .dir-desc { display: none; }
+
+  .status-strip {
+    gap: 4px 12px;
+    font-size: 0.62em;
   }
-  .chatbot-launch img { width:100%; height:100%; object-fit:cover; }
-  .chatbot-launch:active { transform: scale(0.92); }
 
   .chatbot-panel {
-    position: fixed; right: 8px; bottom: 90px; z-index: 31;
-    width: min(360px, calc(100vw - 16px));
-    max-height: 60vh;
-    display: none; flex-direction: column;
-    background: #1a0f38;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px; overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(255,0,212,0.1);
+    right: 4px;
+    width: calc(100vw - 8px);
+    max-height: 55dvh;
   }
-  .chatbot-panel.open { display: flex; }
-  .chatbot-panel-head {
-    background: linear-gradient(135deg, rgba(255,62,165,0.12), rgba(51,230,255,0.08));
-    padding: 12px 14px; display: flex; align-items: center; gap: 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-  .chatbot-panel-head img {
-    width: 38px; height: 38px; border-radius: 50%;
-    border: 1px solid rgba(255,62,165,0.4); object-fit: cover;
-  }
-  .chatbot-panel-head .info { flex:1; min-width:0; }
-  .chatbot-panel-head .info h3 { font-size:0.88em; font-weight:700; }
-  .chatbot-panel-head .info span { font-size:0.65em; color:#d0a9d9; }
-  .chatbot-panel-head select {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px; color: #f8ecff;
-    padding: 4px 8px; font-size: 0.7em; font-family: inherit; outline: none;
-  }
-  .chatbot-panel-head .chatbot-close {
-    background: none; border: none; color: #d0a9d9; cursor: pointer;
-    font-size: 1em; padding: 2px 6px;
-  }
-  .chatbot-msgs {
-    flex: 1; padding: 12px; overflow-y: auto; max-height: 240px;
-    display: flex; flex-direction: column; gap: 8px;
-    background: rgba(0,0,0,0.15);
-  }
-  .chatbot-msg {
-    max-width: 85%; padding: 8px 12px; border-radius: 14px;
-    font-size: 0.82em; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
-  }
-  .chatbot-msg.bot {
-    align-self: flex-start;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-bottom-left-radius: 4px;
-  }
-  .chatbot-msg.user {
-    align-self: flex-end;
-    background: linear-gradient(135deg, #8b2f6e, #4a3f8a);
-    border-bottom-right-radius: 4px;
-  }
-  .chatbot-msg .who {
-    font-size: 0.6em; text-transform: uppercase; letter-spacing: 0.05em;
-    opacity: 0.5; margin-bottom: 1px; font-weight: 700;
-  }
-  .chatbot-form {
-    padding: 8px 12px; display: flex; gap: 6px;
-    background: #0f0a24; border-top: 1px solid rgba(255,255,255,0.08);
-  }
-  .chatbot-form textarea {
-    flex: 1; background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 10px; padding: 8px 12px;
-    color: #f8ecff; font-family: inherit; font-size: 0.8em;
-    resize: none; min-height: 36px; max-height: 80px; outline: none;
-  }
-  .chatbot-form textarea:focus { border-color: rgba(255,62,165,0.4); }
-  .chatbot-form button {
-    padding: 8px 14px;
-    background: #ff3ea5; border: none; border-radius: 10px;
-    color: #fff; font-weight: 700; cursor: pointer;
-    font-family: inherit; font-size: 0.8em;
-  }
-  .chatbot-status {
-    padding: 4px 12px; font-size: 0.65em; color: #d0a9d9;
-    background: #0f0a24; text-align: center;
-  }
+}
 
-  /* ── SECTION TITLE ── */
-  .section-title {
-    margin: 28px 0 14px; font-size: 1em;
-    font-weight: 900; letter-spacing: 0.1em;
-    text-transform: uppercase; color: #33e6ff;
-    text-shadow: 0 0 10px rgba(51,230,255,0.15);
-  }
-
-  /* ── PROJECT CARDS ── */
-  .cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .card {
-    background: #1a0f38;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 18px;
-    transition: border-color 0.15s;
-    display: flex; flex-direction: column;
-  }
-  .card:hover { border-color: rgba(255,62,165,0.2); }
-  .card .tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.65em; font-weight: 800; letter-spacing: 0.06em;
-    text-transform: uppercase; color: #33e6ff;
-    margin-bottom: 8px;
-  }
-  .card .tag .badge {
-    padding: 2px 8px; border-radius: 999px; font-size: 0.9em;
-  }
-  .badge-ready { background: rgba(0,230,118,.12); color: #4dff88; }
-  .badge-beta { background: rgba(77,232,255,.12); color: #4de8ff; }
-  .badge-private { background: rgba(255,82,82,.12); color: #ff5252; }
-  .badge-poc { background: rgba(255,171,64,.12); color: #ffab40; }
-  .card h3 {
-    font-size: 1em; letter-spacing: -0.01em; margin-bottom: 4px;
-  }
-  .card p {
-    color: #d0a9d9; font-size: 0.8em; line-height: 1.6;
-    flex: 1; margin-bottom: 12px;
-  }
-  .card a {
-    text-decoration: none; color: #fff; font-weight: 700;
-    font-size: 0.8em; display: inline-flex; align-items: center; gap: 4px;
-    opacity: 0.8;
-  }
-  .card a:hover { opacity: 1; color: #ff3ea5; }
-  .card.hidden-card { display: none; }
-  .card.hidden-card.show { display: flex; }
-
-  .footer {
-    margin-top: 32px; text-align: center;
-    color: #9e7aaa; font-size: 0.8em;
-    letter-spacing: 0.06em; text-transform: uppercase;
-  }
-
-  @media (max-width: 560px) {
-    .cards { grid-template-columns: 1fr; }
-    .hero h1 { font-size: 1.5em; }
-    .hero-mark { width: 64px; height: 64px; border-radius: 16px; }
-  }
+@media (max-width: 380px) {
+  .dir-badge { font-size: 0.66em; padding: 1px 6px; }
+  .glitch-title { font-size: 1.1em; }
+}
 </style>
 </head>
 <body>
+
 <div class="container">
 
-  <!-- ── HERO ── -->
-  <div class="hero">
-    <div class="hero-mark"><img src="assets/claw-icon.jpg" alt="Claw"></div>
-    <div class="hero-tag">✦ Parklan Clawhub</div>
-    <h1>Parklan<br>Clawhub</h1>
-    <p class="subtitle">
-      Retro-futuristic techno hub for tools, experiments, and dashboards.
-    </p>
-  </div>
+  <!-- ═══════════════════════════════════════════
+       HERO: BOOT SCREEN
+       ═══════════════════════════════════════════ -->
 
-  <!-- Laura floating button -->
-  <button class="chatbot-launch" id="chatbotLaunch" title="同 Laura 傾偈">
-    <img src="assets/chatbot-avatar.jpg" alt="Laura">
-  </button>
-  <!-- Laura chat panel (hidden slide-up) -->
-  <div class="chatbot-panel" id="chatbotPanel">
-    <div class="chatbot-panel-head">
-      <img src="assets/chatbot-avatar.jpg" alt="Laura">
-      <div class="info">
-        <h3>Laura 羅拉</h3>
-        <span>MiMo v2 Pro · 廣東話角色聊天</span>
+  <div class="term-window hero-window">
+    <div class="term-titlebar">
+      <div class="term-dots">
+        <span class="term-dot red"></span>
+        <span class="term-dot yellow"></span>
+        <span class="term-dot green"></span>
       </div>
-      <select id="chatbotRole">
-        <option value="laura">Laura 模式</option>
-        <option value="guide">Clawhub Guide</option>
-        <option value="tech">Tech Helper</option>
-      </select>
-      <button class="chatbot-close" id="chatbotClose">✕</button>
+      <span class="term-title">parklan@clawhub:~ -- tty1</span>
     </div>
-    <div class="chatbot-msgs" id="chatbotMsgs">
-      <div class="chatbot-msg bot"><span class="who">Laura</span><br>你好呀～我係Laura，柏林嘅秘書。有咩可以幫到你呀？😏</div>
+    <div class="hero-body">
+      <div class="boot-line">[<span class="ok">OK</span>] Initializing kernel modules...</div>
+      <div class="boot-line">[<span class="ok">OK</span>] Mounting filesystems...</div>
+      <div class="boot-line">[<span class="ok">OK</span>] Starting network interfaces...</div>
+      <div class="boot-line">[<span class="ok">OK</span>] Loading <span class="key">clawhub</span> services... <span class="warn">22 modules</span> detected</div>
+      <div class="boot-line">[<span class="ok">OK</span>] SSH daemon listening on :22</div>
+      <div class="boot-sep">[<span class="key">clawhub v3.2.6</span>] -- boot sequence complete</div>
+
+      <div class="glitch-title" data-text="PARKLAN CLAWHUB">PARKLAN CLAWHUB</div>
+      <div class="tagline">retro-futuristic techno hub  //  22 modules online</div>
+
+      <div class="prompt-line">
+        <span class="prompt-user">parklan</span><span class="prompt-at">@</span><span class="prompt-host">clawhub</span>:<span class="prompt-path">~</span>$ ./status.sh<span class="cursor-blink"></span>
+      </div>
     </div>
-    <form class="chatbot-form" id="chatbotForm">
-      <textarea id="chatbotInput" placeholder="打字同 Laura 傾偈…" rows="1"></textarea>
-      <button type="submit">Send</button>
-    </form>
-    <div class="chatbot-status" id="chatbotStatus"></div>
   </div>
 
-  <!-- ── PROJECTS ── -->
-  <h2 class="section-title">╳ Projects</h2>
-  <div class="cards">
+  <!-- ═══════════════════════════════════════════
+       SYSTEM STATUS
+       ═══════════════════════════════════════════ -->
 
-    <div class="card">
-      <div class="tag">Transport <span class="badge badge-ready">Ready</span></div>
-      <h3>🚌 Bus ETA</h3>
-      <p>Real-time Citybus & KMB arrival checker with route search and live countdown.</p>
-      <a href="722-eta/">Open →</a>
-    </div>
-
-    <div class="card hidden-card" id="lunchWalletCard">
-      <div class="tag">Private <span class="badge badge-private">🔒</span></div>
-      <h3>Lunch Wallet</h3>
-      <p>Shared wallet tool for lunch spending, balances, and group cost tracking.</p>
-      <a href="lunch-wallet/">Access →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Music <span class="badge badge-beta">Beta</span></div>
-      <h3>🎵 MiniMax Music 2.6</h3>
-      <p>AI music generation + YouTube cover with MiniMax music-2.6 & music-cover models.</p>
-      <a href="music/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">AI <span class="badge badge-beta">Beta</span></div>
-      <h3>Ebook Cantonese Narration</h3>
-      <p>Import text/EPUB, rewrite into spoken Cantonese, test playback.</p>
-      <a href="ebook-canto-poc/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Music <span class="badge badge-ready">Ready</span></div>
-      <h3>Spotify AI Dashboard</h3>
-      <p>Now playing, queue intelligence, device status, and controls dashboard.</p>
-      <a href="spotify-dashboard/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Market <span class="badge badge-ready">Ready</span></div>
-      <h3>📈 HSI Live Stream</h3>
-      <p>Real-time HKEX HSI Futures — live price, bid/ask, volume via WebSocket.</p>
-      <a href="hsi-stream/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Trading <span class="badge badge-private">Private</span></div>
-      <h3>Polymarket Execution</h3>
-      <p>Execution-ready dashboard for connection notes, risk, and order preview.</p>
-      <a href="polymarket-execution/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Strategy <span class="badge badge-beta">Beta</span></div>
-      <h3>BTC 5m Strategy Lab</h3>
-      <p>Paper-test 5-min BTC market ideas with rule inputs and trade journal.</p>
-      <a href="btc-5m-strategy-lab/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Market <span class="badge badge-beta">Beta</span></div>
-      <h3>US Market Radar</h3>
-      <p>Compact dashboard experiment for market context and quick-glance signals.</p>
-      <a href="us-market-radar/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">AI <span class="badge badge-ready">Ready</span></div>
-      <h3>💋 Laura Standalone</h3>
-      <p>Full Laura chat with session memory and MiniMax voice — standalone version.</p>
-      <a href="laura/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">AI <span class="badge badge-poc">POC</span></div>
-      <h3>📊 投資報告</h3>
-      <p>AI 生成廣東話投資分析報告 — 基本面、技術面、風險同建議。</p>
-      <a href="stock-report/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">工具 <span class="badge badge-poc">POC</span></div>
-      <h3>🧋 請食 Tea</h3>
-      <p>搞 tea 訂單神器！開單 → 分享 link → 同事揀嘢 → 自動整合。</p>
-      <a href="tea-treat/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">工具 <span class="badge badge-ready">Live</span></div>
-      <h3>🅿️ 香園圍停車場</h3>
-      <p>監察邊境停車場車位，自動整合可預約時段，支援過夜跨日檢查。</p>
-      <a href="parking/">查看 →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Transport <span class="badge badge-ready">Ready</span></div>
-      <h3>✈️ HK Express Deals</h3>
-      <p>Track HK Express flight prices across routes with auto-refresh scanner.</p>
-      <a href="hkexpress/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Chat <span class="badge badge-ready">Ready</span></div>
-      <h3>💬 Conversation Vault</h3>
-      <p>Google sign-in conversation storage. Only you can see your chats.</p>
-      <a href="chat/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Stocks <span class="badge badge-ready">Live</span></div>
-      <h3>🏠 OPEN Stock</h3>
-      <p>Real-time Opendoor Technologies (NYSE: OPEN) price streaming.</p>
-      <a href="open/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Stocks <span class="badge badge-ready">Live</span></div>
-      <h3>🍚 美團 Meituan</h3>
-      <p>Real-time 美團 (HKEX: 3690) stock price streaming temple.</p>
-      <a href="meituan/">Open →</a>
-    </div>
-
-    <div class="card">
-      <div class="tag">Game <span class="badge badge-beta">Proto</span></div>
-      <h3>🏙️ NEON CITY BUILDER</h3>
-      <p>Cyberpunk SimCity prototype — grid-based city builder with neon aesthetic, 5 building types, real-time ticks.</p>
-      <a href="simcity-neon/">Open →</a>
-    </div>
-
+  <div class="status-strip">
+    <span class="label">STATUS</span><span class="val ok">ONLINE</span>
+    <span class="status-sep">|</span>
+    <span class="label">MODULES</span><span class="val info">22</span>
+    <span class="status-sep">|</span>
+    <span class="label">UPTIME</span><span class="val">127d</span>
+    <span class="status-sep">|</span>
+    <span class="label">CPU</span><span class="val ok">8%</span>
+    <span class="status-sep">|</span>
+    <span class="label">MEM</span><span class="val">412M / 512M</span>
+    <span class="status-sep">|</span>
+    <span class="label">NODE</span><span class="val info">nyc3</span>
   </div>
 
-  <div class="footer">Parklan Clawhub · on9claw.com</div>
+  <!-- ═══════════════════════════════════════════
+       PROJECT DIRECTORY
+       ═══════════════════════════════════════════ -->
+
+  <div class="section-label">/home/parklan/projects</div>
+
+  <div class="term-window">
+    <div class="term-titlebar">
+      <div class="term-dots">
+        <span class="term-dot red"></span>
+        <span class="term-dot yellow"></span>
+        <span class="term-dot green"></span>
+      </div>
+      <span class="term-title">parklan@clawhub:~/projects -- zsh</span>
+    </div>
+    <div class="dir-header">
+      <span class="prompt-user">parklan</span><span class="prompt-at">@</span><span class="prompt-host">clawhub</span>:<span class="prompt-path">~/projects</span>$ ls -la
+    </div>
+    <div class="dir-listing">
+
+      <a class="dir-row" href="722-eta/">
+        <span class="dir-icon">🚌</span>
+        <span><span class="dir-name">bus-eta</span> <span class="dir-desc">Citybus & KMB real-time arrival checker</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="hkexpress/">
+        <span class="dir-icon">✈️</span>
+        <span><span class="dir-name">hkexpress-deals</span> <span class="dir-desc">HK Express flight price tracker & scanner</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="parking/">
+        <span class="dir-icon">🅿️</span>
+        <span><span class="dir-name">hyw-parking</span> <span class="dir-desc">香園圍邊境停車場車位監察</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="music/">
+        <span class="dir-icon">🎵</span>
+        <span><span class="dir-name">minimax-music</span> <span class="dir-desc">AI music generation + YouTube covers</span></span>
+        <span class="dir-badge badge-beta">BETA</span>
+      </a>
+
+      <a class="dir-row" href="music/">
+        <span class="dir-icon">🎵</span>
+        <span><span class="dir-name">minimax-music-new</span> <span class="dir-desc">AI music 2.6 with music-cover models</span></span>
+        <span class="dir-badge badge-beta">BETA</span>
+      </a>
+
+      <a class="dir-row" href="spotify-dashboard/">
+        <span class="dir-icon">🎧</span>
+        <span><span class="dir-name">spotify-dashboard</span> <span class="dir-desc">Now playing, queue, device controls</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="ebook-canto-poc/">
+        <span class="dir-icon">📖</span>
+        <span><span class="dir-name">ebook-canto</span> <span class="dir-desc">Text-to-spoken Cantonese narration engine</span></span>
+        <span class="dir-badge badge-beta">BETA</span>
+      </a>
+
+      <a class="dir-row" href="hsi-stream/">
+        <span class="dir-icon">📈</span>
+        <span><span class="dir-name">hsi-stream</span> <span class="dir-desc">HKEX HSI futures real-time WebSocket</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="stock-report/">
+        <span class="dir-icon">📊</span>
+        <span><span class="dir-name">stock-report</span> <span class="dir-desc">AI 廣東話投資分析報告生成器</span></span>
+        <span class="dir-badge badge-poc">POC</span>
+      </a>
+
+      <a class="dir-row" href="open/">
+        <span class="dir-icon">🏠</span>
+        <span><span class="dir-name">open-stock</span> <span class="dir-desc">Opendoor Technologies price streaming</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="meituan/">
+        <span class="dir-icon">🍚</span>
+        <span><span class="dir-name">meituan</span> <span class="dir-desc">美團 3690 real-time stock tracker</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="btc-5m-strategy-lab/">
+        <span class="dir-icon">₿</span>
+        <span><span class="dir-name">btc-strategy-lab</span> <span class="dir-desc">5-minute BTC paper-test trading lab</span></span>
+        <span class="dir-badge badge-beta">BETA</span>
+      </a>
+
+      <a class="dir-row" href="us-market-radar/">
+        <span class="dir-icon">🇺🇸</span>
+        <span><span class="dir-name">us-market-radar</span> <span class="dir-desc">Compact US market context dashboard</span></span>
+        <span class="dir-badge badge-beta">BETA</span>
+      </a>
+
+      <a class="dir-row" href="polymarket-execution/">
+        <span class="dir-icon">🎲</span>
+        <span><span class="dir-name">polymarket-exec</span> <span class="dir-desc">Execution dashboard for Polymarket</span></span>
+        <span class="dir-badge badge-priv">PRIV</span>
+      </a>
+
+      <a class="dir-row" href="laura/">
+        <span class="dir-icon">💋</span>
+        <span><span class="dir-name">laura-chat</span> <span class="dir-desc">Standalone Laura chatbot with voice</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="chat/">
+        <span class="dir-icon">💬</span>
+        <span><span class="dir-name">conversation-vault</span> <span class="dir-desc">Google sign-in chat storage</span></span>
+        <span class="dir-badge badge-ready">READY</span>
+      </a>
+
+      <a class="dir-row" href="tea-treat/">
+        <span class="dir-icon">🧋</span>
+        <span><span class="dir-name">tea-treat</span> <span class="dir-desc">請食 Tea 訂單神器</span></span>
+        <span class="dir-badge badge-poc">POC</span>
+      </a>
+
+      <a class="dir-row" href="simcity-neon/">
+        <span class="dir-icon">🏙️</span>
+        <span><span class="dir-name">neon-city-builder</span> <span class="dir-desc">Cyberpunk SimCity prototype</span></span>
+        <span class="dir-badge badge-beta">BETA</span>
+      </a>
+
+      <!-- Hidden: Lunch Wallet -->
+      <a class="dir-row hidden-row" id="lunchWalletRow" href="lunch-wallet/">
+        <span class="dir-icon">🍱</span>
+        <span><span class="dir-name">lunch-wallet</span> <span class="dir-desc">Shared lunch spending tracker</span></span>
+        <span class="dir-badge badge-priv">PRIV</span>
+      </a>
+
+    </div>
+    <div class="dir-total">
+      total <span class="val info">22</span> entries | <span class="val ok">18</span> active | <span class="val warn">4</span> hidden
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════ -->
+
+  <div class="footer-term">
+    [<span class="highlight">parklan@clawhub</span>] ~ connection: <span style="color:var(--green)">secure</span> | node: <span style="color:var(--cyan)">nyc3</span> | <span style="color:var(--text-dim)">on9claw.com</span>
+  </div>
+
 </div>
 
-<!-- Private dialog -->
-<dialog id="privateDialog" style="border:1px solid rgba(255,255,255,0.14);border-radius:20px;background:#1a0f38;color:#f8ecff;padding:24px;max-width:340px;width:90%;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <strong style="letter-spacing:-0.01em;">🔒 Private Access</strong>
-    <button id="privateDialogClose" style="width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:#f8ecff;cursor:pointer;">✕</button>
+<!-- ═══════════════════════════════════════════
+     LAURA: FLOATING TERMINAL CHAT
+     ═══════════════════════════════════════════ -->
+
+<button class="chatbot-launch" id="chatbotLaunch" title="Open terminal chat">
+  <img src="assets/chatbot-avatar.jpg" alt="Laura">
+</button>
+
+<div class="chatbot-panel" id="chatbotPanel">
+  <div class="chatbot-panel-head">
+    <img src="assets/chatbot-avatar.jpg" alt="Laura">
+    <div class="info">
+      <h3>laura@clawhub</h3>
+      <span>tty2 · MiMo v2 Pro · 廣東話</span>
+    </div>
+    <select id="chatbotRole">
+      <option value="laura">laura</option>
+      <option value="guide">guide</option>
+      <option value="tech">tech</option>
+    </select>
+    <button class="chatbot-close" id="chatbotClose">EXIT</button>
   </div>
-  <p style="color:#d0a9d9;font-size:0.85em;line-height:1.5;margin-bottom:14px;">Enter the secret password to reveal private projects.</p>
-  <form id="privateRevealForm" style="display:flex;gap:8px;">
-    <input type="password" name="password" placeholder="Password" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;color:#f8ecff;font-family:inherit;font-size:0.9em;outline:none;">
-    <button type="submit" style="padding:10px 16px;background:#ff3ea5;border:none;border-radius:12px;color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:0.85em;">Unlock</button>
+  <div class="chatbot-msgs" id="chatbotMsgs">
+    <div class="chatbot-msg bot"><span class="who">laura@clawhub:~$</span>你好呀，我係Laura。有咩可以幫到你？</div>
+  </div>
+  <form class="chatbot-form" id="chatbotForm">
+    <textarea id="chatbotInput" placeholder="parklan@clawhub:~$ _" rows="1"></textarea>
+    <button type="submit">SEND</button>
   </form>
-  <div id="privateError" style="display:none;color:#ffb4ce;font-size:0.75em;margin-top:10px;">Wrong password.</div>
+  <div class="chatbot-status" id="chatbotStatus"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PRIVATE ACCESS DIALOG
+     ═══════════════════════════════════════════ -->
+
+<dialog id="privateDialog">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <h3>[ PRIVATE ACCESS ]</h3>
+    <button class="close-btn" id="privateDialogClose">ESC</button>
+  </div>
+  <p>Enter credentials to reveal hidden modules.</p>
+  <form id="privateRevealForm">
+    <input type="password" name="password" placeholder="password">
+    <button type="submit">AUTH</button>
+  </form>
+  <div class="private-error" id="privateError">ACCESS DENIED: invalid credentials</div>
 </dialog>
 
 <script>
 (function(){
-  // ── LAURA FLOATING CHAT ──
-  var chatbotMsgs=document.getElementById('chatbotMsgs');
-  var chatbotForm=document.getElementById('chatbotForm');
-  var chatbotInput=document.getElementById('chatbotInput');
-  var chatbotStatus=document.getElementById('chatbotStatus');
-  var chatbotRole=document.getElementById('chatbotRole');
-  var chatHistory=[
-    {role:'assistant',content:'你好呀～我係Laura，柏林嘅秘書。有咩可以幫到你呀？😏'}
+  /* ── LAURA FLOATING CHAT ── */
+  var chatbotMsgs = document.getElementById('chatbotMsgs');
+  var chatbotForm = document.getElementById('chatbotForm');
+  var chatbotInput = document.getElementById('chatbotInput');
+  var chatbotStatus = document.getElementById('chatbotStatus');
+  var chatbotRole = document.getElementById('chatbotRole');
+  var chatHistory = [
+    {role:'assistant', content:'你好呀，我係Laura。有咩可以幫到你？'}
   ];
 
-  function addChatMsg(role,content){
-    var cls=role==='user'?'user':'bot';
-    var who=role==='user'?'You':'Laura';
-    var d=document.createElement('div');
-    d.className='chatbot-msg '+cls;
-    d.innerHTML='<span class="who">'+who+'</span><br>'+content.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function addChatMsg(role, content) {
+    var cls = role === 'user' ? 'user' : 'bot';
+    var who = role === 'user' ? 'parklan@clawhub:~$' : 'laura@clawhub:~$';
+    var d = document.createElement('div');
+    d.className = 'chatbot-msg ' + cls;
+    d.innerHTML = '<span class="who">' + who + '</span><br>' +
+      content.replace(/</g,'&lt;').replace(/>/g,'&gt;');
     chatbotMsgs.appendChild(d);
-    chatbotMsgs.scrollTop=chatbotMsgs.scrollHeight;
+    chatbotMsgs.scrollTop = chatbotMsgs.scrollHeight;
   }
 
-  // Toggle panel
-  document.getElementById('chatbotLaunch').addEventListener('click',function(){
+  document.getElementById('chatbotLaunch').addEventListener('click', function(){
     document.getElementById('chatbotPanel').classList.toggle('open');
   });
-  document.getElementById('chatbotClose').addEventListener('click',function(){
+  document.getElementById('chatbotClose').addEventListener('click', function(){
     document.getElementById('chatbotPanel').classList.remove('open');
   });
 
-  chatbotForm.addEventListener('submit',async function(e){
+  chatbotForm.addEventListener('submit', async function(e) {
     e.preventDefault();
-    var text=chatbotInput.value.trim();
-    if(!text) return;
-    addChatMsg('user',text);
-    chatHistory.push({role:'user',content:text});
-    chatbotInput.value='';
-    chatbotStatus.textContent='思考中…';
-    try{
-      var res=await fetch('/chatbot-api/message',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({role:chatbotRole.value,messages:chatHistory})
+    var text = chatbotInput.value.trim();
+    if (!text) return;
+    addChatMsg('user', text);
+    chatHistory.push({role:'user', content: text});
+    chatbotInput.value = '';
+    chatbotStatus.textContent = 'processing...';
+    try {
+      var res = await fetch('/chatbot-api/message', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({role: chatbotRole.value, messages: chatHistory})
       });
-      var data=await res.json();
-      if(!data.ok) throw new Error(data.error||'chat failed');
-      addChatMsg('assistant',data.reply);
-      chatHistory.push({role:'assistant',content:data.reply});
-      chatbotStatus.textContent='';
-    }catch(err){
-      chatbotStatus.textContent=err.message;
+      var data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'chat failed');
+      addChatMsg('assistant', data.reply);
+      chatHistory.push({role:'assistant', content: data.reply});
+      chatbotStatus.textContent = '';
+    } catch(err) {
+      chatbotStatus.textContent = 'ERROR: ' + err.message;
     }
   });
 
-  chatbotInput.addEventListener('keydown',function(e){
-    if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); chatbotForm.requestSubmit(); }
+  chatbotInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      chatbotForm.requestSubmit();
+    }
   });
 
-  // ── PRIVATE ACCESS ──
-  var dialog=document.getElementById('privateDialog');
-  var launch=document.createElement('button');
-  launch.style.cssText='position:fixed;top:12px;right:12px;z-index:20;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,62,165,0.3);background:rgba(255,62,165,0.12);color:#f8ecff;cursor:pointer;font-size:16px;box-shadow:0 0 16px rgba(255,0,212,0.1);';
-  launch.textContent='🔒';
-  launch.title='Private access';
-  document.body.appendChild(launch);
+  /* ── PRIVATE ACCESS ── */
+  var dialog = document.getElementById('privateDialog');
+  var lockBtn = document.createElement('button');
+  lockBtn.className = 'lock-btn';
+  lockBtn.textContent = '[]';
+  lockBtn.title = 'Private access';
+  document.body.appendChild(lockBtn);
 
-  var lunchCard=document.getElementById('lunchWalletCard');
-  function setLunchVisible(){
-    lunchCard.classList.add('show');
-    sessionStorage.setItem('clawhub_lunch_unlocked','1');
+  var lunchRow = document.getElementById('lunchWalletRow');
+  function setLunchVisible() {
+    if (lunchRow) lunchRow.classList.add('show');
+    sessionStorage.setItem('clawhub_lunch_unlocked', '1');
   }
-  if(sessionStorage.getItem('clawhub_lunch_unlocked')==='1') setLunchVisible();
+  if (sessionStorage.getItem('clawhub_lunch_unlocked') === '1') setLunchVisible();
 
-  launch.addEventListener('click',function(){
-    document.getElementById('privateError').style.display='none';
+  lockBtn.addEventListener('click', function() {
+    document.getElementById('privateError').style.display = 'none';
     dialog.showModal();
   });
-  document.getElementById('privateDialogClose').addEventListener('click',function(){
+  document.getElementById('privateDialogClose').addEventListener('click', function() {
     dialog.close();
   });
-  document.getElementById('privateRevealForm').addEventListener('submit',async function(e){
+  document.getElementById('privateRevealForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    var value=this.querySelector('input').value;
-    var data=new TextEncoder().encode(value);
-    var digest=await crypto.subtle.digest('SHA-256',data);
-    var hash=Array.from(new Uint8Array(digest)).map(function(b){return b.toString(16).padStart(2,'0')}).join('');
-    if(hash==='cb69775effd93fc34ef38dfbfcdc4c593b1a3d8e7ab70c0f05d627dbc5cbd298'){
+    var value = this.querySelector('input').value;
+    var data = new TextEncoder().encode(value);
+    var digest = await crypto.subtle.digest('SHA-256', data);
+    var hash = Array.from(new Uint8Array(digest))
+      .map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+    if (hash === 'cb69775effd93fc34ef38dfbfcdc4c593b1a3d8e7ab70c0f05d627dbc5cbd298') {
       setLunchVisible();
       dialog.close();
-      lunchCard.scrollIntoView({behavior:'smooth',block:'center'});
-    }else{
-      document.getElementById('privateError').style.display='block';
+      if (lunchRow) lunchRow.scrollIntoView({behavior:'smooth', block:'center'});
+    } else {
+      document.getElementById('privateError').style.display = 'block';
     }
   });
-  // ── 3D TILT floating Laura (move phone!) ──
-  (function(){
-    var btn=document.getElementById('chatbotLaunch');
-    if(!btn) return;
-    var raf=null, beta=0, gamma=0, initBeta=null, initGamma=null, gyroReady=false;
-    function upd(){
-      var rx, ry;
-      if(gyroReady){
-        rx=(beta-initBeta)*2; ry=(gamma-initGamma)*2;
-        rx=Math.max(-25,Math.min(25,rx));
-        ry=Math.max(-25,Math.min(25,ry));
-      }else{rx=0;ry=0;}
-      btn.style.transform='rotateX('+rx.toFixed(1)+'deg) rotateY('+ry.toFixed(1)+'deg)';
-      btn.style.boxShadow=ry*2+'px '+rx*1.5+'px 28px rgba(0,0,0,0.4), '+(-ry*3)+'px '+(-rx*2)+'px 20px rgba(255,0,212,'+(0.18+Math.abs(rx+ry)/60).toFixed(2)+')';
-    }
-    function onOrient(e){
-      var b=e.beta||0, g=e.gamma||0;
-      if(initBeta===null){initBeta=b;initGamma=g;gyroReady=true;}
-      beta=b;gamma=g;
-      if(!raf){raf=requestAnimationFrame(function(){upd();raf=null;});}
-    }
-    if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission!=='function'){
-      window.addEventListener('deviceorientation',onOrient);
-    }
-    document.addEventListener('mousemove',function(e){
-      if(gyroReady) return;
-      var mx=(e.clientX/window.innerWidth-0.5)*16;
-      var my=(e.clientY/window.innerHeight-0.5)*16;
-      btn.style.transform='rotateX('+(-my).toFixed(1)+'deg) rotateY('+(mx).toFixed(1)+'deg)';
-    });
-  })();
 })();
 </script>
 </body>
