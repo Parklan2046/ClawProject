@@ -412,10 +412,10 @@ function addBK(it){
 // ── TIMER ──
 function startCD(){cdVal=10;if(cdTimer)clearInterval(cdTimer);var r=document.getElementById('rd');r.classList.remove('paused');cdTimer=setInterval(function(){cdVal--;if(cdVal<0){document.getElementById('tl').textContent='0';return}document.getElementById('tl').textContent=cdVal+'s'},1000)}
 function clearAll(){if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}if(cdTimer){clearInterval(cdTimer);cdTimer=null;}}
-function togglePause(){paused=!paused;var b=document.getElementById('tpBtn'),r=document.getElementById('rd');if(paused){b.textContent='繼續';b.classList.add('paused');r.classList.add('paused');document.getElementById('tl').textContent='--';clearAll()}else{b.textContent='暫停';b.classList.remove('paused');r.classList.remove('paused');startCD();refreshTimer=setTimeout(function(){openEta();},10000)}}
+function togglePause(){paused=!paused;var b=document.getElementById('tpBtn'),r=document.getElementById('rd');if(paused){b.textContent='繼續';b.classList.add('paused');r.classList.add('paused');document.getElementById('tl').textContent='--';clearAll()}else{b.textContent='暫停';b.classList.remove('paused');r.classList.remove('paused');startCD();refreshTimer=setTimeout(function(){openEta(null,null,true)},10000)}}
 
 // ── ETA ──
-async function openEta(forceCo,partnerStop){
+async function openEta(forceCo,partnerStop,silent){
   var route=document.getElementById('routeNo').value.trim().toUpperCase();
   var stopInput=document.getElementById('stopId').value.trim();
   var stopParts=stopInput.split('+');
@@ -425,8 +425,7 @@ async function openEta(forceCo,partnerStop){
   clearAll();errEl.textContent='';
   if(!route||!stopId){errEl.textContent='請輸入路線同 Stop ID';return;}
   document.getElementById('checkBtn').disabled=true;
-  document.getElementById('loading').style.display='block';document.getElementById('app').style.display='none';
-  statusEl.innerHTML='<span class="status-dot"></span>查詢中…';
+  if(!silent){document.getElementById('loading').style.display='block';document.getElementById('app').style.display='none';statusEl.innerHTML='<span class="status-dot"></span>查詢中…'}
 
   try{
     var allEtas=[],co=forceCo||detectCO(route,stopId);
@@ -439,7 +438,7 @@ async function openEta(forceCo,partnerStop){
     var filtered=allEtas.filter(function(i){return i&&i.eta});
     if(searchState.dir){filtered=filtered.filter(function(i){return !i.dir||i.dir===searchState.dir;})}
     var items=filtered.sort(function(a,b){return new Date(a.eta)-new Date(b.eta)});
-    if(!items.length){statusEl.innerHTML='<span class="status-dot"></span>'+route+' 暫時冇 ETA';document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';startCD();refreshTimer=setTimeout(function(){openEta(co,partner)},10000);return;}
+    if(!items.length){statusEl.innerHTML='<span class="status-dot"></span>'+route+' 暫時冇 ETA';if(!silent){document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block'}startCD();refreshTimer=setTimeout(function(){openEta(co,partner,null,true)},10000);return;}
 
     var ops=[].concat.apply([],items.map(function(i){return i._co})).filter(function(v,i,a){return a.indexOf(v)===i});
     var opLabel=ops.map(function(o){return o==='KMB'?'<span class="op-badge kmb">九巴</span>':'<span class="op-badge ctb">城巴</span>'}).join(' ');
@@ -472,9 +471,9 @@ async function openEta(forceCo,partnerStop){
       listEl.appendChild(div);
     });
 
-    document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';
-    startCD();refreshTimer=setTimeout(function(){openEta(co,partner)},10000);
-  }catch(e){errEl.textContent='查詢失敗：'+e.message;statusEl.textContent='';document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';}
+    if(!silent){document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block'}
+    startCD();refreshTimer=setTimeout(function(){openEta(co,partner,null,true)},10000);
+  }catch(e){if(!silent){errEl.textContent='查詢失敗：'+e.message;statusEl.textContent='';document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block'}else{var lastCo=forceCo||(partner?partner.length>6?'CTB':'KMB':null);startCD();refreshTimer=setTimeout(function(){openEta(lastCo,partner,null,true)},10000)}}
   finally{document.getElementById('checkBtn').disabled=false;}
 }
 

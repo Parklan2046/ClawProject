@@ -277,19 +277,21 @@ function toggleTheme(){
 
 function startCD(){cd=30;if(cti)clearInterval(cti);document.getElementById('rd').classList.remove('paused');cti=setInterval(function(){cd--;if(cd<0){document.getElementById('tl').textContent='0';return}document.getElementById('tl').textContent=cd+'s'},1000)}
 function clearAll(){if(rt)clearTimeout(rt);if(cti)clearInterval(cti);rt=null;cti=null}
-function togglePause(){paused=!paused;var b=document.getElementById('bpBtn'),r=document.getElementById('rd');if(paused){b.textContent='繼續';b.classList.add('paused');r.classList.add('paused');document.getElementById('tl').textContent='--';clearAll()}else{b.textContent='暫停';b.classList.remove('paused');r.classList.remove('paused');startCD();rt=setTimeout(refresh,30000)}}
+function togglePause(){paused=!paused;var b=document.getElementById('bpBtn'),r=document.getElementById('rd');if(paused){b.textContent='繼續';b.classList.add('paused');r.classList.add('paused');document.getElementById('tl').textContent='--';clearAll()}else{b.textContent='暫停';b.classList.remove('paused');r.classList.remove('paused');startCD();rt=setTimeout(function(){refresh(true)},30000)}}
 
-async function refresh(){
-  clearAll();document.getElementById('loading').style.display='block';document.getElementById('app').style.display='none';
+async function refresh(silent){
+  clearAll();
+  if(!silent){document.getElementById('loading').style.display='block';document.getElementById('app').style.display='none'}
   var ct=document.getElementById('carType').value;
   var from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
   try{
     var r=await fetch('/parking/api/availability?type='+ct+'&from='+from+'&to='+to);
-    var d=await r.json();document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';
+    var d=await r.json();
+    if(!silent){document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block'}
     if(!d.ok){showErr(d.error);return}
     _days=d.days;renderDays();
-    if(!paused){startCD();rt=setTimeout(refresh,30000)}
-  }catch(e){showErr(e.message)}
+    if(!paused){startCD();rt=setTimeout(function(){refresh(true)},30000)}
+  }catch(e){if(!silent)showErr(e.message);else{startCD();rt=setTimeout(function(){refresh(true)},30000)}}
 }
 function showErr(m){document.getElementById('loading').style.display='none';document.getElementById('app').style.display='block';document.getElementById('days').innerHTML='<div style="color:var(--red);text-align:center;padding:32px">'+m+'</div>'}
 
