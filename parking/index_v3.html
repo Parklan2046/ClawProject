@@ -264,17 +264,15 @@ function initDates(){
 }
 initDates();
 
+function getSystemTheme(){return window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙'}
 function toggleTheme(){
-  var html=document.documentElement;
-  var isDark=html.getAttribute('data-theme')==='dark';
-  html.setAttribute('data-theme',isDark?'light':'dark');
-  document.getElementById('themeBtn').textContent=isDark?'🌙':'☀️';
-  localStorage.setItem('parking-theme',isDark?'light':'dark');
+  var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  applyTheme(n);localStorage.setItem('parking-theme',n);
 }
 (function(){
-  var t=localStorage.getItem('parking-theme')||'light';
-  document.documentElement.setAttribute('data-theme',t);
-  document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙';
+  var s=localStorage.getItem('parking-theme'),t=s||getSystemTheme();applyTheme(t);
+  window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(e){if(!localStorage.getItem('parking-theme'))applyTheme(e.matches?'dark':'light')});
 })();
 
 function startCD(){cd=30;if(cti)clearInterval(cti);document.getElementById('rd').classList.remove('paused');cti=setInterval(function(){cd--;if(cd<0){document.getElementById('tl').textContent='0';return}document.getElementById('tl').textContent=cd+'s'},1000)}
