@@ -193,11 +193,11 @@ body{
     </div>
     <div class="topbar-actions">
       <select id="carType" onchange="refresh()">
-        <option value="private">私家車</option>
-        <option value="goods">客貨車</option>
-        <option value="motorcycle">電單車</option>
-        <option value="disabled_blue">傷殘人士 (藍證)</option>
-        <option value="disabled_grey">接載殘疾 (灰證)</option>
+        <option value="private">🚗 私家車</option>
+        <option value="goods">🚛 客貨車</option>
+        <option value="motorcycle">🏍️ 電單車</option>
+        <option value="disabled_blue">♿ 傷殘人士 (藍證)</option>
+        <option value="disabled_grey">♿ 接載殘疾 (灰證)</option>
       </select>
       <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="切換主題">🌙</button>
     </div>
@@ -214,6 +214,11 @@ body{
 
   <div id="app" style="display:none">
     <div id="days"></div>
+
+    <!-- PRICING NOTES -->
+    <div style="font-size:.66em;color:var(--dim);line-height:1.8;padding:0 2px 8px">
+      泊車收費以每小時計算 · 入場前 30 分鐘至 7 天前預約 · 最少 2 小時 · 私家車/電單車最長 7 天 · 客貨車最長 3 天 · 更改/取消 HK$100
+    </div>
 
     <div class="help-row">
       <button onclick="var h=document.getElementById('hb');h.style.display=h.style.display==='block'?'none':'block';this.textContent=h.style.display==='block'?'關閉':'說明'">說明</button>
@@ -249,7 +254,7 @@ body{
 </div>
 
 <script>
-const ST={open:{label:'開放',cls:'open'},available:{label:'可預約',cls:'available'},limited:{label:'少量',cls:'limited'},full:{label:'已滿',cls:'full'}};
+const ST={open:{icon:'🟢',label:'開放',cls:'open'},available:{icon:'🔵',label:'可預約',cls:'available'},limited:{icon:'🟡',label:'少量',cls:'limited'},full:{icon:'🔴',label:'已滿',cls:'full'}};
 var _days=[],rt=null,cti=null,cd=30,paused=false;
 
 function initDates(){
@@ -293,6 +298,37 @@ function showErr(m){document.getElementById('loading').style.display='none';docu
 function dcl(s){return s==='error'||s==='full'?'full':s==='limited'?'limited':s==='available'?'available':'open'}
 function sc(n){return n<=2?'u':n<=5?'l':'o'}
 
+
+function getOvernight(i,_days,day,ws){
+  if(i>=_days.length-1||day.status==='error'||day.status==='full')return '';
+  var lw=ws.length>0?ws[ws.length-1]:null;
+  if(!lw||lw.end!=='21:30')return '';
+  var nd=_days[i+1];
+  if(!nd||nd.status==='error'||nd.status==='full')return '';
+  var fw=(nd.windows||[]).length>0?nd.windows[0]:null;
+  if(!fw||fw.start!=='06:00')return '';
+  var fh=parseInt(lw.start.split(':')[0]),fm=parseInt(lw.start.split(':')[1]);
+  var eh=parseInt(fw.end.split(':')[0]),em=parseInt(fw.end.split(':')[1]);
+  var hrs=(22-(fh+fm/60))+(eh+em/60-6);
+  var nightsOK=1,lastLabel='',lastEnd=fw.end;
+  var maxDays=7;
+  for(var k=i+2;k<Math.min(_days.length,i+maxDays);k++){
+    var nkd=_days[k];
+    if(nkd.status==='error'||nkd.status==='full')break;
+    var nkfw=(nkd.windows||[]).length>0?nkd.windows[0]:null;
+    if(!nkfw||nkfw.start!=='06:00')break;
+    var allOpen=true;
+    for(var ck=i+1;ck<k;ck++){if(!_days[ck].full_day_available){allOpen=false;break;}}
+    if(!allOpen)break;
+    nightsOK++;lastLabel=nkd.day_label;lastEnd=nkfw.end;
+  }
+  if(nightsOK>=2){
+    var allHrs=((22-(fh+fm/60))+(parseInt(lastEnd.split(':')[0])+parseInt(lastEnd.split(':')[1])/60-6))+(nightsOK-1)*16;
+    return '<div class="day-windows" style="margin-top:5px"><div class="wc ov"><span class="wct">可過夜泊車 '+nightsOK+' 晚 · 至 '+lastLabel+' 06:00 至 '+lastEnd+'（約'+allHrs.toFixed(0)+'小時）</span></div></div>';
+  }
+  return '<div class="day-windows" style="margin-top:5px"><div class="wc ov"><span class="wct">可過夜：翌日 06:00 至 '+fw.end+'（約'+hrs.toFixed(0)+'小時）</span></div></div>';
+}
+
 function renderDays(){
   var ts=new Date(Date.now()+8*3600000).toISOString().split('T')[0];
   var dayNames=['週日','週一','週二','週三','週四','週五','週六'];
@@ -308,11 +344,11 @@ function renderDays(){
     else if(day.full_day_available){wh='<div class=\"day-windows\"><div class=\"wc full-day\" onclick=\"openDlg(\''+day.date+'\',\'06:00\',\'21:30\','+day.quota+')\"><span class=\"wct\">06:00 至 22:00 全線開放</span><span class=\"wcs\"><strong class=\"o\">'+day.quota+'</strong> 位</span></div></div>'}
     else{wh='<div class=\"day-windows\">'+ws.map(function(w){return '<div class=\"wc\" onclick=\"openDlg(\''+day.date+'\',\''+w.start+'\',\''+w.end+'\','+w.spaces+')\"><span class=\"wct\">'+w.start+' 至 '+w.end+'</span><span class=\"wcs\"><strong class=\"'+sc(w.spaces)+'\">'+w.spaces+'</strong> 位</span></div>'}).join('')+'</div>'}
 
-    if(i<_days.length-1&&day.status!=='error'&&day.status!=='full'){var lw=ws.length>0?ws[ws.length-1]:null;if(lw&&lw.end==='21:30'){var nd=_days[i+1];if(nd&&nd.status!=='error'&&nd.status!=='full'){var fw=(nd.windows||[]).length>0?nd.windows[0]:null;if(fw&&fw.start==='06:00'){var fh=parseInt(lw.start.split(':')[0]),fm=parseInt(lw.start.split(':')[1]),eh=parseInt(fw.end.split(':')[0]),em=parseInt(fw.end.split(':')[1]),hrs=(22-(fh+fm/60))+(eh+em/60-6);wh+='<div class=\"day-windows\" style=\"margin-top:5px\"><div class=\"wc ov\"><span class=\"wct\">可過夜：翌日 06:00 至 '+fw.end+'（約'+hrs.toFixed(0)+'小時）</span></div></div>'}}}}
+    wh+=getOvernight(i,_days,day,ws);
 
     return '<div class=\"day-card'+(it?' today':'')+'\">'
       +'<div class=\"day-head\">'
-        +'<span class=\"day-dot '+dc+'\"></span>'
+        +'<span class="day-dot '+dc+'"></span>'+st.icon
         +'<span class=\"day-label\">'+(it?'今天':dn)+(it?'<span class=\"day-today\"> · '+day.day_label+'</span>':'')+'</span>'
         +(!it?'<span class=\"day-date\">'+day.day_label+'</span>':'')
         +'<span class=\"day-badge '+st.cls+'\">'+st.label+'</span>'
