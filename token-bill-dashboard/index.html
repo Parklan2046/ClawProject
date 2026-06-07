@@ -568,6 +568,10 @@ body::after {
 
 .acct-card[data-service="chatgpt"] .acct-icon { color: var(--green); border-color: var(--border-green); }
 .acct-card[data-service="minimax"]  .acct-icon { color: var(--orange); border-color: rgba(255,140,66,0.3); }
+.acct-card[data-service="opencode-go"] .acct-icon { color: var(--green);  border-color: var(--border-active); }
+.acct-card[data-service="opencode-go"] .acct-badge.badge-go { color: var(--green); border-color: var(--green); }
+.acct-card[data-service="openrouter"]  .acct-icon { color: var(--cyan);   border-color: var(--border-cyan); }
+.acct-card[data-service="openrouter"]  .acct-badge.badge-or { color: var(--cyan); border-color: var(--cyan); }
 .acct-card[data-service="openai"]   .acct-icon { color: var(--pink);   border-color: var(--border-active); }
 .acct-card[data-service="anthropic"].acct-icon { color: var(--purple); border-color: rgba(167,139,250,0.3); }
 .acct-card[data-service="google"]   .acct-icon { color: var(--cyan);   border-color: var(--border-cyan); }
@@ -696,6 +700,69 @@ body::after {
     </div>
 
   </div>
+    <!-- ── OpenCode Go ── -->
+    <div class="acct-card crit" data-service="opencode-go">
+      <div class="acct-head">
+        <div class="acct-icon">⌘</div>
+        <div class="acct-name">opencode-go</div>
+        <div class="acct-badge badge-go">GO</div>
+      </div>
+      <div class="acct-meta">
+        <div><span class="k">workspace</span> <span class="v" id="ocg-workspace">wrk_01KREB…3HYM30ZCYB</span></div>
+        <div><span class="k">limit   </span> <span class="v" id="ocg-limitname">monthly</span></div>
+        <div><span class="k">reset   </span> <span class="v" id="ocg-reset">in …</span></div>
+        <div><span class="k">status  </span> <span class="v" id="ocg-status">…</span></div>
+      </div>
+      <div class="acct-bars">
+        <div class="bar-block">
+          <div class="bar-label"><span>monthly</span><span class="pct" id="ocg-monthly-pct">…</span></div>
+          <div class="bar-track"><div class="bar-fill" id="ocg-monthly-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="ocg-monthly-sub">…</div>
+        </div>
+      </div>
+      <div class="acct-models">
+        <span class="model-chip">deepseek-v4-flash</span>
+        <span class="model-chip">minimax-m3</span>
+        <span class="model-chip" id="ocg-tier">workspace tier</span>
+      </div>
+      <div class="acct-footer">
+        <span class="live" id="ocg-state">…</span>
+        <span id="ocg-age">last fetch …</span>
+      </div>
+    </div>
+
+    <!-- ── OpenRouter ── -->
+    <div class="acct-card warn" data-service="openrouter">
+      <div class="acct-head">
+        <div class="acct-icon">◉</div>
+        <div class="acct-name">openrouter</div>
+        <div class="acct-badge badge-or">CREDITS</div>
+      </div>
+      <div class="acct-meta">
+        <div><span class="k">account </span> <span class="v" id="or-account">user_2qmPwN…fohZj</span></div>
+        <div><span class="k">tier    </span> <span class="v" id="or-tier">…</span></div>
+        <div><span class="k">credits </span> <span class="v" id="or-credits">$… of $… left</span></div>
+        <div><span class="k">spent   </span> <span class="v" id="or-spent">$… lifetime</span></div>
+      </div>
+      <div class="acct-bars">
+        <div class="bar-block">
+          <div class="bar-label"><span>credits used</span><span class="pct" id="or-used-pct">…</span></div>
+          <div class="bar-track"><div class="bar-fill" id="or-used-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="or-used-sub">…</div>
+        </div>
+      </div>
+      <div class="acct-models">
+        <span class="model-chip" id="or-day">day $…</span>
+        <span class="model-chip" id="or-week">week $…</span>
+        <span class="model-chip" id="or-month">month $…</span>
+        <span class="model-chip" id="or-byok">byok $…</span>
+      </div>
+      <div class="acct-footer">
+        <span class="live" id="or-state">…</span>
+        <span id="or-age">last fetch …</span>
+      </div>
+    </div>
+
 
 
 
@@ -771,6 +838,10 @@ body::after {
     if (payload.data.chatgpt) renderChatgpt(payload.data.chatgpt, payload, payload.errors && payload.errors.chatgpt);
     // minimax
     if (payload.data.minimax) renderMinimax(payload.data.minimax, payload, payload.errors && payload.errors.minimax);
+    // opencode-go
+    if (payload.data.opencode_go) renderOpencodeGo(payload.data.opencode_go, payload, payload.errors && payload.errors.opencode_go);
+    // openrouter
+    if (payload.data.openrouter) renderOpenrouter(payload.data.openrouter, payload, payload.errors && payload.errors.openrouter);
     // top bar + foot text
     const now = new Date(payload.fetchedAt || Date.now()).toLocaleTimeString();
     const ageS = Math.max(0, Math.round((Date.now() - new Date(payload.fetchedAt || Date.now()).getTime()) / 1000));
@@ -843,6 +914,79 @@ body::after {
     setText("mm-5h-reset", "in " + (i.resetInHuman || "—"));
     setText("mm-region", (d.region || "cn") + " · MiniMax-M3");
     setText("mm-billing", "coding plan");
+  }
+
+
+  function renderOpencodeGo(d, payload, err) {
+    if (!d) {
+      setText("ocg-status", "err");
+      setText("ocg-reset", "—");
+      setText("ocg-monthly-pct", "—");
+      setText("ocg-monthly-sub", err || "no data");
+      setText("ocg-state", "err");
+      setText("ocg-age", err || "no data");
+      setStyle("ocg-monthly-bar", "width", "0%");
+      setClass("ocg-monthly-bar", "bar-fill idle");
+      return;
+    }
+    const m = d.monthly || {};
+    const pct = m.usedPct == null ? (d.status === "ok" ? 0 : 100) : m.usedPct;
+    setText("ocg-monthly-pct", (pct ?? "—") + "%");
+    setText("ocg-monthly-sub", (m.note || "monthly window") + (m.resetInHuman ? " · resets in " + m.resetInHuman : ""));
+    setText("ocg-reset", m.resetInHuman ? "in " + m.resetInHuman : "—");
+    setText("ocg-status", d.status === "limit_reached" ? "monthly cap reached" : (d.status === "ok" ? "within quota" : d.status));
+    setText("ocg-limitname", d.limitName || "monthly");
+    setStyle("ocg-monthly-bar", "width", Math.max(0, Math.min(100, pct || 0)) + "%");
+    setClass("ocg-monthly-bar", "bar-fill " + classify(pct));
+    setText("ocg-state", (payload && payload.source) ? payload.source : "live");
+    setText("ocg-age", err ? err : "live");
+    if (d.workspace) {
+      const short = d.workspace.length > 14 ? d.workspace.slice(0, 10) + "…" + d.workspace.slice(-6) : d.workspace;
+      setText("ocg-workspace", short);
+    }
+  }
+
+  function renderOpenrouter(d, payload, err) {
+    if (!d) {
+      setText("or-used-pct", "—");
+      setText("or-used-sub", err || "no data");
+      setText("or-credits", "$— of $— left");
+      setText("or-spent", "$— lifetime");
+      setText("or-state", "err");
+      setText("or-age", err || "no data");
+      setStyle("or-used-bar", "width", "0%");
+      setClass("or-used-bar", "bar-fill idle");
+      return;
+    }
+    const cr = d.credits || {};
+    const sp = d.spend || {};
+    const usedPct = cr.usedPct == null ? null : cr.usedPct;
+    setText("or-used-pct", (usedPct == null ? "—" : usedPct.toFixed(1)) + "%");
+    setText("or-used-sub", `credits $${fmtMoney(cr.remaining)} of $${fmtMoney(cr.total)} remaining · used $${fmtMoney(cr.used)}`);
+    setText("or-credits", `$${fmtMoney(cr.remaining)} of $${fmtMoney(cr.total)} left`);
+    setText("or-spent",  `$${fmtMoney(sp.lifetime)} lifetime`);
+    setText("or-tier", d.isFreeTier ? "free tier" : "paid (pay-as-you-go)");
+    setText("or-day",   `day   $${fmtMoney(sp.daily)}`);
+    setText("or-week",  `week  $${fmtMoney(sp.weekly)}`);
+    setText("or-month", `month $${fmtMoney(sp.monthly)}`);
+    setText("or-byok",  `byok  $${fmtMoney(sp.byokLifetime)}`);
+    if (d.accountId) {
+      const short = d.accountId.length > 14 ? d.accountId.slice(0, 10) + "…" + d.accountId.slice(-5) : d.accountId;
+      setText("or-account", short);
+    }
+    setStyle("or-used-bar", "width", Math.max(0, Math.min(100, usedPct || 0)) + "%");
+    setClass("or-used-bar", "bar-fill " + classify(usedPct));
+    setText("or-state", (payload && payload.source) ? payload.source : "live");
+    setText("or-age", err ? err : "live");
+  }
+
+  function fmtMoney(n) {
+    if (n == null || isNaN(n)) return "—";
+    if (n === 0) return "0";
+    if (Math.abs(n) < 0.01) return n.toFixed(4);
+    if (Math.abs(n) < 1)    return n.toFixed(3);
+    if (Math.abs(n) < 100)  return n.toFixed(2);
+    return Math.round(n).toString();
   }
 
   let inFlight = false;
