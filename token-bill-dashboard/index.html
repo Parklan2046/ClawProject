@@ -40,6 +40,19 @@
   --border-red: rgba(255,77,106,0.25);
   --scanline-opacity: 0.03;
 }
+/* bar-sub: small caption under each bar */
+.bar-sub {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 3px;
+  letter-spacing: 0.03em;
+  font-family: 'Share Tech Mono', monospace;
+}
+.bar-fill.ok    { background: linear-gradient(90deg, #00e676, #00b35a); }
+.bar-fill.warn  { background: linear-gradient(90deg, #ffb627, #ff8c42); }
+.bar-fill.crit  { background: linear-gradient(90deg, #ff4d6a, #c42d7e); }
+.bar-fill.idle  { background: linear-gradient(90deg, #4a4868, #2a2840); }
+
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -607,7 +620,7 @@ body::after {
     <span class="status-sep">|</span>
     <span><span class="label">alerts</span> <span class="val warn">1 warn · 0 crit</span></span>
     <span class="status-sep">|</span>
-    <span><span class="label">last sync</span> <span class="val ok">just now</span></span>
+    <span><span class="label">last sync</span> <span class="val ok" id="topbar-lastsync">…</span></span>
   </div>
 
   <!-- ═══════════════════════════════════════════════════
@@ -657,22 +670,25 @@ body::after {
         <div><span class="k">auth    </span> <span class="v">Codex OAuth (cli)</span></div>
         <div><span class="k">account </span> <span class="v">a599a569-…cef2d</span></div>
       </div>
-      <div class="acct-bars">
+      <div class="acct-bars" id="cgpt-bars">
         <div class="bar-block">
-          <div class="bar-label"><span>5h window</span><span class="pct">73%</span></div>
-          <div class="bar-track"><div class="bar-fill warn" style="width:73%"></div></div>
+          <div class="bar-label"><span>5h window</span><span class="pct" id="cgpt-5h-pct">…</span></div>
+          <div class="bar-track"><div class="bar-fill" id="cgpt-5h-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="cgpt-5h-sub">resets in …</div>
         </div>
         <div class="bar-block">
-          <div class="bar-label"><span>weekly</span><span class="pct">64%</span></div>
-          <div class="bar-track"><div class="bar-fill warn" style="width:64%"></div></div>
+          <div class="bar-label"><span>weekly (7d)</span><span class="pct" id="cgpt-7d-pct">…</span></div>
+          <div class="bar-track"><div class="bar-fill" id="cgpt-7d-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="cgpt-7d-sub">resets in …</div>
         </div>
       </div>
       <div class="acct-models">
         <span class="model-chip">gpt-5.5</span>
+        <span class="model-chip" id="cgpt-tier">tier: …</span>
       </div>
       <div class="acct-footer">
-        <span class="live">live</span>
-        <span>last call 8s ago</span>
+        <span class="live" id="cgpt-state">…</span>
+        <span id="cgpt-age">last fetch …</span>
       </div>
     </div>
 
@@ -685,28 +701,31 @@ body::after {
       </div>
       <div class="acct-meta">
         <div><span class="k">account </span> <span class="v">China · parklan@…</span></div>
-        <div><span class="k">region  </span> <span class="v">global · MiniMax-M3</span></div>
-        <div><span class="k">billing </span> <span class="v">pay-as-you-go</span></div>
-        <div><span class="k">5h reset</span> <span class="v">in 47m</span></div>
+        <div><span class="k">region  </span> <span class="v" id="mm-region">cn · MiniMax-M3</span></div>
+        <div><span class="k">billing </span> <span class="v" id="mm-billing">coding plan</span></div>
+        <div><span class="k">5h reset</span> <span class="v" id="mm-5h-reset">in …</span></div>
       </div>
-      <div class="acct-bars">
+      <div class="acct-bars" id="mm-bars">
         <div class="bar-block">
-          <div class="bar-label"><span>5h window</span><span class="pct high">78%</span></div>
-          <div class="bar-track"><div class="bar-fill warn" style="width:78%"></div></div>
+          <div class="bar-label"><span>5h window</span><span class="pct" id="mm-5h-pct">…</span></div>
+          <div class="bar-track"><div class="bar-fill" id="mm-5h-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="mm-5h-sub">resets in …</div>
         </div>
         <div class="bar-block">
-          <div class="bar-label"><span>weekly</span><span class="pct">41%</span></div>
-          <div class="bar-track"><div class="bar-fill ok" style="width:41%"></div></div>
+          <div class="bar-label"><span>weekly</span><span class="pct" id="mm-7d-pct">…</span></div>
+          <div class="bar-track"><div class="bar-fill" id="mm-7d-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="mm-7d-sub">resets in …</div>
         </div>
       </div>
       <div class="acct-models">
         <span class="model-chip">MiniMax-M3</span>
         <span class="model-chip">MiniMax-M2.7</span>
         <span class="model-chip">MiniMax-M2.5</span>
+        <span class="model-chip" id="mm-boost">boost …</span>
       </div>
       <div class="acct-footer">
-        <span class="live">live</span>
-        <span>last call 1m ago</span>
+        <span class="live" id="mm-state">…</span>
+        <span id="mm-age">last fetch …</span>
       </div>
     </div>
 
@@ -1022,23 +1041,156 @@ body::after {
        FOOTER
        ═══════════════════════════════════════════════════ -->
   <div class="foot">
-    <span class="pink">●</span> live · refreshes every <span class="cyan">30s</span> · source: on9claw/token-bill-dashboard<br/>
-    <span class="dim">template v0.1 · data is mocked for first draft</span>
+    <span class="pink">●</span> live · refreshes every <span class="cyan">30s</span> · source: on9claw/token-bill-dashboard/api/usage<br/>
+    <span class="dim" id="foot-source">last fetch … · v0.3 wired</span>
   </div>
 
 </div>
 
 <script>
-/* ── live tick: animate bar widths and timestamps ── */
+/* ── live Codex usage: poll /api/usage every 30s, update DOM ── */
 (function () {
-  const fills = document.querySelectorAll('.bar-fill');
-  setInterval(() => {
-    fills.forEach(el => {
-      const cur = parseFloat(el.style.width) || 0;
-      const next = Math.max(0, Math.min(100, cur + (Math.random() - 0.5) * 1.5));
-      el.style.width = next.toFixed(1) + '%';
-    });
-  }, 4000);
+  const API = (location.pathname.endsWith('/') ? location.pathname : location.pathname + '/') + 'api/usage';
+  const $ = (id) => document.getElementById(id);
+
+  function setText(id, txt) { const el = $(id); if (el) el.textContent = txt; }
+  function setStyle(id, prop, val) { const el = $(id); if (el) el.style[prop] = val; }
+  function setClass(id, cls) { const el = $(id); if (el) el.className = cls; }
+
+  function humanize(s) {
+    if (s == null) return "—";
+    if (s <= 0) return "now";
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (d > 0) return d + "d " + h + "h";
+    if (h > 0) return h + "h " + m + "m";
+    return m + "m";
+  }
+
+  function classify(used) {
+    if (used == null) return "idle";
+    if (used >= 90) return "crit";
+    if (used >= 70) return "warn";
+    return "ok";
+  }
+
+  function renderError(msg) {
+    setText("cgpt-5h-pct", "—");
+    setText("cgpt-7d-pct", "—");
+    setText("cgpt-5h-sub", msg);
+    setText("cgpt-7d-sub", "");
+    setText("cgpt-tier", "tier: ?");
+    setText("cgpt-state", "err");
+    setText("cgpt-age", msg);
+    setText("topbar-lastsync", "err");
+    setText("foot-source", "err: " + msg);
+    setStyle("cgpt-5h-bar", "width", "0%");
+    setStyle("cgpt-7d-bar", "width", "0%");
+    setClass("cgpt-5h-bar", "bar-fill idle");
+    setClass("cgpt-7d-bar", "bar-fill idle");
+  }
+
+  function renderUsage(payload) {
+    if (!payload || !payload.data) {
+      return renderError("no data");
+    }
+    // chatgpt-plus
+    if (payload.data.chatgpt) renderChatgpt(payload.data.chatgpt, payload, payload.errors && payload.errors.chatgpt);
+    // minimax
+    if (payload.data.minimax) renderMinimax(payload.data.minimax, payload, payload.errors && payload.errors.minimax);
+    // top bar + foot text
+    const now = new Date(payload.fetchedAt || Date.now()).toLocaleTimeString();
+    const ageS = Math.max(0, Math.round((Date.now() - new Date(payload.fetchedAt || Date.now()).getTime()) / 1000));
+    setText("topbar-lastsync", ageS + "s ago");
+    setText("foot-source", `last fetch ${now} · age ${ageS}s · v0.3 wired`);
+  }
+
+  function renderChatgpt(d, payload, err) {
+    if (!d) {
+      setText("cgpt-5h-pct", "—");
+      setText("cgpt-7d-pct", "—");
+      setText("cgpt-5h-sub", err || "no data");
+      setText("cgpt-7d-sub", "");
+      setText("cgpt-tier", "tier: ?");
+      setText("cgpt-state", "err");
+      setText("cgpt-age", err || "no data");
+      setStyle("cgpt-5h-bar", "width", "0%");
+      setStyle("cgpt-7d-bar", "width", "0%");
+      setClass("cgpt-5h-bar", "bar-fill idle");
+      setClass("cgpt-7d-bar", "bar-fill idle");
+      return;
+    }
+    const p = d.primary, s = d.secondary;
+
+    setText("cgpt-5h-pct", (p.usedPct ?? "—") + "%");
+    setText("cgpt-7d-pct", (s.usedPct ?? "—") + "%");
+    setText("cgpt-5h-sub", "resets in " + (p.resetInHuman || "—") + " · " + (p.windowMinutes || "?") + "m window");
+    setText("cgpt-7d-sub", "resets in " + (s.resetInHuman || "—") + " · " + Math.round((s.windowMinutes||0)/60/24) + "d window");
+    setStyle("cgpt-5h-bar", "width", Math.max(0, Math.min(100, p.usedPct || 0)) + "%");
+    setStyle("cgpt-7d-bar", "width", Math.max(0, Math.min(100, s.usedPct || 0)) + "%");
+    setClass("cgpt-5h-bar", "bar-fill " + classify(p.usedPct));
+    setClass("cgpt-7d-bar", "bar-fill " + classify(s.usedPct));
+
+    setText("cgpt-tier", "tier: " + (d.activeLimit || "?"));
+    setText("cgpt-state", (payload && payload.source) ? payload.source : "live");
+    setText("cgpt-age", err ? err : "live");
+  }
+
+  function renderMinimax(d, payload, err) {
+    if (!d || !d.models || !d.models.general) {
+      setText("mm-5h-pct", "—");
+      setText("mm-7d-pct", "—");
+      setText("mm-5h-sub", err || "no data");
+      setText("mm-7d-sub", "");
+      setText("mm-boost", "boost ?");
+      setText("mm-state", "err");
+      setText("mm-age", err || "no data");
+      setText("mm-5h-reset", "in ?");
+      setText("mm-region", `${d && d.region ? d.region : "?"} · MiniMax-M3`);
+      setText("mm-billing", "coding plan");
+      setStyle("mm-5h-bar", "width", "0%");
+      setStyle("mm-7d-bar", "width", "0%");
+      setClass("mm-5h-bar", "bar-fill idle");
+      setClass("mm-7d-bar", "bar-fill idle");
+      return;
+    }
+    const g = d.models.general;
+    const i = g.interval, w = g.weekly;
+    setText("mm-5h-pct", (i.usedPct ?? "—") + "%");
+    setText("mm-7d-pct", (w.usedPct ?? "—") + "%");
+    setText("mm-5h-sub", "resets in " + (i.resetInHuman || "—") + " · " + (i.windowMinutes || "?") + "m window");
+    setText("mm-7d-sub", "resets in " + (w.resetInHuman || "—") + " · " + Math.round((w.windowMinutes || 0) / 60 / 24) + "d window");
+    setStyle("mm-5h-bar", "width", Math.max(0, Math.min(100, i.usedPct || 0)) + "%");
+    setStyle("mm-7d-bar", "width", Math.max(0, Math.min(100, w.usedPct || 0)) + "%");
+    setClass("mm-5h-bar", "bar-fill " + classify(i.usedPct));
+    setClass("mm-7d-bar", "bar-fill " + classify(w.usedPct));
+    setText("mm-boost", "boost " + ((i.boostPermille || 0) / 1000).toFixed(1) + "x");
+    setText("mm-state", (payload && payload.source) ? payload.source : "live");
+    setText("mm-age", err ? err : "live");
+    setText("mm-5h-reset", "in " + (i.resetInHuman || "—"));
+    setText("mm-region", (d.region || "cn") + " · MiniMax-M3");
+    setText("mm-billing", "coding plan");
+  }
+
+  let inFlight = false;
+  async function tick() {
+    if (inFlight) return;
+    inFlight = true;
+    try {
+      const r = await fetch(API, { cache: "no-store" });
+      const j = await r.json();
+      renderUsage(j);
+    } catch (e) {
+      renderError("fetch failed: " + e.message);
+    } finally {
+      inFlight = false;
+    }
+  }
+
+  // First fetch immediately, then every 30s.
+  tick();
+  setInterval(tick, 30_000);
 })();
 </script>
 
