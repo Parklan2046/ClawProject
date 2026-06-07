@@ -572,6 +572,13 @@ body::after {
 .acct-card[data-service="opencode-go"] .acct-badge.badge-go { color: var(--green); border-color: var(--green); }
 .acct-card[data-service="openrouter"]  .acct-icon { color: var(--cyan);   border-color: var(--border-cyan); }
 .acct-card[data-service="openrouter"]  .acct-badge.badge-or { color: var(--cyan); border-color: var(--cyan); }
+.acct-card.crit.capped { border-color: var(--red); box-shadow: 0 0 0 1px rgba(255,77,109,0.3), 0 0 14px -2px rgba(255,77,109,0.25); }
+.acct-card.crit.capped .acct-icon { border-color: var(--red); color: var(--red); }
+.acct-card.crit.capped .badge-go { color: var(--red); border-color: var(--red); }
+a.link { color: var(--cyan); text-decoration: underline; }
+a.link:hover { color: var(--pink); }
+.badge-cap { color: var(--red); border-color: var(--red); background: rgba(255,77,109,0.08); font-weight: 700; letter-spacing: 0.5px; }
+
 .acct-card[data-service="openai"]   .acct-icon { color: var(--pink);   border-color: var(--border-active); }
 .acct-card[data-service="anthropic"].acct-icon { color: var(--purple); border-color: rgba(167,139,250,0.3); }
 .acct-card[data-service="google"]   .acct-icon { color: var(--cyan);   border-color: var(--border-cyan); }
@@ -701,17 +708,18 @@ body::after {
 
   </div>
     <!-- ── OpenCode Go ── -->
-    <div class="acct-card crit" data-service="opencode-go">
+    <div class="acct-card crit capped" data-service="opencode-go">
       <div class="acct-head">
         <div class="acct-icon">⌘</div>
         <div class="acct-name">opencode-go</div>
-        <div class="acct-badge badge-go">GO</div>
+        <div class="acct-badge badge-go" id="ocg-badge">GO</div>
       </div>
       <div class="acct-meta">
         <div><span class="k">workspace</span> <span class="v" id="ocg-workspace">wrk_01KREB…3HYM30ZCYB</span></div>
         <div><span class="k">limit   </span> <span class="v" id="ocg-limitname">monthly</span></div>
         <div><span class="k">reset   </span> <span class="v" id="ocg-reset">in …</span></div>
         <div><span class="k">status  </span> <span class="v" id="ocg-status">…</span></div>
+        <div id="ocg-upgrade-wrap" style="display:none"><span class="k">upgrade </span> <a id="ocg-upgrade" href="#" target="_blank" rel="noopener" class="v link">add balance →</a></div>
       </div>
       <div class="acct-bars">
         <div class="bar-block">
@@ -927,14 +935,18 @@ body::after {
       setText("ocg-age", err || "no data");
       setStyle("ocg-monthly-bar", "width", "0%");
       setClass("ocg-monthly-bar", "bar-fill idle");
+      setText("ocg-badge", "GO");
+      var w = document.getElementById("ocg-upgrade-wrap");
+      if (w) w.style.display = "none";
       return;
     }
     const m = d.monthly || {};
     const pct = m.usedPct == null ? (d.status === "ok" ? 0 : 100) : m.usedPct;
+    const capped = d.status === "limit_reached";
     setText("ocg-monthly-pct", (pct ?? "—") + "%");
     setText("ocg-monthly-sub", (m.note || "monthly window") + (m.resetInHuman ? " · resets in " + m.resetInHuman : ""));
     setText("ocg-reset", m.resetInHuman ? "in " + m.resetInHuman : "—");
-    setText("ocg-status", d.status === "limit_reached" ? "monthly cap reached" : (d.status === "ok" ? "within quota" : d.status));
+    setText("ocg-status", capped ? "● CAPPED · " + (d.limitName || "monthly") + " limit" : (d.status === "ok" ? "within quota" : d.status));
     setText("ocg-limitname", d.limitName || "monthly");
     setStyle("ocg-monthly-bar", "width", Math.max(0, Math.min(100, pct || 0)) + "%");
     setClass("ocg-monthly-bar", "bar-fill " + classify(pct));
@@ -943,6 +955,22 @@ body::after {
     if (d.workspace) {
       const short = d.workspace.length > 14 ? d.workspace.slice(0, 10) + "…" + d.workspace.slice(-6) : d.workspace;
       setText("ocg-workspace", short);
+    }
+    // swap badge text + color when capped
+    var badge = document.getElementById("ocg-badge");
+    if (badge) {
+      badge.textContent = capped ? "CAPPED" : "GO";
+      badge.className = capped ? "acct-badge badge-cap" : "acct-badge badge-go";
+    }
+    var w = document.getElementById("ocg-upgrade-wrap");
+    var a = document.getElementById("ocg-upgrade");
+    if (w && a) {
+      if (capped && d.upgradeUrl) {
+        a.href = d.upgradeUrl;
+        w.style.display = "";
+      } else {
+        w.style.display = "none";
+      }
     }
   }
 
