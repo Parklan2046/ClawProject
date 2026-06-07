@@ -608,47 +608,13 @@ body::after {
        STATUS STRIP
        ═══════════════════════════════════════════════════ -->
   <div class="status-strip">
-    <span><span class="label">month</span> <span class="val pink">2026-06</span></span>
-    <span class="status-sep">|</span>
-    <span><span class="label">spend</span> <span class="val">$24.18</span> / $30.00</span>
-    <span class="status-sep">|</span>
-    <span><span class="label">accounts</span> <span class="val info">3 active</span></span>
-    <span class="status-sep">|</span>
-    <span><span class="label">models</span> <span class="val">12 tracked</span></span>
-    <span class="status-sep">|</span>
-    <span><span class="label">tokens (7d)</span> <span class="val info">2.41M</span></span>
-    <span class="status-sep">|</span>
-    <span><span class="label">alerts</span> <span class="val warn">1 warn · 0 crit</span></span>
-    <span class="status-sep">|</span>
     <span><span class="label">last sync</span> <span class="val ok" id="topbar-lastsync">…</span></span>
+    <span class="status-sep">|</span>
+    <span><span class="label">source</span> <span class="val">on9claw/token-bill-dashboard/api/usage</span></span>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════
-       KPI ROW
-       ═══════════════════════════════════════════════════ -->
-  <div class="section-label">month-to-date</div>
-  <div class="kpi-row">
-    <div class="kpi pink">
-      <div class="kpi-label">SPEND (MTD)</div>
-      <div class="kpi-value">$24.18<span class="kpi-suffix">/ $30</span></div>
-      <div class="kpi-foot"><span class="up">▲ +$3.20</span> vs last mo</div>
-    </div>
-    <div class="kpi cyan">
-      <div class="kpi-label">TOKENS (7D)</div>
-      <div class="kpi-value">2.41M</div>
-      <div class="kpi-foot"><span class="up">▲ +18%</span> wk/wk</div>
-    </div>
-    <div class="kpi green">
-      <div class="kpi-label">REQUESTS (7D)</div>
-      <div class="kpi-value">1,842</div>
-      <div class="kpi-foot"><span class="flat">— 0%</span> wk/wk</div>
-    </div>
-    <div class="kpi yellow">
-      <div class="kpi-label">AVG / REQUEST</div>
-      <div class="kpi-value">1,308</div>
-      <div class="kpi-foot"><span class="down">▼ −4%</span> wk/wk</div>
-    </div>
-  </div>
+
+
 
   <!-- ═══════════════════════════════════════════════════
        ACCOUNTS
@@ -729,320 +695,26 @@ body::after {
       </div>
     </div>
 
-    <!-- ── OpenAI API (placeholder, $0) ── -->
-    <div class="acct-card" data-service="openai" style="opacity:0.55">
-      <div class="acct-head">
-        <div class="acct-icon">○</div>
-        <div class="acct-name">openai-api</div>
-        <div class="acct-badge badge-down">EMPTY</div>
-      </div>
-      <div class="acct-meta">
-        <div><span class="k">account </span> <span class="v">platform.openai.com</span></div>
-        <div><span class="k">credits </span> <span class="v">$0.00 (no top-up)</span></div>
-        <div><span class="k">status  </span> <span class="v">429 insufficient_quota</span></div>
-        <div><span class="k">via     </span> <span class="v">on9claw/oai/* (token-gated)</span></div>
-      </div>
-      <div class="acct-bars">
-        <div class="bar-block">
-          <div class="bar-label"><span>credits</span><span class="pct crit">0%</span></div>
-          <div class="bar-track"><div class="bar-fill crit" style="width:0%"></div></div>
-        </div>
-        <div class="bar-block">
-          <div class="bar-label"><span>requests 7d</span><span class="pct">0</span></div>
-          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
-        </div>
-      </div>
-      <div class="acct-models">
-        <span class="model-chip dim">gpt-4o</span>
-        <span class="model-chip dim">gpt-5</span>
-        <span class="model-chip dim">o3-mini</span>
-      </div>
-      <div class="acct-footer">
-        <span>— offline</span>
-        <span>add $5 to enable</span>
-      </div>
-    </div>
-
   </div>
 
-  <!-- ═══════════════════════════════════════════════════
-       USAGE CHART + BY-MODEL TABLE
-       ═══════════════════════════════════════════════════ -->
-  <div class="two-col">
-    <div class="term-window">
-      <div class="term-titlebar">
-        <div class="term-dots"><span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span></div>
-        <div class="term-title">usage · last 14 days</div>
-      </div>
-      <div class="term-body">
-        <div class="chart-wrap">
-          <svg class="chart" viewBox="0 0 600 180" preserveAspectRatio="none" aria-label="Token usage chart">
-            <line class="grid" x1="0" y1="45"  x2="600" y2="45"></line>
-            <line class="grid" x1="0" y1="90"  x2="600" y2="90"></line>
-            <line class="grid" x1="0" y1="135" x2="600" y2="135"></line>
-            <line class="axis" x1="0" y1="170" x2="600" y2="170"></line>
-            <g>
-              <rect class="bar dim"      x="10"  y="135" width="32" height="35"></rect>
-              <rect class="bar dim"      x="50"  y="120" width="32" height="50"></rect>
-              <rect class="bar"          x="90"  y="100" width="32" height="70"></rect>
-              <rect class="bar"          x="130" y="85"  width="32" height="85"></rect>
-              <rect class="bar"          x="170" y="70"  width="32" height="100"></rect>
-              <rect class="bar pink"     x="210" y="55"  width="32" height="115"></rect>
-              <rect class="bar pink"     x="250" y="40"  width="32" height="130"></rect>
-              <rect class="bar"          x="290" y="60"  width="32" height="110"></rect>
-              <rect class="bar"          x="330" y="75"  width="32" height="95"></rect>
-              <rect class="bar"          x="370" y="65"  width="32" height="105"></rect>
-              <rect class="bar pink"     x="410" y="30"  width="32" height="140"></rect>
-              <rect class="bar pink"     x="450" y="20"  width="32" height="150"></rect>
-              <rect class="bar pink"     x="490" y="35"  width="32" height="135"></rect>
-              <rect class="bar pink"     x="530" y="25"  width="32" height="145"></rect>
-            </g>
-            <polyline class="line-cost" points="26,160 66,150 106,140 146,128 186,118 226,108 266,98 306,105 346,115 386,108 426,90 466,82 506,92 546,80"></polyline>
-            <circle class="dot-cost" cx="546" cy="80" r="3"></circle>
-            <text class="label" x="10"  y="178">−13d</text>
-            <text class="label" x="270" y="178">−7d</text>
-            <text class="label" x="540" y="178">today</text>
-            <text class="label" x="0" y="14" style="fill:var(--pink)">cost</text>
-            <text class="label" x="580" y="14" text-anchor="end" style="fill:var(--cyan)">tokens</text>
-          </svg>
-        </div>
-      </div>
-    </div>
 
-    <div class="term-window">
-      <div class="term-titlebar">
-        <div class="term-dots"><span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span></div>
-        <div class="term-title">by model · last 7d</div>
-      </div>
-      <div class="term-body">
-        <table class="tbl">
-          <thead>
-            <tr>
-              <th>model</th>
-              <th class="num">tokens</th>
-              <th class="num">cost</th>
-              <th>7d trend</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="bold">gpt-5.5</td>
-              <td class="num cyan">1,124,832</td>
-              <td class="num dim">$0.00</td>
-              <td><svg class="sparkline" width="60" height="14" viewBox="0 0 60 14">
-                <rect x="0"  y="9"  width="6" height="5"/>
-                <rect x="8"  y="7"  width="6" height="7"/>
-                <rect x="16" y="5"  width="6" height="9"/>
-                <rect x="24" y="3"  width="6" height="11"/>
-                <rect x="32" y="1"  width="6" height="13"/>
-                <rect x="40" y="0"  width="6" height="14"/>
-                <rect x="48" y="2"  width="6" height="12"/>
-              </svg></td>
-            </tr>
-            <tr>
-              <td class="bold">MiniMax-M3</td>
-              <td class="num cyan">512,083</td>
-              <td class="num pink">$2.84</td>
-              <td><svg class="sparkline" width="60" height="14" viewBox="0 0 60 14">
-                <rect x="0"  y="2"  width="6" height="12"/>
-                <rect x="8"  y="3"  width="6" height="11"/>
-                <rect x="16" y="1"  width="6" height="13"/>
-                <rect x="24" y="4"  width="6" height="10"/>
-                <rect x="32" y="6"  width="6" height="8"/>
-                <rect x="40" y="8"  width="6" height="6"/>
-                <rect x="48" y="9"  width="6" height="5"/>
-              </svg></td>
-            </tr>
-            <tr>
-              <td class="bold">MiniMax-M2.7</td>
-              <td class="num cyan">389,210</td>
-              <td class="num pink">$1.10</td>
-              <td><svg class="sparkline" width="60" height="14" viewBox="0 0 60 14">
-                <rect x="0"  y="5"  width="6" height="9"/>
-                <rect x="8"  y="4"  width="6" height="10"/>
-                <rect x="16" y="3"  width="6" height="11"/>
-                <rect x="24" y="5"  width="6" height="9"/>
-                <rect x="32" y="6"  width="6" height="8"/>
-                <rect x="40" y="4"  width="6" height="10"/>
-                <rect x="48" y="2"  width="6" height="12"/>
-              </svg></td>
-            </tr>
-            <tr>
-              <td class="bold">MiniMax-M2.5</td>
-              <td class="num cyan">198,447</td>
-              <td class="num pink">$0.24</td>
-              <td><svg class="sparkline" width="60" height="14" viewBox="0 0 60 14">
-                <rect x="0"  y="10" width="6" height="4"/>
-                <rect x="8"  y="9"  width="6" height="5"/>
-                <rect x="16" y="8"  width="6" height="6"/>
-                <rect x="24" y="7"  width="6" height="7"/>
-                <rect x="32" y="8"  width="6" height="6"/>
-                <rect x="40" y="9"  width="6" height="5"/>
-                <rect x="48" y="10" width="6" height="4"/>
-              </svg></td>
-            </tr>
-            <tr>
-              <td class="bold dim">gpt-4o</td>
-              <td class="num dim">0</td>
-              <td class="num dim">—</td>
-              <td class="dim">no credits</td>
-            </tr>
-            <tr>
-              <td class="bold dim">o3-mini</td>
-              <td class="num dim">0</td>
-              <td class="num dim">—</td>
-              <td class="dim">no credits</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════════════
-       RECENT ACTIVITY
-       ═══════════════════════════════════════════════════ -->
-  <div class="section-label">recent activity</div>
-  <div class="term-window">
-    <div class="term-titlebar">
-      <div class="term-dots"><span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span></div>
-      <div class="term-title">tail -f /var/log/llm-bill.log</div>
-    </div>
-    <div class="term-body">
-      <div class="feed">
-        <div class="feed-row">
-          <span class="ts">09:19:08</span>
-          <span class="src chatgpt">[chatgpt+]</span>
-          <span class="msg">cline → gpt-5.5 · "fix auth bug in proxy.js"</span>
-          <span class="tok">2,148 tok</span>
-          <span class="cost">$0.00</span>
-        </div>
-        <div class="feed-row">
-          <span class="ts">09:14:22</span>
-          <span class="src minimax">[minimax ]</span>
-          <span class="msg">session → MiniMax-M3 · "explain this code"</span>
-          <span class="tok">1,402 tok</span>
-          <span class="cost">$0.008</span>
-        </div>
-        <div class="feed-row">
-          <span class="ts">09:02:47</span>
-          <span class="src minimax">[minimax ]</span>
-          <span class="msg">agent  → MiniMax-M2.7 · "summarize PR diff"</span>
-          <span class="tok">5,201 tok</span>
-          <span class="cost">$0.012</span>
-        </div>
-        <div class="feed-row">
-          <span class="ts">08:51:33</span>
-          <span class="src chatgpt">[chatgpt+]</span>
-          <span class="msg">curl  → gpt-5.5 · "say PONG"</span>
-          <span class="tok">13 tok</span>
-          <span class="cost">$0.00</span>
-        </div>
-        <div class="feed-row">
-          <span class="ts">08:42:11</span>
-          <span class="src minimax">[minimax ]</span>
-          <span class="msg">heartbeat · MiniMax-M3 · system prompt</span>
-          <span class="tok">312 tok</span>
-          <span class="cost">$0.002</span>
-        </div>
-        <div class="feed-row">
-          <span class="ts">08:31:55</span>
-          <span class="src minimax">[minimax ]</span>
-          <span class="msg">terminal → MiniMax-M3 · "draft memory note"</span>
-          <span class="tok">8,733 tok</span>
-          <span class="cost">$0.043</span>
-        </div>
-        <div class="feed-row">
-          <span class="ts">08:18:04</span>
-          <span class="src openai">[openai ]</span>
-          <span class="msg">GET /v1/models · 200 (3 ms)</span>
-          <span class="tok dim">—</span>
-          <span class="cost dim">—</span>
-        </div>
-        <div class="feed-row">
-          <span class="ts">07:55:42</span>
-          <span class="src chatgpt">[chatgpt+]</span>
-          <span class="msg">curl  → gpt-5.5 · "say hi in 3 words"</span>
-          <span class="tok">9 tok</span>
-          <span class="cost">$0.00</span>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════════════
-       ALERTS
-       ═══════════════════════════════════════════════════ -->
-  <div class="section-label">alerts</div>
-  <div class="term-window">
-    <div class="term-titlebar">
-      <div class="term-dots"><span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span></div>
-      <div class="term-title">alerts · 1 active</div>
-    </div>
-    <div class="term-body">
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>when</th>
-            <th>level</th>
-            <th>service</th>
-            <th>message</th>
-            <th>action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="dim">09:18 UTC</td>
-            <td class="yellow">WARN</td>
-            <td class="cyan">minimax</td>
-            <td>5-hour window at 78% — throttling likely within 30 min</td>
-            <td class="pink">wait for reset</td>
-          </tr>
-          <tr>
-            <td class="dim">08:55 UTC</td>
-            <td class="green">OK</td>
-            <td class="cyan">proxy</td>
-            <td>codex-proapi v1.0.8 patched, model=gpt-5.5 working</td>
-            <td class="dim">—</td>
-          </tr>
-          <tr>
-            <td class="dim">08:30 UTC</td>
-            <td class="green">OK</td>
-            <td class="cyan">auth</td>
-            <td>codex OAuth token refreshed · exp 2026-09-04</td>
-            <td class="dim">—</td>
-          </tr>
-          <tr>
-            <td class="dim">yesterday</td>
-            <td class="green">OK</td>
-            <td class="cyan">on9claw</td>
-            <td>disk cleanup freed 4.6 GB (89% → 69% full)</td>
-            <td class="dim">—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════════════
-       ACTIONS
-       ═══════════════════════════════════════════════════ -->
-  <div class="section-label">actions</div>
-  <div class="actions">
-    <button class="btn">+ add account</button>
-    <button class="btn cyan">refresh now</button>
-    <button class="btn ghost">export csv (7d)</button>
-    <button class="btn ghost">export csv (30d)</button>
-    <button class="btn ghost">settings</button>
-    <button class="btn ghost">view raw json</button>
-  </div>
+
+
+
+
+
+
+
 
   <!-- ═══════════════════════════════════════════════════
        FOOTER
        ═══════════════════════════════════════════════════ -->
   <div class="foot">
     <span class="pink">●</span> live · refreshes every <span class="cyan">30s</span> · source: on9claw/token-bill-dashboard/api/usage<br/>
-    <span class="dim" id="foot-source">last fetch … · v0.3 wired</span>
+    <span class="dim" id="foot-source">last fetch …</span>
   </div>
 
 </div>
@@ -1103,7 +775,7 @@ body::after {
     const now = new Date(payload.fetchedAt || Date.now()).toLocaleTimeString();
     const ageS = Math.max(0, Math.round((Date.now() - new Date(payload.fetchedAt || Date.now()).getTime()) / 1000));
     setText("topbar-lastsync", ageS + "s ago");
-    setText("foot-source", `last fetch ${now} · age ${ageS}s · v0.3 wired`);
+    setText("foot-source", `last fetch ${now} · age ${ageS}s · live cards only`);
   }
 
   function renderChatgpt(d, payload, err) {
