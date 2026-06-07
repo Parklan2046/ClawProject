@@ -568,13 +568,16 @@ body::after {
 
 .acct-card[data-service="chatgpt"] .acct-icon { color: var(--green); border-color: var(--border-green); }
 .acct-card[data-service="minimax"]  .acct-icon { color: var(--orange); border-color: rgba(255,140,66,0.3); }
-.acct-card[data-service="opencode-go"] .acct-icon { color: var(--green);  border-color: var(--border-active); }
-.acct-card[data-service="opencode-go"] .acct-badge.badge-go { color: var(--green); border-color: var(--green); }
+.acct-card[data-service="opencode-go-1"] .acct-icon { color: var(--green);  border-color: var(--border-active); }
+.acct-card[data-service="opencode-go-1"] .acct-badge.badge-go { color: var(--green); border-color: var(--green); }
+.acct-card[data-service="opencode-go-2"] .acct-icon { color: var(--green);  border-color: var(--border-active); }
+.acct-card[data-service="opencode-go-2"] .acct-badge.badge-go { color: var(--green); border-color: var(--green); }
 .acct-card[data-service="openrouter"]  .acct-icon { color: var(--cyan);   border-color: var(--border-cyan); }
 .acct-card[data-service="openrouter"]  .acct-badge.badge-or { color: var(--cyan); border-color: var(--cyan); }
 .acct-card.crit.capped { border-color: var(--red); box-shadow: 0 0 0 1px rgba(255,77,109,0.3), 0 0 14px -2px rgba(255,77,109,0.25); }
 .acct-card.crit.capped .acct-icon { border-color: var(--red); color: var(--red); }
 .acct-card.crit.capped .badge-go { color: var(--red); border-color: var(--red); }
+.bar-label em.src { font-style: normal; font-size: 0.6rem; color: var(--text-dim); background: rgba(255,255,255,0.04); padding: 1px 4px; border-radius: 3px; margin-left: 4px; letter-spacing: 0.3px; text-transform: uppercase; }
 a.link { color: var(--cyan); text-decoration: underline; }
 a.link:hover { color: var(--pink); }
 .badge-cap { color: var(--red); border-color: var(--red); background: rgba(255,77,109,0.08); font-weight: 700; letter-spacing: 0.5px; }
@@ -707,35 +710,86 @@ a.link:hover { color: var(--pink); }
     </div>
 
   </div>
-    <!-- ── OpenCode Go ── -->
-    <div class="acct-card crit capped" data-service="opencode-go">
+
+    <!-- ── OpenCode Go #1 ── -->
+    <div class="acct-card crit capped" data-service="opencode-go-1">
       <div class="acct-head">
         <div class="acct-icon">⌘</div>
-        <div class="acct-name">opencode-go</div>
-        <div class="acct-badge badge-go" id="ocg-badge">GO</div>
+        <div class="acct-name">opencode-go-1</div>
+        <div class="acct-badge badge-go" id="ocg1-badge">GO</div>
       </div>
       <div class="acct-meta">
-        <div><span class="k">workspace</span> <span class="v" id="ocg-workspace">wrk_01KREB…3HYM30ZCYB</span></div>
-        <div><span class="k">limit   </span> <span class="v" id="ocg-limitname">monthly</span></div>
-        <div><span class="k">reset   </span> <span class="v" id="ocg-reset">in …</span></div>
-        <div><span class="k">status  </span> <span class="v" id="ocg-status">…</span></div>
-        <div id="ocg-upgrade-wrap" style="display:none"><span class="k">upgrade </span> <a id="ocg-upgrade" href="#" target="_blank" rel="noopener" class="v link">add balance →</a></div>
+        <div><span class="k">workspace</span> <span class="v" id="ocg1-workspace">wrk_01KREB…3HYM30ZCYB</span></div>
+        <div><span class="k">limit   </span> <span class="v" id="ocg1-limitname">monthly</span></div>
+        <div><span class="k">reset   </span> <span class="v" id="ocg1-reset">in …</span></div>
+        <div><span class="k">status  </span> <span class="v" id="ocg1-status">…</span></div>
+        <div id="ocg1-upgrade-wrap" style="display:none"><span class="k">upgrade </span> <a id="ocg1-upgrade" href="#" target="_blank" rel="noopener" class="v link">add balance →</a></div>
       </div>
       <div class="acct-bars">
         <div class="bar-block">
-          <div class="bar-label"><span>monthly</span><span class="pct" id="ocg-monthly-pct">…</span></div>
-          <div class="bar-track"><div class="bar-fill" id="ocg-monthly-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="ocg-monthly-sub">…</div>
+          <div class="bar-label"><span>5h <em class="src">n/a</em></span><span class="pct" id="ocg1-5h-pct">—</span></div>
+          <div class="bar-track"><div class="bar-fill" id="ocg1-5h-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="ocg1-5h-sub">not exposed by upstream</div>
+        </div>
+        <div class="bar-block">
+          <div class="bar-label"><span>weekly <em class="src">n/a</em></span><span class="pct" id="ocg1-week-pct">—</span></div>
+          <div class="bar-track"><div class="bar-fill" id="ocg1-week-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="ocg1-week-sub">not exposed by upstream</div>
+        </div>
+        <div class="bar-block">
+          <div class="bar-label"><span>monthly <em class="src">api</em></span><span class="pct" id="ocg1-monthly-pct">…</span></div>
+          <div class="bar-track"><div class="bar-fill" id="ocg1-monthly-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="ocg1-monthly-sub">…</div>
         </div>
       </div>
       <div class="acct-models">
         <span class="model-chip">deepseek-v4-flash</span>
         <span class="model-chip">minimax-m3</span>
-        <span class="model-chip" id="ocg-tier">workspace tier</span>
       </div>
       <div class="acct-footer">
-        <span class="live" id="ocg-state">…</span>
-        <span id="ocg-age">last fetch …</span>
+        <span class="live" id="ocg1-state">…</span>
+        <span id="ocg1-age">last fetch …</span>
+      </div>
+    </div>
+
+    <!-- ── OpenCode Go #2 ── -->
+    <div class="acct-card crit capped" data-service="opencode-go-2">
+      <div class="acct-head">
+        <div class="acct-icon">⌘</div>
+        <div class="acct-name">opencode-go-2</div>
+        <div class="acct-badge badge-go" id="ocg2-badge">GO</div>
+      </div>
+      <div class="acct-meta">
+        <div><span class="k">workspace</span> <span class="v" id="ocg2-workspace">wrk_01KT08…64N88THE</span></div>
+        <div><span class="k">limit   </span> <span class="v" id="ocg2-limitname">monthly</span></div>
+        <div><span class="k">reset   </span> <span class="v" id="ocg2-reset">in …</span></div>
+        <div><span class="k">status  </span> <span class="v" id="ocg2-status">…</span></div>
+        <div id="ocg2-upgrade-wrap" style="display:none"><span class="k">upgrade </span> <a id="ocg2-upgrade" href="#" target="_blank" rel="noopener" class="v link">add balance →</a></div>
+      </div>
+      <div class="acct-bars">
+        <div class="bar-block">
+          <div class="bar-label"><span>5h <em class="src">n/a</em></span><span class="pct" id="ocg2-5h-pct">—</span></div>
+          <div class="bar-track"><div class="bar-fill" id="ocg2-5h-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="ocg2-5h-sub">not exposed by upstream</div>
+        </div>
+        <div class="bar-block">
+          <div class="bar-label"><span>weekly <em class="src">n/a</em></span><span class="pct" id="ocg2-week-pct">—</span></div>
+          <div class="bar-track"><div class="bar-fill" id="ocg2-week-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="ocg2-week-sub">not exposed by upstream</div>
+        </div>
+        <div class="bar-block">
+          <div class="bar-label"><span>monthly <em class="src">api</em></span><span class="pct" id="ocg2-monthly-pct">…</span></div>
+          <div class="bar-track"><div class="bar-fill" id="ocg2-monthly-bar" style="width:0%"></div></div>
+          <div class="bar-sub" id="ocg2-monthly-sub">…</div>
+        </div>
+      </div>
+      <div class="acct-models">
+        <span class="model-chip">deepseek-v4-flash</span>
+        <span class="model-chip">minimax-m3</span>
+      </div>
+      <div class="acct-footer">
+        <span class="live" id="ocg2-state">…</span>
+        <span id="ocg2-age">last fetch …</span>
       </div>
     </div>
 
@@ -846,8 +900,9 @@ a.link:hover { color: var(--pink); }
     if (payload.data.chatgpt) renderChatgpt(payload.data.chatgpt, payload, payload.errors && payload.errors.chatgpt);
     // minimax
     if (payload.data.minimax) renderMinimax(payload.data.minimax, payload, payload.errors && payload.errors.minimax);
-    // opencode-go
-    if (payload.data.opencode_go) renderOpencodeGo(payload.data.opencode_go, payload, payload.errors && payload.errors.opencode_go);
+    // opencode-go (2 accounts)
+    if (payload.data.opencode_go_1) renderOpencodeGo(payload.data.opencode_go_1, payload, payload.errors && payload.errors.opencode_go_1, "ocg1");
+    if (payload.data.opencode_go_2) renderOpencodeGo(payload.data.opencode_go_2, payload, payload.errors && payload.errors.opencode_go_2, "ocg2");
     // openrouter
     if (payload.data.openrouter) renderOpenrouter(payload.data.openrouter, payload, payload.errors && payload.errors.openrouter);
     // top bar + foot text
@@ -925,45 +980,56 @@ a.link:hover { color: var(--pink); }
   }
 
 
-  function renderOpencodeGo(d, payload, err) {
+  function renderOpencodeGo(d, payload, err, prefix) {
     if (!d) {
-      setText("ocg-status", "err");
-      setText("ocg-reset", "—");
-      setText("ocg-monthly-pct", "—");
-      setText("ocg-monthly-sub", err || "no data");
-      setText("ocg-state", "err");
-      setText("ocg-age", err || "no data");
-      setStyle("ocg-monthly-bar", "width", "0%");
-      setClass("ocg-monthly-bar", "bar-fill idle");
-      setText("ocg-badge", "GO");
-      var w = document.getElementById("ocg-upgrade-wrap");
+      setText(prefix + "-status", "err");
+      setText(prefix + "-reset", "—");
+      setText(prefix + "-monthly-pct", "—");
+      setText(prefix + "-monthly-sub", err || "no data");
+      setText(prefix + "-5h-pct", "—");
+      setText(prefix + "-week-pct", "—");
+      setText(prefix + "-state", "err");
+      setText(prefix + "-age", err || "no data");
+      setStyle(prefix + "-monthly-bar", "width", "0%");
+      setClass(prefix + "-monthly-bar", "bar-fill idle");
+      setStyle(prefix + "-5h-bar", "width", "0%");
+      setStyle(prefix + "-week-bar", "width", "0%");
+      setText(prefix + "-badge", "GO");
+      var w = document.getElementById(prefix + "-upgrade-wrap");
       if (w) w.style.display = "none";
       return;
     }
     const m = d.monthly || {};
     const pct = m.usedPct == null ? (d.status === "ok" ? 0 : 100) : m.usedPct;
     const capped = d.status === "limit_reached";
-    setText("ocg-monthly-pct", (pct ?? "—") + "%");
-    setText("ocg-monthly-sub", (m.note || "monthly window") + (m.resetInHuman ? " · resets in " + m.resetInHuman : ""));
-    setText("ocg-reset", m.resetInHuman ? "in " + m.resetInHuman : "—");
-    setText("ocg-status", capped ? "● CAPPED · " + (d.limitName || "monthly") + " limit" : (d.status === "ok" ? "within quota" : d.status));
-    setText("ocg-limitname", d.limitName || "monthly");
-    setStyle("ocg-monthly-bar", "width", Math.max(0, Math.min(100, pct || 0)) + "%");
-    setClass("ocg-monthly-bar", "bar-fill " + classify(pct));
-    setText("ocg-state", (payload && payload.source) ? payload.source : "live");
-    setText("ocg-age", err ? err : "live");
+    setText(prefix + "-monthly-pct", (pct ?? "—") + "%");
+    setText(prefix + "-monthly-sub", (m.note || "monthly window") + (m.resetInHuman ? " · resets in " + m.resetInHuman : ""));
+    setText(prefix + "-reset", m.resetInHuman ? "in " + m.resetInHuman : "—");
+    setText(prefix + "-status", capped ? "● CAPPED · " + (d.limitName || "monthly") + " limit" : (d.status === "ok" ? "within quota" : d.status));
+    setText(prefix + "-limitname", d.limitName || "monthly");
+    setStyle(prefix + "-monthly-bar", "width", Math.max(0, Math.min(100, pct || 0)) + "%");
+    setClass(prefix + "-monthly-bar", "bar-fill " + classify(pct));
+    // 5h/weekly bars: mark as n/a (dim grey)
+    setText(prefix + "-5h-pct", "n/a");
+    setText(prefix + "-week-pct", "n/a");
+    setText(prefix + "-5h-sub", "not exposed by upstream");
+    setText(prefix + "-week-sub", "not exposed by upstream");
+    setClass(prefix + "-5h-bar", "bar-fill idle");
+    setClass(prefix + "-week-bar", "bar-fill idle");
+    setText(prefix + "-state", (payload && payload.source) ? payload.source : "live");
+    setText(prefix + "-age", err ? err : "live");
     if (d.workspace) {
       const short = d.workspace.length > 14 ? d.workspace.slice(0, 10) + "…" + d.workspace.slice(-6) : d.workspace;
-      setText("ocg-workspace", short);
+      setText(prefix + "-workspace", short);
     }
     // swap badge text + color when capped
-    var badge = document.getElementById("ocg-badge");
+    var badge = document.getElementById(prefix + "-badge");
     if (badge) {
       badge.textContent = capped ? "CAPPED" : "GO";
       badge.className = capped ? "acct-badge badge-cap" : "acct-badge badge-go";
     }
-    var w = document.getElementById("ocg-upgrade-wrap");
-    var a = document.getElementById("ocg-upgrade");
+    var w = document.getElementById(prefix + "-upgrade-wrap");
+    var a = document.getElementById(prefix + "-upgrade");
     if (w && a) {
       if (capped && d.upgradeUrl) {
         a.href = d.upgradeUrl;

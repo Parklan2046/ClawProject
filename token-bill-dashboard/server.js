@@ -5,18 +5,16 @@
  * Sources polled:
  *   chatgpt-plus  — /root/.codex/auth.json → chatgpt.com/backend-api/codex/responses
  *   minimax (cn)  — /root/.minimax/api_key → api.minimaxi.com/v1/api/openplatform/coding_plan/remains
- *   opencode-go   — OPENCODE_API_KEY → opencode.ai/zen/go/v1/chat/completions
- *                   (small probe; if 429 GoUsageLimitError → parse retry-after + metadata)
- *   openrouter    — OPENROUTER_API_KEY → openrouter.ai/api/v1/auth/key + /api/v1/credits
+ *   opencode-go-1 — /root/.opencode/auth.key  → opencode.ai/zen/go/v1/chat/completions
+ *   opencode-go-2 — /root/.opencode/auth2.key → opencode.ai/zen/go/v1/chat/completions
+ *   openrouter    — /root/.openrouter/auth.key → openrouter.ai/api/v1/auth/key + /api/v1/credits
  *
- * Each source is cached independently for 5 minutes. state[slot] preserves
- * last good data even on error.
- *
- * Endpoints (Caddy strips /token-bill-dashboard; backend sees /api/*):
- *   GET  /api/usage    → { data: { chatgpt, minimax, opencode_go, openrouter } }
- *   GET  /api/health   → liveness + per-source cache status
- *   GET  /api/cache    → raw cached snapshots, no upstream calls
- *   POST /api/refresh  → force all upstream polls
+ * NOTE on OpenCode Go windows: upstream API only exposes MONTHLY cap state
+ * (limitName="monthly" in the 429 GoUsageLimitError body). 5h / weekly windows
+ * do not exist on the server side. The card still has 3 bars (5h, weekly,
+ * monthly) for visual consistency with the other cards, but the 5h/weekly bars
+ * are intentionally marked "n/a — upstream does not expose" so the monthly bar
+ * is the authoritative one.
  */
 import express from "express";
 import { readFile } from "fs/promises";
@@ -33,21 +31,19 @@ const CODEX_BACKEND_URL = "https://chatgpt.com/backend-api/codex/responses";
 const MM_API_KEY_PATH = "/root/.minimax/api_key";
 const MM_QUOTA_URL = "https://api.minimaxi.com/v1/api/openplatform/coding_plan/remains";
 const OC_GO_URL = "https://opencode.ai/zen/go/v1/chat/completions";
-const OC_AUTH_KEY_PATH = "/root/.opencode/auth.key";
 const OR_AUTH_KEY_PATH = "/root/.openrouter/auth.key";
 const OR_KEY_URL = "https://openrouter.ai/api/v1/auth/key";
 const OR_CREDITS_URL = "https://openrouter.ai/api/v1/credits";
 
+const OC_GO_ACCOUNTS = [
+  { slot: "opencode_go_1", keyFile: "/root/.opencode/auth.key",  env: "OPENCODE_API_KEY",   label: "opencode-go-1" },
+  { slot: "opencode_go_2", keyFile: "/root/.opencode/auth2.key", env: "OPENCODE_API_KEY_2", label: "opencode-go-2" },
+];
+
 const CODEX_PROBE = {
-  model: "gpt-5.5",
-  stream: true,
-  store: false,
-  instructions: "ping",
+  model: "gpt-5.5", stream: true, store: false, instructions: "ping",
   input: [{ role: "user", content: [{ type: "input_text", text: "ok" }] }],
-  text: { verbosity: "low" },
-  reasoning: {},
-  tools: [],
-  tool_choice: "auto",
+  text: { verbosity: "low" }, reasoning: {}, tools: [], tool_choice: "auto",
 };
 
 const OC_GO_PROBE = {
@@ -67,18 +63,16 @@ app.use((req, res, next) => {
 });
 
 function blankState() {
-  return {
-    ok: false, source: null, fetchedAt: null, cachedUntil: null, data: null, error: null,
-  };
+  return { ok: false, source: null, fetchedAt: null, cachedUntil: null, data: null, error: null };
 }
 const state = {
   chatgpt: blankState(),
   minimax: blankState(),
-  opencode_go: blankState(),
+  opencode_go_1: blankState(),
+  opencode_go_2: blankState(),
   openrouter: blankState(),
 };
-const isFresh = (s) =>
-  s && s.cachedUntil && new Date(s.cachedUntil).getTime() > Date.now() && s.data;
+const isFresh = (s) => s && s.cachedUntil && new Date(s.cachedUntil).getTime() > Date.now() && s.data;
 
 function humanizeSeconds(s) {
   if (s == null) return null;
@@ -114,9 +108,7 @@ async function readKey(path) {
 function headerSnapshot(headers) {
   const out = {};
   for (const [k, v] of headers.entries()) {
-    if (k.startsWith("x-codex-") || k.startsWith("x-ratelimit-") || k === "retry-after") {
-      out[k] = v;
-    }
+    if (k.startsWith("x-codex-") || k.startsWith("x-ratelimit-") || k === "retry-after") out[k] = v;
   }
   return out;
 }
@@ -128,18 +120,14 @@ function parseCodex(snap, accountId) {
   const secondaryResetAfter = num(snap["x-codex-secondary-reset-after-seconds"]);
   const now = Math.floor(Date.now() / 1000);
   return {
-    service: "chatgpt-plus",
-    label: "ChatGPT Plus (Codex OAuth)",
-    planType: snap["x-codex-plan-type"] || null,
-    activeLimit: snap["x-codex-active-limit"] || null,
-    accountId,
+    service: "chatgpt-plus", label: "ChatGPT Plus (Codex OAuth)",
+    planType: snap["x-codex-plan-type"] || null, activeLimit: snap["x-codex-active-limit"] || null, accountId,
     primary: {
       key: "primary", label: "5h window",
       usedPct: num(snap["x-codex-primary-used-percent"]),
       windowMinutes: num(snap["x-codex-primary-window-minutes"]),
       overSecondaryLimitPct: num(snap["x-codex-primary-over-secondary-limit-percent"]),
-      resetAt: primaryReset,
-      resetAtIso: primaryReset ? new Date(primaryReset * 1000).toISOString() : null,
+      resetAt: primaryReset, resetAtIso: primaryReset ? new Date(primaryReset*1000).toISOString() : null,
       resetAfterSeconds: primaryResetAfter,
       resetInSeconds: primaryReset ? primaryReset - now : primaryResetAfter,
       resetInHuman: humanizeSeconds(primaryReset ? primaryReset - now : primaryResetAfter),
@@ -148,8 +136,7 @@ function parseCodex(snap, accountId) {
       key: "secondary", label: "7d window",
       usedPct: num(snap["x-codex-secondary-used-percent"]),
       windowMinutes: num(snap["x-codex-secondary-window-minutes"]),
-      resetAt: secondaryReset,
-      resetAtIso: secondaryReset ? new Date(secondaryReset * 1000).toISOString() : null,
+      resetAt: secondaryReset, resetAtIso: secondaryReset ? new Date(secondaryReset*1000).toISOString() : null,
       resetAfterSeconds: secondaryResetAfter,
       resetInSeconds: secondaryReset ? secondaryReset - now : secondaryResetAfter,
       resetInHuman: humanizeSeconds(secondaryReset ? secondaryReset - now : secondaryResetAfter),
@@ -178,33 +165,19 @@ async function pollCodex() {
     resp = await fetch(CODEX_BACKEND_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        "chatgpt-account-id": accountId,
-        session_id: crypto.randomUUID(),
-        Referer: "https://chatgpt.com/",
-        Origin: "https://chatgpt.com",
+        Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", Accept: "text/event-stream",
+        "chatgpt-account-id": accountId, session_id: crypto.randomUUID(),
+        Referer: "https://chatgpt.com/", Origin: "https://chatgpt.com",
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
       },
-      body: JSON.stringify(CODEX_PROBE),
-      signal: ctrl.signal,
+      body: JSON.stringify(CODEX_PROBE), signal: ctrl.signal,
     });
   } catch (e) { clearTimeout(t); return setError("chatgpt", `upstream fetch failed: ${e.message}`); }
   clearTimeout(t);
 
   const snap = headerSnapshot(resp.headers);
-  try {
-    if (resp.body) {
-      const r = resp.body.getReader();
-      await r.read().catch(() => null);
-      try { await r.cancel(); } catch {}
-    }
-  } catch {}
-
-  if (!snap["x-codex-plan-type"]) {
-    return setError("chatgpt", `upstream returned no x-codex-* headers (HTTP ${resp.status})`);
-  }
+  try { if (resp.body) { const r = resp.body.getReader(); await r.read().catch(() => null); try { await r.cancel(); } catch {} } } catch {}
+  if (!snap["x-codex-plan-type"]) return setError("chatgpt", `upstream returned no x-codex-* headers (HTTP ${resp.status})`);
   return setOk("chatgpt", parseCodex(snap, accountId));
 }
 
@@ -226,11 +199,8 @@ function parseMM(mr, kind) {
     interval: {
       windowMinutes: start && end ? Math.round((end - start) / 60000) : null,
       usedPct: remPct == null ? null : Math.max(0, Math.min(100, 100 - remPct)),
-      remainingPct: remPct,
-      usedCount: mr.current_interval_usage_count ?? 0,
-      totalCount: mr.current_interval_total_count ?? 0,
-      resetAt: intervalEnd,
-      resetAtIso: intervalEnd ? new Date(intervalEnd * 1000).toISOString() : null,
+      remainingPct: remPct, usedCount: mr.current_interval_usage_count ?? 0, totalCount: mr.current_interval_total_count ?? 0,
+      resetAt: intervalEnd, resetAtIso: intervalEnd ? new Date(intervalEnd*1000).toISOString() : null,
       resetInSeconds: intervalEnd ? intervalEnd - now : null,
       resetInHuman: humanizeSeconds(intervalEnd ? intervalEnd - now : null),
       boostPermille: mr.interval_boost_permille ?? null,
@@ -238,11 +208,8 @@ function parseMM(mr, kind) {
     weekly: {
       windowMinutes: weeklyStart && weeklyEnd ? Math.round((weeklyEnd - weeklyStart) / 60000) : null,
       usedPct: wRemPct == null ? null : Math.max(0, Math.min(100, 100 - wRemPct)),
-      remainingPct: wRemPct,
-      usedCount: mr.current_weekly_usage_count ?? 0,
-      totalCount: mr.current_weekly_total_count ?? 0,
-      resetAt: weeklyEndS,
-      resetAtIso: weeklyEndS ? new Date(weeklyEndS * 1000).toISOString() : null,
+      remainingPct: wRemPct, usedCount: mr.current_weekly_usage_count ?? 0, totalCount: mr.current_weekly_total_count ?? 0,
+      resetAt: weeklyEndS, resetAtIso: weeklyEndS ? new Date(weeklyEndS*1000).toISOString() : null,
       resetInSeconds: weeklyEndS ? weeklyEndS - now : null,
       resetInHuman: humanizeSeconds(weeklyEndS ? weeklyEndS - now : null),
       boostPermille: mr.weekly_boost_permille ?? null,
@@ -261,8 +228,7 @@ async function pollMinimax() {
   let resp;
   try {
     resp = await fetch(MM_QUOTA_URL, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      method: "GET", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       signal: ctrl.signal,
     });
   } catch (e) { clearTimeout(t); return setError("minimax", `upstream fetch failed: ${e.message}`); }
@@ -287,12 +253,13 @@ async function pollMinimax() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  opencode-go (workspace monthly quota)
+//  opencode-go (N accounts, monthly cap from upstream)
 // ═══════════════════════════════════════════════════════════════════════════
-async function pollOpencodeGo() {
-  let key = await readKey(OC_AUTH_KEY_PATH);
-  if (!key) key = process.env.OPENCODE_API_KEY || "";
-  if (!key) return setError("opencode_go", "no OPENCODE_API_KEY");
+async function pollOneOpencodeGo(account) {
+  const { slot, keyFile, env, label } = account;
+  let key = await readKey(keyFile);
+  if (!key && env) key = process.env[env] || "";
+  if (!key) return setError(slot, `no key in ${keyFile} or env ${env}`);
 
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 15000);
@@ -308,7 +275,7 @@ async function pollOpencodeGo() {
       body: JSON.stringify(OC_GO_PROBE),
       signal: ctrl.signal,
     });
-  } catch (e) { clearTimeout(t); return setError("opencode_go", `upstream fetch failed: ${e.message}`); }
+  } catch (e) { clearTimeout(t); return setError(slot, `upstream fetch failed: ${e.message}`); }
   clearTimeout(t);
 
   const retryAfter = Number(resp.headers.get("retry-after")) || null;
@@ -316,12 +283,21 @@ async function pollOpencodeGo() {
   try { body = await resp.json(); } catch {}
 
   if (resp.status === 200) {
-    return setOk("opencode_go", {
+    return setOk(slot, {
       service: "opencode-go",
-      label: "OpenCode Go (workspace)",
+      accountLabel: label,
+      keyFile: keyFile,
       endpoint: OC_GO_URL,
       status: "ok",
-      monthly: { usedPct: null, used: null, limit: null, resetAt: null, resetInSeconds: null, resetInHuman: null, note: "within quota (probe succeeded)" },
+      workspace: null,
+      limitName: "monthly",
+      monthly: {
+        usedPct: 0,
+        used: null, limit: null,
+        resetAt: null, resetInSeconds: null, resetInHuman: null,
+        note: "within monthly quota (probe succeeded) — 5h/weekly not exposed by upstream",
+      },
+      upgradeUrl: null,
       raw: { httpStatus: 200, retryAfter, body },
     });
   }
@@ -329,9 +305,10 @@ async function pollOpencodeGo() {
   if (resp.status === 429 && body && body.error && body.error.type === "GoUsageLimitError") {
     const meta = body.metadata || {};
     const resetIn = retryAfter != null ? retryAfter : null;
-    return setOk("opencode_go", {
+    return setOk(slot, {
       service: "opencode-go",
-      label: "OpenCode Go (workspace)",
+      accountLabel: label,
+      keyFile: keyFile,
       endpoint: OC_GO_URL,
       status: "limit_reached",
       workspace: meta.workspace || null,
@@ -348,7 +325,7 @@ async function pollOpencodeGo() {
     });
   }
 
-  return setError("opencode_go", `upstream returned HTTP ${resp.status}: ${body && body.error ? body.error.message : "unknown"}`);
+  return setError(slot, `upstream returned HTTP ${resp.status}: ${body && body.error ? body.error.message : "unknown"}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -361,16 +338,10 @@ function parseOpenRouter(key, credits) {
   const totalUsage   = typeof c.total_usage   === "number" ? c.total_usage   : null;
   const remaining    = (totalCredits != null && totalUsage != null) ? Math.max(0, totalCredits - totalUsage) : null;
   return {
-    service: "openrouter",
-    label: "OpenRouter (credits)",
-    endpoint: OR_KEY_URL,
-    accountId: d.creator_user_id || null,
-    keyLabel: d.label || null,
-    isFreeTier: !!d.is_free_tier,
-    isManagementKey: !!d.is_management_key,
-    limit: d.limit,
-    limitReset: d.limit_reset || null,
-    limitRemaining: d.limit_remaining,
+    service: "openrouter", label: "OpenRouter (credits)", endpoint: OR_KEY_URL,
+    accountId: d.creator_user_id || null, keyLabel: d.label || null,
+    isFreeTier: !!d.is_free_tier, isManagementKey: !!d.is_management_key,
+    limit: d.limit, limitReset: d.limit_reset || null, limitRemaining: d.limit_remaining,
     includeByokInLimit: !!d.include_byok_in_limit,
     spend: {
       lifetime: typeof d.usage === "number" ? d.usage : null,
@@ -383,18 +354,11 @@ function parseOpenRouter(key, credits) {
       byokMonthly:  typeof d.byok_usage_monthly === "number" ? d.byok_usage_monthly : null,
     },
     credits: {
-      total: totalCredits,
-      used:  totalUsage,
-      remaining,
-      remainingPct: (totalCredits != null && totalUsage != null && totalCredits > 0)
-        ? Math.max(0, Math.min(100, (remaining / totalCredits) * 100))
-        : null,
-      usedPct: (totalCredits != null && totalUsage != null && totalCredits > 0)
-        ? Math.max(0, Math.min(100, (totalUsage / totalCredits) * 100))
-        : null,
+      total: totalCredits, used: totalUsage, remaining,
+      remainingPct: (totalCredits != null && totalUsage != null && totalCredits > 0) ? Math.max(0, Math.min(100, (remaining / totalCredits) * 100)) : null,
+      usedPct:      (totalCredits != null && totalUsage != null && totalCredits > 0) ? Math.max(0, Math.min(100, (totalUsage / totalCredits) * 100)) : null,
     },
-    expiresAt: d.expires_at || null,
-    raw: { key, credits },
+    expiresAt: d.expires_at || null, raw: { key, credits },
   };
 }
 async function pollOpenRouter() {
@@ -419,80 +383,74 @@ async function pollOpenRouter() {
     clearTimeout(t);
     return setError("openrouter", `upstream fetch failed: ${e.message}`);
   }
-
   return setOk("openrouter", parseOpenRouter(k, c));
 }
 
-function sourceSummary(s) {
-  return { ok: s.ok, source: s.source, fresh: isFresh(s), fetchedAt: s.fetchedAt, error: s.error };
-}
+function sourceSummary(s) { return { ok: s.ok, source: s.source, fresh: isFresh(s), fetchedAt: s.fetchedAt, error: s.error }; }
 
 app.get("/api/health", (req, res) => {
   res.json({
-    ok: true,
-    service: "token-bill-dashboard",
-    uptimeSec: Math.round(process.uptime()),
+    ok: true, service: "token-bill-dashboard", uptimeSec: Math.round(process.uptime()),
     sources: {
-      chatgpt:     sourceSummary(state.chatgpt),
-      minimax:     sourceSummary(state.minimax),
-      opencode_go: sourceSummary(state.opencode_go),
-      openrouter:  sourceSummary(state.openrouter),
+      chatgpt:        sourceSummary(state.chatgpt),
+      minimax:        sourceSummary(state.minimax),
+      opencode_go_1:  sourceSummary(state.opencode_go_1),
+      opencode_go_2:  sourceSummary(state.opencode_go_2),
+      openrouter:     sourceSummary(state.openrouter),
     },
   });
 });
 
 async function collect(refresh) {
-  if (refresh || !isFresh(state.chatgpt))     await pollCodex();
-  if (refresh || !isFresh(state.minimax))     await pollMinimax();
-  if (refresh || !isFresh(state.opencode_go)) await pollOpencodeGo();
-  if (refresh || !isFresh(state.openrouter))  await pollOpenRouter();
+  if (refresh || !isFresh(state.chatgpt))       await pollCodex();
+  if (refresh || !isFresh(state.minimax))       await pollMinimax();
+  for (const a of OC_GO_ACCOUNTS) {
+    if (refresh || !isFresh(state[a.slot]))      await pollOneOpencodeGo(a);
+  }
+  if (refresh || !isFresh(state.openrouter))    await pollOpenRouter();
   return {
-    ok: state.chatgpt.ok || state.minimax.ok || state.opencode_go.ok || state.openrouter.ok,
-    source: "live",
-    fetchedAt: nowIso(),
+    ok: state.chatgpt.ok || state.minimax.ok || state.opencode_go_1.ok || state.opencode_go_2.ok || state.openrouter.ok,
+    source: "live", fetchedAt: nowIso(),
     data: {
-      chatgpt:     state.chatgpt.data,
-      minimax:     state.minimax.data,
-      opencode_go: state.opencode_go.data,
-      openrouter:  state.openrouter.data,
+      chatgpt:       state.chatgpt.data,
+      minimax:       state.minimax.data,
+      opencode_go_1: state.opencode_go_1.data,
+      opencode_go_2: state.opencode_go_2.data,
+      openrouter:    state.openrouter.data,
     },
     errors: {
-      chatgpt:     state.chatgpt.error,
-      minimax:     state.minimax.error,
-      opencode_go: state.opencode_go.error,
-      openrouter:  state.openrouter.error,
+      chatgpt:       state.chatgpt.error,
+      minimax:       state.minimax.error,
+      opencode_go_1: state.opencode_go_1.error,
+      opencode_go_2: state.opencode_go_2.error,
+      openrouter:    state.openrouter.error,
     },
   };
 }
 
-app.get("/api/usage", async (req, res) => {
-  const refresh = String(req.query.refresh || "") === "1";
-  res.json(await collect(refresh));
-});
-
-app.get("/api/cache", (req, res) => {
-  res.json({
-    ok: true,
-    sources: {
-      chatgpt:     { ...state.chatgpt, fresh: isFresh(state.chatgpt) },
-      minimax:     { ...state.minimax, fresh: isFresh(state.minimax) },
-      opencode_go: { ...state.opencode_go, fresh: isFresh(state.opencode_go) },
-      openrouter:  { ...state.openrouter, fresh: isFresh(state.openrouter) },
-    },
-  });
-});
-
-app.post("/api/refresh", async (req, res) => {
-  res.json(await collect(true));
-});
+app.get("/api/usage",  async (req, res) => { res.json(await collect(String(req.query.refresh||"")==="1")); });
+app.get("/api/cache",  (req, res) => { res.json({ ok: true, sources: {
+  chatgpt: { ...state.chatgpt, fresh: isFresh(state.chatgpt) },
+  minimax: { ...state.minimax, fresh: isFresh(state.minimax) },
+  opencode_go_1: { ...state.opencode_go_1, fresh: isFresh(state.opencode_go_1) },
+  opencode_go_2: { ...state.opencode_go_2, fresh: isFresh(state.opencode_go_2) },
+  openrouter: { ...state.openrouter, fresh: isFresh(state.openrouter) },
+}}); });
+app.post("/api/refresh", async (req, res) => { res.json(await collect(true)); });
 
 (async () => {
   try {
-    await Promise.all([pollCodex(), pollMinimax(), pollOpencodeGo(), pollOpenRouter()]);
-    console.log(`[boot] codex:        ok=${state.chatgpt.ok}     err=${state.chatgpt.error || "-"}`);
-    console.log(`[boot] minimax:      ok=${state.minimax.ok}     err=${state.minimax.error || "-"}`);
-    console.log(`[boot] opencode-go:  ok=${state.opencode_go.ok} err=${state.opencode_go.error || "-"}`);
-    console.log(`[boot] openrouter:   ok=${state.openrouter.ok}  err=${state.openrouter.error || "-"}`);
+    await Promise.all([
+      pollCodex(), pollMinimax(),
+      ...OC_GO_ACCOUNTS.map(pollOneOpencodeGo),
+    ]);
+    await pollOpenRouter();
+    console.log(`[boot] codex:          ok=${state.chatgpt.ok}        err=${state.chatgpt.error || "-"}`);
+    console.log(`[boot] minimax:        ok=${state.minimax.ok}        err=${state.minimax.error || "-"}`);
+    for (const a of OC_GO_ACCOUNTS) {
+      console.log(`[boot] ${a.slot}: ok=${state[a.slot].ok} err=${state[a.slot].error || "-"}`);
+    }
+    console.log(`[boot] openrouter:     ok=${state.openrouter.ok}     err=${state.openrouter.error || "-"}`);
   } catch (e) {
     console.error(`[boot] initial poll threw: ${e.message}`);
   }
