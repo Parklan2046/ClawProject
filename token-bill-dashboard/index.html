@@ -1,1120 +1,261 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Token Bill Dashboard · Parklan</title>
-<meta name="description" content="All AI accounts and token usage in one view." />
-<link rel="icon" type="image/jpeg" href="../assets/favicon.jpg" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>token bill</title>
+<meta name="color-scheme" content="dark">
 <style>
-/* ═══════════════════════════════════════════════════
-   TOKEN BILL DASHBOARD · CYBERPUNK TERMINAL
-   on9claw design standard v1.0
-   ═══════════════════════════════════════════════════ */
+  :root {
+    --bg:        #0c0e13;
+    --card:      #13161e;
+    --border:    #1f2330;
+    --border-hi: #2a3040;
+    --text:      #d8dde8;
+    --text-dim:  #6b7280;
+    --text-mute: #4b5363;
+    --accent:    #7aa2ff;
+    --green:     #1edc8b;
+    --yellow:    #f5b74e;
+    --red:       #ef4a5d;
+    --grey:      #3a4150;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.4; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
 
-:root {
-  --pink: #ff3ea5;
-  --pink-dim: #c42d7e;
-  --cyan: #33e6ff;
-  --cyan-dim: #1fa8bd;
-  --green: #00e676;
-  --yellow: #ffb627;
-  --red: #ff4d6a;
-  --purple: #a78bfa;
-  --orange: #ff8c42;
-  --text: #e0dce8;
-  --text-bright: #ffffff;
-  --text-dim: #6b6990;
-  --bg: #000000;
-  --bg-alt: #0a0a0f;
-  --chrome: #111118;
-  --chrome-2: #16161e;
-  --border: rgba(255,255,255,0.08);
-  --border-active: rgba(255,62,165,0.25);
-  --border-cyan: rgba(51,230,255,0.25);
-  --border-green: rgba(0,230,118,0.25);
-  --border-yellow: rgba(255,182,39,0.25);
-  --border-red: rgba(255,77,106,0.25);
-  --scanline-opacity: 0.03;
-}
-/* bar-sub: small caption under each bar */
-.bar-sub {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  margin-top: 3px;
-  letter-spacing: 0.03em;
-  font-family: 'Share Tech Mono', monospace;
-}
-.bar-fill.ok    { background: linear-gradient(90deg, #00e676, #00b35a); }
-.bar-fill.warn  { background: linear-gradient(90deg, #ffb627, #ff8c42); }
-.bar-fill.crit  { background: linear-gradient(90deg, #ff4d6a, #c42d7e); }
-.bar-fill.idle  { background: linear-gradient(90deg, #4a4868, #2a2840); }
+  .page { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+  .title { font-size: 14px; color: var(--text-dim); font-weight: 500; letter-spacing: 0.4px; margin-bottom: 20px; }
 
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; }
 
-* { margin:0; padding:0; box-sizing:border-box; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .card .name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+  .card .name .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+  .card .name .dot.err { background: var(--red); }
+  .card .name .dot.warn { background: var(--yellow); }
+  .card .name .dot.idle { background: var(--grey); }
+  .card .meta { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; }
 
-html, body {
-  font-family: 'JetBrains Mono', 'Share Tech Mono', monospace;
-  color: var(--text);
-  background: var(--bg);
-  min-height: 100dvh;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+  .bar-row { display: flex; align-items: baseline; justify-content: space-between; margin: 10px 0 4px; }
+  .bar-row .lbl { font-size: 12px; color: var(--text-dim); }
+  .bar-row .pct { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--text); font-weight: 500; }
+  .bar-row .pct.crit { color: var(--red); }
+  .bar-row .pct.warn { color: var(--yellow); }
+  .bar-row .pct.ok { color: var(--green); }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 32px 32px;
-}
+  .bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .bar > .fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s ease; }
+  .bar > .fill.ok { background: var(--green); }
+  .bar > .fill.warn { background: var(--yellow); }
+  .bar > .fill.crit { background: var(--red); }
+  .bar > .fill.idle { background: var(--grey); }
 
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255,255,255,var(--scanline-opacity)) 0px,
-    rgba(255,255,255,var(--scanline-opacity)) 1px,
-    transparent 1px,
-    transparent 4px
-  );
-  mix-blend-mode: overlay;
-}
+  .bar-sub { font-size: 11px; color: var(--text-mute); margin-top: 4px; }
 
-.wrap {
-  position: relative;
-  z-index: 2;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 20px 60px;
-}
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .badge.capped { background: var(--red); color: #fff; }
+  .badge.ok     { background: var(--green); color: #0c0e13; }
 
-.term-window {
-  position: relative;
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  margin-bottom: 18px;
-  box-shadow: 0 0 40px rgba(255,62,165,0.04), 0 0 80px rgba(51,230,255,0.02);
-}
-.term-window::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 1px solid rgba(255,255,255,0.03);
-  pointer-events: none;
-  z-index: 2;
-}
-.term-titlebar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: var(--chrome);
-  border-bottom: 1px solid var(--chrome-2);
-  user-select: none;
-}
-.term-dots { display: flex; gap: 7px; flex-shrink: 0; }
-.term-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid; }
-.term-dot.red    { background: #ff5f57; border-color: #e0443e; }
-.term-dot.yellow { background: #febc2e; border-color: #dea123; }
-.term-dot.green  { background: #28c840; border-color: #1ea835; }
-.term-title {
-  flex: 1;
-  font-size: 0.7em;
-  color: var(--text-dim);
-  text-align: center;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.term-body { padding: 22px 24px; position: relative; z-index: 1; }
+  .footer { margin-top: 24px; font-size: 11px; color: var(--text-mute); display: flex; justify-content: space-between; }
+  .footer .live { color: var(--green); }
+  .footer .live.err { color: var(--red); }
 
-.glitch-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: clamp(1.8em, 5vw, 3.4em);
-  font-weight: 800;
-  color: var(--text-bright);
-  line-height: 1.0;
-  text-shadow:
-    0 0 7px rgba(255,62,165,0.6),
-    0 0 20px rgba(255,62,165,0.3),
-    0 0 40px rgba(255,62,165,0.15);
-  letter-spacing: -0.03em;
-  margin: 14px 0 6px;
-  position: relative;
-  animation: title-flicker 5s linear infinite;
-}
-@keyframes title-flicker {
-  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; transform: none; }
-  20%, 21.999% { opacity: 0.85; transform: translate(-1px, 1px); }
-  63%, 63.999% { opacity: 0.65; transform: translate(2px, -1px); }
-  65%, 69.999% { opacity: 0.55; transform: translate(-1px, 0); }
-}
-.glitch-title::before, .glitch-title::after {
-  content: attr(data-text);
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  opacity: 0;
-}
-.glitch-title::before {
-  color: var(--cyan); z-index: -1;
-  animation: glitch-cyan 5s linear infinite;
-}
-.glitch-title::after {
-  color: var(--pink); z-index: -2;
-  animation: glitch-pink 5s linear infinite;
-}
-@keyframes glitch-cyan {
-  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 0; transform: none; }
-  20%, 21.999% { opacity: 0.7; transform: translate(-3px, 0); }
-  63% { opacity: 0; }
-  65%, 69.999% { opacity: 0.5; transform: translate(2px, -1px); }
-}
-@keyframes glitch-pink {
-  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 0; transform: none; }
-  20%, 21.999% { opacity: 0.7; transform: translate(3px, 1px); }
-  63% { opacity: 0; }
-  65%, 69.999% { opacity: 0.5; transform: translate(-2px, -1px); }
-}
-
-.tagline {
-  color: var(--cyan);
-  font-size: 0.84em;
-  letter-spacing: 0.04em;
-  margin-bottom: 18px;
-  text-shadow: 0 0 8px rgba(51,230,255,0.3);
-}
-.prompt-line {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  color: var(--text-dim);
-  font-size: 0.78em;
-  margin-top: 8px;
-}
-.prompt-user { color: var(--green); }
-.prompt-at   { color: var(--text-dim); }
-.prompt-host { color: var(--cyan); }
-.prompt-path { color: var(--pink); }
-.cursor-blink {
-  display: inline-block;
-  width: 8px; height: 16px;
-  background: var(--cyan);
-  margin-left: 4px;
-  animation: cursor-blink 1s step-end infinite;
-  vertical-align: middle;
-  box-shadow: 0 0 6px var(--cyan);
-}
-@keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-.status-strip {
-  border: 1px solid var(--chrome-2);
-  background: var(--chrome);
-  padding: 10px 16px;
-  margin-bottom: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  font-size: 0.7em;
-  color: var(--text-dim);
-  letter-spacing: 0.03em;
-}
-.status-strip .label { color: var(--text-dim); }
-.status-strip .val   { color: var(--text); font-weight: 500; }
-.status-strip .val.ok    { color: var(--green); }
-.status-strip .val.warn  { color: var(--yellow); }
-.status-strip .val.info  { color: var(--cyan); }
-.status-strip .val.pink  { color: var(--pink); }
-.status-sep { color: var(--border); }
-
-.section-label {
-  font-size: 0.7em;
-  color: var(--text-dim);
-  letter-spacing: 0.14em;
-  padding: 14px 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.section-label::before { content: '#'; color: var(--pink); }
-.section-label::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--chrome-2);
-}
-
-.account-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.acct-card {
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  padding: 16px 18px;
-  position: relative;
-  transition: border-color 0.15s, transform 0.15s;
-}
-.acct-card:hover {
-  border-color: var(--border-active);
-  transform: translateY(-2px);
-}
-.acct-card.warn  { border-left: 2px solid var(--yellow); }
-.acct-card.crit  { border-left: 2px solid var(--red); }
-.acct-card.ok    { border-left: 2px solid var(--green); }
-
-.acct-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.acct-icon {
-  width: 28px; height: 28px;
-  display: grid; place-items: center;
-  border: 1px solid var(--border);
-  font-size: 0.85em;
-  color: var(--cyan);
-  background: var(--chrome);
-  flex-shrink: 0;
-}
-.acct-name {
-  flex: 1;
-  font-size: 0.86em;
-  font-weight: 700;
-  color: var(--text-bright);
-  letter-spacing: 0.01em;
-}
-.acct-badge {
-  font-size: 0.62em;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 2px 8px;
-  border: 1px solid;
-  white-space: nowrap;
-}
-.badge-plus   { color: var(--green); border-color: rgba(0,230,118,0.3); }
-.badge-pro    { color: var(--purple); border-color: rgba(167,139,250,0.3); }
-.badge-free   { color: var(--text-dim); border-color: var(--border); }
-.badge-payg   { color: var(--cyan); border-color: var(--border-cyan); }
-.badge-down   { color: var(--red); border-color: var(--border-red); }
-.badge-beta   { color: var(--yellow); border-color: var(--border-yellow); }
-
-.acct-meta {
-  font-size: 0.7em;
-  color: var(--text-dim);
-  line-height: 1.7;
-  margin-bottom: 12px;
-}
-.acct-meta .k { color: var(--text-dim); }
-.acct-meta .v { color: var(--text); }
-
-.acct-bars {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 14px;
-  margin-bottom: 12px;
-}
-.bar-block { font-size: 0.66em; }
-.bar-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-  color: var(--text-dim);
-  letter-spacing: 0.04em;
-}
-.bar-label .pct { color: var(--text); font-weight: 600; }
-.bar-label .pct.high { color: var(--yellow); }
-.bar-label .pct.crit { color: var(--red); }
-.bar-track {
-  height: 5px;
-  background: var(--chrome-2);
-  position: relative;
-  overflow: hidden;
-}
-.bar-fill {
-  position: absolute;
-  inset: 0;
-  background: var(--cyan);
-  width: 0%;
-  box-shadow: 0 0 6px currentColor;
-  transition: width 0.6s cubic-bezier(.2,.7,.2,1);
-}
-.bar-fill.ok   { background: var(--green);   color: var(--green); }
-.bar-fill.warn { background: var(--yellow);  color: var(--yellow); }
-.bar-fill.crit { background: var(--red);     color: var(--red); }
-.bar-fill.info { background: var(--cyan);    color: var(--cyan); }
-
-.acct-models {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  font-size: 0.66em;
-  margin-bottom: 8px;
-}
-.model-chip {
-  padding: 2px 7px;
-  background: var(--chrome);
-  border: 1px solid var(--border);
-  color: var(--cyan);
-  letter-spacing: 0.03em;
-}
-.acct-footer {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.62em;
-  color: var(--text-dim);
-  padding-top: 8px;
-  border-top: 1px dashed var(--border);
-}
-.acct-footer .live::before {
-  content: '●';
-  color: var(--green);
-  margin-right: 4px;
-  animation: pulse 1.6s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.tbl {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.74em;
-  margin-bottom: 4px;
-}
-.tbl thead th {
-  text-align: left;
-  font-weight: 500;
-  color: var(--text-dim);
-  letter-spacing: 0.06em;
-  font-size: 0.92em;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--chrome-2);
-  background: var(--chrome);
-}
-.tbl tbody td {
-  padding: 9px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
-  color: var(--text);
-  letter-spacing: 0.02em;
-}
-.tbl tbody tr:hover { background: rgba(255,62,165,0.04); }
-.tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
-.tbl .pink   { color: var(--pink); }
-.tbl .cyan   { color: var(--cyan); }
-.tbl .green  { color: var(--green); }
-.tbl .yellow { color: var(--yellow); }
-.tbl .dim    { color: var(--text-dim); }
-.tbl .bold   { color: var(--text-bright); font-weight: 600; }
-
-.sparkline { display: inline-block; vertical-align: middle; }
-.sparkline rect { fill: var(--cyan); opacity: 0.85; }
-.sparkline rect.dim { fill: var(--text-dim); opacity: 0.4; }
-
-.feed {
-  font-size: 0.72em;
-  display: flex;
-  flex-direction: column;
-}
-.feed-row {
-  display: grid;
-  grid-template-columns: 60px 90px 1fr 100px 80px;
-  gap: 10px;
-  padding: 7px 0;
-  border-bottom: 1px dashed rgba(255,255,255,0.04);
-  color: var(--text-dim);
-  letter-spacing: 0.02em;
-  align-items: center;
-}
-.feed-row:hover { color: var(--text); background: rgba(255,62,165,0.03); }
-.feed-row .ts   { color: var(--text-dim); font-variant-numeric: tabular-nums; }
-.feed-row .src  { color: var(--cyan); }
-.feed-row .src.minimax { color: var(--orange); }
-.feed-row .src.chatgpt { color: var(--green); }
-.feed-row .src.openai  { color: var(--pink); }
-.feed-row .msg  { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.feed-row .tok  { color: var(--cyan); text-align: right; font-variant-numeric: tabular-nums; }
-.feed-row .cost { color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
-
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 10px;
-  margin-bottom: 18px;
-}
-.kpi {
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  padding: 14px 16px;
-  position: relative;
-  overflow: hidden;
-}
-.kpi-label {
-  font-size: 0.64em;
-  color: var(--text-dim);
-  letter-spacing: 0.1em;
-  margin-bottom: 6px;
-}
-.kpi-value {
-  font-size: 1.5em;
-  font-weight: 800;
-  color: var(--text-bright);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.kpi-suffix {
-  font-size: 0.4em;
-  color: var(--text-dim);
-  font-weight: 500;
-  margin-left: 4px;
-  letter-spacing: 0.04em;
-}
-.kpi-foot {
-  font-size: 0.6em;
-  color: var(--text-dim);
-  margin-top: 4px;
-}
-.kpi-foot .up   { color: var(--green); }
-.kpi-foot .down { color: var(--red); }
-.kpi-foot .flat { color: var(--text-dim); }
-.kpi.pink  { border-left: 2px solid var(--pink); }
-.kpi.cyan  { border-left: 2px solid var(--cyan); }
-.kpi.green { border-left: 2px solid var(--green); }
-.kpi.yellow{ border-left: 2px solid var(--yellow); }
-
-.chart-wrap {
-  padding: 6px 0 0;
-  margin-bottom: 18px;
-}
-.chart {
-  width: 100%;
-  height: 180px;
-  display: block;
-}
-.chart .axis { stroke: var(--border); stroke-width: 1; }
-.chart .grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.4; }
-.chart .label { fill: var(--text-dim); font-size: 10px; font-family: 'JetBrains Mono', monospace; }
-.chart .bar { fill: var(--cyan); }
-.chart .bar.pink { fill: var(--pink); }
-.chart .bar.orange { fill: var(--orange); }
-.chart .bar.green { fill: var(--green); }
-.chart .bar.dim { fill: var(--text-dim); opacity: 0.5; }
-.chart .line-cost { stroke: var(--pink); stroke-width: 1.5; fill: none; }
-.chart .line-tok  { stroke: var(--cyan); stroke-width: 1.5; fill: none; }
-.chart .dot-cost { fill: var(--pink); }
-.chart .dot-tok  { fill: var(--cyan); }
-
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-@media (max-width: 760px) {
-  .two-col { grid-template-columns: 1fr; }
-  .feed-row { grid-template-columns: 56px 80px 1fr 70px 60px; font-size: 0.95em; }
-  .feed-row .cost { display: none; }
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-  font-size: 0.7em;
-}
-.btn {
-  background: transparent;
-  border: 1px solid var(--pink);
-  color: var(--pink);
-  font-weight: 700;
-  cursor: pointer;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1em;
-  letter-spacing: 0.06em;
-  padding: 7px 14px;
-  transition: background 0.15s, color 0.15s;
-}
-.btn:hover { background: var(--pink); color: var(--bg); }
-.btn.cyan  { border-color: var(--cyan); color: var(--cyan); }
-.btn.cyan:hover { background: var(--cyan); color: var(--bg); }
-.btn.ghost { border-color: var(--border); color: var(--text-dim); }
-.btn.ghost:hover { border-color: var(--text); color: var(--text); background: transparent; }
-
-.foot {
-  text-align: center;
-  font-size: 0.66em;
-  color: var(--text-dim);
-  padding: 24px 16px 8px;
-  letter-spacing: 0.04em;
-}
-.foot .pink { color: var(--pink); }
-.foot .cyan { color: var(--cyan); }
-
-.acct-card[data-service="chatgpt"] .acct-icon { color: var(--green); border-color: var(--border-green); }
-.acct-card[data-service="minimax"]  .acct-icon { color: var(--orange); border-color: rgba(255,140,66,0.3); }
-.acct-card[data-service="opencode-go-1"] .acct-icon { color: var(--green);  border-color: var(--border-active); }
-.acct-card[data-service="opencode-go-1"] .acct-badge.badge-go { color: var(--green); border-color: var(--green); }
-.acct-card[data-service="opencode-go-2"] .acct-icon { color: var(--green);  border-color: var(--border-active); }
-.acct-card[data-service="opencode-go-2"] .acct-badge.badge-go { color: var(--green); border-color: var(--green); }
-.acct-card[data-service="openrouter"]  .acct-icon { color: var(--cyan);   border-color: var(--border-cyan); }
-.acct-card[data-service="openrouter"]  .acct-badge.badge-or { color: var(--cyan); border-color: var(--cyan); }
-.acct-card.crit.capped { border-color: var(--red); box-shadow: 0 0 0 1px rgba(255,77,109,0.3), 0 0 14px -2px rgba(255,77,109,0.25); }
-.acct-card.crit.capped .acct-icon { border-color: var(--red); color: var(--red); }
-.acct-card.crit.capped .badge-go { color: var(--red); border-color: var(--red); }
-/* Within-quota opencode-go: green OK treatment (mirrors the CAPPED red one) */
-.acct-card.crit.ok { border-color: var(--green); box-shadow: 0 0 0 1px var(--green), 0 0 18px rgba(0, 230, 130, 0.18); }
-.acct-card.crit.ok .acct-icon { color: var(--green); border-color: var(--green); }
-.acct-card.crit.ok .acct-badge { background: var(--green); color: #0c0e13; }
-.acct-card.crit.ok .bar-fill.idle { background: var(--green); opacity: 0.5; min-width: 2px; }
-
-.bar-label em.src { font-style: normal; font-size: 0.6rem; color: var(--text-dim); background: rgba(255,255,255,0.04); padding: 1px 4px; border-radius: 3px; margin-left: 4px; letter-spacing: 0.3px; text-transform: uppercase; }
-a.link { color: var(--cyan); text-decoration: underline; }
-a.link:hover { color: var(--pink); }
-.badge-cap { color: var(--red); border-color: var(--red); background: rgba(255,77,109,0.08); font-weight: 700; letter-spacing: 0.5px; }
-
-.acct-card[data-service="openai"]   .acct-icon { color: var(--pink);   border-color: var(--border-active); }
-.acct-card[data-service="anthropic"].acct-icon { color: var(--purple); border-color: rgba(167,139,250,0.3); }
-.acct-card[data-service="google"]   .acct-icon { color: var(--cyan);   border-color: var(--border-cyan); }
-
+  .err-box { font-size: 11px; color: var(--red); background: rgba(239, 74, 93, 0.08); padding: 6px 8px; border-radius: 4px; margin-top: 8px; font-family: ui-monospace, "SF Mono", monospace; word-break: break-all; }
 </style>
 </head>
 <body>
-
-<div class="wrap">
-
-  <!-- ═══════════════════════════════════════════════════
-       HERO / BOOT SCREEN
-       ═══════════════════════════════════════════════════ -->
-  <div class="term-window hero-window">
-    <div class="term-titlebar">
-      <div class="term-dots">
-        <span class="term-dot red"></span>
-        <span class="term-dot yellow"></span>
-        <span class="term-dot green"></span>
-      </div>
-      <div class="term-title">parklan@on9claw: ~/token-bill-dashboard</div>
-    </div>
-    <div class="term-body hero-body">
-
-      <div class="glitch-title" data-text="TOKEN BILL">TOKEN BILL</div>
-      <div class="tagline">// all AI accounts · all token spend · one view</div>
-
-      <div class="prompt-line">
-        <span class="prompt-user">parklan</span><span class="prompt-at">@</span><span class="prompt-host">on9claw</span><span class="prompt-path">:~/token-bill-dashboard$</span>
-        <span>./watch --live</span>
-        <span class="cursor-blink"></span>
-      </div>
-
-    </div>
+<div class="page">
+  <div class="title">token bill</div>
+  <div id="grid" class="grid"></div>
+  <div class="footer">
+    <span id="live-indicator" class="live">● live</span>
+    <span id="last-sync">…</span>
   </div>
-
-  <!-- ═══════════════════════════════════════════════════
-       STATUS STRIP
-       ═══════════════════════════════════════════════════ -->
-  <div class="status-strip">
-    <span><span class="label">last sync</span> <span class="val ok" id="topbar-lastsync">…</span></span>
-    <span class="status-sep">|</span>
-    <span><span class="label">source</span> <span class="val">on9claw/token-bill-dashboard/api/usage</span></span>
-  </div>
-
-
-
-
-  <!-- ═══════════════════════════════════════════════════
-       ACCOUNTS
-       ═══════════════════════════════════════════════════ -->
-  <div class="section-label">accounts</div>
-
-  <div class="account-grid">
-
-    <!-- ── ChatGPT Plus ── -->
-    <div class="acct-card warn" data-service="chatgpt">
-      <div class="acct-head">
-        <div class="acct-icon">+</div>
-        <div class="acct-name">chatgpt-plus</div>
-        <div class="acct-badge badge-plus">PLUS</div>
-      </div>
-      <div class="acct-meta">
-        <div><span class="k">email   </span> <span class="v">parklan@gmail.com</span></div>
-        <div><span class="k">plan    </span> <span class="v">Plus · $20/mo flat</span></div>
-        <div><span class="k">auth    </span> <span class="v">Codex OAuth (cli)</span></div>
-        <div><span class="k">account </span> <span class="v">a599a569-…cef2d</span></div>
-      </div>
-      <div class="acct-bars" id="cgpt-bars">
-        <div class="bar-block">
-          <div class="bar-label"><span>5h window</span><span class="pct" id="cgpt-5h-pct">…</span></div>
-          <div class="bar-track"><div class="bar-fill" id="cgpt-5h-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="cgpt-5h-sub">resets in …</div>
-        </div>
-        <div class="bar-block">
-          <div class="bar-label"><span>weekly (7d)</span><span class="pct" id="cgpt-7d-pct">…</span></div>
-          <div class="bar-track"><div class="bar-fill" id="cgpt-7d-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="cgpt-7d-sub">resets in …</div>
-        </div>
-      </div>
-      <div class="acct-models">
-        <span class="model-chip">gpt-5.5</span>
-        <span class="model-chip" id="cgpt-tier">tier: …</span>
-      </div>
-      <div class="acct-footer">
-        <span class="live" id="cgpt-state">…</span>
-        <span id="cgpt-age">last fetch …</span>
-      </div>
-    </div>
-
-    <!-- ── MiniMax ── -->
-    <div class="acct-card ok" data-service="minimax">
-      <div class="acct-head">
-        <div class="acct-icon">名</div>
-        <div class="acct-name">minimax</div>
-        <div class="acct-badge badge-payg">PAYG</div>
-      </div>
-      <div class="acct-meta">
-        <div><span class="k">account </span> <span class="v">China · parklan@…</span></div>
-        <div><span class="k">region  </span> <span class="v" id="mm-region">cn · MiniMax-M3</span></div>
-        <div><span class="k">billing </span> <span class="v" id="mm-billing">coding plan</span></div>
-        <div><span class="k">5h reset</span> <span class="v" id="mm-5h-reset">in …</span></div>
-      </div>
-      <div class="acct-bars" id="mm-bars">
-        <div class="bar-block">
-          <div class="bar-label"><span>5h window</span><span class="pct" id="mm-5h-pct">…</span></div>
-          <div class="bar-track"><div class="bar-fill" id="mm-5h-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="mm-5h-sub">resets in …</div>
-        </div>
-        <div class="bar-block">
-          <div class="bar-label"><span>weekly</span><span class="pct" id="mm-7d-pct">…</span></div>
-          <div class="bar-track"><div class="bar-fill" id="mm-7d-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="mm-7d-sub">resets in …</div>
-        </div>
-      </div>
-      <div class="acct-models">
-        <span class="model-chip">MiniMax-M3</span>
-        <span class="model-chip">MiniMax-M2.7</span>
-        <span class="model-chip">MiniMax-M2.5</span>
-        <span class="model-chip" id="mm-boost">boost …</span>
-      </div>
-      <div class="acct-footer">
-        <span class="live" id="mm-state">…</span>
-        <span id="mm-age">last fetch …</span>
-      </div>
-    </div>
-
-  </div>
-
-    <!-- ── OpenCode Go #1 ── -->
-    <div class="acct-card crit ok" data-service="opencode-go-1">
-      <div class="acct-head">
-        <div class="acct-icon">⌘</div>
-        <div class="acct-name">opencode-go-1</div>
-        <div class="acct-badge badge-go" id="ocg1-badge">GO</div>
-      </div>
-      <div class="acct-meta">
-        <div><span class="k">workspace</span> <span class="v" id="ocg1-workspace">wrk_01KREB…3HYM30ZCYB</span></div>
-        <div><span class="k">limit   </span> <span class="v" id="ocg1-limitname">monthly</span></div>
-        <div><span class="k">reset   </span> <span class="v" id="ocg1-reset">in …</span></div>
-        <div><span class="k">status  </span> <span class="v" id="ocg1-status">…</span></div>
-        <div id="ocg1-upgrade-wrap" style="display:none"><span class="k">upgrade </span> <a id="ocg1-upgrade" href="#" target="_blank" rel="noopener" class="v link">add balance →</a></div>
-      </div>
-      <div class="acct-bars">
-        <div class="bar-block">
-          <div class="bar-label"><span>5h <em class="src">n/a</em></span><span class="pct" id="ocg1-5h-pct">—</span></div>
-          <div class="bar-track"><div class="bar-fill" id="ocg1-5h-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="ocg1-5h-sub">not exposed by upstream</div>
-        </div>
-        <div class="bar-block">
-          <div class="bar-label"><span>weekly <em class="src">n/a</em></span><span class="pct" id="ocg1-week-pct">—</span></div>
-          <div class="bar-track"><div class="bar-fill" id="ocg1-week-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="ocg1-week-sub">not exposed by upstream</div>
-        </div>
-        <div class="bar-block">
-          <div class="bar-label"><span>monthly <em class="src">api</em></span><span class="pct" id="ocg1-monthly-pct">…</span></div>
-          <div class="bar-track"><div class="bar-fill" id="ocg1-monthly-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="ocg1-monthly-sub">…</div>
-        </div>
-      </div>
-      <div class="acct-models">
-        <span class="model-chip">deepseek-v4-flash</span>
-        <span class="model-chip">minimax-m3</span>
-      </div>
-      <div class="acct-footer">
-        <span class="live" id="ocg1-state">…</span>
-        <span id="ocg1-age">last fetch …</span>
-      </div>
-    </div>
-
-    <!-- ── OpenCode Go #2 ── -->
-    <div class="acct-card crit ok" data-service="opencode-go-2">
-      <div class="acct-head">
-        <div class="acct-icon">⌘</div>
-        <div class="acct-name">opencode-go-2</div>
-        <div class="acct-badge badge-go" id="ocg2-badge">GO</div>
-      </div>
-      <div class="acct-meta">
-        <div><span class="k">workspace</span> <span class="v" id="ocg2-workspace">wrk_01KT08…64N88THE</span></div>
-        <div><span class="k">limit   </span> <span class="v" id="ocg2-limitname">monthly</span></div>
-        <div><span class="k">reset   </span> <span class="v" id="ocg2-reset">in …</span></div>
-        <div><span class="k">status  </span> <span class="v" id="ocg2-status">…</span></div>
-        <div id="ocg2-upgrade-wrap" style="display:none"><span class="k">upgrade </span> <a id="ocg2-upgrade" href="#" target="_blank" rel="noopener" class="v link">add balance →</a></div>
-      </div>
-      <div class="acct-bars">
-        <div class="bar-block">
-          <div class="bar-label"><span>5h <em class="src">n/a</em></span><span class="pct" id="ocg2-5h-pct">—</span></div>
-          <div class="bar-track"><div class="bar-fill" id="ocg2-5h-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="ocg2-5h-sub">not exposed by upstream</div>
-        </div>
-        <div class="bar-block">
-          <div class="bar-label"><span>weekly <em class="src">n/a</em></span><span class="pct" id="ocg2-week-pct">—</span></div>
-          <div class="bar-track"><div class="bar-fill" id="ocg2-week-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="ocg2-week-sub">not exposed by upstream</div>
-        </div>
-        <div class="bar-block">
-          <div class="bar-label"><span>monthly <em class="src">api</em></span><span class="pct" id="ocg2-monthly-pct">…</span></div>
-          <div class="bar-track"><div class="bar-fill" id="ocg2-monthly-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="ocg2-monthly-sub">…</div>
-        </div>
-      </div>
-      <div class="acct-models">
-        <span class="model-chip">deepseek-v4-flash</span>
-        <span class="model-chip">minimax-m3</span>
-      </div>
-      <div class="acct-footer">
-        <span class="live" id="ocg2-state">…</span>
-        <span id="ocg2-age">last fetch …</span>
-      </div>
-    </div>
-
-    <!-- ── OpenRouter ── -->
-    <div class="acct-card warn" data-service="openrouter">
-      <div class="acct-head">
-        <div class="acct-icon">◉</div>
-        <div class="acct-name">openrouter</div>
-        <div class="acct-badge badge-or">CREDITS</div>
-      </div>
-      <div class="acct-meta">
-        <div><span class="k">account </span> <span class="v" id="or-account">user_2qmPwN…fohZj</span></div>
-        <div><span class="k">tier    </span> <span class="v" id="or-tier">…</span></div>
-        <div><span class="k">credits </span> <span class="v" id="or-credits">$… of $… left</span></div>
-        <div><span class="k">spent   </span> <span class="v" id="or-spent">$… lifetime</span></div>
-      </div>
-      <div class="acct-bars">
-        <div class="bar-block">
-          <div class="bar-label"><span>credits used</span><span class="pct" id="or-used-pct">…</span></div>
-          <div class="bar-track"><div class="bar-fill" id="or-used-bar" style="width:0%"></div></div>
-          <div class="bar-sub" id="or-used-sub">…</div>
-        </div>
-      </div>
-      <div class="acct-models">
-        <span class="model-chip" id="or-day">day $…</span>
-        <span class="model-chip" id="or-week">week $…</span>
-        <span class="model-chip" id="or-month">month $…</span>
-        <span class="model-chip" id="or-byok">byok $…</span>
-      </div>
-      <div class="acct-footer">
-        <span class="live" id="or-state">…</span>
-        <span id="or-age">last fetch …</span>
-      </div>
-    </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <!-- ═══════════════════════════════════════════════════
-       FOOTER
-       ═══════════════════════════════════════════════════ -->
-  <div class="foot">
-    <span class="pink">●</span> live · refreshes every <span class="cyan">30s</span> · source: on9claw/token-bill-dashboard/api/usage<br/>
-    <span class="dim" id="foot-source">last fetch …</span>
-  </div>
-
 </div>
 
 <script>
-/* ── live Codex usage: poll /api/usage every 30s, update DOM ── */
-(function () {
-  const API = (location.pathname.endsWith('/') ? location.pathname : location.pathname + '/') + 'api/usage';
-  const $ = (id) => document.getElementById(id);
+const REFRESH_MS = 30 * 1000;
+const grid = document.getElementById("grid");
+const liveEl = document.getElementById("live-indicator");
+const lastSync = document.getElementById("last-sync");
 
-  function setText(id, txt) { const el = $(id); if (el) el.textContent = txt; }
-  function setStyle(id, prop, val) { const el = $(id); if (el) el.style[prop] = val; }
-  function setClass(id, cls) { const el = $(id); if (el) el.className = cls; }
+function classify(pct) {
+  if (pct == null) return "idle";
+  if (pct >= 90) return "crit";
+  if (pct >= 70) return "warn";
+  return "ok";
+}
+function pctText(v) { return v == null ? "—" : `${Math.round(v)}%`; }
+function shortId(id) { if (!id) return null; return id.length > 14 ? id.slice(0, 6) + "…" + id.slice(-4) : id; }
 
-  function humanize(s) {
-    if (s == null) return "—";
-    if (s <= 0) return "now";
-    const d = Math.floor(s / 86400);
-    const h = Math.floor((s % 86400) / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    if (d > 0) return d + "d " + h + "h";
-    if (h > 0) return h + "h " + m + "m";
-    return m + "m";
+function card(name, meta) {
+  const div = document.createElement("div");
+  div.className = "card";
+  div.innerHTML = `
+    <div class="name">
+      <span class="dot idle" data-dot></span>
+      <span data-name>${name}</span>
+      <span data-badge></span>
+    </div>
+    <div class="meta" data-meta>${meta || ""}</div>
+    <div data-bars></div>
+    <div data-extra></div>
+  `;
+  return div;
+}
+
+function addBar(cardEl, label, pct, sub, opts = {}) {
+  const bars = cardEl.querySelector("[data-bars]");
+  const wrap = document.createElement("div");
+  const cls = opts.cls || classify(pct);
+  const displayPct = opts.text || pctText(pct);
+  const pctClass = cls;
+  const labelHtml = `<div class="bar-row"><span class="lbl">${label}</span><span class="pct ${pctClass}">${displayPct}</span></div>`;
+  const barHtml = `<div class="bar"><div class="fill ${cls}" style="width:${Math.max(0, Math.min(100, pct || 0))}%"></div></div>`;
+  const subHtml = sub ? `<div class="bar-sub">${sub}</div>` : "";
+  wrap.innerHTML = labelHtml + barHtml + subHtml;
+  bars.appendChild(wrap);
+}
+
+function setDot(cardEl, cls) {
+  const dot = cardEl.querySelector("[data-dot]");
+  dot.className = "dot " + (cls || "idle");
+}
+
+function setMeta(cardEl, html) {
+  cardEl.querySelector("[data-meta]").innerHTML = html;
+}
+
+function setBadge(cardEl, text, cls) {
+  const b = cardEl.querySelector("[data-badge]");
+  if (text) {
+    b.innerHTML = `<span class="badge ${cls}">${text}</span>`;
+  } else {
+    b.innerHTML = "";
   }
+}
 
-  function classify(used) {
-    if (used == null) return "idle";
-    if (used >= 90) return "crit";
-    if (used >= 70) return "warn";
-    return "ok";
+function setExtra(cardEl, html) {
+  const e = cardEl.querySelector("[data-extra]");
+  if (html) {
+    e.innerHTML = `<div class="err-box">${html}</div>`;
+  } else {
+    e.innerHTML = "";
   }
+}
+function appendExtra(cardEl, html) {
+  const e = cardEl.querySelector("[data-extra]");
+  e.insertAdjacentHTML("beforeend", html);
+}
 
-  function renderError(msg) {
-    setText("cgpt-5h-pct", "—");
-    setText("cgpt-7d-pct", "—");
-    setText("cgpt-5h-sub", msg);
-    setText("cgpt-7d-sub", "");
-    setText("cgpt-tier", "tier: ?");
-    setText("cgpt-state", "err");
-    setText("cgpt-age", msg);
-    setText("topbar-lastsync", "err");
-    setText("foot-source", "err: " + msg);
-    setStyle("cgpt-5h-bar", "width", "0%");
-    setStyle("cgpt-7d-bar", "width", "0%");
-    setClass("cgpt-5h-bar", "bar-fill idle");
-    setClass("cgpt-7d-bar", "bar-fill idle");
+function errCard(name, err) {
+  const c = card(name, "fetch failed");
+  setDot(c, "err");
+  setExtra(c, err || "no data");
+  return c;
+}
+
+function renderChatgpt(d, err) {
+  if (err || !d) return errCard("chatgpt-plus", err);
+  const p = d.primary || {};
+  const s = d.secondary || {};
+  const c = card("chatgpt-plus", `plan ${d.planType || "?"} · ${d.activeLimit || "?"}`);
+  setDot(c, p.usedPct >= 90 || s.usedPct >= 90 ? "crit" : (p.usedPct >= 70 || s.usedPct >= 70 ? "warn" : "ok"));
+  addBar(c, "5h", p.usedPct, p.resetInHuman ? `resets in ${p.resetInHuman}` : null);
+  addBar(c, "7d", s.usedPct, s.resetInHuman ? `resets in ${s.resetInHuman}` : null);
+  return c;
+}
+
+function renderMinimax(d, err) {
+  if (err || !d) return errCard("minimax", err);
+  const m = (d.models && d.models.general) || {};
+  const i = m.interval || {};
+  const w = m.weekly || {};
+  const boost = m.interval && m.interval.boostPermille ? ` · boost ${(m.interval.boostPermille/1000).toFixed(1)}x` : "";
+  const c = card("minimax", `cn · text models${boost}`);
+  setDot(c, i.usedPct >= 90 || w.usedPct >= 90 ? "crit" : (i.usedPct >= 70 || w.usedPct >= 70 ? "warn" : "ok"));
+  addBar(c, "5h", i.usedPct, i.resetInHuman ? `resets in ${i.resetInHuman}` : null);
+  addBar(c, "weekly", w.usedPct, w.resetInHuman ? `resets in ${w.resetInHuman}` : null);
+  return c;
+}
+
+function renderOpencodeGo(slot, label, d, err) {
+  if (err || !d) return errCard(label, err);
+  const capped = d.status === "limit_reached";
+  const meta = (d.workspace ? `workspace ${shortId(d.workspace)}` : "workspace —");
+  const c = card(label, meta);
+  if (capped) {
+    setDot(c, "crit");
+    setBadge(c, "capped", "capped");
+    addBar(c, "monthly", 100, `resets in ${d.monthly?.resetInHuman || "?"}`);
+    if (d.upgradeUrl) {
+      appendExtra(c, `<div style="margin-top:8px;font-size:12px;"><a href="${d.upgradeUrl}" target="_blank" rel="noopener">add balance →</a></div>`);
+    }
+  } else {
+    setDot(c, "ok");
+    setBadge(c, "ok", "ok");
+    addBar(c, "monthly", 0, "within quota", { text: "0%", cls: "ok" });
   }
+  return c;
+}
 
-  function renderUsage(payload) {
-    if (!payload || !payload.data) {
-      return renderError("no data");
-    }
-    // chatgpt-plus
-    if (payload.data.chatgpt) renderChatgpt(payload.data.chatgpt, payload, payload.errors && payload.errors.chatgpt);
-    // minimax
-    if (payload.data.minimax) renderMinimax(payload.data.minimax, payload, payload.errors && payload.errors.minimax);
-    // opencode-go (2 accounts)
-    if (payload.data.opencode_go_1) renderOpencodeGo(payload.data.opencode_go_1, payload, payload.errors && payload.errors.opencode_go_1, "ocg1");
-    if (payload.data.opencode_go_2) renderOpencodeGo(payload.data.opencode_go_2, payload, payload.errors && payload.errors.opencode_go_2, "ocg2");
-    // openrouter
-    if (payload.data.openrouter) renderOpenrouter(payload.data.openrouter, payload, payload.errors && payload.errors.openrouter);
-    // top bar + foot text
-    const now = new Date(payload.fetchedAt || Date.now()).toLocaleTimeString();
-    const ageS = Math.max(0, Math.round((Date.now() - new Date(payload.fetchedAt || Date.now()).getTime()) / 1000));
-    setText("topbar-lastsync", ageS + "s ago");
-    setText("foot-source", `last fetch ${now} · age ${ageS}s · live cards only`);
+function renderOpenrouter(d, err) {
+  if (err || !d) return errCard("openrouter", err);
+  const cr = d.credits || {};
+  const sp = d.spend || {};
+  const c = card("openrouter", `user ${shortId(d.accountId) || "?"} · ${d.isFreeTier ? "free" : "paid"}`);
+  setDot(c, cr.usedPct >= 90 ? "crit" : (cr.usedPct >= 70 ? "warn" : "ok"));
+  addBar(c, "credits", cr.usedPct, `$${(cr.remaining||0).toFixed(2)} of $${(cr.total||0).toFixed(0)} left`);
+  // spend chips
+  const chips = [];
+  if (sp.daily != null) chips.push(`day $${sp.daily.toFixed(2)}`);
+  if (sp.weekly != null) chips.push(`wk $${sp.weekly.toFixed(2)}`);
+  if (sp.monthly != null) chips.push(`mo $${sp.monthly.toFixed(2)}`);
+  if (sp.byokMonthly > 0) chips.push(`byok $${sp.byokMonthly.toFixed(2)}`);
+  if (chips.length) {
+    setMeta(c.querySelector("[data-meta]").parentElement, c.querySelector("[data-meta]").outerHTML);
   }
+  return c;
+}
 
-  function renderChatgpt(d, payload, err) {
-    if (!d) {
-      setText("cgpt-5h-pct", "—");
-      setText("cgpt-7d-pct", "—");
-      setText("cgpt-5h-sub", err || "no data");
-      setText("cgpt-7d-sub", "");
-      setText("cgpt-tier", "tier: ?");
-      setText("cgpt-state", "err");
-      setText("cgpt-age", err || "no data");
-      setStyle("cgpt-5h-bar", "width", "0%");
-      setStyle("cgpt-7d-bar", "width", "0%");
-      setClass("cgpt-5h-bar", "bar-fill idle");
-      setClass("cgpt-7d-bar", "bar-fill idle");
-      return;
-    }
-    const p = d.primary, s = d.secondary;
-
-    setText("cgpt-5h-pct", (p.usedPct ?? "—") + "%");
-    setText("cgpt-7d-pct", (s.usedPct ?? "—") + "%");
-    setText("cgpt-5h-sub", "resets in " + (p.resetInHuman || "—") + " · " + (p.windowMinutes || "?") + "m window");
-    setText("cgpt-7d-sub", "resets in " + (s.resetInHuman || "—") + " · " + Math.round((s.windowMinutes||0)/60/24) + "d window");
-    setStyle("cgpt-5h-bar", "width", Math.max(0, Math.min(100, p.usedPct || 0)) + "%");
-    setStyle("cgpt-7d-bar", "width", Math.max(0, Math.min(100, s.usedPct || 0)) + "%");
-    setClass("cgpt-5h-bar", "bar-fill " + classify(p.usedPct));
-    setClass("cgpt-7d-bar", "bar-fill " + classify(s.usedPct));
-
-    setText("cgpt-tier", "tier: " + (d.activeLimit || "?"));
-    setText("cgpt-state", (payload && payload.source) ? payload.source : "live");
-    setText("cgpt-age", err ? err : "live");
+async function load() {
+  let payload;
+  try {
+    const r = await fetch("api/usage", { cache: "no-store" });
+    payload = await r.json();
+  } catch (e) {
+    grid.innerHTML = "";
+    grid.appendChild(errCard("network", e.message));
+    liveEl.textContent = "● offline";
+    liveEl.className = "live err";
+    return;
   }
+  const errs = payload.errors || {};
+  const data = payload.data || {};
+  grid.innerHTML = "";
+  if (data.chatgpt || errs.chatgpt)   grid.appendChild(renderChatgpt(data.chatgpt, errs.chatgpt));
+  if (data.minimax || errs.minimax)   grid.appendChild(renderMinimax(data.minimax, errs.minimax));
+  if (data.opencode_go_1 || errs.opencode_go_1) grid.appendChild(renderOpencodeGo("opencode_go_1", "opencode-go-1", data.opencode_go_1, errs.opencode_go_1));
+  if (data.opencode_go_2 || errs.opencode_go_2) grid.appendChild(renderOpencodeGo("opencode_go_2", "opencode-go-2", data.opencode_go_2, errs.opencode_go_2));
+  if (data.openrouter || errs.openrouter) grid.appendChild(renderOpenrouter(data.openrouter, errs.openrouter));
 
-  function renderMinimax(d, payload, err) {
-    if (!d || !d.models || !d.models.general) {
-      setText("mm-5h-pct", "—");
-      setText("mm-7d-pct", "—");
-      setText("mm-5h-sub", err || "no data");
-      setText("mm-7d-sub", "");
-      setText("mm-boost", "boost ?");
-      setText("mm-state", "err");
-      setText("mm-age", err || "no data");
-      setText("mm-5h-reset", "in ?");
-      setText("mm-region", `${d && d.region ? d.region : "?"} · MiniMax-M3`);
-      setText("mm-billing", "coding plan");
-      setStyle("mm-5h-bar", "width", "0%");
-      setStyle("mm-7d-bar", "width", "0%");
-      setClass("mm-5h-bar", "bar-fill idle");
-      setClass("mm-7d-bar", "bar-fill idle");
-      return;
-    }
-    const g = d.models.general;
-    const i = g.interval, w = g.weekly;
-    setText("mm-5h-pct", (i.usedPct ?? "—") + "%");
-    setText("mm-7d-pct", (w.usedPct ?? "—") + "%");
-    setText("mm-5h-sub", "resets in " + (i.resetInHuman || "—") + " · " + (i.windowMinutes || "?") + "m window");
-    setText("mm-7d-sub", "resets in " + (w.resetInHuman || "—") + " · " + Math.round((w.windowMinutes || 0) / 60 / 24) + "d window");
-    setStyle("mm-5h-bar", "width", Math.max(0, Math.min(100, i.usedPct || 0)) + "%");
-    setStyle("mm-7d-bar", "width", Math.max(0, Math.min(100, w.usedPct || 0)) + "%");
-    setClass("mm-5h-bar", "bar-fill " + classify(i.usedPct));
-    setClass("mm-7d-bar", "bar-fill " + classify(w.usedPct));
-    setText("mm-boost", "boost " + ((i.boostPermille || 0) / 1000).toFixed(1) + "x");
-    setText("mm-state", (payload && payload.source) ? payload.source : "live");
-    setText("mm-age", err ? err : "live");
-    setText("mm-5h-reset", "in " + (i.resetInHuman || "—"));
-    setText("mm-region", (d.region || "cn") + " · MiniMax-M3");
-    setText("mm-billing", "coding plan");
-  }
+  // footer
+  const allOk = payload.ok;
+  liveEl.textContent = allOk ? "● live" : "● partial";
+  liveEl.className = "live" + (allOk ? "" : " err");
+  const age = (Date.now() - new Date(payload.fetchedAt).getTime()) / 1000;
+  lastSync.textContent = `synced ${age < 1 ? "just now" : age < 60 ? Math.floor(age) + "s ago" : Math.floor(age/60) + "m ago"}`;
+}
 
-
-  function renderOpencodeGo(d, payload, err, prefix) {
-    if (!d) {
-      setText(prefix + "-status", "err");
-      setText(prefix + "-reset", "—");
-      setText(prefix + "-monthly-pct", "—");
-      setText(prefix + "-monthly-sub", err || "no data");
-      setText(prefix + "-5h-pct", "—");
-      setText(prefix + "-week-pct", "—");
-      setText(prefix + "-state", "err");
-      setText(prefix + "-age", err || "no data");
-      setStyle(prefix + "-monthly-bar", "width", "0%");
-      setClass(prefix + "-monthly-bar", "bar-fill idle");
-      setStyle(prefix + "-5h-bar", "width", "0%");
-      setStyle(prefix + "-week-bar", "width", "0%");
-      setText(prefix + "-badge", "GO");
-      var w = document.getElementById(prefix + "-upgrade-wrap");
-      if (w) w.style.display = "none";
-      return;
-    }
-    const m = d.monthly || {};
-    const pct = m.usedPct == null ? (d.status === "ok" ? 0 : 100) : m.usedPct;
-    const capped = d.status === "limit_reached";
-    setText(prefix + "-monthly-pct", (pct ?? "—") + "%");
-    setText(prefix + "-monthly-sub", (m.note || "monthly window") + (m.resetInHuman ? " · resets in " + m.resetInHuman : ""));
-    setText(prefix + "-reset", m.resetInHuman ? "in " + m.resetInHuman : "—");
-    setText(prefix + "-status", capped ? "● CAPPED · " + (d.limitName || "monthly") + " limit" : (d.status === "ok" ? "within quota" : d.status));
-    setText(prefix + "-limitname", d.limitName || "monthly");
-    setStyle(prefix + "-monthly-bar", "width", Math.max(0, Math.min(100, pct || 0)) + "%");
-    setClass(prefix + "-monthly-bar", "bar-fill " + classify(pct));
-    // 5h/weekly bars: mark as n/a (dim grey)
-    setText(prefix + "-5h-pct", "n/a");
-    setText(prefix + "-week-pct", "n/a");
-    setText(prefix + "-5h-sub", "not exposed by upstream");
-    setText(prefix + "-week-sub", "not exposed by upstream");
-    setClass(prefix + "-5h-bar", "bar-fill idle");
-    setClass(prefix + "-week-bar", "bar-fill idle");
-    setText(prefix + "-state", (payload && payload.source) ? payload.source : "live");
-    setText(prefix + "-age", err ? err : "live");
-    if (d.workspace) {
-      const short = d.workspace.length > 14 ? d.workspace.slice(0, 10) + "…" + d.workspace.slice(-6) : d.workspace;
-      setText(prefix + "-workspace", short);
-    }
-    // swap badge text + color when capped
-    var badge = document.getElementById(prefix + "-badge");
-    if (badge) {
-      badge.textContent = capped ? "CAPPED" : "OK";
-      badge.className = capped ? "acct-badge badge-cap" : "acct-badge badge-go";
-    }
-    // toggle card root class between .ok and .capped
-    var card = document.querySelector(".acct-card[data-service=\"" + (prefix === "ocg1" ? "opencode-go-1" : "opencode-go-2") + "\"]");
-    if (card) {
-      card.classList.remove(capped ? "ok" : "capped");
-      card.classList.add(capped ? "capped" : "ok");
-    }
-    var w = document.getElementById(prefix + "-upgrade-wrap");
-    var a = document.getElementById(prefix + "-upgrade");
-    if (w && a) {
-      if (capped && d.upgradeUrl) {
-        a.href = d.upgradeUrl;
-        w.style.display = "";
-      } else {
-        w.style.display = "none";
-      }
-    }
-  }
-
-  function renderOpenrouter(d, payload, err) {
-    if (!d) {
-      setText("or-used-pct", "—");
-      setText("or-used-sub", err || "no data");
-      setText("or-credits", "$— of $— left");
-      setText("or-spent", "$— lifetime");
-      setText("or-state", "err");
-      setText("or-age", err || "no data");
-      setStyle("or-used-bar", "width", "0%");
-      setClass("or-used-bar", "bar-fill idle");
-      return;
-    }
-    const cr = d.credits || {};
-    const sp = d.spend || {};
-    const usedPct = cr.usedPct == null ? null : cr.usedPct;
-    setText("or-used-pct", (usedPct == null ? "—" : usedPct.toFixed(1)) + "%");
-    setText("or-used-sub", `credits $${fmtMoney(cr.remaining)} of $${fmtMoney(cr.total)} remaining · used $${fmtMoney(cr.used)}`);
-    setText("or-credits", `$${fmtMoney(cr.remaining)} of $${fmtMoney(cr.total)} left`);
-    setText("or-spent",  `$${fmtMoney(sp.lifetime)} lifetime`);
-    setText("or-tier", d.isFreeTier ? "free tier" : "paid (pay-as-you-go)");
-    setText("or-day",   `day   $${fmtMoney(sp.daily)}`);
-    setText("or-week",  `week  $${fmtMoney(sp.weekly)}`);
-    setText("or-month", `month $${fmtMoney(sp.monthly)}`);
-    setText("or-byok",  `byok  $${fmtMoney(sp.byokLifetime)}`);
-    if (d.accountId) {
-      const short = d.accountId.length > 14 ? d.accountId.slice(0, 10) + "…" + d.accountId.slice(-5) : d.accountId;
-      setText("or-account", short);
-    }
-    setStyle("or-used-bar", "width", Math.max(0, Math.min(100, usedPct || 0)) + "%");
-    setClass("or-used-bar", "bar-fill " + classify(usedPct));
-    setText("or-state", (payload && payload.source) ? payload.source : "live");
-    setText("or-age", err ? err : "live");
-  }
-
-  function fmtMoney(n) {
-    if (n == null || isNaN(n)) return "—";
-    if (n === 0) return "0";
-    if (Math.abs(n) < 0.01) return n.toFixed(4);
-    if (Math.abs(n) < 1)    return n.toFixed(3);
-    if (Math.abs(n) < 100)  return n.toFixed(2);
-    return Math.round(n).toString();
-  }
-
-  let inFlight = false;
-  async function tick() {
-    if (inFlight) return;
-    inFlight = true;
-    try {
-      const r = await fetch(API, { cache: "no-store" });
-      const j = await r.json();
-      renderUsage(j);
-    } catch (e) {
-      renderError("fetch failed: " + e.message);
-    } finally {
-      inFlight = false;
-    }
-  }
-
-  // First fetch immediately, then every 30s.
-  tick();
-  setInterval(tick, 30_000);
-})();
+load();
+setInterval(load, REFRESH_MS);
 </script>
-
 </body>
 </html>
