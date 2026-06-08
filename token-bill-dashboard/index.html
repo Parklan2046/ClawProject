@@ -215,9 +215,7 @@ function renderMinimax(d, err) {
 function renderOpencodeGo(slot, label, d, err) {
   if (err || !d) return errCard(label, err);
   const capped = d.status === "limit_reached";
-  const hardcoded = d.status === "ok_hardcoded";
-  const meta = (d.workspace ? `workspace ${shortId(d.workspace)}` : "workspace —")
-    + (hardcoded ? ` · <span style="color:var(--yellow)" title="placeholder value from opencode.ai web UI snapshot — public API does not expose usage %">hardcoded</span>` : "");
+  const meta = d.workspace ? `workspace ${shortId(d.workspace)}` : "workspace —";
   const c = card(label, meta);
   if (capped) {
     setDot(c, "crit");
@@ -228,8 +226,8 @@ function renderOpencodeGo(slot, label, d, err) {
     }
   } else {
     setDot(c, "ok");
-    setBadge(c, hardcoded ? "live*" : "ok", "ok");
-    addBar(c, "monthly", d.monthly.usedPct, hardcoded ? "live % requires cookie auth" : "within quota");
+    setBadge(c, "ok", "ok");
+    addBar(c, "monthly", d.monthly.usedPct, "within quota");
   }
   return c;
 }
