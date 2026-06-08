@@ -577,6 +577,12 @@ body::after {
 .acct-card.crit.capped { border-color: var(--red); box-shadow: 0 0 0 1px rgba(255,77,109,0.3), 0 0 14px -2px rgba(255,77,109,0.25); }
 .acct-card.crit.capped .acct-icon { border-color: var(--red); color: var(--red); }
 .acct-card.crit.capped .badge-go { color: var(--red); border-color: var(--red); }
+/* Within-quota opencode-go: green OK treatment (mirrors the CAPPED red one) */
+.acct-card.crit.ok { border-color: var(--green); box-shadow: 0 0 0 1px var(--green), 0 0 18px rgba(0, 230, 130, 0.18); }
+.acct-card.crit.ok .acct-icon { color: var(--green); border-color: var(--green); }
+.acct-card.crit.ok .acct-badge { background: var(--green); color: #0c0e13; }
+.acct-card.crit.ok .bar-fill.idle { background: var(--green); opacity: 0.5; min-width: 2px; }
+
 .bar-label em.src { font-style: normal; font-size: 0.6rem; color: var(--text-dim); background: rgba(255,255,255,0.04); padding: 1px 4px; border-radius: 3px; margin-left: 4px; letter-spacing: 0.3px; text-transform: uppercase; }
 a.link { color: var(--cyan); text-decoration: underline; }
 a.link:hover { color: var(--pink); }
@@ -712,7 +718,7 @@ a.link:hover { color: var(--pink); }
   </div>
 
     <!-- ── OpenCode Go #1 ── -->
-    <div class="acct-card crit capped" data-service="opencode-go-1">
+    <div class="acct-card crit ok" data-service="opencode-go-1">
       <div class="acct-head">
         <div class="acct-icon">⌘</div>
         <div class="acct-name">opencode-go-1</div>
@@ -753,7 +759,7 @@ a.link:hover { color: var(--pink); }
     </div>
 
     <!-- ── OpenCode Go #2 ── -->
-    <div class="acct-card crit capped" data-service="opencode-go-2">
+    <div class="acct-card crit ok" data-service="opencode-go-2">
       <div class="acct-head">
         <div class="acct-icon">⌘</div>
         <div class="acct-name">opencode-go-2</div>
@@ -1025,8 +1031,14 @@ a.link:hover { color: var(--pink); }
     // swap badge text + color when capped
     var badge = document.getElementById(prefix + "-badge");
     if (badge) {
-      badge.textContent = capped ? "CAPPED" : "GO";
+      badge.textContent = capped ? "CAPPED" : "OK";
       badge.className = capped ? "acct-badge badge-cap" : "acct-badge badge-go";
+    }
+    // toggle card root class between .ok and .capped
+    var card = document.querySelector(".acct-card[data-service=\"" + (prefix === "ocg1" ? "opencode-go-1" : "opencode-go-2") + "\"]");
+    if (card) {
+      card.classList.remove(capped ? "ok" : "capped");
+      card.classList.add(capped ? "capped" : "ok");
     }
     var w = document.getElementById(prefix + "-upgrade-wrap");
     var a = document.getElementById(prefix + "-upgrade");
