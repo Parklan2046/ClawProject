@@ -26,7 +26,28 @@
   a:hover { text-decoration: underline; }
 
   .page { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
-  .title { font-size: 14px; color: var(--text-dim); font-weight: 500; letter-spacing: 0.4px; margin-bottom: 20px; }
+
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px; margin-bottom: 18px;
+    background: linear-gradient(90deg, rgba(122,162,255,0.08), rgba(30,220,139,0.04) 50%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .header .brand { display: flex; align-items: baseline; gap: 10px; }
+  .header .brand .mark {
+    font-size: 15px; font-weight: 700; letter-spacing: 0.6px;
+    background: linear-gradient(135deg, #7aa2ff 0%, #1edc8b 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .header .brand .count { font-size: 11px; color: var(--text-dim); letter-spacing: 0.3px; }
+  .header .right { display: flex; align-items: center; gap: 14px; font-size: 11px; color: var(--text-dim); }
+  .header .right .live { color: var(--green); display: flex; align-items: center; gap: 5px; }
+  .header .right .live.err { color: var(--red); }
+  .header .right .live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
+  .header .right a { font-size: 10px; padding: 3px 8px; border: 1px solid var(--border-hi); border-radius: 4px; color: var(--text-dim); }
+  .header .right a:hover { color: var(--text); border-color: var(--text-dim); text-decoration: none; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; }
 
@@ -63,21 +84,25 @@
   .badge.capped { background: var(--red); color: #fff; }
   .badge.ok     { background: var(--green); color: #0c0e13; }
 
-  .footer { margin-top: 24px; font-size: 11px; color: var(--text-mute); display: flex; justify-content: space-between; }
-  .footer .live { color: var(--green); }
-  .footer .live.err { color: var(--red); }
+  /* (footer removed; live state now in header) */
 
   .err-box { font-size: 11px; color: var(--red); background: rgba(239, 74, 93, 0.08); padding: 6px 8px; border-radius: 4px; margin-top: 8px; font-family: ui-monospace, "SF Mono", monospace; word-break: break-all; }
 </style>
 </head>
 <body>
 <div class="page">
-  <div class="title">token bill</div>
-  <div id="grid" class="grid"></div>
-  <div class="footer">
-    <span id="live-indicator" class="live">● live</span>
-    <span id="last-sync">…</span>
+  <div class="header">
+    <div class="brand">
+      <span class="mark">TOKEN BILL</span>
+      <span class="count" id="account-count">— accounts</span>
+    </div>
+    <div class="right">
+      <span id="last-sync">…</span>
+      <span id="live-indicator" class="live">live</span>
+      <a href="api/usage?refresh=1" target="_blank">refresh</a>
+    </div>
   </div>
+  <div id="grid" class="grid"></div>
 </div>
 
 <script>
@@ -85,6 +110,7 @@ const REFRESH_MS = 30 * 1000;
 const grid = document.getElementById("grid");
 const liveEl = document.getElementById("live-indicator");
 const lastSync = document.getElementById("last-sync");
+const accountCount = document.getElementById("account-count");
 
 function classify(pct) {
   if (pct == null) return "idle";
@@ -233,8 +259,9 @@ async function load() {
   } catch (e) {
     grid.innerHTML = "";
     grid.appendChild(errCard("network", e.message));
-    liveEl.textContent = "● offline";
+    liveEl.textContent = "offline";
     liveEl.className = "live err";
+    accountCount.textContent = "—";
     return;
   }
   const errs = payload.errors || {};
@@ -246,12 +273,19 @@ async function load() {
   if (data.opencode_go_2 || errs.opencode_go_2) grid.appendChild(renderOpencodeGo("opencode_go_2", "opencode-go-2", data.opencode_go_2, errs.opencode_go_2));
   if (data.openrouter || errs.openrouter) grid.appendChild(renderOpenrouter(data.openrouter, errs.openrouter));
 
-  // footer
+  // header
   const allOk = payload.ok;
-  liveEl.textContent = allOk ? "● live" : "● partial";
+  liveEl.textContent = allOk ? "live" : "partial";
   liveEl.className = "live" + (allOk ? "" : " err");
   const age = (Date.now() - new Date(payload.fetchedAt).getTime()) / 1000;
   lastSync.textContent = `synced ${age < 1 ? "just now" : age < 60 ? Math.floor(age) + "s ago" : Math.floor(age/60) + "m ago"}`;
+  // count accounts that loaded (data + no error)
+  const slots = ["chatgpt","minimax","opencode_go_1","opencode_go_2","openrouter"];
+  const loaded = slots.filter(s => data[s] && !errs[s]).length;
+  const capped = data.opencode_go_1 && data.opencode_go_1.status === "limit_reached" ? 1 : 0
+               + (data.opencode_go_2 && data.opencode_go_2.status === "limit_reached" ? 1 : 0);
+  const capNote = capped ? ` · ${capped} capped` : "";
+  accountCount.textContent = `${loaded}/${slots.length} accounts${capNote}`;
 }
 
 load();
