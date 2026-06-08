@@ -40,6 +40,13 @@ const OC_GO_ACCOUNTS = [
   { slot: "opencode_go_2", keyFile: "/root/.opencode/auth2.key", env: "OPENCODE_API_KEY_2", label: "opencode-go-2" },
 ];
 
+// HARDCODED monthly % per Parklan (public API doesn't expose usage).
+// Remove once cookie-based auth is wired up.
+const HARDCODED_OPENCODE_GO_PCT = {
+  opencode_go_1: null,  // real value: capped at 100% via 429 probe
+  opencode_go_2: 47,    // snapshot from opencode.ai web UI on 2026-06-08
+};
+
 const CODEX_PROBE = {
   model: "gpt-5.5", stream: true, store: false, instructions: "ping",
   input: [{ role: "user", content: [{ type: "input_text", text: "ok" }] }],
@@ -283,22 +290,27 @@ async function pollOneOpencodeGo(account) {
   try { body = await resp.json(); } catch {}
 
   if (resp.status === 200) {
+    const hardPct = HARDCODED_OPENCODE_GO_PCT[slot];
+    const usedPct = hardPct != null ? hardPct : 0;
+    const isHardcoded = hardPct != null;
     return setOk(slot, {
       service: "opencode-go",
       accountLabel: label,
       keyFile: keyFile,
       endpoint: OC_GO_URL,
-      status: "ok",
+      status: isHardcoded ? "ok_hardcoded" : "ok",
       workspace: null,
       limitName: "monthly",
       monthly: {
-        usedPct: 0,
+        usedPct,
         used: null, limit: null,
         resetAt: null, resetInSeconds: null, resetInHuman: null,
-        note: "within monthly quota (probe succeeded) — 5h/weekly not exposed by upstream",
+        note: isHardcoded
+          ? `HARDCODED value from opencode.ai web UI snapshot — public API does not expose usage %; wire up cookie auth to read live`
+          : "within monthly quota (probe succeeded) — 5h/weekly not exposed by upstream",
       },
       upgradeUrl: null,
-      raw: { httpStatus: 200, retryAfter, body },
+      raw: { httpStatus: 200, retryAfter, body, hardcoded: isHardcoded ? { usedPct, snapshotDate: "2026-06-08" } : null },
     });
   }
 
