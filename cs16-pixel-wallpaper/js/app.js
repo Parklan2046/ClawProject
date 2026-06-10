@@ -10,12 +10,24 @@ const SIDES = {
   ct: {
     label: 'Counter-Terrorist',
     short: 'Counter-Terrorist operative',
-    clothing: 'classic blue helmet, tactical vest and camo uniform',
+    models: [
+      { name: 'GIGN', desc: 'French GIGN with blue gear, blue balaclava, navy combat uniform and tactical vest' },
+      { name: 'GSG9', desc: 'German GSG-9 with dark helmet, dark uniform and tactical vest' },
+      { name: 'SAS', desc: 'British SAS with black gas mask, green/grey combat uniform and tactical vest' },
+      { name: 'Urban', desc: 'Urban CT with blue urban camo helmet and vest' },
+    ],
+    clothing: 'classic blue tactical helmet, vest and urban/camo uniform',
   },
   t: {
     label: 'Terrorist',
     short: 'Terrorist operative',
-    clothing: 'classic brown jacket, balaclava and cap',
+    models: [
+      { name: 'Phoenix Connexion', desc: 'Phoenix Connexion with red/brown hooded jacket, brown bandana mask and cap' },
+      { name: 'Elite Crew', desc: 'Leet Elite Crew with green jacket, tan pants, aviator sunglasses, black beret' },
+      { name: 'Guerilla', desc: 'Guerilla Warfare with dark camo wrap, skull bandana and dark vest' },
+      { name: 'Arctic', desc: 'Arctic Avengers with white winter parka and mask' },
+    ],
+    clothing: ' classic brown/green hooded jacket, balaclava, bandana mask and cap',
   },
 };
 
@@ -97,6 +109,12 @@ const ATMOSPHERES = {
   fog: { desc: 'thick dusty fog with low visibility and god rays' },
 };
 
+// Pick a random CS 1.6 character model each time for variety
+function pickModel(side) {
+  const models = SIDES[side].models;
+  return models[Math.floor(Math.random() * models.length)];
+}
+
 const EFFECTS = {
   muzzle: 'muzzle flash bursting from the barrel',
   smoke: 'wisps of light smoke drifting around the figure',
@@ -115,6 +133,7 @@ const GRADES = {
 
 const state = {
   side: 'ct',
+  modelIdx: 0,
   map: 'de_dust2',
   location: 'A Bombsite',
   gun: 'ak47',
@@ -181,6 +200,7 @@ function bindEvents() {
       $$('#sideGrid .side-card').forEach((c) => c.classList.remove('selected'));
       card.classList.add('selected');
       state.side = card.dataset.side;
+      state.modelIdx = Math.floor(Math.random() * SIDES[state.side].models.length);
       updatePrompt();
     });
   });
@@ -309,10 +329,12 @@ function buildPrompt() {
   const fx = state.fx.length
     ? state.fx.map((f) => EFFECTS[f]).join(', ')
     : '';
+  const model = side.models[state.modelIdx || 0];
 
   const mainScene =
-    `A ${side.short} from Counter-Strike 1.6 standing ${pose} on the ${state.location} of ${map.label} map, ` +
-    `holding a ${gun.name} in both hands ${gun.action}, wearing ${side.clothing}, ${atmo}. ` +
+    `A ${side.short} modelled as ${model.name} from Counter-Strike 1.6, ${model.desc}, ` +
+    `standing ${pose} on the ${state.location} of ${map.label} map, ` +
+    `holding a ${gun.name} in both hands ${gun.action}, ${atmo}. ` +
     `Background shows ${map.features}. ` +
     (fx ? `${fx}. ` : '') +
     `${grade}. ` +
@@ -357,6 +379,7 @@ function surprise() {
   const allFx = Object.keys(EFFECTS);
 
   state.side = sides[Math.floor(Math.random() * sides.length)];
+  state.modelIdx = Math.floor(Math.random() * SIDES[state.side].models.length);
   state.map = maps[Math.floor(Math.random() * maps.length)];
   state.location = MAPS[state.map].locations[Math.floor(Math.random() * MAPS[state.map].locations.length)];
   const cat = cats[Math.floor(Math.random() * cats.length)];
