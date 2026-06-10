@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="description" content="CS 1.6 pixel art mobile wallpaper generator — pick your side, map, and gun, and create a nostalgic retro wallpaper for your phone." />
+  <title>PixelStrike 1.6 — Retro CS Wallpaper Forge</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="crt-flicker"></div>
+
+  <header class="topbar">
+    <div class="logo-wrap">
+      <div class="logo-pixels" aria-hidden="true">
+        <span class="px p1"></span><span class="px p2"></span><span class="px p3"></span>
+        <span class="px p4"></span><span class="px p5"></span><span class="px p6"></span>
+        <span class="px p7"></span><span class="px p8"></span><span class="px p9"></span>
+      </div>
+      <div class="brand">
+        <h1>PixelStrike <span class="version">1.6</span></h1>
+        <p class="tagline">// RETRO CS WALLPAPER FORGE</p>
+      </div>
+    </div>
+    <button id="installBtn" class="install-btn hidden" aria-label="Install app">
+      <span>INSTALL</span>
+    </button>
+  </header>
+
+  <main class="container">
+
+    <!-- STEP 1: SIDE -->
+    <section class="step" data-step="1">
+      <div class="step-header">
+        <span class="step-num">01</span>
+        <h2>CHOOSE SIDE</h2>
+      </div>
+      <div class="side-grid" id="sideGrid">
+        <button class="side-card" data-side="ct">
+          <div class="side-art ct-art">
+            <div class="ct-helmet"></div>
+            <div class="ct-vest"></div>
+          </div>
+          <div class="side-meta">
+            <span class="side-tag ct-tag">CT</span>
+            <span class="side-name">COUNTER-TERRORIST</span>
+            <span class="side-desc">Blue helmet, tactical vest, camo</span>
+          </div>
+        </button>
+        <button class="side-card" data-side="t">
+          <div class="side-art t-art">
+            <div class="t-cap"></div>
+            <div class="t-mask"></div>
+            <div class="t-vest"></div>
+          </div>
+          <div class="side-meta">
+            <span class="side-tag t-tag">T</span>
+            <span class="side-name">TERRORIST</span>
+            <span class="side-desc">Balaclava, brown jacket, cap</span>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- STEP 2: MAP -->
+    <section class="step" data-step="2">
+      <div class="step-header">
+        <span class="step-num">02</span>
+        <h2>PICK MAP</h2>
+      </div>
+      <div class="map-scroll" id="mapScroll">
+        <button class="map-card selected" data-map="de_dust2">
+          <div class="map-thumb dust2"></div>
+          <span class="map-name">de_dust2</span>
+        </button>
+        <button class="map-card" data-map="de_inferno">
+          <div class="map-thumb inferno"></div>
+          <span class="map-name">de_inferno</span>
+        </button>
+        <button class="map-card" data-map="de_train">
+          <div class="map-thumb train"></div>
+          <span class="map-name">de_train</span>
+        </button>
+        <button class="map-card" data-map="de_nuke">
+          <div class="map-thumb nuke"></div>
+          <span class="map-name">de_nuke</span>
+        </button>
+        <button class="map-card" data-map="de_mirage">
+          <div class="map-thumb mirage"></div>
+          <span class="map-name">de_mirage</span>
+        </button>
+        <button class="map-card" data-map="de_cbble">
+          <div class="map-thumb cbble"></div>
+          <span class="map-name">de_cbble</span>
+        </button>
+      </div>
+      <div class="location-row">
+        <label class="lbl" for="mapLocation">LOCATION</label>
+        <select id="mapLocation" class="select"></select>
+      </div>
+    </section>
+
+    <!-- STEP 3: GUN -->
+    <section class="step" data-step="3">
+      <div class="step-header">
+        <span class="step-num">03</span>
+        <h2>GEAR UP</h2>
+      </div>
+      <div class="gun-tabs" id="gunTabs">
+        <button class="gun-tab active" data-cat="all">ALL</button>
+        <button class="gun-tab" data-cat="pistol">PISTOLS</button>
+        <button class="gun-tab" data-cat="rifle">RIFLES</button>
+        <button class="gun-tab" data-cat="sniper">SNIPER</button>
+        <button class="gun-tab" data-cat="smg">SMG</button>
+        <button class="gun-tab" data-cat="other">OTHER</button>
+      </div>
+      <div class="gun-grid" id="gunGrid"></div>
+    </section>
+
+    <!-- STEP 4: STYLE -->
+    <section class="step collapsible" data-step="4">
+      <div class="step-header clickable" id="advToggle">
+        <span class="step-num">04</span>
+        <h2>FINE TUNE</h2>
+        <span class="chevron" aria-hidden="true">▼</span>
+      </div>
+      <div class="adv-body" id="advBody">
+        <div class="form-row">
+          <label class="lbl">POSE</label>
+          <div class="chip-row" id="poseRow">
+            <button class="chip selected" data-pose="ready">READY</button>
+            <button class="chip" data-pose="aim">AIM</button>
+            <button class="chip" data-pose="relaxed">RELAXED</button>
+            <button class="chip" data-pose="win">VICTORY</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="lbl">ATMOSPHERE</label>
+          <div class="chip-row" id="atmoRow">
+            <button class="chip selected" data-atmo="day">DAY</button>
+            <button class="chip" data-atmo="golden">GOLDEN HOUR</button>
+            <button class="chip" data-atmo="night">NIGHT</button>
+            <button class="chip" data-atmo="fog">DUSTY FOG</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="lbl">EFFECTS</label>
+          <div class="chip-row" id="fxRow">
+            <button class="chip" data-fx="muzzle">MUZZLE FLASH</button>
+            <button class="chip" data-fx="smoke">SMOKE</button>
+            <button class="chip" data-fx="dust">DUST</button>
+            <button class="chip" data-fx="tracers">TRACERS</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="lbl">COLOR GRADE</label>
+          <div class="chip-row" id="gradeRow">
+            <button class="chip selected" data-grade="classic">CLASSIC</button>
+            <button class="chip" data-grade="warm">WARM DUST</button>
+            <button class="chip" data-grade="cool">COOL BLUE</button>
+            <button class="chip" data-grade="contrast">HIGH CONTRAST</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="lbl" for="overlayText">OVERLAY TEXT <span class="hint">(optional)</span></label>
+          <input id="overlayText" class="input" type="text" maxlength="20" placeholder="GL HF / 16-14 / nickname" />
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 5: PROMPT + GENERATE -->
+    <section class="step" data-step="5">
+      <div class="step-header">
+        <span class="step-num">05</span>
+        <h2>FORGE</h2>
+      </div>
+      <div class="prompt-card">
+        <div class="prompt-label">
+          <span>PROMPT</span>
+          <button class="ghost-btn" id="copyPrompt">COPY</button>
+        </div>
+        <pre id="promptPreview" class="prompt-pre"></pre>
+      </div>
+      <div class="action-row">
+        <button class="action-btn primary" id="generateBtn">
+          <span>GENERATE WALLPAPER</span>
+          <span class="btn-corner tl"></span><span class="btn-corner tr"></span>
+          <span class="btn-corner bl"></span><span class="btn-corner br"></span>
+        </button>
+        <button class="action-btn ghost" id="surpriseBtn">
+          <span>SURPRISE ME</span>
+        </button>
+      </div>
+      <div id="resultArea" class="result-area hidden">
+        <div class="result-frame">
+          <div class="result-overlay">
+            <span class="result-badge">9:16</span>
+            <span class="result-badge size" id="resultSize">1080×1920</span>
+          </div>
+          <div class="result-placeholder" id="resultPlaceholder">
+            <div class="loading-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <p>RENDERING PIXELS…</p>
+          </div>
+          <img id="resultImg" alt="Generated wallpaper" class="result-img hidden" />
+        </div>
+        <div class="download-row">
+          <button class="dl-btn" data-size="1080">1080×1920</button>
+          <button class="dl-btn" data-size="1440">1440×2560</button>
+          <button class="dl-btn" data-size="native">NATIVE</button>
+        </div>
+        <div class="action-row sub">
+          <button class="action-btn small" id="regenBtn">REGENERATE</button>
+          <button class="action-btn small ghost" id="editBtn">EDIT</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <p>// FORGED IN RETRO // NOT AFFILIATED WITH VALVE OR CS 1.6 // PIXEL PERFECT</p>
+    </footer>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
