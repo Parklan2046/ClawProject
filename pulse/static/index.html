@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pulse — Live Football x Markets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="bg-aurora"></div>
+  <div class="wrap">
+    <!-- HERO -->
+    <header class="hero glass">
+      <div class="hero-top">
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <span class="brand-name">PULSE</span>
+          <span class="brand-sub">live football × polymarket</span>
+        </div>
+        <div class="conn" id="conn">
+          <span class="conn-dot"></span>
+          <span class="conn-text">connecting…</span>
+        </div>
+      </div>
+      <h1>The match is one truth.<br/>The market is another.<br/><span class="grad">We put them side by side.</span></h1>
+      <p class="lead">
+        Live scores from ESPN, prediction-market odds from Polymarket, breathing together.
+        When the goal goes in, watch the odds move in real time.
+      </p>
+      <div class="stat-grid">
+        <div class="stat"><div class="k">Live now</div><div class="v" id="stat-live">—</div></div>
+        <div class="stat"><div class="k">Tracked markets</div><div class="v" id="stat-markets">—</div></div>
+        <div class="stat"><div class="k">Biggest edge</div><div class="v" id="stat-edge">—</div></div>
+        <div class="stat"><div class="k">Last update</div><div class="v" id="stat-update">—</div></div>
+      </div>
+    </header>
+
+    <!-- MAIN GRID -->
+    <div class="grid-main">
+      <!-- LEFT: markets moved feed -->
+      <aside class="col-left">
+        <section class="panel glass">
+          <div class="section-title">
+            <span>Markets Moved</span>
+            <span class="hint">biggest recent swings</span>
+          </div>
+          <div id="moved-feed" class="moved-feed">
+            <div class="empty">waiting for first poll…</div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- CENTER: match cards -->
+      <main class="col-center">
+        <div class="filters glass">
+          <button class="chip active" data-filter="all">All</button>
+          <button class="chip" data-filter="live">Live</button>
+          <button class="chip" data-filter="upcoming">Upcoming</button>
+          <button class="chip" data-filter="final">Final</button>
+          <div class="spacer"></div>
+          <div class="filter-hint">auto-refresh · WebSocket</div>
+        </div>
+        <div id="match-grid" class="match-grid">
+          <div class="empty big">fetching matches…</div>
+        </div>
+      </main>
+
+      <!-- RIGHT: hot markets -->
+      <aside class="col-right">
+        <section class="panel glass">
+          <div class="section-title">
+            <span>Where the Money Is</span>
+            <span class="hint">top Polymarket football markets</span>
+          </div>
+          <div id="hot-markets" class="hot-markets">
+            <div class="empty">fetching…</div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="foot">
+      <span>built by parkl · ClawProject/pulse</span>
+      <span class="dot-sep">·</span>
+      <span>data: ESPN (public) + Polymarket Gamma (public)</span>
+    </footer>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
