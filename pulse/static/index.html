@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="static/style.css" />
 </head>
 <body>
   <div class="bg-aurora"></div>
@@ -18,23 +18,21 @@
         <div class="brand">
           <span class="brand-dot"></span>
           <span class="brand-name">PULSE</span>
-          <span class="brand-sub">live football × polymarket</span>
+          <span class="brand-sub" data-i18n="brandSub">live football × polymarket</span>
         </div>
-        <div class="conn" id="conn">
-          <span class="conn-dot"></span>
-          <span class="conn-text">connecting…</span>
+        <div class="hero-actions"><div class="conn" id="conn">
+            <span class="conn-dot"></span>
+            <span class="conn-text" data-i18n="connecting">connecting…</span>
+          </div>
         </div>
       </div>
-      <h1>The match is one truth.<br/>The market is another.<br/><span class="grad">We put them side by side.</span></h1>
-      <p class="lead">
-        Live scores from ESPN, prediction-market odds from Polymarket, breathing together.
-        When the goal goes in, watch the odds move in real time.
-      </p>
+      <h1><span data-i18n="heroH1_1">The match is one truth.</span><br/><span data-i18n="heroH1_2">The market is another.</span><br/><span class="grad" data-i18n="heroH1_3">We put them side by side.</span></h1>
+      <p class="lead" data-i18n="lead">Live scores from ESPN, prediction-market odds from Polymarket, breathing together. When the goal goes in, watch the odds move in real time.</p>
       <div class="stat-grid">
-        <div class="stat"><div class="k">Live now</div><div class="v" id="stat-live">—</div></div>
-        <div class="stat"><div class="k">Tracked markets</div><div class="v" id="stat-markets">—</div></div>
-        <div class="stat"><div class="k">Biggest edge</div><div class="v" id="stat-edge">—</div></div>
-        <div class="stat"><div class="k">Last update</div><div class="v" id="stat-update">—</div></div>
+        <div class="stat"><div class="k" data-i18n="statLive">Live now</div><div class="v" id="stat-live">—</div></div>
+        <div class="stat"><div class="k" data-i18n="statMarkets">Tracked markets</div><div class="v" id="stat-markets">—</div></div>
+        <div class="stat"><div class="k" data-i18n="statEdge">Biggest edge</div><div class="v" id="stat-edge">—</div></div>
+        <div class="stat"><div class="k" data-i18n="statUpdate">Last update</div><div class="v" id="stat-update">—</div></div>
       </div>
     </header>
 
@@ -44,11 +42,11 @@
       <aside class="col-left">
         <section class="panel glass">
           <div class="section-title">
-            <span>Markets Moved</span>
-            <span class="hint">biggest recent swings</span>
+            <span data-i18n="marketsMoved">Markets Moved</span>
+            <span class="hint" data-i18n="marketsMovedHint">biggest recent swings</span>
           </div>
           <div id="moved-feed" class="moved-feed">
-            <div class="empty">waiting for first poll…</div>
+            <div class="empty" data-i18n="waitingPoll">waiting for first poll…</div>
           </div>
         </section>
       </aside>
@@ -56,15 +54,15 @@
       <!-- CENTER: match cards -->
       <main class="col-center">
         <div class="filters glass">
-          <button class="chip active" data-filter="all">All</button>
-          <button class="chip" data-filter="live">Live</button>
-          <button class="chip" data-filter="upcoming">Upcoming</button>
-          <button class="chip" data-filter="final">Final</button>
+          <button class="chip active" data-filter="all" data-i18n="filterAll">All</button>
+          <button class="chip" data-filter="live" data-i18n="filterLive">Live</button>
+          <button class="chip" data-filter="upcoming" data-i18n="filterUpcoming">Upcoming</button>
+          <button class="chip" data-filter="final" data-i18n="filterFinal">Final</button>
           <div class="spacer"></div>
-          <div class="filter-hint">auto-refresh · WebSocket</div>
+          <div class="filter-hint" data-i18n="autoRefresh">auto-refresh · WebSocket</div>
         </div>
         <div id="match-grid" class="match-grid">
-          <div class="empty big">fetching matches…</div>
+          <div class="empty big" data-i18n="fetchingMatches">fetching matches…</div>
         </div>
       </main>
 
@@ -72,22 +70,23 @@
       <aside class="col-right">
         <section class="panel glass">
           <div class="section-title">
-            <span>Where the Money Is</span>
-            <span class="hint">top Polymarket football markets</span>
+            <span data-i18n="whereMoney">Where the Money Is</span>
+            <span class="hint" data-i18n="whereMoneyHint">top Polymarket football markets</span>
           </div>
           <div id="hot-markets" class="hot-markets">
-            <div class="empty">fetching…</div>
+            <div class="empty" data-i18n="fetching">fetching…</div>
           </div>
         </section>
       </aside>
     </div>
 
     <footer class="foot">
-      <span>built by parkl · ClawProject/pulse</span>
+      <span data-i18n="footerBuilt">built by parkl · ClawProject/pulse</span>
       <span class="dot-sep">·</span>
-      <span>data: ESPN (public) + Polymarket Gamma (public)</span>
+      <span data-i18n="footerData">data: ESPN (public) + Polymarket Gamma (public)</span>
     </footer>
   </div>
-  <script src="/static/app.js"></script>
+  <script src="static/i18n.js"></script>
+  <script src="static/app.js"></script>
 </body>
 </html>

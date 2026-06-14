@@ -13,23 +13,7 @@ log = logging.getLogger("pulse.espn")
 
 # A curated set of leagues to poll. ESPN slug -> (display name, country code)
 LEAGUES: list[tuple[str, str, str]] = [
-    ("fifa.world",            "World Cup",         "WORLD"),
-    ("fifa.worldq",           "WC Qualifiers",     "WC-Q"),
-    ("uefa.champions",        "UEFA Champions",    "UCL"),
-    ("uefa.europa",           "UEFA Europa",       "UEL"),
-    ("uefa.euro",             "UEFA Euro",         "EURO"),
-    ("eng.1",                 "Premier League",    "EPL"),
-    ("esp.1",                 "La Liga",           "LIGA"),
-    ("ger.1",                 "Bundesliga",        "BUN"),
-    ("ita.1",                 "Serie A",           "SER"),
-    ("fra.1",                 "Ligue 1",           "LG1"),
-    ("por.1",                 "Primeira Liga",     "POR"),
-    ("ned.1",                 "Eredivisie",        "ERE"),
-    ("bra.1",                 "Brasileirão",       "BRA"),
-    ("arg.1",                 "Liga Profesional",  "ARG"),
-    ("usa.1",                 "MLS",               "MLS"),
-    ("ksa.1",                 "Saudi Pro League",  "SAU"),
-    ("jpn.1",                 "J1 League",         "JPN"),
+    ("fifa.world",            "世界盃",              "世界盃"),
 ]
 
 BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"

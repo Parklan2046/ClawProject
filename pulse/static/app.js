@@ -25,18 +25,13 @@ function setConn(status) {
   el.classList.remove('live', 'stale', 'down');
   el.classList.add(status);
   const txt = el.querySelector('.conn-text');
-  txt.textContent = {
-    connecting: 'connecting…',
-    live: 'live',
-    stale: 'reconnecting…',
-    down: 'disconnected',
-  }[status] || status;
+  txt.textContent = t(status) || status;
 }
 
 function connect() {
   setConn('connecting');
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws = new WebSocket(`${proto}://${location.host}${location.pathname.replace(/\/$/,"")}/ws`);
   ws.onopen = () => { setConn('live'); };
   ws.onclose = () => {
     setConn('down');
@@ -93,14 +88,14 @@ function fmtTime(unix) {
 function fmtRelTime(unix) {
   if (!unix) return '—';
   const s = Math.floor(Date.now() / 1000 - unix);
-  if (s < 5) return 'just now';
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  return `${Math.floor(s / 3600)}h ago`;
+  if (s < 5) return t('justNow');
+  if (s < 60) return `${s}${t('secAgo')}`;
+  if (s < 3600) return `${Math.floor(s / 60)}${t('minAgo')}`;
+  return `${Math.floor(s / 3600)}${t('hrAgo')}`;
 }
 
 function teamInitial(name) {
-  return (name || '?').trim().charAt(0).toUpperCase();
+  return countryFlag(name) || (tname(name) || '?').trim().charAt(0);
 }
 
 function el(tag, attrs = {}, ...children) {
@@ -150,14 +145,14 @@ function svgSparkline(values, opts = {}) {
 function renderMatchCard(m) {
   const card = el('article', { class: `match-card ${m.state}` });
   const state = m.state;
-  const stateLabel = state === 'in' ? 'LIVE' : (state === 'pre' ? 'SOON' : 'FT');
+  const stateLabel = state === 'in' ? t('stateLive') : (state === 'pre' ? t('stateSoon') : t('stateFT'));
   const statePill = el('span', { class: `state-pill ${state === 'in' ? 'live' : (state === 'pre' ? 'pre' : 'post')}` });
   if (state === 'in') statePill.appendChild(el('span', { class: 'blink' }));
   statePill.appendChild(document.createTextNode(stateLabel + (m.clock ? ` · ${m.clock}` : '')));
 
   const leagueTag = el('div', { class: 'league-tag' },
-    el('span', { class: 'code' }, m.league_code || '—'),
-    el('span', {}, m.league || ''),
+    el('span', { class: 'code' }, '🏆'),
+    el('span', {}, tname(m.league) || m.league || ''),
   );
 
   const head = el('div', { class: 'match-head' }, leagueTag, statePill);
@@ -172,7 +167,7 @@ function renderMatchCard(m) {
       : el('div', { class: 'team-logo fallback' }, teamInitial(t.name));
     return el('div', { class: `team-row ${isWinner ? 'winner' : ''}` },
       logo,
-      el('div', { class: 'team-name' }, t.short || t.name || '—'),
+      el('div', { class: 'team-name' }, tname(t.short || t.name) || '—'),
       el('div', { class: 'team-score' }, String(t.score)),
     );
   };
@@ -181,8 +176,8 @@ function renderMatchCard(m) {
 
   // meta (venue / kickoff)
   const meta = el('div', { class: 'match-meta' },
-    el('span', {}, m.venue || (m.state === 'pre' ? fmtTime(Date.parse(m.date) / 1000) : '')),
-    m.state === 'pre' ? el('span', { class: 'clock' }, 'KICKOFF') : null,
+    el('span', {}, tname(m.venue) || (m.state === 'pre' ? fmtTime(Date.parse(m.date) / 1000) : '')),
+    m.state === 'pre' ? el('span', { class: 'clock' }, t('kickoff')) : null,
   );
   card.appendChild(meta);
 
@@ -194,7 +189,7 @@ function renderMatchCard(m) {
     const pricePills = outcomes.map((o, i) => {
       const pct = o.price != null ? `${Math.round(o.price * 100)}¢` : '—';
       return el('span', { class: `outcome-pill ${i === favIdx ? 'fav' : ''}` },
-        el('span', { class: 'name' }, (o.name || '').slice(0, 8)),
+        el('span', { class: 'name' }, tname(o.name).slice(0, 8)),
         el('span', {}, pct),
       );
     });
@@ -208,7 +203,7 @@ function renderMatchCard(m) {
     if (edge.has_history) {
       const badge = el('div', { class: `edge-badge ${edge.direction}` });
       const sign = edge.edge_pct > 0 ? '+' : '';
-      badge.appendChild(document.createTextNode(`${sign}${edge.edge_pct.toFixed(1)}¢ edge`));
+      badge.appendChild(document.createTextNode(`${sign}${edge.edge_pct.toFixed(1)}¢ ${t('edgeLabel')}`));
       if (Math.abs(edge.edge_pct) > 3) badge.classList.add('hot');
       const sparkWrap = el('div', { class: 'sparkline-wrap', html: svgSparkline(edge.sparkline) });
       card.appendChild(badge);
@@ -217,7 +212,7 @@ function renderMatchCard(m) {
   } else {
     // no market matched — show a subtle line
     card.appendChild(el('div', { class: 'match-meta' },
-      el('span', { style: 'opacity:0.5' }, '— no matching market —'),
+      el('span', { style: 'opacity:0.5' }, t('noMarket')),
     ));
   }
 
@@ -256,7 +251,7 @@ function renderMoved() {
   const feed = $('#moved-feed');
   feed.innerHTML = '';
   if (state.movedLog.length === 0) {
-    feed.appendChild(el('div', { class: 'empty' }, 'no significant moves yet'));
+    feed.appendChild(el('div', { class: 'empty' }, t('noMoves')));
     return;
   }
   for (const item of state.movedLog.slice(0, 12)) {
@@ -283,7 +278,7 @@ function renderHot() {
   wrap.innerHTML = '';
   const list = (state.marketsUnmatched || []).slice(0, 8);
   if (list.length === 0) {
-    wrap.appendChild(el('div', { class: 'empty' }, 'no standalone markets right now'));
+    wrap.appendChild(el('div', { class: 'empty' }, t('noMarkets')));
     return;
   }
   for (const m of list) {
@@ -295,7 +290,7 @@ function renderHot() {
     const node = el('div', { class: 'hot-item' },
       el('div', { class: 'hot-q' }, pm.question || m.title),
       el('div', { class: 'hot-meta' },
-        el('span', {}, '24h vol'),
+        el('span', {}, t('vol24h')),
         el('span', { class: 'hot-vol' }, volStr),
       ),
     );
@@ -338,7 +333,7 @@ function renderGrid() {
   });
 
   if (list.length === 0) {
-    grid.appendChild(el('div', { class: 'empty big' }, 'no matches match this filter'));
+    grid.appendChild(el('div', { class: 'empty big' }, t('noMatchFilter')));
     return;
   }
 
@@ -376,4 +371,4 @@ setInterval(() => {
 /* ------------------------------------------------------------------ */
 connect();
 // fetch initial snapshot via REST in case WS is slow
-fetch('/api/snapshot').then(r => r.json()).then(applySnapshot).catch(() => {});
+fetch('api/snapshot').then(r => r.json()).then(applySnapshot).catch(() => {});
