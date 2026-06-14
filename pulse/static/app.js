@@ -271,6 +271,89 @@ function renderMoved() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Render: championship / futures markets                              */
+/* ------------------------------------------------------------------ */
+const CHAMPION_PATTERNS = [
+  /win the \d{4}.*(world cup|fifa world cup)/i,
+  /fifa world cup winner/i,
+  /world cup \d{4} winner/i,
+  /golden boot/i,
+  /top scorer/i,
+  /to lift the (world cup|trophy)/i,
+  /to win the world cup/i,
+  /most goals/i,
+  /group .* winner/i,
+  /to qualify.*world cup/i,
+  /to reach the (final|semi|quarter)/i,
+];
+
+function isChampionMarket(market) {
+  const text = (market.title || '') + ' ' + (market.primary_market?.question || '');
+  return CHAMPION_PATTERNS.some(rx => rx.test(text));
+}
+
+function championCategory(market) {
+  const text = (market.title || '') + ' ' + (market.primary_market?.question || '');
+  if (/golden boot|top scorer|most goals/i.test(text)) return 'topScorer';
+  if (/group .* winner/i.test(text)) return 'groupWinner';
+  if (/reach the (final|semi|quarter)|qualif/i.test(text)) return 'knockout';
+  return 'winner';
+}
+
+function renderChampion() {
+  const wrap = $('#champ-markets');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  // Pull from both attached + unmatched, de-dupe
+  const seen = new Set();
+  const champs = [];
+  for (const m of state.matches) {
+    if (m.market && isChampionMarket(m.market) && !seen.has(m.market.id)) {
+      seen.add(m.market.id);
+      champs.push(m.market);
+    }
+  }
+  for (const m of (state.marketsUnmatched || [])) {
+    if (isChampionMarket(m) && !seen.has(m.id)) {
+      seen.add(m.id);
+      champs.push(m);
+    }
+  }
+  if (champs.length === 0) {
+    wrap.appendChild(el('div', { class: 'empty' }, t('noChampions')));
+    return;
+  }
+  // Sort by 24h volume desc
+  champs.sort((a, b) => (b.primary_market?.volume_24h || 0) - (a.primary_market?.volume_24h || 0));
+  for (const m of champs.slice(0, 8)) {
+    const pm = m.primary_market || {};
+    const cat = championCategory(m);
+    const vol = pm.volume_24h || 0;
+    const volStr = vol >= 1e6 ? `$${(vol / 1e6).toFixed(2)}M` :
+                   vol >= 1e3 ? `$${(vol / 1e3).toFixed(1)}k` :
+                   `$${vol.toFixed(0)}`;
+    // Outcome pills: show the favourite(s) — first 2 outcomes with prices
+    const outcomes = (pm.outcomes || []).slice(0, 2);
+    const pills = outcomes.map(o => {
+      const pct = o.price != null ? `${Math.round(o.price * 100)}¢` : '—';
+      return el('span', { class: 'champ-outcome' },
+        el('span', { class: 'champ-outcome-name' }, (o.name || '').slice(0, 10)),
+        el('span', { class: 'champ-outcome-price' }, pct),
+      );
+    });
+    const node = el('div', { class: 'hot-item champ-item' },
+      el('div', { class: 'hot-q' }, pm.question || m.title),
+      el('div', { class: 'champ-pills' }, ...pills),
+      el('div', { class: 'hot-meta' },
+        el('span', { class: `champ-tag champ-${cat}` }, t('champ_' + cat)),
+        el('span', { class: 'hot-vol' }, volStr),
+      ),
+    );
+    wrap.appendChild(node);
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Render: hot markets                                                 */
 /* ------------------------------------------------------------------ */
 function renderHot() {
@@ -314,9 +397,20 @@ function renderStats() {
   $('#stat-update').textContent = fmtRelTime(last);
 }
 
+function isToday(unixMs) {
+  if (!unixMs) return false;
+  const d = new Date(unixMs);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() &&
+         d.getMonth() === now.getMonth() &&
+         d.getDate() === now.getDate();
+}
+
 function renderGrid() {
   const grid = $('#match-grid');
   grid.innerHTML = '';
+  // Show all WC matches — no today gate. Live + finished always shown;
+  // upcoming sorted soonest-first by date.
   const list = state.matches.filter(m => {
     if (state.filter === 'all') return true;
     if (state.filter === 'live') return m.state === 'in';
@@ -343,6 +437,7 @@ function renderGrid() {
 function renderAll() {
   renderStats();
   renderGrid();
+  renderChampion();
   renderHot();
 }
 

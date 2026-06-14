@@ -18,7 +18,7 @@
         <div class="brand">
           <span class="brand-dot"></span>
           <span class="brand-name">PULSE</span>
-          <span class="brand-sub" data-i18n="brandSub">live football × polymarket</span>
+          <span class="brand-sub" data-i18n="brandSub">世界盃 × Polymarket</span>
         </div>
         <div class="hero-actions"><div class="conn" id="conn">
             <span class="conn-dot"></span>
@@ -26,8 +26,6 @@
           </div>
         </div>
       </div>
-      <h1><span data-i18n="heroH1_1">The match is one truth.</span><br/><span data-i18n="heroH1_2">The market is another.</span><br/><span class="grad" data-i18n="heroH1_3">We put them side by side.</span></h1>
-      <p class="lead" data-i18n="lead">Live scores from ESPN, prediction-market odds from Polymarket, breathing together. When the goal goes in, watch the odds move in real time.</p>
       <div class="stat-grid">
         <div class="stat"><div class="k" data-i18n="statLive">Live now</div><div class="v" id="stat-live">—</div></div>
         <div class="stat"><div class="k" data-i18n="statMarkets">Tracked markets</div><div class="v" id="stat-markets">—</div></div>
@@ -68,6 +66,15 @@
 
       <!-- RIGHT: hot markets -->
       <aside class="col-right">
+        <section class="panel glass">
+          <div class="section-title">
+            <span data-i18n="championship">Championship</span>
+            <span class="hint" data-i18n="championshipHint">Polymarket futures · winner / scorer / groups</span>
+          </div>
+          <div id="champ-markets" class="hot-markets">
+            <div class="empty" data-i18n="fetching">fetching…</div>
+          </div>
+        </section>
         <section class="panel glass">
           <div class="section-title">
             <span data-i18n="whereMoney">Where the Money Is</span>

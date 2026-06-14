@@ -52,7 +52,7 @@ body {
 }
 
 /* HERO */
-.hero { padding: 26px 28px 24px; position: relative; overflow: hidden; margin-bottom: 18px; }
+.hero { padding: 16px 22px 18px; position: relative; overflow: hidden; margin-bottom: 16px; }
 .hero::before {
   content: ""; position: absolute; inset: 0;
   background:
@@ -62,7 +62,7 @@ body {
 }
 .hero-top {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 18px;
+  gap: 12px; margin-bottom: 14px;
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-dot {
@@ -332,6 +332,30 @@ h1 {
 .hot-meta { display: flex; justify-content: space-between; font-size: .7rem; color: var(--muted); }
 .hot-vol { color: var(--gold); font-weight: 800; font-family: 'JetBrains Mono', monospace; }
 
+/* CHAMPIONSHIP (Polymarket futures) */
+.champ-item { border-color: rgba(255,209,102,.18); }
+.champ-pills {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.champ-outcome {
+  display: inline-flex; gap: 5px; align-items: baseline;
+  padding: 3px 8px; border-radius: 8px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+  font-size: .72rem; font-family: 'JetBrains Mono', monospace;
+}
+.champ-outcome-name { color: var(--muted); font-weight: 600; }
+.champ-outcome-price { color: var(--cyan); font-weight: 800; }
+.champ-tag {
+  display: inline-block;
+  padding: 2px 7px; border-radius: 6px;
+  font-size: .62rem; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.champ-winner     { background: rgba(255,209,102,.16); color: var(--gold);   border: 1px solid rgba(255,209,102,.3); }
+.champ-topScorer  { background: rgba(102,227,255,.12); color: var(--cyan);   border: 1px solid rgba(102,227,255,.26); }
+.champ-groupWinner{ background: rgba(167,139,250,.14); color: var(--purple); border: 1px solid rgba(167,139,250,.3); }
+.champ-knockout   { background: rgba(255,77,184,.10);  color: var(--pink);   border: 1px solid rgba(255,77,184,.26); }
+
 /* FOOTER */
 .foot {
   text-align: center; margin-top: 30px;
@@ -349,5 +373,13 @@ h1 {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .match-grid { grid-template-columns: 1fr; }
   h1 { font-size: clamp(1.6rem, 8vw, 2.4rem); }
+  .hero { padding: 12px 14px 14px; }
+  .brand { flex-wrap: nowrap; min-width: 0; }
+  .brand-name { font-size: .95rem; }
+  .brand-sub { font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conn { padding: 5px 9px; font-size: .68rem; }
+  .stat { padding: 10px 12px; }
+  .v { font-size: 1.05rem; }
+  .k { font-size: .66rem; }
 }
 
