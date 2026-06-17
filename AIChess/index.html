@@ -701,6 +701,16 @@ function tryMove(fromRank, fromFile, toRank, toFile) {
   const piece = board[fromRank][fromFile];
   if (!piece) return;
 
+  // CRITICAL: Check if move is in valid moves list
+  const currentValidMoves = getValidMoves(fromRank, fromFile, piece);
+  const isValidMove = currentValidMoves.some(([r, f]) => r === toRank && f === toFile);
+  if (!isValidMove) {
+    selectedSquare = null;
+    validMoves = [];
+    renderBoard();
+    return;
+  }
+
   // Create move effect
   const isCapture = board[toRank][toFile] !== '';
   
