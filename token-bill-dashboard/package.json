@@ -1,0 +1,17 @@
+{
+  "name": "token-bill-dashboard",
+  "version": "0.2.0",
+  "description": "Live Codex usage dashboard backend — polls chatgpt.com for x-codex-* headers and serves them as JSON",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>香園圍停車場 · 即時車位</title>
+<style>
+:root{--bg:#080912;--card:#111224;--card2:#161832;--accent:#4de8ff;--accent2:#7c5cff;--text:#e8e6f0;--dim:#6b6990;--green:#00e396;--yellow:#ffb627;--red:#ff4d6a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px}
+h1{text-align:center;font-size:1.4em;margin-bottom:4px;color:var(--accent)}
+.subtitle{text-align:center;color:var(--dim);margin-bottom:18px;font-size:.82em}
+.controls{display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.controls select,.controls input,.controls button{background:var(--card2);color:var(--text);border:1px solid rgba(255,255,255,.08);padding:9px 12px;border-radius:10px;font-size:.85em;cursor:pointer;outline:none}
+.controls input[type="date"]{color-scheme:dark}
+.controls button{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;font-weight:700;color:#fff}
+.sep{color:var(--dim);font-size:.8em}
+.grid{max-width:780px;margin:0 auto}
+.day-card{background:var(--card);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:14px 18px;margin-bottom:8px}
+.day-card.today{border-color:rgba(77,232,255,.18)}
+.day-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.day-icon{font-size:1.2em;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.day-icon.open{background:rgba(0,227,150,.1)}.day-icon.available{background:rgba(77,232,255,.08)}.day-icon.limited{background:rgba(255,182,39,.1)}.day-icon.full{background:rgba(255,77,106,.08)}
+.day-info{flex:1;min-width:0}
+.day-info .date{font-weight:700;font-size:.95em}
+.day-info .meta{font-size:.72em;color:var(--dim)}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.68em;font-weight:700}
+.badge.open{background:rgba(0,227,150,.12);color:var(--green)}
+.badge.available{background:rgba(77,232,255,.1);color:var(--accent)}
+.badge.limited{background:rgba(255,182,39,.12);color:var(--yellow)}
+.badge.full{background:rgba(255,77,106,.12);color:var(--red)}
+.windows{display:flex;flex-wrap:wrap;gap:5px}
+.win{background:rgba(0,227,150,.06);border:1px solid rgba(0,227,150,.14);border-radius:8px;padding:5px 12px;font-size:.8em;cursor:pointer;transition:all .12s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.win:hover{background:rgba(0,227,150,.13);border-color:rgba(0,227,150,.28)}
+.win .dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.win .time{font-weight:700;color:var(--green)}
+.win.full-day{background:rgba(77,232,255,.06);border-color:rgba(77,232,255,.15)}
+.win.full-day .time{color:var(--accent)}
+.win.full-day .dot{background:var(--accent)}
+.no-win{color:var(--dim);font-size:.78em}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;max-width:380px;width:100%;color-scheme:dark}
+.modal h2{font-size:1.05em;margin-bottom:12px;color:var(--accent)}
+.modal .info{background:rgba(255,255,255,.03);padding:14px;border-radius:12px;margin-bottom:14px;font-size:.84em;line-height:1.9}
+.modal .info b{color:var(--text)}
+.modal .hint{color:var(--yellow);font-size:.74em;margin-bottom:16px;line-height:1.5}
+.modal .actions{display:flex;gap:6px}
+.modal .actions a,.modal .actions button{padding:10px 16px;border-radius:10px;font-size:.84em;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;flex:1}
+.btn-go{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none}
+.btn-copy{background:rgba(255,255,255,.04);color:var(--text);border:1px solid rgba(255,255,255,.08)}
+.btn-close{background:transparent;color:var(--dim);border:1px solid rgba(255,255,255,.05)}
+.notes{max-width:780px;margin:18px auto 0;font-size:.74em;color:var(--dim);line-height:1.9}
+.notes b{color:var(--text)}
+.footer{text-align:center;color:var(--dim);font-size:.7em;margin-top:16px}
+.footer a{color:var(--accent);text-decoration:none}
+.loading{text-align:center;padding:40px;color:var(--dim)}
+.spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.06);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Refresh timer */
+.timer{position:fixed;top:16px;right:16px;background:rgba(17,18,36,.96);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.timer-ring{position:relative;width:32px;height:32px;flex-shrink:0}
+.timer-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.timer-ring .num{font-size:.85rem;font-weight:900;color:var(--accent);position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.timer-label{color:var(--dim);font-size:.72rem}
+.timer-pulse{animation:tp 1s ease infinite}
+@keyframes tp{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<h1>🅿️ 香園圍邊境停車場</h1>
+<p class="subtitle">Heung Yuen Wai Border Parking · 可預約時段 06:00–22:00</p>
+
+<div class="controls">
+  <select id="carType" onchange="refresh()">
+    <option value="private">🚗 私家車</option>
+    <option value="goods">🚛 客貨車</option>
+    <option value="motorcycle">🏍️ 電單車</option>
+    <option value="disabled_blue">♿ 傷殘人士 (藍證)</option>
+    <option value="disabled_grey">♿ 接載殘疾 (灰證)</option>
+  </select>
+  <input type="date" id="dateFrom" onchange="refresh()">
+  <span class="sep">→</span>
+  <input type="date" id="dateTo" onchange="refresh()">
+  <button onclick="refresh()">🔄 查詢</button>
+</div>
+
+<div id="loading" class="loading"><div class="spinner"></div><p>載入中...</p></div>
+<div id="grid" class="grid" style="display:none"></div>
+
+<div id="timer" class="timer" style="display:none">
+  <div class="timer-ring">
+    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2.5"/><circle id="tArc" cx="16" cy="16" r="13" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="81.68" stroke-dashoffset="0" stroke-linecap="round"/></svg>
+    <span id="tNum" class="num">30</span>
+  </div>
+  <span class="timer-label">秒後更新</span>
+</div>
+
+<div class="notes">
+  📋 泊車收費以每小時計算 · 入場前30分鐘至7天預約 · 最少2小時 · 私家車/電單車最長7天 · 客貨車最長3天 · 更改/取消 HK$100
+</div>
+
+<div class="footer">Parklan Clawhub · <a href="/">← Back</a></div>
+
+<script>
+const STATUS={open:{icon:'🟢',label:'全線開放',cls:'open'},available:{icon:'🔵',label:'大部份可訂',cls:'available'},limited:{icon:'🟡',label:'少量時段',cls:'limited'},full:{icon:'🔴',label:'無時段',cls:'full'}};
+const VT={private:{name:'私家車',icon:'🚗'},goods:{name:'客貨車',icon:'🚛'},motorcycle:{name:'電單車',icon:'🏍️'},disabled_blue:{name:'傷殘人士(藍證)',icon:'♿'},disabled_grey:{name:'接載殘疾(灰證)',icon:'♿'}};
+
+function initDates(){
+  const hkt=new Date(Date.now()+8*3600000);
+  document.getElementById('dateFrom').value=hkt.toISOString().split('T')[0];
+  document.getElementById('dateTo').value=new Date(hkt.getTime()+6*86400000).toISOString().split('T')[0];
+}
+initDates();
+
+var refreshTimer=null,cdTimer=null,cdVal=30;
+
+function startCD(){
+  cdVal=30;
+  var timer=document.getElementById('timer'), num=document.getElementById('tNum'), arc=document.getElementById('tArc');
+  if(!timer||!num||!arc)return;
+  console.log('startCD: showing timer');
+  timer.style.display='flex'; num.textContent=cdVal; arc.style.strokeDashoffset='0'; arc.style.stroke='var(--accent)';
+  if(cdTimer)clearInterval(cdTimer);
+  cdTimer=setInterval(function(){
+    cdVal--; if(cdVal<0){num.textContent='0';return;}
+    num.textContent=cdVal;
+    arc.style.strokeDashoffset=(81.68*(1-cdVal/30)).toString();
+    if(cdVal<=3){num.classList.add('timer-pulse');arc.style.stroke='var(--red)';}else{num.classList.remove('timer-pulse');arc.style.stroke='var(--accent)';}
+  },1000);
+}
+
+function clearTimers(){
+  if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null;}
+  if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
+}
+
+async function refresh(){
+  clearTimers();
+  document.getElementById('loading').style.display='block';
+  document.getElementById('grid').style.display='none';
+  var ct=document.getElementById('carType').value;
+  var from=document.getElementById('dateFrom').value, to=document.getElementById('dateTo').value;
+  var r=await fetch('/parking/api/availability?type='+ct+'&from='+from+'&to='+to);
+  var d=await r.json();
+  document.getElementById('loading').style.display='none';
+  document.getElementById('grid').style.display='block';
+  if(!d.ok){document.getElementById('grid').innerHTML='<div class="loading"><p>❌ '+d.error+'</p></div>';return}
+  render(d);
+  // Check overnight availability for days ending at 22:00
+  checkAllOvernights(d);
+  // Start auto-refresh countdown
+  startCD();
+  refreshTimer=setTimeout(function(){refresh()},30000);
+}
+
+async function checkAllOvernights(d){
+  var MAX_DAYS=7, ct=window._ct||'private';
+  for(var i=0;i<d.days.length-1;i++){
+    var day=d.days[i];
+    if(day.status==='error')continue;
+    var lastWin=day.windows&&day.windows.length>0?day.windows[day.windows.length-1]:null;
+    if(!lastWin||lastWin.end!=='21:30')continue;
+    var ymd=day.date.replace(/\//g,'-');
+    var el=document.getElementById('overnight-'+ymd);
+    if(!el)continue;
+    
+    el.style.display='block';
+    el.innerHTML='<span style="color:var(--dim);font-size:.72em">🌙 檢查中...</span>';
+    
+    // Check continuous availability via range API - use each day's actual last bookable slot
+    var daysOK=0, lastLabel='';
+    for(var j=i+1;j<Math.min(d.days.length,i+MAX_DAYS);j++){
+      var nd=d.days[j];
+      if(nd.status==='error')break;
+      if(nd.status==='full')break;
+      var ndLastWin=nd.windows&&nd.windows.length>0?nd.windows[nd.windows.length-1]:null;
+      var toTime=ndLastWin?ndLastWin.end:'22:00'; // Use actual last slot, not 22:00
+      var toYmd=nd.date.replace(/\//g,'-');
+      try{
+        var r=await fetch('/parking/api/range?type='+ct+'&from_date='+ymd+'&from_time='+lastWin.start+'&to_date='+toYmd+'&to_time='+toTime);
+        var rd=await r.json();
+        if(rd.ok&&rd.available){
+          daysOK=j-i;
+          lastLabel=nd.day_label;
+        }else{
+          break;
+        }
+      }catch(e){break;}
+    }
+    
+    if(daysOK>0){
+      var totalDays=daysOK+1;
+      var maxTxt=lastLabel+(totalDays>=MAX_DAYS?' (上限7天)':'');
+      el.innerHTML='<span style="color:var(--green);font-size:.72em">🌙 可過夜 → 至 '+maxTxt+' ('+totalDays+'天)</span>';
+    }else{
+      el.innerHTML='<span style="color:var(--red);font-size:.72em">🌙 翌日不適用</span>';
+    }
+  }
+}
+
+function render(d){
+  const todayStr=new Date(Date.now()+8*3600000).toISOString().split('T')[0];
+  window._ct=d.car_type_key; window._vn=d.vehicle;
+  document.getElementById('grid').innerHTML=d.days.map(day=>{
+    const isToday=day.date.includes(todayStr.replace(/-/g,'/'));
+    const st=STATUS[day.status]||{icon:'⚫',label:'錯誤',cls:'full'};
+    const ws=day.windows||[];
+    let wh='';
+    if(day.status==='error') wh=`<div class="no-win">⚠️ ${day.error||'無法載入'}</div>`;
+    else if(ws.length===0) wh='<div class="no-win">❌ 無可預約時段</div>';
+    else if(day.full_day_available) wh=`<div class="win full-day" onclick="openDialog('${day.date}','06:00','21:30',${day.quota})"><span class="dot"></span><span class="time">06:00–22:00 全線開放</span> <span style="color:var(--dim);font-size:.75em">${day.quota}位</span></div>`;
+    else wh='<div class="windows">'+ws.map(w=>`<div class="win" onclick="openDialog('${day.date}','${w.start}','${w.end}',${w.spaces})"><span class="dot"></span><span class="time">${w.start}–${w.end}</span> <span style="color:var(--dim);font-size:.75em">${w.spaces}位</span></div>`).join('')+'</div>';
+    let ymd2=day.date.replace(/\//g,'-');
+    let overnightHTML='<div id="overnight-'+ymd2+'" style="margin-top:6px;display:none"></div>';
+
+    return `<div class="day-card${isToday?' today':''}">
+      <div class="day-head">
+        <div class="day-icon ${st.cls}">${st.icon}</div>
+        <div class="day-info">
+          <div class="date">${day.day_label} ${isToday?'<span style="font-size:.7em;color:var(--accent)">今天</span>':''}</div>
+          <div class="meta">${day.day_name} · ${day.available_count}/${day.total_slots} 時段可用</div>
+        </div>
+        <div class="badge ${st.cls}">${st.label}</div>
+      </div>
+      ${wh}
+      ${overnightHTML}
+    </div>`;
+  }).join('');
+}
+
+function openDialog(date,ws,we,sp){
+  const ct=window._ct||'private', v=VT[ct]||VT.private;
+  const p=date.split('/');
+  const dd=`${p[0]}年${parseInt(p[1])}月${parseInt(p[2])}日`;
+  const [sh,sm]=ws.split(':').map(Number),[eh,em]=we.split(':').map(Number);
+  // we = last slot START, actual departure = we + 30min
+  const h=eh+em/60+0.5-(sh+sm/60);
+  
+  // Next day for overnight
+  const dateObj=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+  dateObj.setDate(dateObj.getDate()+1);
+  const nextDate=`${dateObj.getFullYear()}/${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
+  const nextLabel=`${dateObj.getFullYear()}年${dateObj.getMonth()+1}月${dateObj.getDate()}日`;
+  const ymd=date.replace(/\//g,'-');
+  const nextYmd=nextDate.replace(/\//g,'-');
+  
+  const ov=document.createElement('div');
+  ov.className='modal-overlay';
+  ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  ov.id='bookingDialog';
+  ov.innerHTML=[
+    '<div class="modal" style="max-width:420px">',
+    '<h2>📋 預約詳情</h2>',
+    '<div class="info"><b>',v.icon,' ',v.name,'</b><br>📅 ',dd,'<br>🕐 ',ws,'–',we,' (',h.toFixed(1),'小時)<br>🅿️ 剩餘 ≥',sp,' 位</div>',
+    '<div style="margin-bottom:12px" id="overnightBox">',
+    '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82em;color:var(--dim)">',
+    '<input type="checkbox" id="chkOvernight" data-ymd="',ymd,'" data-ws="',ws,'" data-nextymd="',nextYmd,'" data-nextlabel="',nextLabel,'" onchange="var d=this.dataset;checkOvernight(d.ymd,d.ws,d.nextymd,d.nextlabel)">',
+    ' 🌙 過夜泊車 (檢查至翌日 ',nextLabel,')',
+    '</label>',
+    '<div id="overnightResult" style="margin-top:8px;display:none"></div>',
+    '</div>',
+    '<div class="hint">✅ 已複製到剪貼簿</div>',
+    '<div class="actions">',
+    '<a class="btn-go" href="https://hywparking.com.hk/car-park/carParkBooking?lang=zh_TW" target="_blank">🔗 前往官方預約</a>',
+    '<button class="btn-copy" id="btnCopy">📋</button>',
+    '<button class="btn-close" onclick="document.getElementById(\'bookingDialog\').remove()">✕</button>',
+    '</div></div>'
+  ].join('');
+  document.body.appendChild(ov);
+  
+  let txt=`${v.name} | ${dd} | ${ws}–${we}`;
+  window._dialogTxt=txt;
+  document.getElementById('btnCopy').onclick=function(){
+    navigator.clipboard.writeText(window._dialogTxt||txt);this.textContent='✅';
+  };
+  navigator.clipboard.writeText(txt).catch(()=>{});
+}
+
+async function checkOvernight(fromYmd,fromTime,toYmd,toLabel){
+  const chk=document.getElementById('chkOvernight');
+  const res=document.getElementById('overnightResult');
+  if(!chk.checked){res.style.display='none';return}
+  res.style.display='block';
+  res.innerHTML='<span style="color:var(--dim)">檢查中...</span>';
+  const ct=window._ct||'private';
+  try{
+    const r=await fetch(`/parking/api/range?type=${ct}&from_date=${fromYmd}&from_time=${fromTime}&to_date=${toYmd}&to_time=22:00`);
+    const d=await r.json();
+    if(d.ok && d.available){
+      const label=d.hours>=24?'過夜':'翌日早上';
+      res.innerHTML=`<div style="background:rgba(0,227,150,.08);border:1px solid rgba(0,227,150,.2);border-radius:10px;padding:10px;font-size:.82em">🌙 <b style="color:var(--green)">可過夜泊車</b><br>📅 ${fromYmd} ${fromTime} → ${toLabel} 06:00–22:00<br>🕐 連續 ${d.hours.toFixed(0)}小時 · ≥${d.min_spaces}位</div>`;
+      window._dialogTxt=`${window._dialogTxt} → 翌日06:00–22:00 (過夜OK)`;
+    }else{
+      const reason=d.full_slots&&d.full_slots.length>0?`❌ 翌日 ${d.full_slots[0].slice(-5)} 已滿`:'❌ 翌日不適用';
+      res.innerHTML=`<div style="background:rgba(255,77,106,.06);border:1px solid rgba(255,77,106,.15);border-radius:10px;padding:10px;font-size:.82em">${reason}</div>`;
+    }
+  }catch(e){
+    res.innerHTML='<span style="color:var(--red)">檢查失敗</span>';
+  }
+}
+document.addEventListener('DOMContentLoaded',refresh);
+</script>
+</body>
+</html>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>HKExpress Flight Search · on9claw</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --card: #1a1a2e;
+  --accent: #e94560;
+  --text: #eaeaea;
+  --dim: #8888aa;
+  --green: #00d68f;
+  --yellow: #ffaa00;
+  --blue: #00b4d8;
+  --input-bg: #16213e;
+  --border: rgba(233,69,96,0.2);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 20px;
+}
+.container { max-width: 700px; margin: 0 auto; }
+h1 {
+  text-align: center;
+  font-size: 1.6em;
+  margin: 20px 0 8px;
+  color: var(--accent);
+}
+.subtitle {
+  text-align: center;
+  color: var(--dim);
+  margin-bottom: 25px;
+  font-size: 0.9em;
+}
+
+/* Search Card */
+.search-card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.search-card h2 {
+  font-size: 1.1em;
+  margin-bottom: 16px;
+  color: var(--blue);
+}
+.form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.form-group {
+  flex: 1;
+  min-width: 140px;
+}
+.form-group label {
+  display: block;
+  font-size: 0.78em;
+  color: var(--dim);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 0.95em;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.form-group select option {
+  background: var(--input-bg);
+  color: var(--text);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-search {
+  background: var(--accent);
+  color: white;
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+.btn-search:hover { background: #d63850; }
+.btn-search:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quick buttons */
+.quick-flights {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.quick-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--input-bg);
+  color: var(--blue);
+  cursor: pointer;
+  font-size: 0.82em;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.quick-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(233,69,96,0.1);
+}
+
+/* Results */
+.result-card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.result-card.show { display: block; }
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.result-route {
+  font-size: 1.2em;
+  font-weight: 700;
+}
+.result-route small {
+  color: var(--dim);
+  font-weight: 400;
+  font-size: 0.8em;
+}
+.result-price {
+  text-align: right;
+}
+.price-main {
+  font-size: 2.2em;
+  font-weight: 800;
+  color: var(--green);
+}
+.price-main.na {
+  color: var(--dim);
+  font-size: 1.2em;
+  font-weight: 400;
+}
+.price-label {
+  font-size: 0.75em;
+  color: var(--dim);
+}
+.result-details {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.detail-item {
+  background: rgba(255,255,255,0.05);
+  padding: 10px 16px;
+  border-radius: 8px;
+  flex: 1;
+  min-width: 100px;
+}
+.detail-label {
+  font-size: 0.7em;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.detail-value {
+  font-weight: 600;
+  font-size: 1em;
+}
+
+/* Date range results */
+.range-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88em;
+  margin-top: 12px;
+}
+.range-table th {
+  text-align: left;
+  color: var(--dim);
+  font-weight: 500;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.range-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.range-table tr:hover td { background: rgba(255,255,255,0.03); }
+.price-best { color: var(--green); font-weight: 700; }
+.price-ok { color: var(--text); }
+.price-na { color: var(--dim); font-style: italic; }
+
+/* Loading */
+.loading {
+  display: none;
+  text-align: center;
+  padding: 20px;
+  color: var(--dim);
+}
+.loading.show { display: block; }
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-box {
+  background: rgba(233,69,96,0.15);
+  border: 1px solid rgba(233,69,96,0.3);
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 12px;
+  color: var(--accent);
+  font-size: 0.9em;
+  display: none;
+}
+
+footer {
+  text-align: center;
+  margin-top: 30px;
+  padding: 15px;
+}
+footer a {
+  color: var(--blue);
+  text-decoration: none;
+  font-size: 0.85em;
+}
+footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>✈️ HKExpress Flight Search</h1>
+  <p class="subtitle">Search prices for a specific HKExpress flight number + date</p>
+
+  <div class="search-card">
+    <h2>🔍 Flight Lookup</h2>
+
+    <div class="quick-flights" id="quickFlights">
+      <button class="quick-btn" data-flight="UO690">UO690 HKG→NGO</button>
+      <button class="quick-btn" data-flight="UO871">UO871 NRT→HKG</button>
+      <button class="quick-btn" data-flight="UO701">UO701 HKG→BKK</button>
+      <button class="quick-btn" data-flight="UO689">UO689 HKG→KIX</button>
+      <button class="quick-btn" data-flight="UO647">UO647 NRT→HKG</button>
+      <button class="quick-btn" data-flight="UO161">UO161 HKG→TPE</button>
+      <button class="quick-btn" data-flight="UO631">UO631 HKG→ICN</button>
+      <button class="quick-btn" data-flight="UO765">UO765 HKG→HKT</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="flightInput">Flight Number</label>
+        <input type="text" id="flightInput" placeholder="e.g. UO690" list="flightList" autocomplete="off"/>
+        <datalist id="flightList"></datalist>
+      </div>
+      <div class="form-group" style="max-width: 160px;">
+        <label for="dateInput">Travel Date</label>
+        <input type="date" id="dateInput"/>
+      </div>
+      <div class="form-group" style="max-width: 160px;">
+        <label for="endDateInput">End Date (optional)</label>
+        <input type="date" id="endDateInput"/>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group" style="max-width: 110px;">
+        <label for="adultsInput">Adults</label>
+        <select id="adultsInput">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+      <div class="form-group" style="max-width: 110px;">
+        <label for="childInput">Child</label>
+        <select id="childInput">
+          <option value="0">0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+      <div class="form-group" style="max-width: 110px;">
+        <label for="infantInput">Infant</label>
+        <select id="infantInput">
+          <option value="0" selected>0</option>
+          <option value="1">1</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn btn-search" id="searchBtn" onclick="searchFlight()">
+      🔎 Search Price
+    </button>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Searching Google Flights for HKExpress prices…</p>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <div class="result-route">
+        <span id="resultFlight"></span><br>
+        <small id="resultRoute"></small>
+      </div>
+      <div class="result-price">
+        <div class="price-main" id="resultPrice">—</div>
+        <div class="price-label">HKD per person (base fare)</div>
+      </div>
+    </div>
+    <div class="result-details">
+      <div class="detail-item">
+        <div class="detail-label">Flight</div>
+        <div class="detail-value" id="resultFlightDetail">—</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Date</div>
+        <div class="detail-value" id="resultDate">—</div>
+      </div>
+      <div class="detail-item" id="timeDetail" style="display:none;">
+        <div class="detail-label">Schedule</div>
+        <div class="detail-value" id="resultTime">—</div>
+      </div>
+    </div>
+    <div id="rangeResults"></div>
+    <p style="font-size:0.75em; color:var(--dim); margin-top:12px;">
+      ⚠️ Prices are approximate from Google Flights. Actual fare may differ.
+      Check <a href="https://www.hkexpress.com" style="color:var(--blue);" target="_blank">hkexpress.com</a> to book.
+    </p>
+  </div>
+
+  <footer>
+    <a href="/hkexpress/">← Back to HKExpress Scanner</a>
+  </footer>
+</div>
+
+<script>
+const API_BASE = '/hkexpress/api';
+
+// Set today as default date
+document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+
+// Load flight list
+fetch(`${API_BASE}/flights`)
+  .then(r => r.json())
+  .then(data => {
+    const list = document.getElementById('flightList');
+    const knownFlights = data.flights || [];
+    knownFlights.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = `${f} — ${data.route_map[f]?.name || ''}`;
+      list.appendChild(opt);
+    });
+  })
+  .catch(() => {});
+
+// Quick flight buttons
+document.getElementById('quickFlights').addEventListener('click', e => {
+  if (e.target.classList.contains('quick-btn')) {
+    document.getElementById('flightInput').value = e.target.dataset.flight;
+    searchFlight();
+  }
+});
+
+// Enter key to search
+document.getElementById('flightInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchFlight();
+});
+
+async function searchFlight() {
+  const flight = document.getElementById('flightInput').value.trim().toUpperCase();
+  const date = document.getElementById('dateInput').value;
+  const endDate = document.getElementById('endDateInput').value;
+
+  if (!flight) {
+    showError('Please enter a flight number (e.g., UO690)');
+    return;
+  }
+  if (!date && !endDate) {
+    showError('Please select a travel date');
+    return;
+  }
+
+  // Show loading
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('searchBtn').disabled = true;
+
+  try {
+    const adults = document.getElementById('adultsInput')?.value || '2';
+    const child = document.getElementById('childInput')?.value || '0';
+    const infant = document.getElementById('infantInput')?.value || '0';
+    let url;
+    const paxParams = `&adults=${adults}&child=${child}&infant=${infant}`;
+    if (date && endDate && endDate !== date) {
+      url = `${API_BASE}/lookup?flight=${encodeURIComponent(flight)}&from=${date}&to=${endDate}${paxParams}`;
+    } else {
+      url = `${API_BASE}/lookup?flight=${encodeURIComponent(flight)}&date=${date}${paxParams}`;
+    }
+
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!data.success && !data.results) {
+      if (data.error === 'NO_PRICES' || data.error === 'NO_FLIGHTS') {
+        showResult(flight, data, date);
+      } else {
+        throw new Error(data.error || 'Flight not found');
+      }
+      return;
+    }
+
+    showResult(flight, data, date);
+  } catch (err) {
+    showError(err.message || 'Search failed. Please try again.');
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('searchBtn').disabled = false;
+  }
+}
+
+function showResult(flight, data, queryDate) {
+  const card = document.getElementById('resultCard');
+
+  // Check if it's a date range result
+  if (data.results) {
+    showRangeResult(flight, data, queryDate);
+    return;
+  }
+
+  document.getElementById('rangeResults').innerHTML = '';
+  document.getElementById('resultFlight').textContent = `✈️ ${data.flight || flight}`;
+  document.getElementById('resultRoute').textContent = data.route || '';
+  document.getElementById('resultFlightDetail').textContent = data.flight || flight;
+  document.getElementById('resultDate').textContent = data.date || queryDate;
+
+  if (data.lowest_price) {
+    document.getElementById('resultPrice').textContent = `HK$${data.lowest_price.toLocaleString()}`;
+    document.getElementById('resultPrice').classList.remove('na');
+  } else {
+    document.getElementById('resultPrice').textContent = data.message || 'Price not available';
+    document.getElementById('resultPrice').classList.add('na');
+  }
+
+  if (data.departure_time) {
+    document.getElementById('timeDetail').style.display = '';
+    document.getElementById('resultTime').textContent =
+      `${data.departure_time} → ${data.arrival_time || '?'}`;
+  } else {
+    document.getElementById('timeDetail').style.display = 'none';
+  }
+
+  card.classList.add('show');
+}
+
+function showRangeResult(flight, data, queryDate) {
+  document.getElementById('resultFlight').textContent = `✈️ ${flight}`;
+  document.getElementById('resultRoute').textContent =
+    `${data.date_range.from} → ${data.date_range.to}`;
+  document.getElementById('resultFlightDetail').textContent = flight;
+  document.getElementById('resultDate').textContent =
+    `${data.date_range.from} to ${data.date_range.to}`;
+
+  const validPrices = data.results
+    .filter(r => r.lowest_price)
+    .map(r => r.lowest_price);
+
+  if (validPrices.length > 0) {
+    const minPrice = Math.min(...validPrices);
+    document.getElementById('resultPrice').textContent =
+      `HK$${minPrice.toLocaleString()}`;
+    document.getElementById('resultPrice').classList.remove('na');
+  } else {
+    document.getElementById('resultPrice').textContent = 'N/A';
+    document.getElementById('resultPrice').classList.add('na');
+  }
+
+  document.getElementById('timeDetail').style.display = 'none';
+
+  // Build range table
+  let tableHtml = '<table class="range-table"><tr><th>Date</th><th>Price</th></tr>';
+  let lowest = Infinity;
+  data.results.forEach(r => {
+    if (r.lowest_price && r.lowest_price < lowest) lowest = r.lowest_price;
+  });
+  data.results.forEach(r => {
+    const isLowest = r.lowest_price && r.lowest_price === lowest;
+    const cls = r.lowest_price ? (isLowest ? 'price-best' : 'price-ok') : 'price-na';
+    const priceText = r.lowest_price
+      ? `HK$${r.lowest_price.toLocaleString()}${isLowest ? ' 🔥' : ''}`
+      : r.message || '—';
+    tableHtml += `<tr><td>${r.date}</td><td class="${cls}">${priceText}</td></tr>`;
+  });
+  tableHtml += '</table>';
+  document.getElementById('rangeResults').innerHTML = tableHtml;
+
+  document.getElementById('resultCard').classList.add('show');
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = '❌ ' + msg;
+  el.style.display = 'block';
+  document.getElementById('resultCard').classList.remove('show');
+}
+</script>
+
+</body>
+</html>

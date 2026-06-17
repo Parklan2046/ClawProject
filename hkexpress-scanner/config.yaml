@@ -1,0 +1,40 @@
+# HKExpress Price Scanner Configuration - Focused Scan
+# Prices sourced via Google Flights (HKExpress blocks direct scraping with Queue-It)
+
+from: HKG
+
+routes:
+  - from: HKG
+    to: NGO
+    name: "HKG → Nagoya"
+    note: "Lowest HKExpress fare (UO690)"
+    dates:
+      - "2026-08-07"
+      - "2026-08-08"
+    threshold: 1200
+
+  - from: NRT
+    to: HKG
+    name: "Tokyo → Hong Kong"
+    note: "Lowest among UO871 / UO647 / UO651 / UO653"
+    dates:
+      - "2026-08-15"
+      - "2026-08-16"
+      - "2026-08-17"
+    threshold: 1500
+
+scanner:
+  headless: true
+  max_retries: 2
+  request_delay_sec: 3
+
+database:
+  path: "/opt/hkexpress-scanner/prices.db"
+
+notifications:
+  telegram:
+    enabled: true
+    chat_id: "811104510"
+
+report:
+  output_path: "/var/www/on9claw/hkexpress/index.html"

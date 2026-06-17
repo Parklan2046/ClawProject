@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>股票篩選器 | Stock Picker</title>
+<style>
+:root{
+  --bg:#0a0a12; --card:#12121e; --card2:#18182a; --border:rgba(255,255,255,.07);
+  --accent:#ff3ea5; --cyan:#33e6ff; --green:#00e676; --red:#ff5252; --orange:#ffab40;
+  --muted:#667; --text:#e8e8f0; --glow:rgba(255,62,165,.15);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(255,62,165,.06),transparent 60%),radial-gradient(ellipse at 80% 10%,rgba(51,230,255,.04),transparent 50%);pointer-events:none;z-index:0}
+.container{max-width:960px;margin:0 auto;padding:20px 16px 40px;position:relative;z-index:1}
+
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:2rem;margin-bottom:4px;background:linear-gradient(135deg,var(--accent),var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% 200%;animation:gradShift 4s ease infinite}
+@keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.header .sub{color:var(--muted);font-size:.82rem}
+
+.market-bar{display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.market-btn{padding:12px 28px;border-radius:14px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:.95rem;cursor:pointer;transition:all .2s;font-weight:600}
+.market-btn:hover{border-color:var(--accent);color:var(--accent)}
+.market-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 0 24px var(--glow)}
+.market-btn:disabled{opacity:.5;cursor:wait}
+
+.loader{display:none;text-align:center;padding:32px}
+.loader.show{display:block}
+.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:.88rem;color:var(--muted)}
+
+/* Leaderboard */
+.leaderboard{display:none}
+.leaderboard.show{display:block;animation:fadeUp .5s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+.meta-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:var(--muted);font-size:.78rem;flex-wrap:wrap;gap:8px}
+.meta-row strong{color:var(--cyan)}
+
+.stock-row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;background:var(--card);border:1px solid var(--border);margin-bottom:8px;transition:all .2s;cursor:pointer}
+.stock-row:hover{transform:translateX(4px);border-color:var(--accent)}
+.stock-row.top1{border-color:var(--accent);background:linear-gradient(135deg,rgba(255,62,165,.08),var(--card))}
+.stock-row.top2{border-color:rgba(255,62,165,.4)}
+.stock-row.top3{border-color:rgba(255,62,165,.25)}
+
+.rank{font-size:1.3rem;font-weight:900;width:36px;text-align:center;flex-shrink:0}
+.rank.gold{color:#ffd700}.rank.silver{color:#c0c0c0}.rank.bronze{color:#cd7f32}
+
+.score-badge{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.1rem;flex-shrink:0;border:3px solid}
+.score-badge.high{background:rgba(0,230,118,.12);border-color:var(--green);color:var(--green)}
+.score-badge.mid{background:rgba(255,171,64,.12);border-color:var(--orange);color:var(--orange)}
+.score-badge.low{background:rgba(255,82,82,.12);border-color:var(--red);color:var(--red)}
+
+.info{flex:1;min-width:0}
+.info .name{font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info .ticker{font-size:.72rem;color:var(--muted)}
+.info .reasons{font-size:.7rem;color:var(--cyan);margin-top:2px}
+
+.nums{text-align:right;flex-shrink:0}
+.nums .price{font-weight:700;font-size:.95rem}
+.nums .change{font-size:.78rem}
+.nums .change.up{color:var(--green)}.nums .change.down{color:var(--red)}
+
+/* AI summary */
+.ai-box{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:20px;display:none}
+.ai-box.show{display:block}
+.ai-box h3{font-size:.95rem;color:var(--accent);margin-bottom:10px}
+.ai-box p{font-size:.88rem;line-height:1.85;color:var(--text);white-space:pre-wrap}
+
+.stats-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.stat-chip{padding:6px 14px;border-radius:20px;background:var(--card2);border:1px solid var(--border);font-size:.75rem}
+.stat-chip b{color:var(--cyan)}
+
+.footer{text-align:center;color:var(--muted);font-size:.7rem;margin-top:28px;padding:16px}
+.footer a{color:var(--cyan);text-decoration:none}
+
+@media(max-width:600px){
+  .stock-row{gap:10px;padding:12px 14px}
+  .score-badge{width:42px;height:42px;font-size:.9rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📊 股票篩選器</h1>
+    <p class="sub">掃描全市場 · 基本面 + 技術面綜合評分 · AI 推薦</p>
+  </div>
+
+  <div class="market-bar">
+    <button class="market-btn active" data-market="hk" onclick="scan('hk')">🇭🇰 港股 (45隻)</button>
+    <button class="market-btn" data-market="us" onclick="scan('us')">🇺🇸 美股 (45隻)</button>
+    <button class="market-btn" data-market="all" onclick="scan('all')">🌍 全部 (90隻)</button>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p class="loader-text" id="loaderText">正在掃描股票...</p>
+  </div>
+
+  <div class="leaderboard" id="leaderboard">
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="meta-row" id="metaRow"></div>
+    <div id="stockList"></div>
+    <div class="ai-box" id="aiBox">
+      <h3>🤖 AI 投資摘要 (DeepSeek V4 Pro)</h3>
+      <p id="aiText"></p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="/stock-report/">← 返回 AI 投資報告</a> &nbsp;·&nbsp;
+    Powered by <a href="https://openclaw.ai" target="_blank">OpenClaw</a>
+    · 數據來源 Yahoo Finance · <strong>僅供參考，不構成投資建議</strong>
+  </div>
+</div>
+
+<script>
+let currentMarket = 'hk';
+let allResults = [];
+
+async function scan(market) {
+  currentMarket = market;
+  document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-market="${market}"]`).classList.add('active');
+
+  document.getElementById('loader').classList.add('show');
+  document.getElementById('leaderboard').classList.remove('show');
+  document.getElementById('aiBox').classList.remove('show');
+  document.getElementById('loaderText').textContent = '正在掃描股票數據...';
+
+  const start = Date.now();
+  try {
+    const resp = await fetch('/stock-picker/api/scan', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({market, ai: true})
+    });
+    const data = await resp.json();
+
+    allResults = data.all_scored || [];
+    renderResults(data);
+    document.getElementById('loaderText').textContent = 
+      `✅ 掃描完成 · ${((Date.now()-start)/1000).toFixed(1)}s · ${data.total_scanned}/${data.total_attempted} 隻有數據`;
+    setTimeout(() => document.getElementById('loader').classList.remove('show'), 600);
+  } catch(e) {
+    document.getElementById('loaderText').textContent = '❌ 掃描失敗，請重試';
+  }
+}
+
+function renderResults(data) {
+  const top = data.top10 || [];
+  const all = data.all_scored || [];
+
+  // Stats
+  const avg = all.length ? (all.reduce((s, r) => s + r.score, 0) / all.length).toFixed(1) : 0;
+  const hi = top.length ? top[0].score : 0;
+  const lo = all.length ? all[all.length-1].score : 0;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-chip">📊 掃描: <b>${data.total_scanned}</b> 隻</div>
+    <div class="stat-chip">⭐ 最高: <b>${hi}/10</b></div>
+    <div class="stat-chip">📈 平均: <b>${avg}/10</b></div>
+    <div class="stat-chip">📉 最低: <b>${lo}/10</b></div>
+  `;
+
+  document.getElementById('metaRow').innerHTML = `
+    掃描時間: <strong>${data.scanned_at}</strong> · 
+    點擊股票查看詳細報告
+  `;
+
+  // Stock rows
+  const list = document.getElementById('stockList');
+  list.innerHTML = top.map((s, i) => {
+    const rank = i + 1;
+    const rankClass = rank === 1 ? 'gold top1' : rank === 2 ? 'silver top2' : rank === 3 ? 'bronze top3' : '';
+    const scoreClass = s.score >= 7 ? 'high' : s.score >= 5 ? 'mid' : 'low';
+    const change = s.change_pct || 0;
+    const changeClass = change >= 0 ? 'up' : 'down';
+    const changeSymbol = change >= 0 ? '▲' : '▼';
+    const reasons = (s.score_reasons || []).slice(0, 4).join(' · ');
+    const ticker = s.ticker.replace('.HK','');
+
+    return `
+    <div class="stock-row ${rankClass}" onclick="openReport('${s.ticker}','${s.name}')" title="點擊查看詳細報告">
+      <div class="rank ${rank <= 3 ? rankClass.split(' ')[0] : ''}">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</div>
+      <div class="score-badge ${scoreClass}">${s.score}</div>
+      <div class="info">
+        <div class="name">${s.name}</div>
+        <div class="ticker">${ticker} · ${s.sector || ''} · ${s.currency || ''}</div>
+        <div class="reasons">${reasons}</div>
+      </div>
+      <div class="nums">
+        <div class="price">${s.currency === 'HKD' ? 'HK$' : '$'}${s.price?.toLocaleString() || 'N/A'}</div>
+        <div class="change ${changeClass}">${changeSymbol} ${Math.abs(change).toFixed(2)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('leaderboard').classList.add('show');
+
+  // AI
+  if (data.ai_analysis) {
+    document.getElementById('aiText').textContent = data.ai_analysis;
+    document.getElementById('aiBox').classList.add('show');
+  }
+}
+
+function openReport(ticker, name) {
+  const symbol = ticker.replace('.HK','');
+  window.open(`/stock-report/?q=${encodeURIComponent(symbol)}`, '_blank');
+}
+
+// Auto-scan on load
+scan('hk');
+</script>
+</body>
+</html>
