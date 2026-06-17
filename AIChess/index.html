@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Chess - 象棋競技場</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(135deg, #0c0a09 0%, #1c1917 50%, #0c0a09 100%);
+  color: #fafafa;
+  min-height: 100vh;
+}
+.header {
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 20px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
+}
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #dc2626, #f59e0b);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+.logo-text h1 {
+  font-size: 24px;
+  background: linear-gradient(90deg, #f87171, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.logo-text p { color: #a8a29e; font-size: 13px; }
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.board-container {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 500px;
+}
+.board-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.board-title h2 { font-size: 18px; }
+
+/* Turn Indicator - Enhanced */
+.turn-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.turn-indicator.red {
+  background: rgba(220, 38, 38, 0.2);
+  border: 2px solid rgba(220, 38, 38, 0.5);
+  color: #f87171;
+}
+.turn-indicator.black {
+  background: rgba(60, 60, 60, 0.3);
+  border: 2px solid rgba(100, 100, 100, 0.5);
+  color: #a1a1aa;
+}
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #dc2626;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* 2D Board */
+.xiangqi-board {
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+  aspect-ratio: 9/10;
+  background: #f5deb3;
+  border: 3px solid #8b4513;
+  border-radius: 4px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+}
+.square {
+  border: 0.5px solid rgba(139, 69, 19, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.square:hover { background: rgba(255,200,100,0.2); }
+.square.selected { background: rgba(251, 191, 36, 0.4); }
+.square.last-move { background: rgba(34, 197, 94, 0.3); }
+.square.valid-move { background: rgba(59, 130, 246, 0.3); }
+.square.capture { background: rgba(239, 68, 68, 0.3); }
+
+.piece {
+  width: 75%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: clamp(14px, 3vw, 20px);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  position: relative;
+}
+.piece:hover { transform: scale(1.15); }
+.piece.red {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fef2f2;
+  border: 2px solid #fbbf24;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+}
+.piece.black {
+  background: linear-gradient(135deg, #1f1f1f, #0a0a0a);
+  color: #d4d4d8;
+  border: 2px solid #525252;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.piece.moving {
+  animation: pieceMove 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+@keyframes pieceMove {
+  0% { transform: scale(1.2); box-shadow: 0 0 20px rgba(251, 191, 36, 0.6); }
+  50% { transform: scale(1.3); box-shadow: 0 0 30px rgba(251, 191, 36, 0.8); }
+  100% { transform: scale(1); }
+}
+.piece.captured {
+  animation: pieceCaptured 0.5s ease forwards;
+}
+@keyframes pieceCaptured {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+/* Move effect */
+.move-effect {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid #fbbf24;
+  animation: moveRipple 0.6s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes moveRipple {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.river {
+  grid-column: 1 / -1;
+  background: linear-gradient(90deg, transparent 30%, rgba(135, 206, 235, 0.3) 50%, transparent 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #8b4513;
+  font-weight: bold;
+}
+
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+.panel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 16px;
+}
+.panel h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-config { display: flex; flex-direction: column; gap: 10px; }
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+}
+.player-row.red { border-left: 3px solid #dc2626; }
+.player-row.black { border-left: 3px solid #525252; }
+.player-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.player-icon.red { background: #dc2626; }
+.player-icon.black { background: #1f1f1f; border: 1px solid #525252; }
+.player-info { flex: 1; }
+.player-info .name { font-weight: 600; font-size: 14px; }
+.player-info .model { font-size: 12px; color: #a8a29e; }
+select {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.history-list {
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 13px;
+  font-family: monospace;
+}
+.history-item {
+  display: flex;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.history-item .num { color: #a8a29e; width: 30px; }
+.history-item .red-move { color: #f87171; flex: 1; }
+.history-item .black-move { color: #a8a29e; flex: 1; }
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  margin-top: 10px;
+  animation: thinking 1.5s infinite;
+}
+@keyframes thinking {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Move hint */
+.move-hint {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.6);
+  pointer-events: none;
+}
+
+.footer {
+  text-align: center;
+  padding: 30px;
+  color: #78716c;
+  font-size: 13px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Game status overlay */
+.game-status-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.game-status-overlay.show { display: flex; }
+.game-status-content {
+  background: linear-gradient(135deg, #1c1917, #0c0a09);
+  border: 2px solid #f59e0b;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  animation: statusPop 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes statusPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.game-status-content h2 {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+.game-status-content.winner-red h2 { color: #f87171; }
+.game-status-content.winner-black h2 { color: #a1a1aa; }
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .xiangqi-board { max-width: 350px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">♟</div>
+      <div class="logo-text">
+        <h1>AI Chess 競技場</h1>
+        <p>中國象棋 · AI 對決</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="board-container">
+    <div class="board-title">
+      <h2>🎮 對局棋盤</h2>
+      <div class="turn-indicator red" id="turnIndicator">
+        <span class="dot"></span>
+        <span id="turnText">🔴 紅方回合</span>
+      </div>
+    </div>
+    <div class="xiangqi-board" id="board"></div>
+  </div>
+
+  <div class="sidebar">
+    <div class="panel">
+      <h3>⚔️ 對戰配置</h3>
+      <div class="player-config">
+        <div class="player-row red">
+          <div class="player-icon red">♟</div>
+          <div class="player-info">
+            <div class="name">紅方</div>
+            <div class="model" id="redModel">人類</div>
+          </div>
+          <select id="redSelect">
+            <option value="human">人類</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="minimax">MiniMax</option>
+            <option value="qwen">Qwen</option>
+            <option value="moonshot">Moonshot</option>
+          </select>
+        </div>
+        <div class="player-row black">
+          <div class="player-icon black">♟</div>
+          <div class="player-info">
+            <div class="name">黑方</div>
+            <div class="model" id="blackModel">人類</div>
+          </div>
+          <select id="blackSelect">
+            <option value="human">人類</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="minimax">MiniMax</option>
+            <option value="qwen">Qwen</option>
+            <option value="moonshot">Moonshot</option>
+          </select>
+        </div>
+        <button class="btn-primary" id="startBtn" onclick="startGame()">開始對局</button>
+        <div id="thinkingIndicator" style="display:none" class="thinking">
+          <span>🤔</span>
+          <span id="thinkingText">思考中...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>📜 棋譜</h3>
+      <div class="history-list" id="historyList">
+        <div style="color:#78716c; text-align:center; padding:20px;">尚無棋步</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>⚙️ API 設定</h3>
+      <p style="font-size:12px; color:#a8a29e; margin-bottom:10px;">在瀏覽器 localStorage 中設置 API Keys</p>
+      <input type="password" placeholder="DeepSeek API Key" id="deepseekKey" style="width:100%; margin-bottom:8px; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; font-size:13px;">
+      <input type="password" placeholder="MiniMax API Key" id="minimaxKey" style="width:100%; margin-bottom:8px; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; font-size:13px;">
+      <button class="btn-primary" onclick="saveKeys()" style="margin-top:8px; padding:8px; font-size:13px;">保存密鑰</button>
+    </div>
+  </div>
+</main>
+
+<!-- Game Status Overlay -->
+<div class="game-status-overlay" id="gameStatusOverlay">
+  <div class="game-status-content" id="gameStatusContent">
+    <h2 id="statusTitle">🎉 勝利！</h2>
+    <p id="statusMessage">紅方獲勝</p>
+    <button class="btn-primary" onclick="closeStatus()" style="margin-top:20px;">再玩一局</button>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>AI Chess 競技場 · 讓 AI 在棋盤上決高下</p>
+</footer>
+
+<script>
+// Piece characters
+const PIECES = {
+  r: '俥', n: '傌', b: '相', a: '仕', k: '帥', c: '炮', p: '兵',
+  R: '車', N: '馬', B: '象', A: '士', K: '將', C: '砲', P: '卒'
+};
+
+// Correct Xiangqi initial board
+const INITIAL_BOARD = [
+  ['r','n','b','a','k','a','b','n','r'],
+  ['','','','','','','','',''],
+  ['','c','','','','','','c',''],
+  ['p','','p','','p','','p','','p'],
+  ['','','','','','','','',''],
+  ['','','','','','','','',''],
+  ['P','','P','','P','','P','','P'],
+  ['','C','','','','','','C',''],
+  ['','','','','','','','',''],
+  ['R','N','B','A','K','A','B','N','R']
+];
+
+let board = [];
+let selectedSquare = null;
+let history = [];
+let gameActive = false;
+let currentTurn = 'red';
+
+function initBoard() {
+  board = INITIAL_BOARD.map(row => [...row]);
+  renderBoard();
+}
+
+function renderBoard() {
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+
+  for (let rank = 0; rank < 10; rank++) {
+    for (let file = 0; file < 9; file++) {
+      const square = document.createElement('div');
+      square.className = 'square';
+      square.dataset.rank = rank;
+      square.dataset.file = file;
+
+      // River
+      if (rank === 4 || rank === 5) {
+        if (file === 0) {
+          const river = document.createElement('div');
+          river.className = 'river';
+          river.textContent = rank === 4 ? '楚 河' : '漢 界';
+          square.appendChild(river);
+        }
+      }
+
+      const piece = board[rank][file];
+      if (piece) {
+        const pieceEl = document.createElement('div');
+        pieceEl.className = `piece ${piece === piece.toUpperCase() ? 'red' : 'black'}`;
+        pieceEl.textContent = PIECES[piece] || piece;
+        pieceEl.dataset.rank = rank;
+        pieceEl.dataset.file = file;
+        pieceEl.onclick = (e) => {
+          e.stopPropagation();
+          handlePieceClick(rank, file, piece);
+        };
+        square.appendChild(pieceEl);
+      }
+
+      square.onclick = () => handleSquareClick(rank, file);
+      boardEl.appendChild(square);
+    }
+  }
+}
+
+function getValidMoves(rank, file, piece) {
+  const moves = [];
+  const isRed = piece === piece.toUpperCase();
+  const pieceType = piece.toLowerCase();
+
+  switch(pieceType) {
+    case 'r': // Rook
+      // Horizontal and vertical moves
+      for (let d = 1; d < 10; d++) {
+        if (rank + d < 10 && !board[rank + d][file]) moves.push([rank + d, file]);
+        else if (rank + d < 10) { if ((isRed && board[rank + d][file] !== board[rank + d][file].toUpperCase()) || (!isRed && board[rank + d][file] === board[rank + d][file].toUpperCase())) moves.push([rank + d, file]); break; }
+        if (rank - d >= 0 && !board[rank - d][file]) moves.push([rank - d, file]);
+        else if (rank - d >= 0) { if ((isRed && board[rank - d][file] !== board[rank - d][file].toUpperCase()) || (!isRed && board[rank - d][file] === board[rank - d][file].toUpperCase())) moves.push([rank - d, file]); break; }
+      }
+      for (let d = 1; d < 9; d++) {
+        if (file + d < 9 && !board[rank][file + d]) moves.push([rank, file + d]);
+        else if (file + d < 9) { if ((isRed && board[rank][file + d] !== board[rank][file + d].toUpperCase()) || (!isRed && board[rank][file + d] === board[rank][file + d].toUpperCase())) moves.push([rank, file + d]); break; }
+        if (file - d >= 0 && !board[rank][file - d]) moves.push([rank, file - d]);
+        else if (file - d >= 0) { if ((isRed && board[rank][file - d] !== board[rank][file - d].toUpperCase()) || (!isRed && board[rank][file - d] === board[rank][file - d].toUpperCase())) moves.push([rank, file - d]); break; }
+      }
+      break;
+    case 'n': // Horse
+      const horseMoves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      for (const [dr, df] of horseMoves) {
+        const nr = rank + dr, nf = file + df;
+        if (nr >= 0 && nr < 10 && nf >= 0 && nf < 9) {
+          // Check horse leg
+          const legR = rank + (dr > 0 ? 1 : -1);
+          const legF = file + (df > 0 ? 1 : -1);
+          if (Math.abs(dr) === 2) {
+            if (!board[rank + (dr > 0 ? 1 : -1)][file]) moves.push([nr, nf]);
+          } else {
+            if (!board[rank][file + (df > 0 ? 1 : -1)]) moves.push([nr, nf]);
+          }
+        }
+      }
+      break;
+    case 'c': // Cannon
+      // Same as rook but needs jump to capture
+      for (let d = 1; d < 10; d++) {
+        if (rank + d < 10 && !board[rank + d][file]) moves.push([rank + d, file]);
+        else if (rank + d < 10) {
+          // Need to jump one piece to capture
+          let jumped = false;
+          for (let dd = d + 1; rank + dd < 10; dd++) {
+            if (board[rank + dd][file]) {
+              if (!jumped) { jumped = true; continue; }
+              if ((isRed && board[rank + dd][file] !== board[rank + dd][file].toUpperCase()) || 
+                  (!isRed && board[rank + dd][file] === board[rank + dd][file].toUpperCase())) {
+                moves.push([rank + dd, file]);
+              }
+              break;
+            }
+          }
+          break;
+        }
+      }
+      break;
+    case 'p': // Pawn
+      const direction = isRed ? -1 : 1;
+      const newR = rank + direction;
+      if (newR >= 0 && newR < 10) {
+        if (!board[newR][file] || (isRed && board[newR][file] !== board[newR][file].toUpperCase()) || 
+            (!isRed && board[newR][file] === board[newR][file].toUpperCase())) {
+          moves.push([newR, file]);
+        }
+      }
+      // After crossing river
+      const riverCrossed = isRed ? rank <= 4 : rank >= 5;
+      if (riverCrossed) {
+        if (file > 0 && (!board[rank][file-1] || (isRed && board[rank][file-1] !== board[rank][file-1].toUpperCase()) || 
+            (!isRed && board[rank][file-1] === board[rank][file-1].toUpperCase()))) moves.push([rank, file-1]);
+        if (file < 8 && (!board[rank][file+1] || (isRed && board[rank][file+1] !== board[rank][file+1].toUpperCase()) || 
+            (!isRed && board[rank][file+1] === board[rank][file+1].toUpperCase()))) moves.push([rank, file+1]);
+      }
+      break;
+    case 'k': // King
+      // Palace only (3x3 area)
+      const palaceR = isRed ? [0, 1, 2] : [7, 8, 9];
+      const palaceF = [3, 4, 5];
+      for (const [dr, df] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+        const nr = rank + dr, nf = file + df;
+        if (palaceR.includes(nr) && palaceF.includes(nf)) {
+          if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
+              (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
+            moves.push([nr, nf]);
+          }
+        }
+      }
+      break;
+    case 'a': // Advisor
+      // Diagonal moves in palace
+      const aPalaceR = isRed ? [0, 1, 2] : [7, 8, 9];
+      const aPalaceF = [3, 4, 5];
+      for (const [dr, df] of [[-1,-1],[-1,1],[1,-1],[1,1]]) {
+        const nr = rank + dr, nf = file + df;
+        if (aPalaceR.includes(nr) && aPalaceF.includes(nf)) {
+          if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
+              (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
+            moves.push([nr, nf]);
+          }
+        }
+      }
+      break;
+    case 'b': // Elephant
+      // 2 diagonal steps, blocked by elephant eye
+      for (const [dr, df] of [[-2,-2],[-2,2],[2,-2],[2,2]]) {
+        const nr = rank + dr, nf = file + df;
+        const eyeR = rank + (dr > 0 ? 1 : -1);
+        const eyeF = file + (df > 0 ? 1 : -1);
+        if (nr >= 0 && nr < 10 && nf >= 0 && nf < 9 && !board[eyeR][eyeF]) {
+          // Cannot cross river
+          if ((isRed && nr >= 5) || (!isRed && nr <= 4)) {
+            if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
+                (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
+              moves.push([nr, nf]);
+            }
+          }
+        }
+      }
+      break;
+  }
+
+  return moves;
+}
+
+let validMoves = [];
+
+function handlePieceClick(rank, file, piece) {
+  const isRed = piece === piece.toUpperCase();
+  
+  // Can only select own pieces on own turn
+  if (currentTurn === 'red' && !isRed) {
+    if (selectedSquare) {
+      tryMove(selectedSquare.rank, selectedSquare.file, rank, file);
+    }
+    return;
+  }
+  if (currentTurn === 'black' && isRed) {
+    if (selectedSquare) {
+      tryMove(selectedSquare.rank, selectedSquare.file, rank, file);
+    }
+    return;
+  }
+
+  // Select piece and show valid moves
+  if (selectedSquare && selectedSquare.rank === rank && selectedSquare.file === file) {
+    selectedSquare = null;
+    validMoves = [];
+  } else {
+    selectedSquare = { rank, file };
+    validMoves = getValidMoves(rank, file, piece);
+  }
+  renderBoard();
+  highlightValidMoves();
+}
+
+function highlightValidMoves() {
+  if (!selectedSquare) return;
+  const boardEl = document.getElementById('board');
+  const squares = boardEl.querySelectorAll('.square');
+  
+  validMoves.forEach(([r, f]) => {
+    const index = r * 9 + f;
+    if (squares[index]) {
+      squares[index].classList.add(board[r][f] ? 'capture' : 'valid-move');
+    }
+  });
+}
+
+function handleSquareClick(rank, file) {
+  if (!selectedSquare) return;
+  
+  // Check if move is valid
+  const isValid = validMoves.some(([r, f]) => r === rank && f === file);
+  if (isValid) {
+    tryMove(selectedSquare.rank, selectedSquare.file, rank, file);
+  } else {
+    selectedSquare = null;
+    validMoves = [];
+    renderBoard();
+  }
+}
+
+function tryMove(fromRank, fromFile, toRank, toFile) {
+  const piece = board[fromRank][fromFile];
+  if (!piece) return;
+
+  // Create move effect
+  const isCapture = board[toRank][toFile] !== '';
+  
+  // Execute move
+  board[toRank][toFile] = piece;
+  board[fromRank][fromFile] = '';
+
+  const iccs = `${String.fromCharCode(97 + fromFile)}${fromRank}${String.fromCharCode(97 + toFile)}${toRank}`;
+  history.push({
+    num: Math.floor(history.length / 2) + 1,
+    move: iccs,
+    turn: currentTurn,
+    piece: piece,
+    capture: isCapture
+  });
+
+  selectedSquare = null;
+  validMoves = [];
+  currentTurn = currentTurn === 'red' ? 'black' : 'red';
+  updateTurnIndicator();
+  renderBoard();
+  renderHistory();
+  
+  // Check for win condition (simplified)
+  checkWinCondition();
+}
+
+function updateTurnIndicator() {
+  const indicator = document.getElementById('turnIndicator');
+  const turnText = document.getElementById('turnText');
+  const isRed = currentTurn === 'red';
+  
+  indicator.className = `turn-indicator ${isRed ? 'red' : 'black'}`;
+  turnText.textContent = isRed ? '🔴 紅方回合' : '⚫ 黑方回合';
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (history.length === 0) {
+    list.innerHTML = '<div style="color:#78716c; text-align:center; padding:20px;">尚無棋步</div>';
+    return;
+  }
+
+  let html = '';
+  for (let i = 0; i < history.length; i += 2) {
+    const num = Math.floor(i / 2) + 1;
+    const red = history[i];
+    const black = history[i + 1];
+    html += `
+      <div class="history-item">
+        <span class="num">${num}.</span>
+        <span class="red-move">${red ? red.move + (red.capture ? '×' : '') : ''}</span>
+        <span class="black-move">${black ? black.move + (black.capture ? '×' : '') : ''}</span>
+      </div>
+    `;
+  }
+  list.innerHTML = html;
+}
+
+function checkWinCondition() {
+  // Simplified: check if king is captured
+  let redKing = false, blackKing = false;
+  for (let r = 0; r < 10; r++) {
+    for (let f = 0; f < 9; f++) {
+      if (board[r][f] === 'K') redKing = true;
+      if (board[r][f] === 'k') blackKing = true;
+    }
+  }
+  
+  if (!redKing) showGameStatus('black', '黑方勝利！紅方帥被吃');
+  if (!blackKing) showGameStatus('red', '紅方勝利！黑方將被吃');
+}
+
+function showGameStatus(winner, message) {
+  const overlay = document.getElementById('gameStatusOverlay');
+  const content = document.getElementById('gameStatusContent');
+  const title = document.getElementById('statusTitle');
+  const msg = document.getElementById('statusMessage');
+  
+  content.className = `game-status-content winner-${winner}`;
+  title.textContent = winner === 'red' ? '🎉 紅方勝利！' : '🎉 黑方勝利！';
+  msg.textContent = message;
+  overlay.classList.add('show');
+  gameActive = false;
+}
+
+function closeStatus() {
+  document.getElementById('gameStatusOverlay').classList.remove('show');
+  startGame();
+}
+
+function startGame() {
+  gameActive = true;
+  history = [];
+  currentTurn = 'red';
+  initBoard();
+  updateTurnIndicator();
+  renderHistory();
+}
+
+function saveKeys() {
+  const deepseek = document.getElementById('deepseekKey').value;
+  const minimax = document.getElementById('minimaxKey').value;
+  if (deepseek) localStorage.setItem('apiKey_deepseek', deepseek);
+  if (minimax) localStorage.setItem('apiKey_minimax', minimax);
+  alert('API Keys 已保存到 localStorage');
+}
+
+// Load saved keys
+window.onload = () => {
+  const deepseek = localStorage.getItem('apiKey_deepseek');
+  const minimax = localStorage.getItem('apiKey_minimax');
+  if (deepseek) document.getElementById('deepseekKey').value = deepseek;
+  if (minimax) document.getElementById('minimaxKey').value = minimax;
+  initBoard();
+  updateTurnIndicator();
+};
+</script>
+
+</body>
+</html>
