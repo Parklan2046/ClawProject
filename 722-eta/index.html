@@ -330,6 +330,7 @@ body{
         <p style="font-size:.8em;margin-bottom:8px">
           <b id="sDirLabel" style="color:var(--accent)"></b> · <span id="sRouteLabel2"></span>
         </p>
+        <div id="sStatus3" style="font-size:.72em;color:var(--red);margin-bottom:6px"></div>
         <input id="sFilter" placeholder="篩選站名…（例如：鰂魚涌、英皇道）" style="margin-bottom:8px">
         <div id="stopList" style="max-height:45vh;overflow-y:auto"></div>
         <div class="actions"><button class="btn-ghost" onclick="goStep(2)">← 重新揀方向</button></div>
@@ -500,6 +501,14 @@ function goStep(n){
 }
 
 var _kmbRouteStopCache=null,_kmbRouteCache=null,_kmbCacheTs=0,CACHE_TTL=3600000;
+var KMB_RS_KEY='kmb_rs_cache_v1',KMB_R_KEY='kmb_r_cache_v1',KMB_TS_KEY='kmb_rs_ts_v1',KMB_STOP_KEY='kmb_stop_cache_v1',KMB_STOP_TS_KEY='kmb_stop_ts_v1';
+function loadKMBCache(){
+  try{if(!storageOK())return null;var ts=parseInt(localStorage.getItem(KMB_TS_KEY)||'0',10);if(!ts||(Date.now()-ts)>=CACHE_TTL)return null;var rs=localStorage.getItem(KMB_RS_KEY),r=localStorage.getItem(KMB_R_KEY);if(!rs||!r)return null;return{routeStop:JSON.parse(rs),route:JSON.parse(r),ts:ts};}catch(e){return null;}
+}
+function saveKMBCache(rs,r){
+  try{if(!storageOK())return;localStorage.setItem(KMB_RS_KEY,JSON.stringify(rs));localStorage.setItem(KMB_R_KEY,JSON.stringify(r));localStorage.setItem(KMB_TS_KEY,String(Date.now()));}catch(e){}
+}
+(function(){var c=loadKMBCache();if(c){_kmbRouteStopCache={data:c.routeStop};_kmbRouteCache={data:c.route};_kmbCacheTs=c.ts;}})();
 
 async function findRoute(){
   var route=document.getElementById('sRoute').value.trim().toUpperCase();
@@ -520,10 +529,10 @@ async function findRoute(){
       });
     }
   }else{
-    try{var r=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});if(r.ok){var d=await r.json();_kmbRouteStopCache=d;kmbRS=(d.data||[]).filter(function(s){return s.route===route});if(kmbRS.length){var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});if(rr.ok){var rd=await rr.json();_kmbRouteCache=rd;_kmbCacheTs=now;var seen={};(rd.data||[]).forEach(function(r){if(r.route===route){var key=r.bound+'_'+(r.service_type||'1');if(!seen[key]){seen[key]=true;dirs.push({co:'KMB',dir:r.bound,dest:r.bound==='O'?(r.dest_tc||'往外'):(r.orig_tc||r.dest_tc||'返程'),service_type:r.service_type||'1'});}}});}}}}catch(e){errors.push('KMB: '+e.message)}
+    try{var r=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});if(r.ok){var d=await r.json();_kmbRouteStopCache=d;kmbRS=(d.data||[]).filter(function(s){return s.route===route});if(kmbRS.length){try{var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});if(rr.ok){var rd=await rr.json();_kmbRouteCache=rd;}}catch(e){errors.push('KMB route: '+e.message)}}_kmbCacheTs=now;saveKMBCache(d.data,(_kmbRouteCache&&_kmbRouteCache.data)||[]);if(_kmbRouteCache){var seen={};(_kmbRouteCache.data||[]).forEach(function(r){if(r.route===route){var key=r.bound+'_'+(r.service_type||'1');if(!seen[key]){seen[key]=true;dirs.push({co:'KMB',dir:r.bound,dest:r.bound==='O'?(r.dest_tc||'往外'):(r.orig_tc||r.dest_tc||'返程'),service_type:r.service_type||'1'});}}});}}}catch(e){errors.push('KMB: '+e.message)}
   }
 
-  try{var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB/'+route,{cache:'no-store'});if(r1.ok){var d1=await r1.json();if(d1.data){var info=d1.data,hasKmbO=dirs.some(function(d){return d.co==='KMB'&&d.dir==='O'}),hasKmbI=dirs.some(function(d){return d.co==='KMB'&&d.dir==='I'});if(!hasKmbO)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});if(!hasKmbI)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});if(hasKmbO)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});if(hasKmbI)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});}}}catch(e){errors.push('CTB: '+e.message)}
+  try{var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB/'+route,{cache:'no-store'});if(r1.ok){var d1=await r1.json();if(d1.data){var info=d1.data,seenDir={};dirs.forEach(function(x){seenDir[x.co+'_'+x.dir]=true;});if(!seenDir.CTB_O)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});if(!seenDir.CTB_I)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});}}}catch(e){errors.push('CTB: '+e.message)}
 
   s1.textContent='';
   if(!dirs.length){s1.textContent='搵唔到路線 '+route+(errors.length?' ('+errors.join(', ')+')':'');return;}
@@ -545,30 +554,73 @@ async function findRoute(){
 
 async function pickDir(d){
   searchState.co=d.co;searchState.dir=d.dir;searchState.dirCode=d.dir==='O'?'outbound':'inbound';
+  var loadingEl=document.getElementById('step3Loading'),contentEl=document.getElementById('step3Content');
+  var labelEl=document.getElementById('sDirLabel');
+  var sStatus3=document.getElementById('sStatus3');
   document.getElementById('sDirLabel').textContent=(d.dir==='O'?'往 ':'返 ')+d.dest;
   document.getElementById('sRouteLabel2').textContent=searchState.route;
   goStep(3);
-  document.getElementById('step3Loading').style.display='block';
-  document.getElementById('step3Content').style.display='none';
+  loadingEl.style.display='block';
+  contentEl.style.display='none';
+  if(sStatus3)sStatus3.textContent='';
 
-  var stops=[],stopMap={};
-  try{var rsRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});var rsData=await rsRes.json();var kmbStops=(rsData.data||[]).filter(function(s){return s.route===searchState.route&&s.bound===d.dir});var sRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});var sData=await sRes.json();(sData.data||[]).forEach(function(s){stopMap[s.stop]=s});kmbStops.forEach(function(s){var info=stopMap[s.stop]||{};stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'KMB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});});}catch(e){}
-  try{var dirParam=d.dir==='O'?'outbound':'inbound';var rsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+searchState.route+'/'+dirParam,{cache:'no-store'});var rsData=await rsRes.json();for(var _i=0;_i<(rsData.data||[]).length;_i++){var s=rsData.data[_i];try{var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});var sd=await sr.json();var info=sd.data||{};stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'CTB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});}catch(e){}}}catch(e){}
+  try{
+    var stops=[],stopMap={};
+    var now=Date.now();
+    var rsData=_kmbRouteStopCache;
+    if(!rsData||(now-_kmbCacheTs)>=CACHE_TTL){
+      var lc=loadKMBCache();
+      if(lc){rsData={data:lc.routeStop};_kmbRouteStopCache=rsData;_kmbCacheTs=lc.ts;}
+    }
+    if(!rsData||!rsData.data){
+      var rsRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});
+      if(!rsRes.ok)throw new Error('KMB route-stop HTTP '+rsRes.status);
+      rsData=await rsRes.json();
+      _kmbRouteStopCache=rsData;
+      saveKMBCache(rsData.data,(_kmbRouteCache&&_kmbRouteCache.data)||[]);
+      _kmbCacheTs=now;
+    }
+    var kmbStops=(rsData.data||[]).filter(function(s){return s.route===searchState.route&&s.bound===d.dir});
 
-  stops.sort(function(a,b){return a.seq-b.seq});
-  var merged=[],used={};
-  stops.forEach(function(s){
-    if(used[s.stop_id])return;used[s.stop_id]=true;
-    var group=[s];
-    stops.forEach(function(s2){if(used[s2.stop_id]||s2.co===s.co)return;var matched=false;if(s.lat&&s.lng&&s2.lat&&s2.lng){var dist=Math.sqrt(Math.pow(s.lat-s2.lat,2)+Math.pow(s.lng-s2.lng,2));if(dist<0.003)matched=true;}if(!matched&&s.name_tc&&s2.name_tc){var n1=s.name_tc.replace(/[(\uff08].*?[)\uff09]/g,'').trim();var n2=s2.name_tc.replace(/[(\uff08].*?[)\uff09]/g,'').trim();if(n1===n2||(n1.length>2&&n2.includes(n1))||(n2.length>2&&n1.includes(n2)))matched=true;}if(!matched&&s.name_en&&s2.name_en){var e1=s.name_en.toLowerCase().split(/[\(,]/)[0].trim();var e2=s2.name_en.toLowerCase().split(/[\(,]/)[0].trim();if(e1===e2&&e1.length>3)matched=true;}if(matched){group.push(s2);used[s2.stop_id]=true;}});
-    var bestName=s.name_tc||s.name_en||'',bestEn=s.name_en||'';
-    group.forEach(function(g){if(g.name_tc&&g.name_tc.length>bestName.length)bestName=g.name_tc;if(g.name_en&&g.name_en.length>bestEn.length)bestEn=g.name_en;});
-    merged.push({stops:group,name_tc:bestName,name_en:bestEn,seq:s.seq});
-  });
-  searchState.mergedStops=merged;
-  document.getElementById('step3Loading').style.display='none';
-  document.getElementById('step3Content').style.display='block';
-  renderStops();
+    var stopTs=parseInt((function(){try{return localStorage.getItem(KMB_STOP_TS_KEY)||'0';}catch(e){return '0';}})(),10);
+    var sData=null;
+    if((now-stopTs)<CACHE_TTL){
+      try{var cached=localStorage.getItem(KMB_STOP_KEY);if(cached){sData={data:JSON.parse(cached)};}}catch(e){}
+    }
+    if(!sData){
+      var sRes=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop',{cache:'no-store'});
+      if(!sRes.ok)throw new Error('KMB stop HTTP '+sRes.status);
+      sData=await sRes.json();
+      try{if(storageOK()){localStorage.setItem(KMB_STOP_KEY,JSON.stringify(sData.data||[]));localStorage.setItem(KMB_STOP_TS_KEY,String(now));}}catch(e){}
+    }
+    (sData.data||[]).forEach(function(s){stopMap[s.stop]=s});
+    kmbStops.forEach(function(s){var info=stopMap[s.stop]||{};stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'KMB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});});
+
+    var dirParam=d.dir==='O'?'outbound':'inbound';
+    var cRsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+searchState.route+'/'+dirParam,{cache:'no-store'});
+    if(!cRsRes.ok)throw new Error('CTB route-stop HTTP '+cRsRes.status);
+    var cRsData=await cRsRes.json();
+    for(var _i=0;_i<(cRsData.data||[]).length;_i++){var s=cRsData.data[_i];try{var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});if(!sr.ok)continue;var sd=await sr.json();var info=sd.data||{};stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'CTB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});}catch(e){}}
+
+    stops.sort(function(a,b){return a.seq-b.seq});
+    var merged=[],used={};
+    stops.forEach(function(s){
+      if(used[s.stop_id])return;used[s.stop_id]=true;
+      var group=[s];
+      stops.forEach(function(s2){if(used[s2.stop_id]||s2.co===s.co)return;var matched=false;if(s.lat&&s.lng&&s2.lat&&s2.lng){var dist=Math.sqrt(Math.pow(s.lat-s2.lat,2)+Math.pow(s.lng-s2.lng,2));if(dist<0.003)matched=true;}if(!matched&&s.name_tc&&s2.name_tc){var n1=s.name_tc.replace(/[(\uff08].*?[)\uff09]/g,'').trim();var n2=s2.name_tc.replace(/[(\uff08].*?[)\uff09]/g,'').trim();if(n1===n2||(n1.length>2&&n2.includes(n1))||(n2.length>2&&n1.includes(n2)))matched=true;}if(!matched&&s.name_en&&s2.name_en){var e1=s.name_en.toLowerCase().split(/[\(,]/)[0].trim();var e2=s2.name_en.toLowerCase().split(/[\(,]/)[0].trim();if(e1===e2&&e1.length>3)matched=true;}if(matched){group.push(s2);used[s2.stop_id]=true;}});
+      var bestName=s.name_tc||s.name_en||'',bestEn=s.name_en||'';
+      group.forEach(function(g){if(g.name_tc&&g.name_tc.length>bestName.length)bestName=g.name_tc;if(g.name_en&&g.name_en.length>bestEn.length)bestEn=g.name_en;});
+      merged.push({stops:group,name_tc:bestName,name_en:bestEn,seq:s.seq});
+    });
+    searchState.mergedStops=merged;
+    contentEl.style.display='block';
+    renderStops();
+  }catch(e){
+    if(sStatus3)sStatus3.textContent='載入失敗：'+(e.message||e);
+    labelEl.textContent=(d.dir==='O'?'往 ':'返 ')+d.dest+' · 載入失敗';
+  }finally{
+    loadingEl.style.display='none';
+  }
 }
 
 function renderStops(){
@@ -631,7 +683,7 @@ async function openEtaWithPartner(stopId,co,otherCo){
 var bms=[];
 function toggleChat(){var p=document.getElementById("chatPanel");p.style.display=p.style.display==="flex"?"none":"flex";if(p.style.display==="flex")document.getElementById("chatInput").focus()}
 function addCm(r,t){var c=document.getElementById("chatMsgs"),d=document.createElement("div");d.className="chat-msg "+r;d.textContent=t;c.appendChild(d);c.scrollTop=c.scrollHeight}
-function sendChat(){var i=document.getElementById("chatInput"),t=i.value.trim();if(!t)return;i.value="";addCm("user",t);bms.push({role:"user",content:t});var ld=document.createElement("div");ld.className="chat-typing";ld.innerHTML="<span></span><span></span><span></span>";var c=document.getElementById("chatMsgs");c.appendChild(ld);c.scrollTop=c.scrollHeight;fetch("/chatbot-api/message",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({role:"busfan",messages:bms})}).then(function(r){return r.json()}).then(function(d){ld.remove();if(d.ok){addCm("bot",d.reply);bms.push({role:"assistant",content:d.reply})}else addCm("bot","錯誤："+d.error)}).catch(function(e){ld.remove();addCm("bot","網絡錯誤")})}
+function sendChat(){var i=document.getElementById("chatInput"),t=i.value.trim();if(!t)return;i.value="";addCm("user",t);bms.push({role:"user",content:t});var ld=document.createElement("div");ld.className="chat-typing";ld.innerHTML="<span></span><span></span><span></span>";var c=document.getElementById("chatMsgs");c.appendChild(ld);c.scrollTop=c.scrollHeight;fetch("/busbot-api/message",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:bms})}).then(function(r){return r.json()}).then(function(d){ld.remove();if(d.ok){addCm("bot",d.reply);bms.push({role:"assistant",content:d.reply})}else addCm("bot","錯誤："+d.error)}).catch(function(e){ld.remove();addCm("bot","網絡錯誤")})}
 
 // ── EVENT BINDINGS ──
 document.getElementById('checkBtn').onclick=function(){openEta()};

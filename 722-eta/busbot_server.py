@@ -10,6 +10,7 @@ import sys
 import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import error
+from urllib import request
 
 HOST = os.getenv("BUSBOT_HOST", "127.0.0.1")
 PORT = int(os.getenv("BUSBOT_PORT", "8772"))
