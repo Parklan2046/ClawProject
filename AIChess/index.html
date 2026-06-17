@@ -519,55 +519,83 @@ function getValidMoves(rank, file, piece) {
   const pieceType = piece.toLowerCase();
 
   switch(pieceType) {
-    case 'r': // Rook
-      // Horizontal and vertical moves
-      for (let d = 1; d < 10; d++) {
-        if (rank + d < 10 && !board[rank + d][file]) moves.push([rank + d, file]);
-        else if (rank + d < 10) { if ((isRed && board[rank + d][file] !== board[rank + d][file].toUpperCase()) || (!isRed && board[rank + d][file] === board[rank + d][file].toUpperCase())) moves.push([rank + d, file]); break; }
-        if (rank - d >= 0 && !board[rank - d][file]) moves.push([rank - d, file]);
-        else if (rank - d >= 0) { if ((isRed && board[rank - d][file] !== board[rank - d][file].toUpperCase()) || (!isRed && board[rank - d][file] === board[rank - d][file].toUpperCase())) moves.push([rank - d, file]); break; }
-      }
-      for (let d = 1; d < 9; d++) {
-        if (file + d < 9 && !board[rank][file + d]) moves.push([rank, file + d]);
-        else if (file + d < 9) { if ((isRed && board[rank][file + d] !== board[rank][file + d].toUpperCase()) || (!isRed && board[rank][file + d] === board[rank][file + d].toUpperCase())) moves.push([rank, file + d]); break; }
-        if (file - d >= 0 && !board[rank][file - d]) moves.push([rank, file - d]);
-        else if (file - d >= 0) { if ((isRed && board[rank][file - d] !== board[rank][file - d].toUpperCase()) || (!isRed && board[rank][file - d] === board[rank][file - d].toUpperCase())) moves.push([rank, file - d]); break; }
+    case 'r': // Rook - 車：直行/横行任意格，遇阻停，可吃敵
+      const rookDirs = [[-1,0],[1,0],[0,-1],[0,1]];
+      for (const [dr, df] of rookDirs) {
+        let steps = 1;
+        while (true) {
+          const nr = rank + dr * steps;
+          const nf = file + df * steps;
+          if (nr < 0 || nr >= 10 || nf < 0 || nf >= 9) break;
+          
+          if (!board[nr][nf]) {
+            moves.push([nr, nf]); // 空格，可以行
+          } else {
+            // 遇到棋子：如果係敵方就可以吃，然後停
+            if ((isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
+                (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
+              moves.push([nr, nf]);
+            }
+            break; // 遇到任何棋子都停
+          }
+          steps++;
+        }
       }
       break;
-    case 'n': // Horse
+    case 'n': // Horse - 馬走日，有蹩馬腿
       const horseMoves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
       for (const [dr, df] of horseMoves) {
         const nr = rank + dr, nf = file + df;
         if (nr >= 0 && nr < 10 && nf >= 0 && nf < 9) {
-          // Check horse leg
-          const legR = rank + (dr > 0 ? 1 : -1);
-          const legF = file + (df > 0 ? 1 : -1);
+          // 正確嘅蹩馬腿檢查
+          let legR, legF;
           if (Math.abs(dr) === 2) {
-            if (!board[rank + (dr > 0 ? 1 : -1)][file]) moves.push([nr, nf]);
+            // 上下走：檢查中間直行格
+            legR = rank + (dr > 0 ? 1 : -1);
+            legF = file;
           } else {
-            if (!board[rank][file + (df > 0 ? 1 : -1)]) moves.push([nr, nf]);
+            // 左右走：檢查中間横行格
+            legR = rank;
+            legF = file + (df > 0 ? 1 : -1);
+          }
+          if (!board[legR][legF]) {
+            if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
+                (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
+              moves.push([nr, nf]);
+            }
           }
         }
       }
       break;
-    case 'c': // Cannon
-      // Same as rook but needs jump to capture
-      for (let d = 1; d < 10; d++) {
-        if (rank + d < 10 && !board[rank + d][file]) moves.push([rank + d, file]);
-        else if (rank + d < 10) {
-          // Need to jump one piece to capture
-          let jumped = false;
-          for (let dd = d + 1; rank + dd < 10; dd++) {
-            if (board[rank + dd][file]) {
-              if (!jumped) { jumped = true; continue; }
-              if ((isRed && board[rank + dd][file] !== board[rank + dd][file].toUpperCase()) || 
-                  (!isRed && board[rank + dd][file] === board[rank + dd][file].toUpperCase())) {
-                moves.push([rank + dd, file]);
+    case 'c': // Cannon - 炮：行路似車，吃子要隔一個（炮架）
+      // 四個方向：上、下、左、右
+      const directions = [[-1,0],[1,0],[0,-1],[0,1]];
+      for (const [dr, df] of directions) {
+        let steps = 1;
+        let foundPlatform = false; // 是否找到炮架
+        while (true) {
+          const nr = rank + dr * steps;
+          const nf = file + df * steps;
+          if (nr < 0 || nr >= 10 || nf < 0 || nf >= 9) break;
+          
+          if (!foundPlatform) {
+            // 未找到炮架前：可以行到空格，遇到棋子要停（可能係炮架）
+            if (!board[nr][nf]) {
+              moves.push([nr, nf]); // 空格，可以行
+            } else {
+              foundPlatform = true; // 找到炮架
+            }
+          } else {
+            // 找到炮架後：遇到第一個棋子就可以吃（必須係敵方）
+            if (board[nr][nf]) {
+              if ((isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
+                  (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
+                moves.push([nr, nf]); // 可以吃掉
               }
-              break;
+              break; // 無論食唔食得，都停
             }
           }
-          break;
+          steps++;
         }
       }
       break;
@@ -617,15 +645,15 @@ function getValidMoves(rank, file, piece) {
         }
       }
       break;
-    case 'b': // Elephant
-      // 2 diagonal steps, blocked by elephant eye
+    case 'b': // Elephant - 象走田，有塞象眼，不能過河
       for (const [dr, df] of [[-2,-2],[-2,2],[2,-2],[2,2]]) {
         const nr = rank + dr, nf = file + df;
-        const eyeR = rank + (dr > 0 ? 1 : -1);
-        const eyeF = file + (df > 0 ? 1 : -1);
+        // 塞象眼檢查：田字中心
+        const eyeR = rank + (dr / 2);
+        const eyeF = file + (df / 2);
         if (nr >= 0 && nr < 10 && nf >= 0 && nf < 9 && !board[eyeR][eyeF]) {
-          // Cannot cross river
-          if ((isRed && nr >= 5) || (!isRed && nr <= 4)) {
+          // 不能過河：紅象只能在 rank 0-4，黑象只能在 rank 5-9
+          if ((isRed && nr <= 4) || (!isRed && nr >= 5)) {
             if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
                 (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
               moves.push([nr, nf]);
