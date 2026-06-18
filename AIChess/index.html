@@ -65,7 +65,7 @@ body {
 }
 .board-title h2 { font-size: 18px; }
 
-/* Turn Indicator - Enhanced */
+/* Turn Indicator */
 .turn-indicator {
   display: flex;
   align-items: center;
@@ -136,9 +136,8 @@ body {
   font-weight: bold;
   font-size: clamp(14px, 3vw, 20px);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s;
   user-select: none;
-  position: relative;
 }
 .piece:hover { transform: scale(1.15); }
 .piece.red {
@@ -152,38 +151,6 @@ body {
   color: #d4d4d8;
   border: 2px solid #525252;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-}
-.piece.moving {
-  animation: pieceMove 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 10;
-}
-@keyframes pieceMove {
-  0% { transform: scale(1.2); box-shadow: 0 0 20px rgba(251, 191, 36, 0.6); }
-  50% { transform: scale(1.3); box-shadow: 0 0 30px rgba(251, 191, 36, 0.8); }
-  100% { transform: scale(1); }
-}
-.piece.captured {
-  animation: pieceCaptured 0.5s ease forwards;
-}
-@keyframes pieceCaptured {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.5; }
-  100% { transform: scale(0); opacity: 0; }
-}
-
-/* Move effect */
-.move-effect {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 3px solid #fbbf24;
-  animation: moveRipple 0.6s ease-out forwards;
-  pointer-events: none;
-}
-@keyframes moveRipple {
-  0% { transform: scale(0.5); opacity: 1; }
-  100% { transform: scale(2); opacity: 0; }
 }
 
 .river {
@@ -256,7 +223,6 @@ select {
   transition: opacity 0.2s;
 }
 .btn-primary:hover { opacity: 0.9; }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .history-list {
   max-height: 200px;
@@ -274,32 +240,6 @@ select {
 .history-item .red-move { color: #f87171; flex: 1; }
 .history-item .black-move { color: #a8a29e; flex: 1; }
 
-.thinking {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.2);
-  border-radius: 8px;
-  margin-top: 10px;
-  animation: thinking 1.5s infinite;
-}
-@keyframes thinking {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-/* Move hint */
-.move-hint {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(59, 130, 246, 0.6);
-  pointer-events: none;
-}
-
 .footer {
   text-align: center;
   padding: 30px;
@@ -307,36 +247,6 @@ select {
   font-size: 13px;
   border-top: 1px solid rgba(255,255,255,0.05);
 }
-
-/* Game status overlay */
-.game-status-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.8);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.game-status-overlay.show { display: flex; }
-.game-status-content {
-  background: linear-gradient(135deg, #1c1917, #0c0a09);
-  border: 2px solid #f59e0b;
-  border-radius: 16px;
-  padding: 40px;
-  text-align: center;
-  animation: statusPop 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-@keyframes statusPop {
-  0% { transform: scale(0.5); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-.game-status-content h2 {
-  font-size: 32px;
-  margin-bottom: 16px;
-}
-.game-status-content.winner-red h2 { color: #f87171; }
-.game-status-content.winner-black h2 { color: #a1a1aa; }
 
 @media (max-width: 900px) {
   .main { grid-template-columns: 1fr; }
@@ -403,10 +313,6 @@ select {
           </select>
         </div>
         <button class="btn-primary" id="startBtn" onclick="startGame()">開始對局</button>
-        <div id="thinkingIndicator" style="display:none" class="thinking">
-          <span>🤔</span>
-          <span id="thinkingText">思考中...</span>
-        </div>
       </div>
     </div>
 
@@ -416,38 +322,21 @@ select {
         <div style="color:#78716c; text-align:center; padding:20px;">尚無棋步</div>
       </div>
     </div>
-
-    <div class="panel">
-      <h3>⚙️ API 設定</h3>
-      <p style="font-size:12px; color:#a8a29e; margin-bottom:10px;">在瀏覽器 localStorage 中設置 API Keys</p>
-      <input type="password" placeholder="DeepSeek API Key" id="deepseekKey" style="width:100%; margin-bottom:8px; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; font-size:13px;">
-      <input type="password" placeholder="MiniMax API Key" id="minimaxKey" style="width:100%; margin-bottom:8px; padding:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; font-size:13px;">
-      <button class="btn-primary" onclick="saveKeys()" style="margin-top:8px; padding:8px; font-size:13px;">保存密鑰</button>
-    </div>
   </div>
 </main>
 
-<!-- Game Status Overlay -->
-<div class="game-status-overlay" id="gameStatusOverlay">
-  <div class="game-status-content" id="gameStatusContent">
-    <h2 id="statusTitle">🎉 勝利！</h2>
-    <p id="statusMessage">紅方獲勝</p>
-    <button class="btn-primary" onclick="closeStatus()" style="margin-top:20px;">再玩一局</button>
-  </div>
-</div>
-
 <footer class="footer">
   <p>AI Chess 競技場 · 讓 AI 在棋盤上決高下</p>
+  <p style="margin-top:5px; font-size:11px;">v3 - 完整規則引擎</p>
 </footer>
 
 <script>
-// Piece characters
+// ====== XIANGQI ENGINE (Ported from TypeScript) ======
 const PIECES = {
   r: '俥', n: '傌', b: '相', a: '仕', k: '帥', c: '炮', p: '兵',
   R: '車', N: '馬', B: '象', A: '士', K: '將', C: '砲', P: '卒'
 };
 
-// Correct Xiangqi initial board
 const INITIAL_BOARD = [
   ['r','n','b','a','k','a','b','n','r'],
   ['','','','','','','','',''],
@@ -461,11 +350,295 @@ const INITIAL_BOARD = [
   ['R','N','B','A','K','A','B','N','R']
 ];
 
+function isRedPiece(p) { return p >= 'A' && p <= 'Z'; }
+function inBounds(r, f) { return r >= 0 && r < 10 && f >= 0 && f < 9; }
+function inRedPalace(r, f) { return r >= 0 && r <= 2 && f >= 3 && f <= 5; }
+function inBlackPalace(r, f) { return r >= 7 && r <= 9 && f >= 3 && f <= 5; }
+function inOwnHalf(r, isRed) { return isRed ? r <= 4 : r >= 5; }
+
+function findKing(board, isRed) {
+  const target = isRed ? 'K' : 'k';
+  for (let r = 0; r < 10; r++) {
+    for (let f = 0; f < 9; f++) {
+      if (board[r][f] === target) return [r, f];
+    }
+  }
+  return null;
+}
+
+function sq(r1, f1, r2, f2) {
+  return String.fromCharCode(97 + f1) + r1 + String.fromCharCode(97 + f2) + r2;
+}
+
+function pseudoMovesForPiece(board, r, f) {
+  const piece = board[r][f];
+  if (!piece) return [];
+  const isRed = isRedPiece(piece);
+  const t = piece.toLowerCase();
+  const moves = [];
+
+  const tryAdd = (nr, nf) => {
+    if (!inBounds(nr, nf)) return;
+    const target = board[nr][nf];
+    if (target === '' || isRedPiece(target) !== isRed) {
+      moves.push(sq(r, f, nr, nf));
+    }
+  };
+
+  if (t === 'r') {
+    for (let i = r + 1; i < 10; i++) {
+      if (board[i][f] === '') moves.push(sq(r, f, i, f));
+      else { if (isRedPiece(board[i][f]) !== isRed) moves.push(sq(r, f, i, f)); break; }
+    }
+    for (let i = r - 1; i >= 0; i--) {
+      if (board[i][f] === '') moves.push(sq(r, f, i, f));
+      else { if (isRedPiece(board[i][f]) !== isRed) moves.push(sq(r, f, i, f)); break; }
+    }
+    for (let i = f + 1; i < 9; i++) {
+      if (board[r][i] === '') moves.push(sq(r, f, r, i));
+      else { if (isRedPiece(board[r][i]) !== isRed) moves.push(sq(r, f, r, i)); break; }
+    }
+    for (let i = f - 1; i >= 0; i--) {
+      if (board[r][i] === '') moves.push(sq(r, f, r, i));
+      else { if (isRedPiece(board[r][i]) !== isRed) moves.push(sq(r, f, r, i)); break; }
+    }
+  } else if (t === 'c') {
+    for (let i = r + 1; i < 10; i++) {
+      if (board[i][f] === '') moves.push(sq(r, f, i, f));
+      else {
+        for (let j = i + 1; j < 10; j++) {
+          if (board[j][f] !== '') {
+            if (isRedPiece(board[j][f]) !== isRed) moves.push(sq(r, f, j, f));
+            break;
+          }
+        }
+        break;
+      }
+    }
+    for (let i = r - 1; i >= 0; i--) {
+      if (board[i][f] === '') moves.push(sq(r, f, i, f));
+      else {
+        for (let j = i - 1; j >= 0; j--) {
+          if (board[j][f] !== '') {
+            if (isRedPiece(board[j][f]) !== isRed) moves.push(sq(r, f, j, f));
+            break;
+          }
+        }
+        break;
+      }
+    }
+    for (let i = f + 1; i < 9; i++) {
+      if (board[r][i] === '') moves.push(sq(r, f, r, i));
+      else {
+        for (let j = i + 1; j < 9; j++) {
+          if (board[r][j] !== '') {
+            if (isRedPiece(board[r][j]) !== isRed) moves.push(sq(r, f, r, j));
+            break;
+          }
+        }
+        break;
+      }
+    }
+    for (let i = f - 1; i >= 0; i--) {
+      if (board[r][i] === '') moves.push(sq(r, f, r, i));
+      else {
+        for (let j = i - 1; j >= 0; j--) {
+          if (board[r][j] !== '') {
+            if (isRedPiece(board[r][j]) !== isRed) moves.push(sq(r, f, r, j));
+            break;
+          }
+        }
+        break;
+      }
+    }
+  } else if (t === 'n') {
+    const candidates = [
+      [r - 2, f - 1, r - 1, f], [r - 2, f + 1, r - 1, f],
+      [r + 2, f - 1, r + 1, f], [r + 2, f + 1, r + 1, f],
+      [r - 1, f - 2, r, f - 1], [r + 1, f - 2, r, f - 1],
+      [r - 1, f + 2, r, f + 1], [r + 1, f + 2, r, f + 1],
+    ];
+    for (const [nr, nf, lr, lf] of candidates) {
+      if (!inBounds(nr, nf)) continue;
+      if (board[lr][lf] !== '') continue;
+      const target = board[nr][nf];
+      if (target === '' || isRedPiece(target) !== isRed) moves.push(sq(r, f, nr, nf));
+    }
+  } else if (t === 'b') {
+    const deltas = [[2, 2], [2, -2], [-2, 2], [-2, -2]];
+    for (const [dr, df] of deltas) {
+      const nr = r + dr, nf = f + df;
+      const eyeR = r + dr / 2, eyeF = f + df / 2;
+      if (!inBounds(nr, nf)) continue;
+      if (!inOwnHalf(nr, isRed)) continue;
+      if (board[eyeR][eyeF] !== '') continue;
+      const target = board[nr][nf];
+      if (target === '' || isRedPiece(target) !== isRed) moves.push(sq(r, f, nr, nf));
+    }
+  } else if (t === 'a') {
+    const inPalace = isRed ? inRedPalace : inBlackPalace;
+    if (!inPalace(r, f)) return moves;
+    for (const [dr, df] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      const nr = r + dr, nf = f + df;
+      if (!inBounds(nr, nf)) continue;
+      if (!inPalace(nr, nf)) continue;
+      const target = board[nr][nf];
+      if (target === '' || isRedPiece(target) !== isRed) moves.push(sq(r, f, nr, nf));
+    }
+  } else if (t === 'k') {
+    const inPalace = isRed ? inRedPalace : inBlackPalace;
+    if (!inPalace(r, f)) return moves;
+    for (const [dr, df] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nr = r + dr, nf = f + df;
+      if (!inBounds(nr, nf)) continue;
+      if (!inPalace(nr, nf)) continue;
+      const target = board[nr][nf];
+      if (target === '' || isRedPiece(target) !== isRed) moves.push(sq(r, f, nr, nf));
+    }
+  } else if (t === 'p') {
+    const forward = isRed ? -1 : 1;
+    const nr = r + forward;
+    if (inBounds(nr, f)) {
+      const target = board[nr][f];
+      if (target === '' || isRedPiece(target) !== isRed) moves.push(sq(r, f, nr, f));
+    }
+    const crossed = isRed ? r <= 4 : r >= 5;
+    if (crossed) {
+      if (f > 0) {
+        const target = board[r][f - 1];
+        if (target === '' || isRedPiece(target) !== isRed) moves.push(sq(r, f, r, f - 1));
+      }
+      if (f < 8) {
+        const target = board[r][f + 1];
+        if (target === '' || isRedPiece(target) !== isRed) moves.push(sq(r, f, r, f + 1));
+      }
+    }
+  }
+
+  return moves;
+}
+
+function isSquareAttacked(board, r, f, byRed) {
+  for (let rr = 0; rr < 10; rr++) {
+    for (let ff = 0; ff < 9; ff++) {
+      const p = board[rr][ff];
+      if (!p) continue;
+      const pIsRed = isRedPiece(p);
+      if (pIsRed !== byRed) continue;
+      const t = p.toLowerCase();
+      const dr = r - rr, df = f - ff;
+      const adr = Math.abs(dr), adf = Math.abs(df);
+
+      if (t === 'p') {
+        const forward = byRed ? -1 : 1;
+        if (dr === forward && df === 0) return true;
+        const crossed = byRed ? rr <= 4 : rr >= 5;
+        if (crossed && dr === 0 && adf === 1) return true;
+      } else if (t === 'n') {
+        if ((adr === 1 && adf === 2) || (adr === 2 && adf === 1)) {
+          if (adr === 2) {
+            const legR = rr + (dr > 0 ? 1 : -1);
+            if (board[legR][ff] === '') return true;
+          } else {
+            const legF = ff + (df > 0 ? 1 : -1);
+            if (board[rr][legF] === '') return true;
+          }
+        }
+      } else if (t === 'r' || t === 'c') {
+        if (dr === 0 && df !== 0) {
+          const step = df > 0 ? 1 : -1;
+          let screens = 0;
+          for (let i = ff + step; i !== f; i += step) {
+            if (board[rr][i] !== '') screens++;
+          }
+          if (t === 'r') { if (screens === 0) return true; }
+          else { if (screens === 1) return true; }
+        } else if (df === 0 && dr !== 0) {
+          const step = dr > 0 ? 1 : -1;
+          let screens = 0;
+          for (let i = rr + step; i !== r; i += step) {
+            if (board[i][ff] !== '') screens++;
+          }
+          if (t === 'r') { if (screens === 0) return true; }
+          else { if (screens === 1) return true; }
+        }
+      } else if (t === 'b') {
+        if (adr === 2 && adf === 2) {
+          const eyeR = rr + dr / 2, eyeF = ff + df / 2;
+          if (board[eyeR][eyeF] === '' && inOwnHalf(eyeR, byRed)) return true;
+        }
+      } else if (t === 'a') {
+        if (adr === 1 && adf === 1) {
+          if (byRed ? inRedPalace(rr, ff) : inBlackPalace(rr, ff)) return true;
+        }
+      } else if (t === 'k') {
+        if (adr + adf === 1) {
+          if (byRed ? inRedPalace(rr, ff) : inBlackPalace(rr, ff)) return true;
+        }
+      }
+    }
+  }
+
+  // 飛將檢查
+  const redKing = findKing(board, true);
+  const blackKing = findKing(board, false);
+  if (redKing && blackKing && redKing[1] === blackKing[1]) {
+    const lo = Math.min(redKing[0], blackKing[0]) + 1;
+    const hi = Math.max(redKing[0], blackKing[0]);
+    let blocked = false;
+    for (let i = lo; i < hi; i++) {
+      if (board[i][redKing[1]] !== '') { blocked = true; break; }
+    }
+    if (!blocked) {
+      if (byRed && (r === blackKing[0] && f === blackKing[1])) return true;
+      if (!byRed && (r === redKing[0] && f === redKing[1])) return true;
+    }
+  }
+
+  return false;
+}
+
+function isInCheck(board, turn) {
+  const isRed = turn === 'w';
+  const k = findKing(board, isRed);
+  if (!k) return false;
+  return isSquareAttacked(board, k[0], k[1], !isRed);
+}
+
+function generateLegalMoves(board, turn) {
+  const isRed = turn === 'w';
+  const moves = [];
+  for (let r = 0; r < 10; r++) {
+    for (let f = 0; f < 9; f++) {
+      const p = board[r][f];
+      if (!p) continue;
+      if (isRedPiece(p) !== isRed) continue;
+      const pms = pseudoMovesForPiece(board, r, f);
+      for (const iccs of pms) {
+        const fr = parseInt(iccs[1], 10);
+        const ff = iccs.charCodeAt(0) - 97;
+        const tr = parseInt(iccs[3], 10);
+        const tf = iccs.charCodeAt(2) - 97;
+        const captured = board[tr][tf];
+        board[tr][tf] = board[fr][ff];
+        board[fr][ff] = '';
+        const inCheckAfter = isInCheck(board, turn);
+        board[fr][ff] = board[tr][tf];
+        board[tr][tf] = captured;
+        if (!inCheckAfter) moves.push(iccs);
+      }
+    }
+  }
+  return moves;
+}
+
+// ====== UI CODE ======
 let board = [];
 let selectedSquare = null;
 let history = [];
 let gameActive = false;
 let currentTurn = 'red';
+let validMoves = [];
 
 function initBoard() {
   board = INITIAL_BOARD.map(row => [...row]);
@@ -475,15 +648,12 @@ function initBoard() {
 function renderBoard() {
   const boardEl = document.getElementById('board');
   boardEl.innerHTML = '';
-
   for (let rank = 0; rank < 10; rank++) {
     for (let file = 0; file < 9; file++) {
       const square = document.createElement('div');
       square.className = 'square';
       square.dataset.rank = rank;
       square.dataset.file = file;
-
-      // River
       if (rank === 4 || rank === 5) {
         if (file === 0) {
           const river = document.createElement('div');
@@ -492,207 +662,36 @@ function renderBoard() {
           square.appendChild(river);
         }
       }
-
       const piece = board[rank][file];
       if (piece) {
         const pieceEl = document.createElement('div');
         pieceEl.className = `piece ${piece === piece.toUpperCase() ? 'red' : 'black'}`;
         pieceEl.textContent = PIECES[piece] || piece;
-        pieceEl.dataset.rank = rank;
-        pieceEl.dataset.file = file;
-        pieceEl.onclick = (e) => {
-          e.stopPropagation();
-          handlePieceClick(rank, file, piece);
-        };
+        pieceEl.onclick = (e) => { e.stopPropagation(); handlePieceClick(rank, file, piece); };
         square.appendChild(pieceEl);
       }
-
       square.onclick = () => handleSquareClick(rank, file);
       boardEl.appendChild(square);
     }
   }
 }
 
-function getValidMoves(rank, file, piece) {
-  const moves = [];
-  const isRed = piece === piece.toUpperCase();
-  const pieceType = piece.toLowerCase();
-
-  switch(pieceType) {
-    case 'r': // Rook - 車：直行/横行任意格，遇阻停，可吃敵
-      const rookDirs = [[-1,0],[1,0],[0,-1],[0,1]];
-      for (const [dr, df] of rookDirs) {
-        let steps = 1;
-        while (true) {
-          const nr = rank + dr * steps;
-          const nf = file + df * steps;
-          if (nr < 0 || nr >= 10 || nf < 0 || nf >= 9) break;
-          
-          if (!board[nr][nf]) {
-            moves.push([nr, nf]); // 空格，可以行
-          } else {
-            // 遇到棋子：如果係敵方就可以吃，然後停
-            if ((isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
-                (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
-              moves.push([nr, nf]);
-            }
-            break; // 遇到任何棋子都停
-          }
-          steps++;
-        }
-      }
-      break;
-    case 'n': // Horse - 馬走日，有蹩馬腿
-      const horseMoves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-      for (const [dr, df] of horseMoves) {
-        const nr = rank + dr, nf = file + df;
-        if (nr >= 0 && nr < 10 && nf >= 0 && nf < 9) {
-          // 正確嘅蹩馬腿檢查
-          let legR, legF;
-          if (Math.abs(dr) === 2) {
-            // 上下走：檢查中間直行格
-            legR = rank + (dr > 0 ? 1 : -1);
-            legF = file;
-          } else {
-            // 左右走：檢查中間横行格
-            legR = rank;
-            legF = file + (df > 0 ? 1 : -1);
-          }
-          if (!board[legR][legF]) {
-            if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
-                (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
-              moves.push([nr, nf]);
-            }
-          }
-        }
-      }
-      break;
-    case 'c': // Cannon - 炮：行路似車，吃子要隔一個（炮架）
-      // 四個方向：上、下、左、右
-      const directions = [[-1,0],[1,0],[0,-1],[0,1]];
-      for (const [dr, df] of directions) {
-        let steps = 1;
-        let foundPlatform = false; // 是否找到炮架
-        while (true) {
-          const nr = rank + dr * steps;
-          const nf = file + df * steps;
-          if (nr < 0 || nr >= 10 || nf < 0 || nf >= 9) break;
-          
-          if (!foundPlatform) {
-            // 未找到炮架前：可以行到空格，遇到棋子要停（可能係炮架）
-            if (!board[nr][nf]) {
-              moves.push([nr, nf]); // 空格，可以行
-            } else {
-              foundPlatform = true; // 找到炮架
-            }
-          } else {
-            // 找到炮架後：遇到第一個棋子就可以吃（必須係敵方）
-            if (board[nr][nf]) {
-              if ((isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
-                  (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
-                moves.push([nr, nf]); // 可以吃掉
-              }
-              break; // 無論食唔食得，都停
-            }
-          }
-          steps++;
-        }
-      }
-      break;
-    case 'p': // Pawn
-      const direction = isRed ? -1 : 1;
-      const newR = rank + direction;
-      if (newR >= 0 && newR < 10) {
-        if (!board[newR][file] || (isRed && board[newR][file] !== board[newR][file].toUpperCase()) || 
-            (!isRed && board[newR][file] === board[newR][file].toUpperCase())) {
-          moves.push([newR, file]);
-        }
-      }
-      // After crossing river
-      const riverCrossed = isRed ? rank <= 4 : rank >= 5;
-      if (riverCrossed) {
-        if (file > 0 && (!board[rank][file-1] || (isRed && board[rank][file-1] !== board[rank][file-1].toUpperCase()) || 
-            (!isRed && board[rank][file-1] === board[rank][file-1].toUpperCase()))) moves.push([rank, file-1]);
-        if (file < 8 && (!board[rank][file+1] || (isRed && board[rank][file+1] !== board[rank][file+1].toUpperCase()) || 
-            (!isRed && board[rank][file+1] === board[rank][file+1].toUpperCase()))) moves.push([rank, file+1]);
-      }
-      break;
-    case 'k': // King
-      // Palace only (3x3 area)
-      const palaceR = isRed ? [0, 1, 2] : [7, 8, 9];
-      const palaceF = [3, 4, 5];
-      for (const [dr, df] of [[-1,0],[1,0],[0,-1],[0,1]]) {
-        const nr = rank + dr, nf = file + df;
-        if (palaceR.includes(nr) && palaceF.includes(nf)) {
-          if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
-              (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
-            moves.push([nr, nf]);
-          }
-        }
-      }
-      break;
-    case 'a': // Advisor
-      // Diagonal moves in palace
-      const aPalaceR = isRed ? [0, 1, 2] : [7, 8, 9];
-      const aPalaceF = [3, 4, 5];
-      for (const [dr, df] of [[-1,-1],[-1,1],[1,-1],[1,1]]) {
-        const nr = rank + dr, nf = file + df;
-        if (aPalaceR.includes(nr) && aPalaceF.includes(nf)) {
-          if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
-              (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
-            moves.push([nr, nf]);
-          }
-        }
-      }
-      break;
-    case 'b': // Elephant - 象走田，有塞象眼，不能過河
-      for (const [dr, df] of [[-2,-2],[-2,2],[2,-2],[2,2]]) {
-        const nr = rank + dr, nf = file + df;
-        // 塞象眼檢查：田字中心
-        const eyeR = rank + (dr / 2);
-        const eyeF = file + (df / 2);
-        if (nr >= 0 && nr < 10 && nf >= 0 && nf < 9 && !board[eyeR][eyeF]) {
-          // 不能過河：紅象只能在 rank 0-4，黑象只能在 rank 5-9
-          if ((isRed && nr <= 4) || (!isRed && nr >= 5)) {
-            if (!board[nr][nf] || (isRed && board[nr][nf] !== board[nr][nf].toUpperCase()) || 
-                (!isRed && board[nr][nf] === board[nr][nf].toUpperCase())) {
-              moves.push([nr, nf]);
-            }
-          }
-        }
-      }
-      break;
-  }
-
-  return moves;
-}
-
-let validMoves = [];
-
 function handlePieceClick(rank, file, piece) {
   const isRed = piece === piece.toUpperCase();
-  
-  // Can only select own pieces on own turn
   if (currentTurn === 'red' && !isRed) {
-    if (selectedSquare) {
-      tryMove(selectedSquare.rank, selectedSquare.file, rank, file);
-    }
+    if (selectedSquare) tryMove(selectedSquare.rank, selectedSquare.file, rank, file);
     return;
   }
   if (currentTurn === 'black' && isRed) {
-    if (selectedSquare) {
-      tryMove(selectedSquare.rank, selectedSquare.file, rank, file);
-    }
+    if (selectedSquare) tryMove(selectedSquare.rank, selectedSquare.file, rank, file);
     return;
   }
-
-  // Select piece and show valid moves
   if (selectedSquare && selectedSquare.rank === rank && selectedSquare.file === file) {
     selectedSquare = null;
     validMoves = [];
   } else {
     selectedSquare = { rank, file };
-    validMoves = getValidMoves(rank, file, piece);
+    validMoves = pseudoMovesForPiece(board, rank, file);
   }
   renderBoard();
   highlightValidMoves();
@@ -702,20 +701,21 @@ function highlightValidMoves() {
   if (!selectedSquare) return;
   const boardEl = document.getElementById('board');
   const squares = boardEl.querySelectorAll('.square');
-  
-  validMoves.forEach(([r, f]) => {
-    const index = r * 9 + f;
+  validMoves.forEach((iccs) => {
+    const toR = parseInt(iccs[3], 10);
+    const toF = iccs.charCodeAt(2) - 97;
+    const index = toR * 9 + toF;
     if (squares[index]) {
-      squares[index].classList.add(board[r][f] ? 'capture' : 'valid-move');
+      squares[index].classList.add(board[toR][toF] ? 'capture' : 'valid-move');
     }
   });
 }
 
 function handleSquareClick(rank, file) {
   if (!selectedSquare) return;
-  
-  // Check if move is valid
-  const isValid = validMoves.some(([r, f]) => r === rank && f === file);
+  const isValid = validMoves.some((iccs) => {
+    return parseInt(iccs[3], 10) === rank && iccs.charCodeAt(2) - 97 === file;
+  });
   if (isValid) {
     tryMove(selectedSquare.rank, selectedSquare.file, rank, file);
   } else {
@@ -726,51 +726,29 @@ function handleSquareClick(rank, file) {
 }
 
 function tryMove(fromRank, fromFile, toRank, toFile) {
-  const piece = board[fromRank][fromFile];
-  if (!piece) return;
-
-  // CRITICAL: Check if move is in valid moves list
-  const currentValidMoves = getValidMoves(fromRank, fromFile, piece);
-  const isValidMove = currentValidMoves.some(([r, f]) => r === toRank && f === toFile);
-  if (!isValidMove) {
-    selectedSquare = null;
-    validMoves = [];
-    renderBoard();
-    return;
+  const iccs = sq(fromRank, fromFile, toRank, toFile);
+  const allLegal = generateLegalMoves(board, currentTurn === 'red' ? 'w' : 'b');
+  if (!allLegal.includes(iccs)) {
+    selectedSquare = null; validMoves = []; renderBoard(); return;
   }
-
-  // Create move effect
-  const isCapture = board[toRank][toFile] !== '';
-  
-  // Execute move
+  const piece = board[fromRank][fromFile];
+  const captured = board[toRank][toFile];
   board[toRank][toFile] = piece;
   board[fromRank][fromFile] = '';
-
-  const iccs = `${String.fromCharCode(97 + fromFile)}${fromRank}${String.fromCharCode(97 + toFile)}${toRank}`;
-  history.push({
-    num: Math.floor(history.length / 2) + 1,
-    move: iccs,
-    turn: currentTurn,
-    piece: piece,
-    capture: isCapture
-  });
-
+  history.push({ move: iccs, turn: currentTurn, piece, captured: captured || undefined });
   selectedSquare = null;
   validMoves = [];
   currentTurn = currentTurn === 'red' ? 'black' : 'red';
   updateTurnIndicator();
   renderBoard();
   renderHistory();
-  
-  // Check for win condition (simplified)
-  checkWinCondition();
+  checkGameEnd();
 }
 
 function updateTurnIndicator() {
   const indicator = document.getElementById('turnIndicator');
   const turnText = document.getElementById('turnText');
   const isRed = currentTurn === 'red';
-  
   indicator.className = `turn-indicator ${isRed ? 'red' : 'black'}`;
   turnText.textContent = isRed ? '🔴 紅方回合' : '⚫ 黑方回合';
 }
@@ -781,53 +759,32 @@ function renderHistory() {
     list.innerHTML = '<div style="color:#78716c; text-align:center; padding:20px;">尚無棋步</div>';
     return;
   }
-
   let html = '';
   for (let i = 0; i < history.length; i += 2) {
     const num = Math.floor(i / 2) + 1;
     const red = history[i];
     const black = history[i + 1];
-    html += `
-      <div class="history-item">
-        <span class="num">${num}.</span>
-        <span class="red-move">${red ? red.move + (red.capture ? '×' : '') : ''}</span>
-        <span class="black-move">${black ? black.move + (black.capture ? '×' : '') : ''}</span>
-      </div>
-    `;
+    html += `<div class="history-item"><span class="num">${num}.</span><span class="red-move">${red ? red.move + (red.captured ? '×' : '') : ''}</span><span class="black-move">${black ? black.move + (black.captured ? '×' : '') : ''}</span></div>`;
   }
   list.innerHTML = html;
 }
 
-function checkWinCondition() {
-  // Simplified: check if king is captured
-  let redKing = false, blackKing = false;
-  for (let r = 0; r < 10; r++) {
-    for (let f = 0; f < 9; f++) {
-      if (board[r][f] === 'K') redKing = true;
-      if (board[r][f] === 'k') blackKing = true;
+function checkGameEnd() {
+  const nextTurn = currentTurn === 'red' ? 'w' : 'b';
+  const moves = generateLegalMoves(board, nextTurn);
+  const inCheckNow = isInCheck(board, nextTurn);
+  if (moves.length === 0) {
+    if (inCheckNow) {
+      showGameStatus(currentTurn, currentTurn === 'red' ? '紅方勝利！將死' : '黑方勝利！將死');
+    } else {
+      showGameStatus(null, '和棋 - 困斃');
     }
+    gameActive = false;
   }
-  
-  if (!redKing) showGameStatus('black', '黑方勝利！紅方帥被吃');
-  if (!blackKing) showGameStatus('red', '紅方勝利！黑方將被吃');
 }
 
 function showGameStatus(winner, message) {
-  const overlay = document.getElementById('gameStatusOverlay');
-  const content = document.getElementById('gameStatusContent');
-  const title = document.getElementById('statusTitle');
-  const msg = document.getElementById('statusMessage');
-  
-  content.className = `game-status-content winner-${winner}`;
-  title.textContent = winner === 'red' ? '🎉 紅方勝利！' : '🎉 黑方勝利！';
-  msg.textContent = message;
-  overlay.classList.add('show');
-  gameActive = false;
-}
-
-function closeStatus() {
-  document.getElementById('gameStatusOverlay').classList.remove('show');
-  startGame();
+  alert(message);
 }
 
 function startGame() {
@@ -839,20 +796,7 @@ function startGame() {
   renderHistory();
 }
 
-function saveKeys() {
-  const deepseek = document.getElementById('deepseekKey').value;
-  const minimax = document.getElementById('minimaxKey').value;
-  if (deepseek) localStorage.setItem('apiKey_deepseek', deepseek);
-  if (minimax) localStorage.setItem('apiKey_minimax', minimax);
-  alert('API Keys 已保存到 localStorage');
-}
-
-// Load saved keys
 window.onload = () => {
-  const deepseek = localStorage.getItem('apiKey_deepseek');
-  const minimax = localStorage.getItem('apiKey_minimax');
-  if (deepseek) document.getElementById('deepseekKey').value = deepseek;
-  if (minimax) document.getElementById('minimaxKey').value = minimax;
   initBoard();
   updateTurnIndicator();
 };
