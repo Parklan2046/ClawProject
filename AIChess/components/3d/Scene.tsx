@@ -11,7 +11,7 @@ export function Scene() {
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
         <pointLight position={[-5, 5, -5]} intensity={0.4} />
-        <Environment preset="wood" />
+        <Environment preset="apartment" />
         <XiangqiBoard3D />
         <OrbitControls
           maxPolarAngle={Math.PI / 2.2}

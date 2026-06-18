@@ -1,10 +1,14 @@
 'use client';
 
 import { useGame } from '@/hooks/useGame';
-import { History, ChevronLeft, ChevronRight } from 'lucide-react';
+import { History } from 'lucide-react';
+import { PIECE_NAMES } from '@/lib/constants';
 
 export function MoveHistory() {
   const { state, lastMove } = useGame();
+
+  const lastPieceName = lastMove?.piece ? (PIECE_NAMES[lastMove.piece] || lastMove.piece) : '';
+  const lastCapturedName = lastMove?.captured ? (PIECE_NAMES[lastMove.captured] || lastMove.captured) : '';
 
   return (
     <div className="space-y-2">
@@ -41,12 +45,12 @@ export function MoveHistory() {
         )}
       </div>
 
-      {/* Current move highlight */}
       {lastMove && (
         <div className="p-2 rounded bg-amber-500/10 border border-amber-500/30">
           <div className="text-xs text-gray-500">最新棋步</div>
           <div className="font-mono text-amber-400">
-            {lastMove.from} → {lastMove.to}
+            {lastPieceName} {lastMove.from} → {lastMove.to}
+            {lastCapturedName && <span className="text-red-400"> 吃 {lastCapturedName}</span>}
           </div>
         </div>
       )}

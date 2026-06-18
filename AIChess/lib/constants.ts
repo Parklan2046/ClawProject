@@ -1,4 +1,7 @@
 import { LLMConfig } from './types';
+import { INITIAL_FEN } from './xiangqi-engine';
+
+export { INITIAL_FEN };
 
 export const DEFAULT_LLM_CONFIGS: LLMConfig[] = [
   {
@@ -42,8 +45,6 @@ export const DEFAULT_LLM_CONFIGS: LLMConfig[] = [
     maxRetries: 3,
   },
 ];
-
-export const INITIAL_FEN = 'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1';
 
 export const PIECE_NAMES: Record<string, string> = {
   r: '俥', n: '傌', b: '相', a: '仕', k: '帥', c: '炮', p: '兵',

@@ -12,10 +12,11 @@ interface PieceProps {
   isRed: boolean;
   isSelected?: boolean;
   isLastMove?: boolean;
+  isInCheck?: boolean;
   onClick?: () => void;
 }
 
-export function XiangqiPiece({ piece, position, isRed, isSelected, isLastMove, onClick }: PieceProps) {
+export function XiangqiPiece({ piece, position, isRed, isSelected, isLastMove, isInCheck, onClick }: PieceProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -26,9 +27,10 @@ export function XiangqiPiece({ piece, position, isRed, isSelected, isLastMove, o
     }
   });
 
-  const color = isRed ? '#dc2626' : '#1f1f1f';
-  const emissive = isSelected ? '#fbbf24' : isLastMove ? '#22c55e' : '#000000';
-  const emissiveIntensity = isSelected ? 0.5 : isLastMove ? 0.3 : 0;
+  const baseColor = isRed ? '#dc2626' : '#1f1f1f';
+  const color = isInCheck ? '#fca5a5' : hovered ? '#fbbf24' : baseColor;
+  const emissive = isInCheck ? '#ef4444' : isSelected ? '#fbbf24' : isLastMove ? '#22c55e' : '#000000';
+  const emissiveIntensity = isInCheck ? 0.8 : isSelected ? 0.5 : isLastMove ? 0.3 : 0;
 
   return (
     <group position={position}>

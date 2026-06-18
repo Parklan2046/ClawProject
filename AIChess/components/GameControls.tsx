@@ -1,13 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { GameConfig, LLMConfig, Player } from '@/lib/types';
 import { DEFAULT_LLM_CONFIGS } from '@/lib/constants';
-import { Swords, User, Bot, Play, RotateCcw } from 'lucide-react';
+import { Swords, User, Bot, Play } from 'lucide-react';
 
 interface GameControlsProps {
   onStartGame: (config: GameConfig) => void;
+}
+
+function loadConfigWithKeys(base: LLMConfig): LLMConfig {
+  if (typeof window === 'undefined') return base;
+  const stored = window.localStorage.getItem(`apiKey_${base.id}`);
+  if (stored && stored.trim() !== '') {
+    return { ...base, apiKey: stored };
+  }
+  return base;
 }
 
 export function GameControls({ onStartGame }: GameControlsProps) {
@@ -17,17 +26,39 @@ export function GameControls({ onStartGame }: GameControlsProps) {
   const [redLLM, setRedLLM] = useState<LLMConfig>(DEFAULT_LLM_CONFIGS[0]);
   const [blackLLM, setBlackLLM] = useState<LLMConfig>(DEFAULT_LLM_CONFIGS[1]);
   const [showConfig, setShowConfig] = useState(false);
+  const [apiKeyDraft, setApiKeyDraft] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const drafts: Record<string, string> = {};
+    for (const cfg of DEFAULT_LLM_CONFIGS) {
+      const stored = typeof window !== 'undefined' ? window.localStorage.getItem(`apiKey_${cfg.id}`) : null;
+      drafts[cfg.id] = stored || '';
+    }
+    setApiKeyDraft(drafts);
+  }, [showConfig]);
 
   const handleStart = () => {
+    const redConfig = redType === 'llm' ? loadConfigWithKeys(redLLM) : null;
+    const blackConfig = blackType === 'llm' ? loadConfigWithKeys(blackLLM) : null;
+    if (redType === 'llm' && !redConfig?.apiKey) {
+      alert('請先設定紅方 API Key');
+      setShowConfig(true);
+      return;
+    }
+    if (blackType === 'llm' && !blackConfig?.apiKey) {
+      alert('請先設定黑方 API Key');
+      setShowConfig(true);
+      return;
+    }
     const redPlayer: Player = {
       type: redType,
       side: 'red',
-      config: redType === 'llm' ? redLLM : undefined,
+      config: redConfig || undefined,
     };
     const blackPlayer: Player = {
       type: blackType,
       side: 'black',
-      config: blackType === 'llm' ? blackLLM : undefined,
+      config: blackConfig || undefined,
     };
     const gameConfig: GameConfig = {
       redPlayer,
@@ -45,7 +76,6 @@ export function GameControls({ onStartGame }: GameControlsProps) {
         <h2 className="text-lg font-bold">對戰配置</h2>
       </div>
 
-      {/* Red Player */}
       <div className="p-4 rounded-lg border border-red-500/30 bg-red-500/5">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-3 h-3 rounded-full bg-red-500" />
@@ -74,7 +104,7 @@ export function GameControls({ onStartGame }: GameControlsProps) {
             value={redLLM.id}
             onChange={(e) => {
               const cfg = DEFAULT_LLM_CONFIGS.find(c => c.id === e.target.value);
-              if (cfg) setRedLLM(cfg);
+              if (cfg) setRedLLM(loadConfigWithKeys(cfg));
             }}
             className="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
           >
@@ -85,7 +115,6 @@ export function GameControls({ onStartGame }: GameControlsProps) {
         )}
       </div>
 
-      {/* Black Player */}
       <div className="p-4 rounded-lg border border-gray-500/30 bg-gray-500/5">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-3 h-3 rounded-full bg-gray-800 border border-gray-500" />
@@ -114,7 +143,7 @@ export function GameControls({ onStartGame }: GameControlsProps) {
             value={blackLLM.id}
             onChange={(e) => {
               const cfg = DEFAULT_LLM_CONFIGS.find(c => c.id === e.target.value);
-              if (cfg) setBlackLLM(cfg);
+              if (cfg) setBlackLLM(loadConfigWithKeys(cfg));
             }}
             className="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
           >
@@ -125,7 +154,6 @@ export function GameControls({ onStartGame }: GameControlsProps) {
         )}
       </div>
 
-      {/* Start Button */}
       <button
         onClick={handleStart}
         className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 rounded-lg transition-colors"
@@ -133,7 +161,6 @@ export function GameControls({ onStartGame }: GameControlsProps) {
         <Play className="w-5 h-5" /> 開始對局
       </button>
 
-      {/* Status */}
       {config && (
         <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
           <div className="flex items-center justify-between">
@@ -154,14 +181,13 @@ export function GameControls({ onStartGame }: GameControlsProps) {
                   🎉 {state.winner === 'red' ? '紅方' : '黑方'} 勝利！
                 </span>
               )}
-              {state.status === 'stalemate' && <span className="text-gray-400">平局 (困斃)</span>}
+              {state.status === 'stalemate' && <span className="text-gray-400">和棋 (困斃)</span>}
               {state.status === 'draw' && <span className="text-gray-400">和棋</span>}
             </div>
           )}
         </div>
       )}
 
-      {/* API Key Config */}
       <button
         onClick={() => setShowConfig(!showConfig)}
         className="text-sm text-gray-500 hover:text-gray-300 underline"
@@ -178,9 +204,12 @@ export function GameControls({ onStartGame }: GameControlsProps) {
                 type="password"
                 placeholder={`輸入 ${cfg.name} API Key`}
                 className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm"
+                value={apiKeyDraft[cfg.id] || ''}
                 onChange={(e) => {
-                  // Store in localStorage
-                  localStorage.setItem(`apiKey_${cfg.id}`, e.target.value);
+                  setApiKeyDraft(prev => ({ ...prev, [cfg.id]: e.target.value }));
+                }}
+                onBlur={(e) => {
+                  window.localStorage.setItem(`apiKey_${cfg.id}`, e.target.value);
                 }}
               />
             </div>

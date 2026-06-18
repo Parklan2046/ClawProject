@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { XiangqiPiece } from './XiangqiPiece';
 
@@ -32,58 +32,76 @@ function parseFEN(fen: string): { piece: string; file: number; rank: number }[] 
 }
 
 function getPosition(file: number, rank: number): [number, number, number] {
-  // Board is 9 files x 10 ranks
-  // Center at origin, scale to fit
   const x = (file - 4) * 1.0;
   const z = (rank - 4.5) * 1.0;
   return [x, 0.1, z];
 }
 
-function iccsToSquare(iccs: string): { file: number; rank: number } {
-  const fromFile = FILES.indexOf(iccs[0]);
-  const fromRank = parseInt(iccs[1], 10);
-  return { file: fromFile, rank: fromRank };
+function squareToFR(sq: string): { file: number; rank: number } {
+  return { file: FILES.indexOf(sq[0]), rank: parseInt(sq[1], 10) };
 }
 
 export function XiangqiBoard3D() {
-  const { state, selectedSquare, lastMove, setSelectedSquare, makeMove, getLegalMovesForSquare } = useGame();
+  const { state, selectedSquare, lastMove, inCheck, setSelectedSquare, makeMove, getLegalMovesForSquare, legalMoves } = useGame();
 
   const pieces = parseFEN(state.fen);
 
+  const lastMoveSquares = useMemo(() => {
+    if (!lastMove) return [] as string[];
+    return [lastMove.from, lastMove.to];
+  }, [lastMove]);
+
+  const selectedMoves = useMemo(() => {
+    if (!selectedSquare) return [] as string[];
+    return getLegalMovesForSquare(selectedSquare);
+  }, [selectedSquare, legalMoves, getLegalMovesForSquare]);
+
+  const checkSquare = useMemo(() => {
+    if (!inCheck || !state.fen) return null;
+    const target = inCheck === 'red' ? 'K' : 'k';
+    const [boardPart] = state.fen.split(' ');
+    const ranks = boardPart.split('/');
+    for (let r = 0; r < 10; r++) {
+      let file = 0;
+      for (const ch of ranks[r]) {
+        if (ch >= '0' && ch <= '9') {
+          file += parseInt(ch, 10);
+        } else {
+          if (ch === target) return { file, rank: r };
+          file++;
+        }
+      }
+    }
+    return null;
+  }, [inCheck, state.fen]);
+
   const handlePieceClick = useCallback((piece: string, file: number, rank: number) => {
+    if (state.status !== 'playing') return;
     const sq = `${FILES[file]}${rank}`;
     const isRed = piece === piece.toUpperCase();
     const currentTurn = state.turn;
 
-    // Can only select own pieces
-    if ((currentTurn === 'red' && !isRed) || (currentTurn === 'black' && isRed)) {
-      // Maybe it's a capture target
-      if (selectedSquare) {
-        const move = `${selectedSquare}${sq}`;
-        makeMove(move);
-      }
-      return;
+    if (selectedSquare) {
+      const targetMove = `${selectedSquare}${sq}`;
+      const success = makeMove(targetMove);
+      if (success) return;
     }
 
-    if (selectedSquare === sq) {
-      setSelectedSquare(null);
+    if ((currentTurn === 'red' && isRed) || (currentTurn === 'black' && !isRed)) {
+      setSelectedSquare(sq === selectedSquare ? null : sq);
     } else {
-      setSelectedSquare(sq);
+      setSelectedSquare(null);
     }
-  }, [selectedSquare, state.turn, setSelectedSquare, makeMove]);
+  }, [selectedSquare, state.turn, state.status, setSelectedSquare, makeMove]);
 
   const handleBoardClick = useCallback((file: number, rank: number) => {
-    if (!selectedSquare) return;
+    if (state.status !== 'playing' || !selectedSquare) return;
     const sq = `${FILES[file]}${rank}`;
-    const move = `${selectedSquare}${sq}`;
-    makeMove(move);
-  }, [selectedSquare, makeMove]);
-
-  const lastMoveSquares = lastMove ? [lastMove.from, lastMove.to] : [];
+    makeMove(`${selectedSquare}${sq}`);
+  }, [selectedSquare, state.status, makeMove]);
 
   return (
     <group>
-      {/* Board base */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
         <boxGeometry args={[10, 11, 0.1]} />
         <meshStandardMaterial color="#f5deb3" roughness={0.8} />
@@ -110,7 +128,6 @@ export function XiangqiBoard3D() {
       </mesh>
 
       {/* Palace diagonals */}
-      {/* Red palace */}
       <mesh position={[-1, 0.01, 3.5]} rotation={[-Math.PI / 2, 0, Math.PI / 4]}>
         <planeGeometry args={[2.8, 0.02]} />
         <meshBasicMaterial color="#8b4513" />
@@ -119,7 +136,6 @@ export function XiangqiBoard3D() {
         <planeGeometry args={[2.8, 0.02]} />
         <meshBasicMaterial color="#8b4513" />
       </mesh>
-      {/* Black palace */}
       <mesh position={[-1, 0.01, -3.5]} rotation={[-Math.PI / 2, 0, Math.PI / 4]}>
         <planeGeometry args={[2.8, 0.02]} />
         <meshBasicMaterial color="#8b4513" />
@@ -129,10 +145,21 @@ export function XiangqiBoard3D() {
         <meshBasicMaterial color="#8b4513" />
       </mesh>
 
-      {/* Clickable squares */}
+      {/* Clickable squares + selection / last move / check highlights */}
       {Array.from({ length: 90 }, (_, i) => {
         const file = i % 9;
         const rank = Math.floor(i / 9);
+        const sqName = `${FILES[file]}${rank}`;
+        const isSelected = selectedSquare === sqName;
+        const isLast = lastMoveSquares.includes(sqName);
+        const isCheck = checkSquare && checkSquare.file === file && checkSquare.rank === rank;
+        const color = isCheck
+          ? '#ef4444'
+          : isSelected
+          ? '#fbbf24'
+          : isLast
+          ? '#22c55e'
+          : 'transparent';
         return (
           <mesh
             key={`sq-${i}`}
@@ -144,17 +171,39 @@ export function XiangqiBoard3D() {
             }}
           >
             <planeGeometry args={[0.95, 0.95]} />
-            <meshBasicMaterial
-              color={
-                selectedSquare === `${FILES[file]}${rank}`
-                  ? '#fbbf24'
-                  : lastMoveSquares.includes(`${FILES[file]}${rank}`)
-                  ? '#22c55e'
-                  : 'transparent'
-              }
-              transparent
-              opacity={0.2}
-            />
+            <meshBasicMaterial color={color} transparent opacity={isCheck ? 0.45 : 0.2} />
+          </mesh>
+        );
+      })}
+
+      {/* Legal-move hints for the selected piece */}
+      {selectedMoves.map((iccs) => {
+        const to = squareToFR(iccs.slice(2, 4));
+        const x = (to.file - 4) * 1.0;
+        const z = (to.rank - 4.5) * 1.0;
+        const targetPiece = state.fen
+          ? state.fen.split(' ')[0].split('/')[to.rank][to.file]
+          : '';
+        if (targetPiece) {
+          return (
+            <mesh
+              key={`mv-${iccs}`}
+              position={[x, 0.05, z]}
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              <ringGeometry args={[0.35, 0.45, 32]} />
+              <meshBasicMaterial color="#ef4444" transparent opacity={0.7} />
+            </mesh>
+          );
+        }
+        return (
+          <mesh
+            key={`mv-${iccs}`}
+            position={[x, 0.05, z]}
+            rotation={[-Math.PI / 2, 0, 0]}
+          >
+            <cylinderGeometry args={[0.12, 0.12, 0.02, 24]} />
+            <meshBasicMaterial color="#22c55e" transparent opacity={0.7} />
           </mesh>
         );
       })}
@@ -162,12 +211,13 @@ export function XiangqiBoard3D() {
       {/* Pieces */}
       {pieces.map((p, i) => (
         <XiangqiPiece
-          key={`${p.piece}-${i}`}
+          key={`p-${p.piece}-${p.file}-${p.rank}-${i}`}
           piece={p.piece}
           position={getPosition(p.file, p.rank)}
           isRed={p.piece === p.piece.toUpperCase()}
           isSelected={selectedSquare === `${FILES[p.file]}${p.rank}`}
           isLastMove={lastMoveSquares.includes(`${FILES[p.file]}${p.rank}`)}
+          isInCheck={Boolean(checkSquare && checkSquare.file === p.file && checkSquare.rank === p.rank)}
           onClick={() => handlePieceClick(p.piece, p.file, p.rank)}
         />
       ))}
