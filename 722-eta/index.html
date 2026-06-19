@@ -583,7 +583,7 @@ async function findRoute(){
     try{var r=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route-stop',{cache:'no-store'});if(r.ok){var d=await r.json();_kmbRouteStopCache=d;kmbRS=(d.data||[]).filter(function(s){return s.route===route});if(kmbRS.length){try{var rr=await fetch('https://data.etabus.gov.hk/v1/transport/kmb/route',{cache:'no-store'});if(rr.ok){var rd=await rr.json();_kmbRouteCache=rd;}}catch(e){errors.push('KMB route: '+e.message)}}_kmbCacheTs=now;saveKMBCache(d.data,(_kmbRouteCache&&_kmbRouteCache.data)||[]);if(_kmbRouteCache){var seen={};(_kmbRouteCache.data||[]).forEach(function(r){if(r.route===route){var key=r.bound+'_'+(r.service_type||'1');if(!seen[key]){seen[key]=true;dirs.push({co:'KMB',dir:r.bound,dest:r.bound==='O'?(r.dest_tc||'往外'):(r.orig_tc||r.dest_tc||'返程'),service_type:r.service_type||'1'});}}});}}}catch(e){errors.push('KMB: '+e.message)}
   }
 
-  try{var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB/'+route,{cache:'no-store'});if(r1.ok){var d1=await r1.json();if(d1.data){var info=d1.data,seenDir={};dirs.forEach(function(x){seenDir[x.co+'_'+x.dir]=true;});if(!seenDir.CTB_O)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});if(!seenDir.CTB_I)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});}}}catch(e){errors.push('CTB: '+e.message)}
+  try{var r1=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB/'+route,{cache:'no-store'});if(r1.ok){var d1=await r1.json();if(d1.data){var info=d1.data,seenDir={};dirs.forEach(function(x){seenDir[x.co+'_'+x.dir]=true;});if(info.bound==='O'&&!seenDir.CTB_O)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});else if(info.bound==='I'&&!seenDir.CTB_I)dirs.push({co:'CTB',dir:'I',dest:info.orig_tc||info.dest_tc||'返程'});else if(!info.bound){if(!seenDir.CTB_O)dirs.push({co:'CTB',dir:'O',dest:info.dest_tc||'往外'});}}}}catch(e){errors.push('CTB: '+e.message)}
 
   s1.textContent='';
   if(!dirs.length){s1.textContent='搵唔到路線 '+route+(errors.length?' ('+errors.join(', ')+')':'');return;}
@@ -648,10 +648,12 @@ async function pickDir(d){
     kmbStops.forEach(function(s){var info=stopMap[s.stop]||{};stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'KMB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});});
 
     var dirParam=d.dir==='O'?'outbound':'inbound';
-    var cRsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+searchState.route+'/'+dirParam,{cache:'no-store'});
-    if(!cRsRes.ok)throw new Error('CTB route-stop HTTP '+cRsRes.status);
-    var cRsData=await cRsRes.json();
-    for(var _i=0;_i<(cRsData.data||[]).length;_i++){var s=cRsData.data[_i];try{var sr=await fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'});if(!sr.ok)continue;var sd=await sr.json();var info=sd.data||{};stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'CTB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});}catch(e){}}
+    var cStops=[];
+    try{
+      var cRsRes=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+searchState.route+'/'+dirParam,{cache:'no-store'});
+      if(cRsRes.ok){var cRsData=await cRsRes.json();cStops=cRsData.data||[];}
+    }catch(e){}
+    var CONC=4;for(var _i=0;_i<cStops.length;_i+=CONC){var batch=cStops.slice(_i,_i+CONC);var infos=await Promise.all(batch.map(function(s){return fetch('https://rt.data.gov.hk/v2/transport/citybus/stop/'+s.stop,{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}));infos.forEach(function(sd,i){var s=batch[i];if(!sd||!sd.data)return;var info=sd.data;stops.push({stop_id:s.stop,name_tc:info.name_tc||'',name_en:info.name_en||'',seq:parseInt(s.seq)||0,co:'CTB',lat:parseFloat(info.lat||0),lng:parseFloat(info.long||0)});});}
 
     stops.sort(function(a,b){return a.seq-b.seq});
     var merged=[],used={};
@@ -669,6 +671,7 @@ async function pickDir(d){
   }catch(e){
     if(sStatus3)sStatus3.textContent='載入失敗：'+(e.message||e);
     labelEl.textContent=(d.dir==='O'?'往 ':'返 ')+d.dest+' · 載入失敗';
+    contentEl.style.display='block';
   }finally{
     loadingEl.style.display='none';
   }
