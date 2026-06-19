@@ -71,9 +71,9 @@ There are no tests, linters, or build steps. The frontend is a single self-conta
 
 6. **Stop-id regexes in the HTML are hardcoded to current HK formats.** If KMB/CTB ever change stop ID lengths, `detectCO` (~line 480) silently misclassifies and the wrong operator's API gets queried.
 
-7. **Avatar asset is referenced but not in the repo.** `index.html:281, 284` reference `/assets/busbot-avatar.jpg` — the file doesn't exist in this directory, so the chat toggle shows a broken image. Either add the asset or remove the `<img>` tags.
+7. **Avatar asset is now `icon.svg`.** Both `<img>` tags (chat toggle + chat header) reference `icon.svg`, which is committed. PWA install uses the same file as the app icon — one source of truth.
 
-8. **No version control.** The directory is not a git repo (`Is directory a git repo: no`). Don't run `git` commands; treat this as a flat file drop.
+8. **Git is initialized.** The directory IS a git repo with a remote (`origin`). The earlier "no git" note is stale. Branch is `main`, recent commits use a `fix(722-eta):` prefix.
 
 9. **No tests, no CI, no type checker.** Don't try to run `pytest`, `npm test`, `tsc`, etc. — they don't exist. Manual smoke test is: open `index.html` in a browser, type a route/stop, confirm ETA cards render.
 
@@ -83,6 +83,15 @@ There are no tests, linters, or build steps. The frontend is a single self-conta
 
 ## Files
 
-- `C:/Users/parkl/OneDrive/文件/GitHub/ClawProject/722-eta/index.html` — single-file client (~648 lines, all CSS+JS inline, lang `zh-Hant-HK`).
+- `C:/Users/parkl/OneDrive/文件/GitHub/ClawProject/722-eta/index.html` — single-file client (~1049 lines, all CSS+JS inline, lang `zh-Hant-HK`).
 - `C:/Users/parkl/OneDrive/文件/GitHub/ClawProject/722-eta/busbot_server.py` — ~200 line chat proxy, stdlib only.
+- `C:/Users/parkl/OneDrive/文件/GitHub/ClawProject/722-eta/manifest.webmanifest` — PWA web manifest (name, icons, 2 shortcuts).
+- `C:/Users/parkl/OneDrive/文件/GitHub/ClawProject/722-eta/icon.svg` — PWA icon + chat avatar (orange `#f97316` bg, 🚌 glyph, used at all sizes).
+- `C:/Users/parkl/OneDrive/文件/GitHub/ClawProject/722-eta/sw.js` — service worker, ~10 lines, app shell only (NEVER caches `data.gov.hk` / `etabus.gov.hk` / `/busbot-api`). Versioned cache `busbot_shell_v1` — bump suffix to invalidate.
 - `.crush/` — Crush editor state (sessions, logs, sqlite DB). Ignore unless debugging the editor itself.
+
+## PWA / deeplink
+
+- **Deeplink schema**: `?route=X&stop=Y&co=KMB|CTB|GMB&partner=Z` prefill form + auto-ETA. `?action=nearby` triggers geolocation. `?action=search` opens the search modal. Unknown params ignored silently. Invalid stop/route combo surfaces a 2.2s red toast `搵唔到呢個站 · 試下搜尋`. URL is rewritten via `history.replaceState` after consumption.
+- **Install hint**: `⬇️` button in `.topbar-actions` (between 📍 附近 and 🌙), hidden when `display-mode: standalone` or `navigator.standalone` is true. `beforeinstallprompt` event is stashed and re-played on tap. iOS fallback shows toast `用 Safari「分享」→ 加到主畫面`. `localStorage` keys: `pwa-i` (installed, permanent) and `pwa-d` (dismissed, 7-day TTL).
+- **Service worker registration** is silently skipped on `file://` (feature-detected). Registration error is `.catch` swallowed — no user-facing noise.

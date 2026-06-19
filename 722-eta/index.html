@@ -2,7 +2,15 @@
 <html lang="zh-Hant-HK" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#f97316">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="巴士 ETA">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>巴士 ETA · 商務版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -224,7 +232,33 @@ body{
 @keyframes bb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 @keyframes fIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
+/* PWA */
+@media(display-mode:standalone){.ip-b{display:none!important}}
+.ip-b{background:var(--card);border:1px solid var(--border);color:var(--dim);width:32px;height:32px;border-radius:50%;font-size:.85em;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);transition:all .15s;font-family:inherit;padding:0}
+.ip-b:hover{color:var(--text);border-color:var(--border-hover)}
+.toast.err{color:var(--red);border-color:var(--red-border)}
+
 @media(max-width:380px){body{padding:14px 10px 100px}.eta-card{padding:12px 12px}.controls-row{gap:6px}.controls-row input{padding:7px 8px;font-size:.76em}}
+
+/* Nearby */
+:root,[data-theme="light"]{--gmb:#0d9488;--gmb-bg:#f0fdfa;--gmb-border:rgba(13,148,136,.18)}
+[data-theme="dark"]{--gmb:#2dd4bf;--gmb-bg:rgba(45,212,191,.08);--gmb-border:rgba(45,212,191,.18)}
+.nb-r{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;background:var(--bg);border:1px solid var(--border);cursor:pointer;transition:all .15s;margin-bottom:6px}
+.nb-r:hover{border-color:var(--accent-border);background:var(--accent-light)}
+.nb-n{flex:1;min-width:0;font-size:.82em;font-weight:600}
+.nb-n .en{color:var(--dim);font-weight:500;font-size:.84em;margin-top:1px}
+.nb-d{font-size:.72em;color:var(--dim);font-weight:600;white-space:nowrap;flex-shrink:0}
+.nb-d .num{color:var(--text);font-size:1.1em;font-weight:800}
+.nb-c{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.rc{display:inline-flex;align-items:center;padding:1px 6px;border-radius:4px;font-size:.68em;font-weight:700;background:var(--bg);border:1px solid var(--border);color:var(--text)}
+.rc.kmb{background:var(--kmb-bg);color:var(--kmb);border-color:var(--kmb-border)}
+.rc.ctb{background:var(--ctb-bg);color:var(--ctb);border-color:var(--ctb-border)}
+.rc.gmb{background:var(--gmb-bg);color:var(--gmb);border-color:var(--gmb-border)}
+.g-btn{background:var(--card);border:1px solid var(--border);color:var(--dim);padding:6px 12px;border-radius:6px;font-size:.76em;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:var(--shadow-sm);transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.g-btn:hover{color:var(--text);border-color:var(--border-hover)}
+.g-btn:disabled{opacity:.6;cursor:wait}
+.g-s{text-align:center;padding:30px 16px;color:var(--dim);font-size:.82em}
+.g-s .g-sp{width:24px;height:24px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
 </style>
 </head>
 <body>
@@ -237,6 +271,8 @@ body{
       <span class="sub">KMB + Citybus · 實時到站</span>
     </div>
     <div class="topbar-actions">
+      <button class="g-btn" onclick="geo()" id="gBtn" title="搵附近站位">📍 附近</button>
+      <button class="ip-b" id="ipBtn" title="加到主畫面" style="display:none">⬇️</button>
       <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="切換主題">🌙</button>
     </div>
   </div>
@@ -278,10 +314,10 @@ body{
 </div>
 
 <!-- Chat -->
-<button class="chat-toggle" id="chatToggle" onclick="toggleChat()"><img src="/assets/busbot-avatar.jpg" alt="巴膠仔"></button>
+<button class="chat-toggle" id="chatToggle" onclick="toggleChat()"><img src="icon.svg" alt="巴膠仔"></button>
 <div class="chat-panel" id="chatPanel">
   <div class="chat-head">
-    <img src="/assets/busbot-avatar.jpg" alt="巴膠仔">
+    <img src="icon.svg" alt="巴膠仔">
     <div style="flex:1"><div style="font-weight:600;font-size:.82em">巴膠仔</div><div style="font-size:.64em;color:var(--dim)">在線</div></div>
     <button class="close-btn" onclick="document.getElementById('chatPanel').style.display='none'">&times;</button>
   </div>
@@ -340,6 +376,21 @@ body{
 </div>
 
 <div id="toast" class="toast"></div>
+
+<!-- Nearby Modal -->
+<div id="nbM" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h2>📍 附近站位</h2>
+      <button class="btn-ghost" style="padding:6px 10px;font-size:.76em" onclick="clNb()">✕</button>
+    </div>
+    <div id="nbS" class="g-s">
+      <div class="g-sp"></div>
+      <div>搵你位置中…</div>
+    </div>
+    <div id="nbL" style="display:none"></div>
+  </div>
+</div>
 
 <script>
 // ── THEME ──
@@ -685,6 +736,298 @@ function toggleChat(){var p=document.getElementById("chatPanel");p.style.display
 function addCm(r,t){var c=document.getElementById("chatMsgs"),d=document.createElement("div");d.className="chat-msg "+r;d.textContent=t;c.appendChild(d);c.scrollTop=c.scrollHeight}
 function sendChat(){var i=document.getElementById("chatInput"),t=i.value.trim();if(!t)return;i.value="";addCm("user",t);bms.push({role:"user",content:t});var ld=document.createElement("div");ld.className="chat-typing";ld.innerHTML="<span></span><span></span><span></span>";var c=document.getElementById("chatMsgs");c.appendChild(ld);c.scrollTop=c.scrollHeight;fetch("/busbot-api/message",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:bms})}).then(function(r){return r.json()}).then(function(d){ld.remove();if(d.ok){addCm("bot",d.reply);bms.push({role:"assistant",content:d.reply})}else addCm("bot","錯誤："+d.error)}).catch(function(e){ld.remove();addCm("bot","網絡錯誤")})}
 
+// ── GEOLOCATE ──
+var GMB_STOP_KEY='gmb_stop_cache_v1',GMB_STOP_TS_KEY='gmb_stop_ts_v1';
+var CTB_STOP_KEY2='ctb_stop_cache_v1',CTB_STOP_TS_KEY2='ctb_stop_ts_v1',STOP_TTL=86400000;
+var _ctbIdx=null;
+
+function opNb(){document.getElementById('nbM').style.display='flex';}
+function clNb(){document.getElementById('nbM').style.display='none';}
+
+async function enStops(co){
+  var KEY=co==='GMB'?GMB_STOP_KEY:CTB_STOP_KEY2;
+  var TS=co==='GMB'?GMB_STOP_TS_KEY:CTB_STOP_TS_KEY2;
+  var URL=co==='GMB'?'https://data.etabus.gov.hk/v1/transport/gmb/stop':'https://rt.data.gov.hk/v2/transport/citybus/stop';
+  try{
+    var ts=parseInt(localStorage.getItem(TS)||'0',10);
+    if(ts&&(Date.now()-ts)<STOP_TTL){var c=localStorage.getItem(KEY);if(c)return JSON.parse(c);}
+  }catch(e){}
+  try{
+    var r=await fetch(URL,{cache:'no-store'});if(!r.ok)throw 0;
+    var d=await r.json();var data=d.data||[];
+    try{if(storageOK()){localStorage.setItem(KEY,JSON.stringify(data));localStorage.setItem(TS,String(Date.now()));}}catch(e){}
+    return data;
+  }catch(e){return null;}
+}
+
+function gcKs(){
+  try{var c=localStorage.getItem(KMB_STOP_KEY);return c?JSON.parse(c):null;}catch(e){return null;}
+}
+
+function gcKrs(){
+  try{var c=localStorage.getItem(KMB_RS_KEY);return c?JSON.parse(c):null;}catch(e){return null;}
+}
+
+function gRs(co,stopId,kmbRS){
+  if(co==='KMB'){
+    if(!kmbRS)return [];
+    var seen={},out=[];
+    kmbRS.forEach(function(s){if(s.stop===stopId&&!seen[s.route]){seen[s.route]=true;out.push({route:s.route,co:'KMB'});}});
+    return out;
+  }
+  if(co==='CTB'&&_ctbIdx)return _ctbIdx[stopId]||[];
+  return [];
+}
+
+async function enCtbIdx(){
+  if(_ctbIdx)return _ctbIdx;
+  try{
+    var rs=await fetch('https://rt.data.gov.hk/v2/transport/citybus/route/CTB',{cache:'no-store'});
+    if(!rs.ok)return null;
+    var d=await rs.json();var routes=d.data||[];
+    var idx={};
+    var tasks=routes.map(function(r){
+      var dirParam=r.bound==='O'?'outbound':'inbound';
+      return fetch('https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/'+r.route+'/'+dirParam,{cache:'no-store'})
+        .then(function(r2){return r2.ok?r2.json():null;}).then(function(d2){
+          (d2&&d2.data||[]).forEach(function(s){
+            if(!idx[s.stop])idx[s.stop]=[];
+            if(idx[s.stop].indexOf(r.route)<0)idx[s.stop].push(r.route);
+          });
+        }).catch(function(){});
+    });
+    await Promise.all(tasks);
+    _ctbIdx=idx;return idx;
+  }catch(e){return null;}
+}
+
+function d2(la1,ln1,la2,ln2){
+  return Math.sqrt(Math.pow(la1-la2,2)+Math.pow(ln1-ln2,2));
+}
+
+function wm(d){
+  var meters=d*111000;return Math.max(0,Math.round(meters/80));
+}
+
+async function nbStops(lat,lng){
+  var kmbStops=gcKs(),kmbRS=gcKrs();
+  var gmbStops=await enStops('GMB');
+  var ctbStops=await enStops('CTB');
+  enCtbIdx();
+  var candidates=[];
+  (kmbStops||[]).forEach(function(s){
+    var la=parseFloat(s.lat),ln=parseFloat(s.long);
+    if(!la||!ln)return;
+    candidates.push({stop:s,co:'KMB',d:d2(lat,lng,la,ln)});
+  });
+  (gmbStops||[]).forEach(function(s){
+    var la=parseFloat(s.lat),ln=parseFloat(s.long);
+    if(!la||!ln)return;
+    candidates.push({stop:s,co:'GMB',d:d2(lat,lng,la,ln)});
+  });
+  (ctbStops||[]).forEach(function(s){
+    var la=parseFloat(s.lat),ln=parseFloat(s.long);
+    if(!la||!ln)return;
+    candidates.push({stop:s,co:'CTB',d:d2(lat,lng,la,ln)});
+  });
+  candidates.sort(function(a,b){return a.d-b.d;});
+  var seen={},out=[];
+  for(var i=0;i<candidates.length&&out.length<5;i++){
+    var c=candidates[i];
+    var mins=wm(c.d);
+    if(mins>15)break;
+    var key=c.co+'_'+c.stop.stop;
+    if(seen[key])continue;
+    seen[key]=true;
+    var routes=gRs(c.co,c.stop.stop,kmbRS);
+    out.push({co:c.co,stop:c.stop,d:c.d,walkMin:mins,routes:routes});
+  }
+  return out;
+}
+
+function rNb(list){
+  var el=document.getElementById('nbL');el.innerHTML='';
+  if(!list.length){
+    var empty=document.createElement('div');
+    empty.className='g-s';
+    empty.textContent='附近 15 分鐘步行範圍搵唔到站';
+    el.appendChild(empty);
+    return;
+  }
+  list.forEach(function(it){
+    var s=it.stop;
+    var name=s.name_tc||s.name_en||s.name_sc||s.stop;
+    var en=s.name_en&&s.name_en!==name?s.name_en:'';
+    var opCls=it.co==='KMB'?'kmb':it.co==='GMB'?'gmb':'ctb';
+    var opLabel=it.co==='KMB'?'九巴':it.co==='GMB'?'綠巴':'城巴';
+
+    var row=document.createElement('div');
+    row.className='nb-r';
+
+    var nm=document.createElement('div');nm.className='nb-n';
+    var top=document.createElement('div');
+    top.appendChild(document.createTextNode(name+' '));
+    var badge=document.createElement('span');
+    badge.className='op-badge '+opCls;
+    badge.textContent=opLabel;
+    top.appendChild(badge);
+    nm.appendChild(top);
+    if(en){
+      var enEl=document.createElement('div');enEl.className='en';
+      enEl.textContent=en;nm.appendChild(enEl);
+    }
+    if(it.routes.length){
+      var chips=document.createElement('div');chips.className='nb-c';
+      it.routes.slice(0,6).forEach(function(r){
+        var c=document.createElement('span');
+        c.className='rc '+r.co.toLowerCase();
+        c.textContent=r.route;
+        chips.appendChild(c);
+      });
+      if(it.routes.length>6){
+        var more=document.createElement('span');
+        more.className='rc';
+        more.textContent='+'+(it.routes.length-6);
+        chips.appendChild(more);
+      }
+      nm.appendChild(chips);
+    }
+    row.appendChild(nm);
+
+    var dist=document.createElement('div');dist.className='nb-d';
+    var num=document.createElement('div');num.className='num';
+    num.textContent=it.walkMin===0?'<1':String(it.walkMin);
+    dist.appendChild(num);
+    var unit=document.createElement('div');unit.textContent='分鐘';
+    dist.appendChild(unit);
+    row.appendChild(dist);
+
+    row.onclick=function(){
+      document.getElementById('routeNo').value='';
+      document.getElementById('stopId').value=s.stop;
+      clNb();
+      openEta(it.co);
+    };
+    el.appendChild(row);
+  });
+}
+
+function nbErr(msg){
+  var el=document.getElementById('nbS');
+  el.innerHTML='';
+  var d=document.createElement('div');
+  d.style.color='var(--red)';
+  d.style.fontWeight='600';
+  d.textContent=msg;
+  el.appendChild(d);
+}
+
+async function geo(){
+  var btn=document.getElementById('gBtn');
+  if(!navigator.geolocation){showToast('呢個瀏覽器唔支援定位');return;}
+  opNb();
+  var stEl=document.getElementById('nbS');var lEl=document.getElementById('nbL');
+  stEl.innerHTML='';
+  var sp=document.createElement('div');sp.className='g-sp';stEl.appendChild(sp);
+  var tx=document.createElement('div');tx.textContent='搵你位置中…';stEl.appendChild(tx);
+  stEl.style.display='block';
+  lEl.style.display='none';
+  btn.disabled=true;
+  var done=false;
+  navigator.geolocation.getCurrentPosition(async function(pos){
+    if(done)return;done=true;
+    try{
+      var list=await nbStops(pos.coords.latitude,pos.coords.longitude);
+      stEl.style.display='none';
+      lEl.style.display='block';
+      rNb(list);
+    }catch(e){
+      nbErr('搵站位失敗：'+(e.message||e));
+    }finally{btn.disabled=false;}
+  },function(err){
+    if(done)return;done=true;
+    var msg=err.code===1?'你拒咗定位，開啟定位可搵附近站位':err.code===3?'定位逾時，試下空曠啲':'搵唔到位置';
+    nbErr(msg);
+    btn.disabled=false;
+  },{timeout:8000,maximumAge:60000,enableHighAccuracy:false});
+}
+
+// ── PWA ──
+var _ipEvt=null;
+if('serviceWorker'in navigator&&location.protocol!=='file:'){
+  try{navigator.serviceWorker.register('sw.js')}catch(e){}
+}
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();_ipEvt=e;
+  if(!localStorage.getItem('pwa-i')&&!localStorage.getItem('pwa-d'))showIP();
+});
+window.addEventListener('appinstalled',function(){
+  try{localStorage.setItem('pwa-i','1');localStorage.removeItem('pwa-d');}catch(e){}hideIP();
+});
+function showIP(){var b=document.getElementById('ipBtn');if(b)b.style.display='flex'}
+function hideIP(){var b=document.getElementById('ipBtn');if(b)b.style.display='none'}
+function ipTap(){
+  if(_ipEvt){
+    _ipEvt.prompt();
+    _ipEvt.userChoice.then(function(c){
+      if(c.outcome==='dismissed'){try{localStorage.setItem('pwa-d',String(Date.now()));}catch(e){}}
+      hideIP();
+    });
+  }else{
+    var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+    showToast(isIOS?'用 Safari「分享」→ 加到主畫面':'用瀏覽器選單「加入主畫面」');
+    try{localStorage.setItem('pwa-d',String(Date.now()));}catch(e){}
+    hideIP();
+  }
+}
+function ipInit(){
+  try{
+    if(localStorage.getItem('pwa-i'))return hideIP();
+  }catch(e){}
+  if(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)return hideIP();
+  if(navigator.standalone)return hideIP();
+  try{var d=parseInt(localStorage.getItem('pwa-d')||'0',10);if(d&&(Date.now()-d)<604800000)return hideIP();}catch(e){}
+  showIP();
+}
+ipInit();
+
+// ── DEEPLINK ──
+function parseDL(){
+  var p=new URLSearchParams(location.search);
+  if(![...p.keys()].length)return null;
+  var route=(p.get('route')||'').trim();
+  var stop=(p.get('stop')||'').trim();
+  var co=(p.get('co')||'').toUpperCase();
+  var partner=(p.get('partner')||'').trim();
+  var action=(p.get('action')||'').trim();
+  if(action)return{action:action};
+  if(route&&stop){
+    var stopStr=partner?stop+'+'+partner:stop;
+    return{route:route,stop:stopStr,co:co||null};
+  }
+  return null;
+}
+
+function applyDL(dl){
+  if(dl.action==='nearby'){setTimeout(geo,200);return;}
+  if(dl.action==='search'){openSearch();return;}
+  if(dl.route&&dl.stop){
+    document.getElementById('routeNo').value=dl.route;
+    document.getElementById('stopId').value=dl.stop;
+    var co=dl.co||detectCO(dl.route,dl.stop.split('+')[0]);
+    var t=document.getElementById('toast');
+    setTimeout(function(){
+      if(!document.getElementById('etaList').children.length){
+        t.classList.add('err');showToast('搵唔到呢個站 · 試下搜尋');
+        setTimeout(function(){t.classList.remove('err')},2300);
+      }else{
+        t.classList.remove('err');showToast('已載入 '+dl.route+' @ '+dl.stop);
+      }
+    },1200);
+    openEta(co);
+  }
+}
+
 // ── EVENT BINDINGS ──
 document.getElementById('checkBtn').onclick=function(){openEta()};
 document.getElementById('routeNo').onkeydown=function(e){if(e.key==='Enter')openEta()};
@@ -693,10 +1036,15 @@ document.getElementById('sFilter').oninput=function(){renderStops()};
 document.getElementById('sRoute').onkeydown=function(e){if(e.key==='Enter')findRoute()};
 document.getElementById('searchModal').onclick=function(e){if(e.target.id==='searchModal')closeSearch()};
 document.getElementById('chatToggle').onclick=function(){toggleChat()};
+document.getElementById('nbM').onclick=function(e){if(e.target.id==='nbM')clNb()};
+document.getElementById('ipBtn').onclick=ipTap;
 
 // ── INIT ──
 renderBK();
-openEta();
+var dl=parseDL();
+if(dl)applyDL(dl);
+else openEta();
+history.replaceState(null,'','./');
 </script>
 </body>
 </html>

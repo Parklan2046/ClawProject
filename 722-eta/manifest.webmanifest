@@ -1,0 +1,32 @@
+{
+  "name": "巴士 ETA · 商務版",
+  "short_name": "巴士ETA",
+  "description": "KMB + Citybus 實時到站時間",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#f97316",
+  "background_color": "#f4f5f7",
+  "lang": "zh-Hant-HK",
+  "icons": [
+    { "src": "icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "查詢 722",
+      "short_name": "查 722",
+      "description": "查 722 巴士到站時間",
+      "url": "./index.html?route=722&stop=001272&co=CTB&source=pwa-shortcut",
+      "icons": [{ "src": "icon.svg", "type": "image/svg+xml", "sizes": "any" }]
+    },
+    {
+      "name": "附近站位",
+      "short_name": "附近",
+      "description": "用定位搵附近巴士站",
+      "url": "./index.html?action=nearby&source=pwa-shortcut",
+      "icons": [{ "src": "icon.svg", "type": "image/svg+xml", "sizes": "any" }]
+    }
+  ]
+}
