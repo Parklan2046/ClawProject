@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0B1220">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F9FAFB">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FIFA 26 世界盃">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="2026 FIFA 世界盃分組賽 + 淘汰賽實時賽果 · 香港時間">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>FIFA 26 世界盃</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{
+  --bg:#0B1220;--card:#111827;--card-hover:#1F2937;
+  --accent:#E11D2E;--accent-light:rgba(225,29,46,.10);--accent-border:rgba(225,29,46,.28);
+  --text:#E5E7EB;--text-secondary:#D1D5DB;--dim:#6B7280;
+  --live:#3B82F6;--live-bg:rgba(59,130,246,.12);--live-border:rgba(59,130,246,.32);
+  --qualified:#10B981;--qualified-bg:rgba(16,185,129,.10);--qualified-border:rgba(16,185,129,.28);
+  --amber:#F59E0B;--amber-bg:rgba(245,158,11,.10);--amber-border:rgba(245,158,11,.28);
+  --muted:#374151;--muted-bg:rgba(107,114,128,.10);
+  --border:#1F2937;--border-hover:#374151;
+  --focus:#60A5FA;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 12px rgba(0,0,0,.35);
+  --modal-overlay:rgba(0,0,0,.72);
+  --gold:#FBBF24;--gold-bg:rgba(251,191,36,.14);--gold-border:rgba(251,191,36,.42);
+  --connector:#374151;
+}
+[data-theme="light"]{
+  --bg:#F9FAFB;--card:#FFFFFF;--card-hover:#F3F4F6;
+  --accent:#E11D2E;--accent-light:#FEF2F3;--accent-border:rgba(225,29,46,.22);
+  --text:#111827;--text-secondary:#374151;--dim:#6B7280;
+  --live:#2563EB;--live-bg:#EFF6FF;--live-border:rgba(37,99,235,.22);
+  --qualified:#059669;--qualified-bg:#ECFDF5;--qualified-border:rgba(5,150,105,.22);
+  --amber:#D97706;--amber-bg:#FFFBEB;--amber-border:rgba(217,119,6,.22);
+  --muted:#9CA3AF;--muted-bg:#F3F4F6;
+  --border:#E5E7EB;--border-hover:#D1D5DB;
+  --focus:#2563EB;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.06);
+  --modal-overlay:rgba(0,0,0,.32);
+  --gold:#D97706;--gold-bg:#FEF3C7;--gold-border:rgba(217,119,6,.42);
+  --connector:#D1D5DB;
+}
+*,*::before,*after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100dvh;-webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  transition:background .2s ease,color .2s ease;
+}
+button{font-family:inherit;cursor:pointer}
+img{display:block;max-width:100%}
+
+/* ── A11Y ── */
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
+button:focus-visible,a:focus-visible,.tab-btn:focus-visible,.pill:focus-visible,
+.help-btn:focus-visible,.match:focus-visible,tr[role="button"]:focus-visible{
+  outline:2px solid var(--focus);outline-offset:2px;
+}
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
+.page{max-width:1200px;margin:0 auto;padding:16px 14px 80px}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:14px;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-logo{
+  width:36px;height:36px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent) 0%,#8B0A1A 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-weight:800;
+  color:#fff;font-size:.95em;letter-spacing:-.02em;
+  box-shadow:var(--shadow-sm);flex-shrink:0;
+}
+.brand-txt{min-width:0}
+.brand-txt h1{font-size:1.05em;font-weight:800;letter-spacing:-.02em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-txt .sub{font-size:.66em;color:var(--dim);font-weight:500;letter-spacing:.02em}
+.topbar-mid{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow-sm);role:tablist}
+.tab-btn{
+  background:transparent;border:none;color:var(--dim);
+  padding:7px 14px;border-radius:7px;font-size:.78em;font-weight:600;
+  transition:all .15s;white-space:nowrap;
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{background:var(--accent);color:#fff;box-shadow:0 1px 3px rgba(225,29,46,.35)}
+.topbar-r{display:flex;align-items:center;gap:8px}
+.upd{font-size:.66em;color:var(--dim);font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.upd b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+.countdown-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 0 3px var(--accent-border);
+  animation:cdpulse 1.2s ease infinite;flex-shrink:0;
+  transition:background .2s,box-shadow .2s;
+}
+.countdown-dot.cool{background:var(--dim);box-shadow:0 0 0 3px var(--muted-bg);animation:none}
+.countdown-dot.due{background:var(--amber);box-shadow:0 0 0 3px var(--amber-border)}
+@keyframes cdpulse{
+  0%,100%{opacity:.55;transform:scale(.85)}
+  50%{opacity:1;transform:scale(1)}
+}
+.icon-btn{
+  background:var(--card);border:1px solid var(--border);color:var(--dim);
+  width:32px;height:32px;border-radius:8px;font-size:.9em;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;box-shadow:var(--shadow-sm);
+}
+.icon-btn:hover{color:var(--text);border-color:var(--border-hover)}
+.icon-btn.installed{display:none}
+
+/* ── LOADING / ERROR ── */
+.loading-state{text-align:center;padding:60px 20px;color:var(--dim)}
+.loading-state p{margin-top:12px;font-size:.82em;font-weight:500}
+.spinner{width:32px;height:32px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skel{background:linear-gradient(90deg,var(--card) 0%,var(--card-hover) 50%,var(--card) 100%);background-size:200% 100%;animation:shim 1.4s linear infinite;border-radius:8px}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+}
+@media(max-width:980px){.skel-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.skel-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.skel-grid{grid-template-columns:1fr}}
+.skel-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px;height:200px;display:flex;flex-direction:column;gap:8px;
+}
+.skel-bar{height:12px;border-radius:4px}
+.skel-bar.b1{width:35%}
+.skel-bar.b2{width:75%}
+.skel-bar.b3{width:55%}
+.err-state{text-align:center;padding:50px 20px;color:var(--dim)}
+.err-state .err-icon{font-size:2em;margin-bottom:8px;opacity:.6}
+.err-state .err-msg{font-size:.86em;color:var(--text);font-weight:600;margin-bottom:4px}
+.err-state .err-sub{font-size:.72em;color:var(--dim);margin-bottom:16px}
+.retry-btn{
+  background:var(--accent);color:#fff;border:none;
+  padding:9px 22px;border-radius:8px;font-size:.78em;font-weight:600;
+  transition:all .15s;box-shadow:var(--shadow-sm);
+}
+.retry-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.retry-btn:active{transform:scale(.97)}
+
+/* ── GROUPS GRID ── */
+.groups-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+@media(max-width:980px){.groups-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.groups-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.groups-grid{grid-template-columns:1fr}}
+
+.gcard{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:12px;box-shadow:var(--shadow-sm);
+  transition:border-color .15s,box-shadow .15s;
+  animation:ci .35s ease;
+}
+.gcard:hover{border-color:var(--border-hover);box-shadow:var(--shadow-md)}
+@keyframes ci{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ghead{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.gbadge{
+  width:26px;height:26px;border-radius:6px;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:.9em;
+  flex-shrink:0;box-shadow:0 1px 3px rgba(225,29,46,.35);
+}
+.gname{font-size:.86em;font-weight:700;letter-spacing:-.01em}
+.grows{display:flex;flex-direction:column;gap:3px}
+.grow{
+  display:grid;grid-template-columns:18px 1fr auto;
+  align-items:center;gap:8px;padding:6px 6px 6px 8px;
+  border-radius:6px;border-left:3px solid transparent;
+  transition:background .15s;cursor:pointer;
+}
+.grow:hover{background:var(--card-hover)}
+.grow.top2{background:var(--qualified-bg);border-left-color:var(--qualified)}
+.grow.third{background:var(--amber-bg);border-left-color:var(--amber);border-left-style:dashed}
+.grow.out{opacity:.7;border-left-color:transparent}
+.grow.flash{animation:flash 1.2s ease}
+@keyframes flash{0%,100%{background:transparent}25%{background:var(--gold-bg)}50%{background:transparent}75%{background:var(--gold-bg)}}
+.flag{
+  width:24px;height:16px;border-radius:2px;
+  background:var(--card-hover);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.55em;font-weight:700;color:var(--dim);
+  font-family:'Space Grotesk',sans-serif;letter-spacing:.02em;
+  overflow:hidden;flex-shrink:0;
+}
+.flag img{width:100%;height:100%;object-fit:cover;display:block}
+.tname{font-size:.78em;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tname .badge{
+  display:inline-block;padding:1px 5px;border-radius:3px;
+  font-size:.7em;font-weight:700;margin-left:4px;vertical-align:middle;
+}
+.tname .badge.q{background:var(--qualified-bg);color:var(--qualified);border:1px solid var(--qualified-border)}
+.tname .badge.t{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.tname .badge.o{background:var(--muted-bg);color:var(--dim);border:1px solid var(--border)}
+.tpts{font-family:'Space Grotesk',sans-serif;font-size:.95em;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
+.grow.top2 .tpts{color:var(--qualified)}
+.grow.third .tpts{color:var(--amber)}
+
+.gstats{
+  display:grid;grid-template-columns:1fr repeat(9,auto);gap:0;
+  font-size:.58em;color:var(--dim);padding:0 6px 4px 32px;
+  font-variant-numeric:tabular-nums;
+}
+.gstats span{text-align:right;min-width:18px}
+.gstats span:first-child{text-align:left;color:transparent}
+.gstats-h{
+  display:grid;grid-template-columns:1fr repeat(9,auto);
+  font-size:.56em;color:var(--dim);font-weight:600;
+  padding:4px 6px 4px 32px;text-transform:uppercase;letter-spacing:.04em;
+}
+.gstats-h span{text-align:right;min-width:18px}
+.gstats-h span:first-child{text-align:left}
+
+/* ── MASTER TABLE ── */
+.tbl-wrap{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm);
+  animation:ci .3s ease;
+}
+.tbl-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;
+}
+.tbl-toolbar h3{font-size:.84em;font-weight:700}
+.ghost-btn{
+  background:var(--card);color:var(--text);border:1px solid var(--border);
+  padding:6px 12px;border-radius:6px;font-size:.72em;font-weight:600;
+  transition:all .15s;box-shadow:var(--shadow-sm);
+}
+.ghost-btn:hover{border-color:var(--border-hover);background:var(--card-hover)}
+.tbl{width:100%;border-collapse:collapse;font-size:.76em}
+.tbl thead th{
+  background:var(--bg);color:var(--dim);
+  padding:8px 6px;text-align:right;font-weight:600;
+  border-bottom:1px solid var(--border);cursor:pointer;user-select:none;
+  white-space:nowrap;font-size:.85em;
+  transition:color .15s;
+}
+.tbl thead th:first-child,.tbl thead th:nth-child(2){text-align:left}
+.tbl thead th:hover{color:var(--text)}
+.tbl thead th.sorted{color:var(--accent)}
+.tbl thead th.sorted::after{content:' ▾';font-size:.8em}
+.tbl thead th.sorted.asc::after{content:' ▴'}
+.tbl tbody td{
+  padding:8px 6px;border-bottom:1px solid var(--border);
+  font-variant-numeric:tabular-nums;text-align:right;
+}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl tbody tr{cursor:pointer;transition:background .15s}
+.tbl tbody tr:hover{background:var(--card-hover)}
+.tbl tbody tr.top2{background:var(--qualified-bg)}
+.tbl tbody tr.top2:hover{background:var(--qualified-border)}
+.tbl tbody tr.third{background:var(--amber-bg)}
+.tbl tbody tr.third:hover{background:var(--amber-border)}
+.tbl td.gl{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--accent);text-align:left;width:32px}
+.tbl td.tn{text-align:left;font-weight:600;display:flex;align-items:center;gap:6px}
+.tbl td.num{color:var(--text-secondary);font-family:'Space Grotesk',sans-serif}
+.tbl td.pts{color:var(--text);font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:1.05em}
+.tbl tr.top2 td.pts{color:var(--qualified)}
+.tbl tr.third td.pts{color:var(--amber)}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl-scroll-hint{
+  font-size:.62em;color:var(--dim);text-align:right;padding:6px 12px 0;
+  display:none;
+}
+@media(max-width:720px){.tbl-scroll-hint{display:block}}
+
+/* ── BRACKET ── */
+.brk-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.brk-head h3{font-size:.92em;font-weight:700;margin-right:6px}
+.pill{
+  background:var(--card);color:var(--dim);border:1px solid var(--border);
+  padding:7px 13px;border-radius:999px;font-size:.74em;font-weight:600;
+  transition:all .15s;box-shadow:var(--shadow-sm);
+}
+.pill:hover{color:var(--text);border-color:var(--border-hover)}
+.pill.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 1px 3px rgba(225,29,46,.35)}
+.brk-toggle{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.72em;color:var(--dim);font-weight:500;cursor:pointer;user-select:none}
+.brk-toggle input{accent-color:var(--accent);cursor:pointer}
+
+.rd-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+  animation:ci .3s ease;
+}
+@media(max-width:640px){.rd-grid{grid-template-columns:1fr}}
+
+.match{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;cursor:pointer;
+  box-shadow:var(--shadow-sm);transition:all .15s;
+  display:flex;flex-direction:column;gap:6px;
+  min-height:96px;
+}
+.match:hover{border-color:var(--accent-border);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.match.live{border-color:var(--live-border);box-shadow:0 0 0 1px var(--live-border)}
+.match.done{border-color:var(--qualified-border)}
+.match.postponed{opacity:.7;border-style:dashed}
+.match.gold{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-border)}
+.mrow{
+  display:grid;grid-template-columns:auto 1fr auto;
+  align-items:center;gap:8px;padding:4px 0;
+}
+.mrow+.mrow{border-top:1px dashed var(--border)}
+.mname{display:flex;align-items:center;gap:8px;min-width:0}
+.mname .flag{flex-shrink:0}
+.mname .mn{font-size:.84em;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mname .mn.tbd{color:var(--dim);font-weight:500;font-style:italic}
+.mscore{font-family:'Space Grotesk',sans-serif;font-size:1.05em;font-weight:700;font-variant-numeric:tabular-nums;min-width:22px;text-align:right}
+.mrow.winner .mscore{color:var(--qualified)}
+.mrow.winner .mn::after{content:' ✓';color:var(--qualified);font-weight:800}
+.mrow.loser .mscore{color:var(--dim)}
+.mfoot{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:.66em;color:var(--dim);margin-top:2px;flex-wrap:wrap;
+}
+.state-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:999px;font-weight:700;font-size:.95em;
+  border:1px solid transparent;white-space:nowrap;
+}
+.state-pill.scheduled{background:var(--muted-bg);color:var(--dim);border-color:var(--border)}
+.state-pill.in_progress{background:var(--live-bg);color:var(--live);border-color:var(--live-border)}
+.state-pill.in_progress::before{
+  content:'';width:6px;height:6px;border-radius:50%;background:var(--live);
+  animation:pulse 1.2s ease infinite;
+}
+.state-pill.final{background:var(--qualified-bg);color:var(--qualified);border-color:var(--qualified-border)}
+.state-pill.postponed{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+.mtime{font-variant-numeric:tabular-nums;font-weight:500}
+.mvenue{font-size:.95em;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;flex:1;min-width:0}
+
+/* FULL BRACKET TREE */
+.full-brk-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px}
+.full-brk-wrap::-webkit-scrollbar{height:6px}
+.full-brk-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.full-brk{
+  display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));
+  gap:24px;min-width:1100px;position:relative;
+}
+.col-title{
+  font-size:.72em;font-weight:700;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.05em;
+  text-align:center;padding-bottom:8px;
+  border-bottom:1px solid var(--border);margin-bottom:8px;
+}
+.col{display:flex;flex-direction:column;gap:10px;justify-content:space-around;min-height:480px;position:relative}
+.col .match{margin:0}
+.full-brk .col:not(:last-child)::after{
+  content:'';position:absolute;right:-12px;top:10%;bottom:10%;
+  width:2px;background:var(--connector);
+}
+.full-brk .col:not(:last-child) .match::before{
+  content:'';position:absolute;right:-12px;top:50%;width:12px;height:2px;
+  background:var(--connector);
+}
+.full-brk .col .match{position:relative}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:var(--modal-overlay);
+  z-index:999;display:none;align-items:center;justify-content:center;
+  padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:24px;max-width:420px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  animation:ci .25s ease;
+}
+.modal h2{font-size:1em;font-weight:700;margin-bottom:4px;letter-spacing:-.01em}
+.modal .modal-sub{font-size:.74em;color:var(--dim);margin-bottom:16px;font-weight:500}
+.modal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.82em}
+.modal-row:last-of-type{border-bottom:none}
+.modal-row .lbl{color:var(--dim);font-weight:500}
+.modal-row .val{font-weight:600;text-align:right}
+.modal-row .val.big{font-size:1.2em;font-family:'Space Grotesk',sans-serif}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:999px;padding:8px 18px;font-size:.78em;font-weight:500;
+  z-index:300;opacity:0;transition:opacity .2s,transform .2s;
+  box-shadow:var(--shadow-md);pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-2px)}
+
+/* ── HELP BUTTON ── */
+.help-btn{
+  position:fixed;right:14px;bottom:14px;width:36px;height:36px;
+  border-radius:50%;background:var(--card);border:1px solid var(--border);
+  color:var(--dim);font-weight:800;font-size:.9em;display:flex;
+  align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:var(--shadow-md);transition:all .15s;z-index:200;
+}
+.help-btn:hover{color:var(--text);border-color:var(--border-hover)}
+.help-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .topbar{gap:8px}
+  .brand-txt h1{font-size:.96em}
+  .tab-btn{padding:6px 10px;font-size:.72em}
+  .upd{font-size:.6em}
+  .page{padding:12px 10px 60px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="page" id="live" aria-live="polite" aria-atomic="false">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true">26</div>
+      <div class="brand-txt">
+        <h1>FIFA 26 世界盃</h1>
+        <span class="sub">分組賽 · 淘汰賽 · 實時</span>
+      </div>
+    </div>
+    <div id="tabs" class="topbar-mid" role="tablist" aria-label="檢視切換">
+      <button class="tab-btn active" data-tab="groups" role="tab" aria-selected="true" aria-controls="viewGroups">分組賽</button>
+      <button class="tab-btn" data-tab="bracket" role="tab" aria-selected="false" aria-controls="viewBracket" tabindex="-1">淘汰賽</button>
+    </div>
+    <div class="topbar-r">
+      <span class="upd" id="updWrap" aria-label="最後更新時間">
+        <span class="countdown-dot" id="cdDot" aria-hidden="true"></span>
+        更新於 <b id="updAgo">--</b> 前
+      </span>
+      <button class="icon-btn" id="themeBtn" type="button" title="切換主題" aria-label="切換主題">🌙</button>
+      <button class="icon-btn installed" id="installBtn" type="button" title="加入主畫面" aria-label="加入主畫面">⬇</button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading" class="loading-state" role="status">
+    <div class="skel-grid" aria-hidden="true">
+      <div class="skel-card"><div class="skel skel-bar b1"></div><div class="skel skel-bar b2"></div><div class="skel skel-bar b3"></div><div class="skel skel-bar b2"></div></div>
+      <div class="skel-card"><div class="skel skel-bar b1"></div><div class="skel skel-bar b2"></div><div class="skel skel-bar b3"></div><div class="skel skel-bar b2"></div></div>
+      <div class="skel-card"><div class="skel skel-bar b1"></div><div class="skel skel-bar b2"></div><div class="skel skel-bar b3"></div><div class="skel skel-bar b2"></div></div>
+      <div class="skel-card"><div class="skel skel-bar b1"></div><div class="skel skel-bar b2"></div><div class="skel skel-bar b3"></div><div class="skel skel-bar b2"></div></div>
+    </div>
+    <p style="margin-top:18px">載入中…</p>
+  </div>
+
+  <!-- ERROR -->
+  <div id="error" class="err-state" role="alert" style="display:none">
+    <div class="err-icon" aria-hidden="true">⚠</div>
+    <div class="err-msg" id="errMsg">載入失敗</div>
+    <div class="err-sub" id="errSub"></div>
+    <button class="retry-btn" id="retryBtn" type="button">重試</button>
+  </div>
+
+  <!-- GROUPS -->
+  <section id="viewGroups" role="tabpanel" aria-labelledby="tabGroups" style="display:none">
+    <div id="gridWrap">
+      <div class="groups-grid" id="groupsGrid"></div>
+    </div>
+    <div id="tableWrap" style="display:none"></div>
+    <div style="margin-top:14px;text-align:center">
+      <button class="ghost-btn" id="viewToggle" type="button">切換到總表</button>
+    </div>
+  </section>
+
+  <!-- BRACKET -->
+  <section id="viewBracket" role="tabpanel" aria-labelledby="tabBracket" style="display:none">
+    <div class="brk-head" role="toolbar" aria-label="淘汰賽圈數切換">
+      <h3>淘汰賽</h3>
+      <button class="pill" data-round="r32" type="button" aria-pressed="false">32強</button>
+      <button class="pill active" data-round="r16" type="button" aria-pressed="true">16強</button>
+      <button class="pill" data-round="qf" type="button" aria-pressed="false">8強</button>
+      <button class="pill" data-round="sf" type="button" aria-pressed="false">4強</button>
+      <button class="pill" data-round="final" type="button" aria-pressed="false">決賽</button>
+      <label class="brk-toggle">
+        <input type="checkbox" id="fullBrk"> 顯示完整
+      </label>
+    </div>
+    <div id="brkContent"></div>
+  </section>
+</div>
+
+<!-- MATCH MODAL -->
+<div class="modal-overlay" id="matchModal" role="dialog" aria-modal="true" aria-labelledby="mTitle" aria-hidden="true">
+  <div class="modal">
+    <h2 id="mTitle">場次</h2>
+    <div class="modal-sub" id="mSub"></div>
+    <div id="mBody"></div>
+    <div class="modal-actions">
+      <button class="ghost-btn" id="closeModal" type="button" style="flex:1">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<button class="help-btn" id="helpBtn" type="button" title="說明" aria-label="說明">?</button>
+
+<script>
+// ── STATE (persisted under fifa26_state_v1) ──
+var STORE_KEY='fifa26_state_v1';
+function loadState(){
+  try{var s=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');return s||{};}catch(e){return {};}
+}
+function saveState(patch){
+  try{
+    var s=loadState();
+    Object.keys(patch).forEach(function(k){s[k]=patch[k];});
+    localStorage.setItem(STORE_KEY,JSON.stringify(s));
+  }catch(e){}
+}
+
+// ── THEME ──
+function getSystemTheme(){return window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  var b=document.getElementById('themeBtn');
+  if(b){b.textContent=t==='dark'?'☀':'🌙';b.setAttribute('aria-label',t==='dark'?'切換到淺色主題':'切換到深色主題');}
+}
+function toggleTheme(){
+  var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  applyTheme(n);
+  saveState({theme:n});
+}
+(function(){
+  var s=loadState();
+  var t=s.theme||getSystemTheme();
+  applyTheme(t);
+  try{
+    window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(e){
+      var cur=loadState();
+      if(!cur.theme)applyTheme(e.matches?'dark':'light');
+    });
+  }catch(e){}
+})();
+
+// ── RUNTIME STATE ──
+var snap=null;
+var lastSnapDigest='';
+var activeTab='groups';
+var activeRound='r16';
+var fullBracket=false;
+var tableView=false;
+var tableSort={col:'pts',dir:'desc'};
+var highlightedTeam=null;
+var pollTimer=null;
+var agoTimer=null;
+var lastFetchTs=0;
+var viewState='loading';
+var roundsOrder=['r32','r16','qf','sf','final'];
+var roundNames={'r32':'32強','r16':'16強','qf':'8強','sf':'4強','final':'決賽','third':'季軍戰'};
+var POLL_MS=60000;
+
+// ── INIT ──
+(function init(){
+  var s=loadState();
+  if(s.tab==='groups'||s.tab==='bracket')activeTab=s.tab;
+  if(roundsOrder.indexOf(s.round)>=0)activeRound=s.round;
+  if(typeof s.tableView==='boolean')tableView=s.tableView;
+  setTab(activeTab,false);
+  setRound(activeRound,false);
+  if(s.tableView)document.getElementById('viewToggle').textContent='切換到分組';
+  fetchSnap();
+  if('serviceWorker'in navigator&&location.protocol!=='file:'){
+    try{navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}
+  }
+  startAgo();
+  startPoll();
+  bindHelp();
+  bindBeforeUnload();
+})();
+
+// ── FETCH / POLL ──
+async function fetchSnap(silent){
+  if(!silent){
+    viewState='loading';
+    document.getElementById('loading').style.display='block';
+    document.getElementById('error').style.display='none';
+    document.getElementById('viewGroups').style.display='none';
+    document.getElementById('viewBracket').style.display='none';
+  }
+  try{
+    var r=await fetch('/api/snapshot',{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var raw=await r.json();
+    var s=normalize(raw);
+    snap=s;
+    lastFetchTs=Date.now();
+    viewState='ok';
+    document.getElementById('loading').style.display='none';
+    document.getElementById('error').style.display='none';
+    render();
+  }catch(e){
+    viewState='error';
+    document.getElementById('loading').style.display='none';
+    document.getElementById('viewGroups').style.display='none';
+    document.getElementById('viewBracket').style.display='none';
+    var eEl=document.getElementById('error');
+    eEl.style.display='block';
+    var reason='請檢查網絡';
+    if(e&&e.message){
+      if(/Failed to fetch|NetworkError|TypeError/i.test(e.message))reason='網絡錯誤 · 請檢查連線';
+      else if(/HTTP 5\d\d/.test(e.message))reason='伺服器錯誤 · 請稍後再試';
+      else if(/HTTP 4\d\d/.test(e.message))reason='請求被拒絕 ('+e.message+')';
+      else reason=e.message;
+    }
+    document.getElementById('errMsg').textContent='載入失敗';
+    document.getElementById('errSub').textContent=reason;
+  }
+}
+
+/**
+ * Normalise the raw server payload into the shapes the renderers expect.
+ *  raw = { matches:[{status,round_slug,home,away,group,date,venue,...}], last_update }
+ *  out = { standings:{groups:[...]}, bracket:{rounds:{r32:[...],...}}, updated_at }
+ */
+function normalize(raw){
+  var matches=(raw&&raw.matches)||[];
+  var out={standings:{groups:[]},bracket:{rounds:{}},updated_at:raw.last_update||0};
+
+  // ── standings ──
+  var groupsByLetter={};
+  for(var i=0;i<matches.length;i++){
+    var m=matches[i];
+    if(m.round_slug!=='group-stage')continue;
+    if(m.status!=='final')continue;
+    var g=m.group;if(!g)continue;
+    var h=m.home,a=m.away;
+    var hs=intOr0(h.score),as_=intOr0(a.score);
+    if(!groupsByLetter[g])groupsByLetter[g]={};
+    var recH=groupsByLetter[g][teamKey(h)];
+    var recA=groupsByLetter[g][teamKey(a)];
+    if(!recH){recH=teamRec(h);groupsByLetter[g][teamKey(h)]=recH;}
+    if(!recA){recA=teamRec(a);groupsByLetter[g][teamKey(a)]=recA;}
+    recH.played++;recA.played++;
+    recH.gf+=hs;recH.ga+=as_;
+    recA.gf+=as_;recA.ga+=hs;
+    if(hs>as_){recH.won++;recH.pts+=3;recA.lost++;}
+    else if(hs<as_){recA.won++;recA.pts+=3;recH.lost++;}
+    else{recH.drawn++;recA.drawn++;recH.pts++;recA.pts++;}
+  }
+  var letters=Object.keys(groupsByLetter).sort();
+  letters.forEach(function(L){
+    var teams=Object.values(groupsByLetter[L]);
+    teams.forEach(function(t){t.gd=t.gf-t.ga;});
+    teams.sort(function(a,b){
+      if(b.pts!==a.pts)return b.pts-a.pts;
+      if(b.gd!==a.gd)return b.gd-a.gd;
+      if(b.gf!==a.gf)return b.gf-a.gf;
+      return(a.name||'').localeCompare(b.name||'');
+    });
+    teams.forEach(function(t,i){t.qualified=i<2?'top2':(i===2?'third':'out');});
+    out.standings.groups.push({letter:L,teams:teams});
+  });
+
+  // ── bracket ──
+  var rounds={r32:[],r16:[],qf:[],sf:[],final:[],third:[]};
+  var bucketMap={r32:'r32','round-of-32':'r32',r16:'r16','round-of-16':'r16',qf:'qf',quarterfinals:'qf',sf:'sf',semifinals:'sf',final:'final','third-place':'third'};
+  matches.forEach(function(m){
+    var key=bucketMap[m.round_slug];
+    if(!key)return;
+    rounds[key].push(buildMatchCard(m));
+  });
+  Object.keys(rounds).forEach(function(k){rounds[k].sort(function(a,b){return(a.kickoff||'').localeCompare(b.kickoff||'');});});
+  out.bracket.rounds=rounds;
+  return out;
+}
+
+function teamKey(t){return t.iso||String(t.id||t.name||'');}
+function intOr0(v){var n=parseInt(v,10);return isNaN(n)?0:n;}
+function teamRec(t){
+  return {id:t.id,iso:t.iso,name:t.name,short:t.short,logo:t.logo,color:t.color,flag:t.logo||'',
+    played:0,won:0,drawn:0,lost:0,gf:0,ga:0,gd:0,pts:0};
+}
+function buildMatchCard(m){
+  var s=m.status||'scheduled';
+  var score=null;
+  if(s==='in_progress'||s==='final'){
+    score=String(intOr0(m.home.score))+'-'+String(intOr0(m.away.score));
+  }
+  return {
+    id:m.id,
+    home:m.home,
+    away:m.away,
+    score:score,
+    status:s,
+    kickoff:m.date,
+    venue:m.venue,
+    round:m.round,
+    round_slug:m.round_slug
+  };
+}
+
+function startPoll(){
+  if(pollTimer)clearInterval(pollTimer);
+  pollTimer=setInterval(function(){
+    if(document.hidden)return;
+    fetchSnap(true);
+  },POLL_MS);
+}
+function startAgo(){
+  if(agoTimer)clearInterval(agoTimer);
+  agoTimer=setInterval(updateAgo,1000);
+  updateAgo();
+}
+function updateAgo(){
+  var el=document.getElementById('updAgo');
+  var dot=document.getElementById('cdDot');
+  if(!el||!dot)return;
+  if(!lastFetchTs){el.textContent='--';dot.className='countdown-dot cool';return;}
+  var s=Math.max(0,Math.floor((Date.now()-lastFetchTs)/1000));
+  if(s<60)el.textContent=s+' 秒';
+  else el.textContent=Math.floor(s/60)+' 分鐘';
+  var age=Date.now()-lastFetchTs;
+  var due=POLL_MS-1500;
+  dot.className='countdown-dot'+(age>=due?' due':age>POLL_MS/2?' ':' cool');
+}
+
+// ── DIGEST (pulse-style change detection) ──
+function digest(s){
+  if(!s)return'';
+  try{
+    var st=JSON.stringify({g:s.standings.groups,b:s.bracket.rounds,lu:s.updated_at});
+    var h=0,i;for(i=0;i<st.length;i++){h=((h<<5)-h)+st.charCodeAt(i);h|=0;}
+    return h.toString(36);
+  }catch(e){return''+Date.now();}
+}
+
+// ── RENDER ──
+function render(){
+  if(!snap)return;
+  var dg=digest(snap);
+  var changed=dg!==lastSnapDigest;
+  lastSnapDigest=dg;
+  if(activeTab==='groups'){
+    document.getElementById('viewGroups').style.display='block';
+    document.getElementById('viewBracket').style.display='none';
+    if(tableView)renderTable();
+    else renderGroups();
+  }else{
+    document.getElementById('viewGroups').style.display='none';
+    document.getElementById('viewBracket').style.display='block';
+    renderBracket();
+  }
+}
+
+function setTab(t,persist){
+  activeTab=t;
+  var btns=document.querySelectorAll('#tabs .tab-btn');
+  btns.forEach(function(b){
+    var on=b.dataset.tab===t;
+    b.classList.toggle('active',on);
+    b.setAttribute('aria-selected',on?'true':'false');
+    b.setAttribute('tabindex',on?'0':'-1');
+  });
+  if(persist!==false)saveState({tab:t});
+  if(viewState==='ok'&&snap)render();
+}
+document.getElementById('tabs').addEventListener('click',function(e){
+  var b=e.target.closest('.tab-btn');if(b)setTab(b.dataset.tab);
+});
+document.getElementById('tabs').addEventListener('keydown',function(e){
+  if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+  var btns=Array.from(document.querySelectorAll('#tabs .tab-btn'));
+  var idx=btns.findIndex(function(b){return b.getAttribute('aria-selected')==='true';});
+  if(idx<0)return;
+  var n=idx+(e.key==='ArrowRight'?1:-1);
+  if(n<0)n=btns.length-1;if(n>=btns.length)n=0;
+  btns[n].focus();setTab(btns[n].dataset.tab);
+});
+
+function setRound(r,persist){
+  activeRound=r;
+  var pills=document.querySelectorAll('.brk-head .pill');
+  pills.forEach(function(p){
+    var on=p.dataset.round===r;
+    p.classList.toggle('active',on);
+    p.setAttribute('aria-pressed',on?'true':'false');
+  });
+  if(persist!==false)saveState({round:r});
+}
+
+// ── GROUPS ──
+function renderGroups(){
+  var grid=document.getElementById('groupsGrid');
+  var groups=(snap.standings&&snap.standings.groups)||[];
+  if(!groups.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim)">未有分組數據</div>';
+    return;
+  }
+  grid.innerHTML=groups.map(function(g,gi){
+    return '<article class="gcard" style="animation-delay:'+(gi*0.04)+'s" aria-label="'+esc(g.letter)+'組">'+
+      '<div class="ghead">'+
+        '<div class="gbadge" aria-hidden="true">'+esc(g.letter)+'</div>'+
+        '<div class="gname">'+esc(g.letter)+' 組</div>'+
+      '</div>'+
+      '<div class="gstats-h" aria-hidden="true"><span></span><span>場</span><span>勝</span><span>和</span><span>負</span><span>入</span><span>失</span><span>淨</span><span>分</span></div>'+
+      '<div class="grows">'+
+        (g.teams||[]).map(function(t){return renderGroupRow(g.letter,t)}).join('')+
+      '</div>'+
+    '</article>';
+  }).join('');
+  bindGroupRows();
+}
+function renderGroupRow(gl,t){
+  var cls='grow',badge='';
+  if(t.qualified==='top2'){cls+=' top2';badge='<span class="badge q">出線</span>';}
+  else if(t.qualified==='third'){cls+=' third';badge='<span class="badge t">有機</span>';}
+  else if(t.qualified==='out'){cls+=' out';badge='<span class="badge o">出局</span>';}
+  if(highlightedTeam&&t.iso===highlightedTeam)cls+=' flash';
+  return '<button type="button" class="'+cls+'" data-iso="'+(t.iso||'')+'" data-grp="'+esc(gl)+'" aria-label="'+esc(t.name||t.short||t.iso||'球隊')+' · '+num(t.pts)+'分">'+
+    flag(t)+
+    '<span class="tname">'+esc(t.name||t.short||t.iso||'—')+badge+'</span>'+
+    '<span class="tpts">'+num(t.pts)+'</span>'+
+  '</button>'+
+  '<div class="gstats" aria-hidden="true"><span></span><span>'+num(t.played)+'</span><span>'+num(t.won)+'</span><span>'+num(t.drawn)+'</span><span>'+num(t.lost)+'</span><span>'+num(t.gf)+'</span><span>'+num(t.ga)+'</span><span>'+num(t.gd)+'</span><span>'+num(t.pts)+'</span></div>';
+}
+function flag(t){
+  if(t&&t.flag)return '<span class="flag" aria-hidden="true"><img src="'+esc(t.flag)+'" alt="" onerror="this.parentNode.textContent=\''+esc(t.short||t.iso||'')+'\'"></span>';
+  return '<span class="flag" aria-hidden="true">'+esc((t&&(t.short||t.iso))||'')+'</span>';
+}
+function num(n){return (n===undefined||n===null)?'0':n}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+function bindGroupRows(){
+  document.querySelectorAll('.grow[data-iso]').forEach(function(el){
+    el.addEventListener('click',function(){
+      var iso=el.dataset.iso;if(!iso)return;
+      highlightedTeam=iso;
+      var onGroups=activeTab==='groups';
+      if(onGroups&&viewState==='ok'&&snap){renderGroups();}
+      setTab('bracket');
+      showToast('已切到淘汰賽 · '+iso);
+    });
+  });
+}
+
+// ── TABLE ──
+function renderTable(){
+  var wrap=document.getElementById('tableWrap');
+  var grid=document.getElementById('gridWrap');
+  grid.style.display='none';
+  wrap.style.display='block';
+  var groups=(snap.standings&&snap.standings.groups)||[];
+  var rows=[];
+  groups.forEach(function(g){
+    (g.teams||[]).forEach(function(t){rows.push(Object.assign({grp:g.letter},t))});
+  });
+  var sortFns={
+    grp:function(t){return t.grp},
+    name:function(t){return t.name||t.short||t.iso||''},
+    played:function(t){return t.played||0},
+    won:function(t){return t.won||0},
+    drawn:function(t){return t.drawn||0},
+    lost:function(t){return t.lost||0},
+    gf:function(t){return t.gf||0},
+    ga:function(t){return t.ga||0},
+    gd:function(t){return t.gd||0},
+    pts:function(t){return t.pts||0}
+  };
+  var sc=tableSort.col,sd=tableSort.dir==='asc'?1:-1;
+  rows.sort(function(a,b){
+    var va=sortFns[sc](a),vb=sortFns[sc](b);
+    if(va<vb)return -1*sd;if(va>vb)return 1*sd;
+    if(a.pts!==b.pts)return (b.pts||0)-(a.pts||0);
+    if(a.gd!==b.gd)return (b.gd||0)-(a.gd||0);
+    return (b.gf||0)-(a.gf||0);
+  });
+  wrap.innerHTML=
+    '<div class="tbl-wrap">'+
+      '<div class="tbl-toolbar"><h3>積分總表 · '+rows.length+' 隊</h3>'+
+      '<button class="ghost-btn" id="backGrid" type="button">返回分組</button></div>'+
+      '<div class="tbl-scroll-hint" aria-hidden="true">← 橫向滑動 →</div>'+
+      '<div class="tbl-scroll">'+
+      '<table class="tbl"><thead><tr>'+
+        '<th data-col="grp" scope="col">組</th>'+
+        '<th data-col="name" scope="col">球隊</th>'+
+        '<th data-col="played" scope="col">場</th>'+
+        '<th data-col="won" scope="col">勝</th>'+
+        '<th data-col="drawn" scope="col">和</th>'+
+        '<th data-col="lost" scope="col">負</th>'+
+        '<th data-col="gf" scope="col">入</th>'+
+        '<th data-col="ga" scope="col">失</th>'+
+        '<th data-col="gd" scope="col">淨</th>'+
+        '<th data-col="pts" scope="col">分</th>'+
+      '</tr></thead><tbody>'+
+        rows.map(function(t){
+          var cls='';
+          if(t.qualified==='top2')cls=' class="top2"';
+          else if(t.qualified==='third')cls=' class="third"';
+          return '<tr'+cls+' data-iso="'+(t.iso||'')+'" tabindex="0" role="button" aria-label="'+esc(t.name||t.short||t.iso||'球隊')+' '+esc(t.grp)+'組 '+num(t.pts)+'分">'+
+            '<td class="gl">'+esc(t.grp)+'</td>'+
+            '<td class="tn">'+flag(t)+'<span>'+esc(t.name||t.short||t.iso||'—')+'</span></td>'+
+            '<td class="num">'+num(t.played)+'</td>'+
+            '<td class="num">'+num(t.won)+'</td>'+
+            '<td class="num">'+num(t.drawn)+'</td>'+
+            '<td class="num">'+num(t.lost)+'</td>'+
+            '<td class="num">'+num(t.gf)+'</td>'+
+            '<td class="num">'+num(t.ga)+'</td>'+
+            '<td class="num">'+num(t.gd)+'</td>'+
+            '<td class="pts">'+num(t.pts)+'</td>'+
+          '</tr>';
+        }).join('')+
+      '</tbody></table></div></div>';
+  var ths=wrap.querySelectorAll('thead th');
+  ths.forEach(function(th){
+    if(th.dataset.col===tableSort.col)th.classList.add('sorted',tableSort.dir==='asc'?'asc':'');
+    th.addEventListener('click',function(){
+      var c=th.dataset.col;
+      if(tableSort.col===c)tableSort.dir=tableSort.dir==='asc'?'desc':'asc';
+      else{tableSort.col=c;tableSort.dir=(c==='name'||c==='grp')?'asc':'desc';}
+      renderTable();
+    });
+  });
+  wrap.querySelectorAll('tbody tr[data-iso]').forEach(function(tr){
+    var go=function(){
+      highlightedTeam=tr.dataset.iso;
+      tableView=false;
+      document.getElementById('viewToggle').textContent='切換到總表';
+      saveState({tableView:false});
+      setTab('bracket');
+      showToast('已切到淘汰賽 · '+tr.dataset.iso);
+    };
+    tr.addEventListener('click',go);
+    tr.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+  document.getElementById('backGrid').addEventListener('click',function(){
+    tableView=false;document.getElementById('viewToggle').textContent='切換到總表';
+    saveState({tableView:false});
+    document.getElementById('tableWrap').style.display='none';
+    document.getElementById('gridWrap').style.display='block';
+    renderGroups();
+  });
+}
+document.getElementById('viewToggle').addEventListener('click',function(){
+  tableView=!tableView;
+  this.textContent=tableView?'切換到分組':'切換到總表';
+  saveState({tableView:tableView});
+  if(tableView)renderTable();
+  else{document.getElementById('tableWrap').style.display='none';document.getElementById('gridWrap').style.display='block';renderGroups();}
+});
+document.getElementById('retryBtn').addEventListener('click',function(){fetchSnap()});
+
+// ── BRACKET ──
+function renderBracket(){
+  var c=document.getElementById('brkContent');
+  var rounds=(snap.bracket&&snap.bracket.rounds)||{};
+  var hasAny=Object.keys(rounds).some(function(k){return(rounds[k]||[]).length>0;});
+  if(!hasAny){
+    c.innerHTML='<div style="text-align:center;padding:50px;color:var(--dim)">未有淘汰賽數據</div>';
+    return;
+  }
+  if(fullBracket){
+    c.innerHTML=renderFullBracket(rounds);
+  }else{
+    var list=rounds[activeRound]||[];
+    if(!list.length&&rounds.r16)list=rounds.r16;
+    c.innerHTML=renderRoundGrid(list);
+  }
+  bindMatchCards();
+}
+function renderRoundGrid(list){
+  if(!list.length)return '<div style="text-align:center;padding:30px;color:var(--dim)">此圈暫未編排</div>';
+  return '<div class="rd-grid">'+list.map(function(m){return renderMatch(m)}).join('')+'</div>';
+}
+function renderMatch(m){
+  var cls='match';
+  var s=m.status||'scheduled';
+  if(s==='in_progress')cls+=' live';
+  else if(s==='final')cls+=' done';
+  else if(s==='postponed')cls+=' postponed';
+  if(highlightedTeam){
+    var hi=highlightedTeam;
+    var ht=m.home&&m.home.iso===hi,at=m.away&&m.away.iso===hi;
+    if(ht||at)cls+=' gold';
+  }
+  var hScore='',aScore='',hCls='',aCls='';
+  var scoreParts=(m.score&&m.score.split('-'))||[];
+  var hVal=scoreParts[0],aVal=scoreParts[1];
+  var hasScore=hVal!==undefined&&hVal!==null&&hVal!=='';
+  if(s==='final'){
+    var hn=parseInt(hVal,10),an=parseInt(aVal,10);
+    if(!isNaN(hn)&&!isNaN(an)){
+      if(hn>an){hCls='winner';aCls='loser';}
+      else if(an>hn){aCls='winner';hCls='loser';}
+    }
+    hScore=hVal;aScore=aVal;
+  }else if(s==='in_progress'){
+    hScore=hasScore?hVal:'-';aScore=hasScore?aVal:'-';
+  }else{
+    hScore='-';aScore='-';
+  }
+  var stLabel=stateLabel(s);
+  var stCls=s;
+  var dt=m.kickoff?fmtDate(m.kickoff):'';
+  var venue=m.venue?esc(m.venue):'';
+  var id=m.id?'data-mid="'+esc(m.id)+'"':'';
+  var ariaLabel=(teamLabel(m.home)||'待定')+' 對 '+(teamLabel(m.away)||'待定')+' · '+stLabel+(dt?' · '+dt:'');
+  return '<div class="'+cls+'" '+id+' role="button" tabindex="0" aria-label="'+esc(ariaLabel)+'">'+
+    '<div class="mrow '+hCls+'">'+
+      '<span class="mname">'+flag(m.home||{})+'<span class="mn'+(m.home&&m.home.name?'':' tbd')+'">'+teamLabel(m.home)+'</span></span>'+
+      '<span class="mscore">'+hScore+'</span>'+
+    '</div>'+
+    '<div class="mrow '+aCls+'">'+
+      '<span class="mname">'+flag(m.away||{})+'<span class="mn'+(m.away&&m.away.name?'':' tbd')+'">'+teamLabel(m.away)+'</span></span>'+
+      '<span class="mscore">'+aScore+'</span>'+
+    '</div>'+
+    '<div class="mfoot">'+
+      '<span class="state-pill '+stCls+'">'+stLabel+'</span>'+
+      '<span class="mtime">'+dt+'</span>'+
+      (venue?'<span class="mvenue" title="'+venue+'">'+venue+'</span>':'')+
+    '</div>'+
+  '</div>';
+}
+function teamLabel(t){
+  if(!t||(!t.name&&!t.short&&!t.iso))return '待定';
+  if(t.short)return esc(t.short);
+  if(t.iso)return esc(t.iso);
+  return esc(t.name);
+}
+function stateLabel(s){
+  if(s==='in_progress')return'進行中';
+  if(s==='final')return'完場';
+  if(s==='postponed')return'延期';
+  return'未開賽';
+}
+function fmtDate(iso){
+  try{
+    var d=new Date(iso);if(isNaN(d))return esc(iso);
+    var m=d.getMonth()+1,day=d.getDate();
+    var hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
+    return m+'/'+day+' '+hh+':'+mm;
+  }catch(e){return esc(iso)}
+}
+function renderFullBracket(rounds){
+  var html='<div class="full-brk-wrap"><div class="full-brk">';
+  roundsOrder.forEach(function(rd){
+    var list=rounds[rd]||[];
+    html+='<div><div class="col-title">'+esc(roundNames[rd]||rd)+'</div><div class="col">';
+    if(list.length){
+      list.forEach(function(m){html+=renderMatch(m)});
+    }else{
+      html+='<div style="text-align:center;color:var(--dim);font-size:.74em;padding:20px 0">未編排</div>';
+    }
+    html+='</div></div>';
+  });
+  html+='</div></div>';
+  return html;
+}
+function bindMatchCards(){
+  document.querySelectorAll('.match[data-mid]').forEach(function(el){
+    var go=function(){
+      var id=el.dataset.mid;
+      var m=findMatch(id);
+      if(m)showMatchModal(m);
+    };
+    el.addEventListener('click',go);
+    el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+}
+function findMatch(id){
+  var rounds=(snap.bracket&&snap.bracket.rounds)||{};
+  for(var k in rounds){
+    var list=rounds[k]||[];
+    for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i];
+  }
+  return null;
+}
+
+// round pills
+document.querySelectorAll('.brk-head .pill').forEach(function(p){
+  p.addEventListener('click',function(){
+    var r=p.dataset.round;
+    activeRound=r;fullBracket=false;
+    document.getElementById('fullBrk').checked=false;
+    setRound(r);
+    renderBracket();
+  });
+});
+document.getElementById('fullBrk').addEventListener('change',function(e){
+  fullBracket=e.target.checked;
+  if(fullBracket){
+    document.querySelectorAll('.brk-head .pill').forEach(function(x){x.classList.remove('active');x.setAttribute('aria-pressed','false');});
+  }else{
+    setRound(activeRound,false);
+  }
+  renderBracket();
+});
+
+// ── MODAL ──
+var _lastFocus=null;
+function showMatchModal(m){
+  _lastFocus=document.activeElement;
+  var rounds=(snap.bracket&&snap.bracket.rounds)||{};
+  var rdName='—';
+  for(var k in rounds){if((rounds[k]||[]).some(function(x){return x.id===m.id})){rdName=roundNames[k]||k;break;}}
+  var s=m.status||'scheduled';
+  var stLabel=stateLabel(s);
+  var ht=teamLabel(m.home),at=teamLabel(m.away);
+  var sh=(m.score!=null)?m.score:'-';
+  document.getElementById('mTitle').textContent=(m.home&&m.home.name?m.home.name:ht)+' vs '+(m.away&&m.away.name?m.away.name:at);
+  document.getElementById('mSub').textContent=rdName+(m.kickoff?' · '+fmtDate(m.kickoff):'');
+  document.getElementById('mBody').innerHTML=
+    '<div class="modal-row"><span class="lbl">狀態</span><span class="val"><span class="state-pill '+s+'">'+stLabel+'</span></span></div>'+
+    '<div class="modal-row"><span class="lbl">主隊</span><span class="val">'+esc(ht)+'</span></div>'+
+    '<div class="modal-row"><span class="lbl">客隊</span><span class="val">'+esc(at)+'</span></div>'+
+    '<div class="modal-row"><span class="lbl">比數</span><span class="val big">'+esc(sh)+'</span></div>'+
+    (m.venue?'<div class="modal-row"><span class="lbl">場地</span><span class="val">'+esc(m.venue)+'</span></div>':'')+
+    (m.kickoff?'<div class="modal-row"><span class="lbl">開賽</span><span class="val">'+fmtFull(m.kickoff)+'</span></div>':'');
+  var modal=document.getElementById('matchModal');
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+  document.getElementById('live').setAttribute('inert','');
+  document.addEventListener('keydown',_modalTabTrap);
+  setTimeout(function(){document.getElementById('closeModal').focus();},50);
+}
+function fmtFull(iso){
+  try{
+    var d=new Date(iso);if(isNaN(d))return esc(iso);
+    var w=['日','一','二','三','四','五','六'][d.getDay()];
+    return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+' (周'+w+') '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }catch(e){return esc(iso)}
+}
+function closeMatch(){
+  var modal=document.getElementById('matchModal');
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  document.getElementById('live').removeAttribute('inert');
+  document.removeEventListener('keydown',_modalTabTrap);
+  if(_lastFocus&&_lastFocus.focus)try{_lastFocus.focus();}catch(e){}
+}
+function _modalTabTrap(e){
+  if(e.key!=='Tab')return;
+  var modal=document.getElementById('matchModal');
+  if(!modal.classList.contains('open'))return;
+  var focusables=modal.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+  if(!focusables.length)return;
+  var first=focusables[0],last=focusables[focusables.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+}
+document.getElementById('closeModal').addEventListener('click',closeMatch);
+document.getElementById('matchModal').addEventListener('click',function(e){if(e.target.id==='matchModal')closeMatch()});
+
+// ── TOAST ──
+var _toastT=null;
+function showToast(m){
+  var t=document.getElementById('toast');
+  t.textContent=m;t.classList.add('show');
+  if(_toastT)clearTimeout(_toastT);
+  _toastT=setTimeout(function(){t.classList.remove('show')},2200);
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown',function(e){
+  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;
+  if(e.target&&e.target.closest&&e.target.closest('[role="dialog"]')){
+    if(e.key==='Escape')closeMatch();
+    return;
+  }
+  var k=e.key.toLowerCase();
+  if(k==='g')setTab('groups');
+  else if(k==='b')setTab('bracket');
+  else if(k==='t')toggleTheme();
+  else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
+    if(activeTab!=='bracket'||fullBracket)return;
+    var idx=roundsOrder.indexOf(activeRound);
+    if(idx<0)return;
+    var n=idx+(e.key==='ArrowRight'?1:-1);
+    if(n<0||n>=roundsOrder.length)return;
+    var r=roundsOrder[n];
+    setRound(r);
+    var p=document.querySelector('.brk-head .pill[data-round="'+r+'"]');
+    if(p)p.click();
+  }else if(e.key==='Escape')closeMatch();
+});
+
+// ── HELP (PWA install hint + shortcuts) ──
+function bindHelp(){
+  document.getElementById('helpBtn').addEventListener('click',function(){
+    var help='快捷鍵\nG 分組賽 · B 淘汰賽 · ←/→ 切換圈數 · T 切換主題 · Esc 關閉\n\n';
+    var ua=navigator.userAgent||'';
+    var isIOS=/iPad|iPhone|iPod/.test(ua)&&!window.MSStream;
+    var isAndroid=/Android/.test(ua);
+    if(isIOS){
+      help+='iOS · 用 Safari「分享」→「加入主畫面」以安裝';
+    }else if(isAndroid){
+      help+='Android · 點擊右上 ⬇ 以加入主畫面';
+    }else{
+      help+='電腦版 · 瀏覽器網址列右側「安裝」圖示';
+    }
+    alert(help);
+  });
+
+  // PWA install prompt (Chrome/Edge/Android)
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();
+    var btn=document.getElementById('installBtn');
+    btn.classList.remove('installed');
+    btn.addEventListener('click',function(){
+      e.prompt();
+      btn.classList.add('installed');
+    },{once:true});
+  });
+  window.addEventListener('appinstalled',function(){
+    document.getElementById('installBtn').classList.add('installed');
+  });
+}
+
+function bindBeforeUnload(){
+  // flush localStorage on tab close
+  window.addEventListener('pagehide',function(){try{localStorage.setItem(STORE_KEY,JSON.stringify(loadState()));}catch(e){}});
+}
+
+// expose for inline handlers
+window.toggleTheme=toggleTheme;
+window.closeMatch=closeMatch;
+</script>
+</body>
+</html>
