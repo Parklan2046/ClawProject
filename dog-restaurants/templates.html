@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>狗狗友好餐廳 HK · Design Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Nunito",system-ui,sans-serif;background:#0F0F14;color:#E8E8E8;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px;}
+h1{font-family:"Quicksand";font-size:clamp(24px,4vw,36px);margin-bottom:8px;text-align:center}
+.sub{color:#888;font-size:15px;margin-bottom:40px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;max-width:1100px;width:100%;}
+.card{display:block;text-decoration:none;color:inherit;border-radius:16px;overflow:hidden;transition:transform .25s cubic-bezier(0.34,1.56,0.64,1);position:relative;}
+.card:hover{transform:translateY(-6px);}
+.card .preview{height:180px;display:flex;align-items:center;justify-content:center;font-family:"Quicksand";font-weight:700;font-size:28px;position:relative;overflow:hidden;}
+.card .info{padding:16px 20px;background:#1A1A24;}
+.card .info h3{font-size:17px;margin-bottom:4px}
+.card .info p{font-size:13px;color:#888;line-height:1.4}
+.card .badge{position:absolute;top:12px;right:12px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+.t0 .preview{background:linear-gradient(135deg,#E8F1EA,#F7E2E5);color:#5B8E6C;}
+.t0 .badge{background:#7BA888;color:#fff;}
+.t3 .preview{background:#08080F;color:#00F0FF;text-shadow:0 0 12px rgba(0,240,255,.6);font-family:"Orbitron",sans-serif;font-size:22px;}
+.t3 .badge{background:#FF006E;color:#fff;box-shadow:0 0 10px rgba(255,0,110,.5);}
+.t4 .preview{background:#FFFDF7;color:#FF6B9D;font-family:"Bungee",sans-serif;border:4px solid #111;box-shadow:6px 6px 0 #111;}
+.t4 .badge{background:#FFE66D;color:#111;border:2px solid #111;}
+</style>
+</head>
+<body>
+<h1>🐾 Dog-Friendly Restaurants HK</h1>
+<p class="sub">3 design templates — pick your favorite vibe</p>
+<div class="grid">
+<a class="card t0" href="index.html"><div class="preview">🌸 Cute Flowery<span class="badge">V1</span></div><div class="info"><h3>Cute & Flowery</h3><p>Sage green, pastel flowers, paw prints, soft shadows, rounded corners</p></div></a>
+<a class="card t3" href="t3-neon/index.html"><div class="preview">NEON<span class="badge">V4</span></div><div class="info"><h3>Dark Neon Cyberpunk</h3><p>Black void, glowing glass cards, cyan/magenta gradients, Orbitron, scanlines</p></div></a>
+<a class="card t4" href="t4-memphis/index.html"><div class="preview">MEMPHIS!<span class="badge">V5</span></div><div class="info"><h3>Retro Memphis 80s</h3><p>Bright clashing colors, black outlines, hard sticker shadows, squiggles, Bungee</p></div></a>
+</div>
+</body>
+</html>
