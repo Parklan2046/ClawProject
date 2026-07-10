@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title data-i18n="pageTitle">狗狗友善餐廳手帳 HK</title>
+<meta name="description" data-i18n="metaDesc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Nunito:wght@400;600;700;800&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#FAF7F2;--cream-deep:#F1ECE2;--paper:#FFFCF7;--paper-warm:#FFF8EE;--sage:#8B9D7E;--sage-deep:#6B7A57;--sage-soft:#B7C3A4;--sage-tint:#E8EDDE;--terracotta:#D4847C;--terracotta-deep:#B66A62;--terracotta-soft:#ECC7C2;--mustard:#D4A84B;--mustard-deep:#B58A2E;--mustard-soft:#EBD9A7;--dusty-blue:#8BA5BE;--dusty-blue-deep:#6887A1;--dusty-blue-soft:#CBD9E3;--ink:#5A5145;--ink-soft:#857C6E;--ink-faint:#B2A99A;--line:#E4DED1;--line-dark:#D2C9B8;--shadow-xs:0 1px 2px rgba(90,81,69,.06);--shadow-sm:0 2px 8px rgba(90,81,69,.08);--shadow-md:0 5px 18px rgba(90,81,69,.10);--shadow-lg:0 10px 30px rgba(90,81,69,.14);--focus-ring:0 0 0 3px rgba(139,157,126,.35);--ease-soft:cubic-bezier(.22,1,.36,1);--dur:220ms;--font-display:"Klee One","Zen Kaku Gothic New","PingFang HK","Microsoft JhengHei",serif;--font-jp:"Zen Kaku Gothic New","Klee One","PingFang HK","Microsoft JhengHei",sans-serif;--font-hand:"Caveat","Klee One","PingFang HK",cursive;--font-body:"Nunito","Zen Kaku Gothic New","PingFang HK","Microsoft JhengHei",system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--ink);background-color:var(--cream);background-image:linear-gradient(rgba(120,108,86,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(120,108,86,.045) 1px,transparent 1px);background-size:20px 20px;min-height:100dvh;-webkit-font-smoothing:antialiased;}
+.deco-layer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.float-paw{position:absolute;opacity:.10;color:var(--sage-deep)}
+.fp-1{top:38vh;left:2%;width:42px;animation:spin 34s linear infinite}.fp-2{top:64vh;right:3%;width:34px;animation:spin 42s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes drift{0%{transform:translate(0,0) rotate(-6deg)}100%{transform:translate(24px,-18px) rotate(8deg)}}@keyframes wag{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)}}
+.header{position:sticky;top:0;z-index:100;background:rgba(250,247,242,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:2px dashed var(--line-dark);}
+.header-inner{max-width:1320px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:12px 24px;}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;flex-shrink:0;position:relative}
+.brand-mark{width:46px;height:46px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--paper);border:1.5px solid var(--line-dark);border-radius:6px;box-shadow:var(--shadow-sm);position:relative;}
+.brand-mark svg{width:30px;height:30px;color:var(--sage-deep)}
+.brand-mark::after{content:"";position:absolute;top:-9px;left:50%;width:42px;height:16px;transform:translateX(-50%) rotate(-4deg);background:var(--terracotta);opacity:.78;background-image:radial-gradient(rgba(255,255,255,.5) 1.3px,transparent 1.3px);background-size:6px 6px;}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}.brand-name{font-family:var(--font-display);font-weight:600;font-size:19px;color:var(--sage-deep);letter-spacing:.5px;}.brand-sub{font-family:var(--font-hand);font-size:15px;color:var(--ink-soft);margin-top:-1px}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.lang-toggle{display:flex;background:var(--paper);border:1.5px solid var(--line-dark);border-radius:5px;box-shadow:var(--shadow-xs);overflow:hidden;}
+.lang-toggle button{border:none;background:transparent;cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:13px;padding:7px 15px;color:var(--ink-soft);transition:all var(--dur) var(--ease-soft);}
+.lang-toggle button.active{background:var(--sage);color:var(--paper);}
+.lang-toggle button+button{border-left:1.5px dashed var(--line-dark)}
+.hero{max-width:1320px;margin:0 auto;padding:44px 24px 14px;position:relative;text-align:center;}
+.hero-content{position:relative;z-index:2}
+.hero-kicker{display:inline-block;font-family:var(--font-hand);font-size:22px;color:var(--terracotta-deep);background:var(--paper);border:1.5px dashed var(--terracotta-soft);border-radius:999px;padding:2px 18px;transform:rotate(-2deg);margin-bottom:12px;}
+.hero h1{font-family:var(--font-display);font-weight:600;font-size:clamp(28px,5vw,46px);line-height:1.2;color:var(--ink);margin-bottom:12px;}
+.hero h1 .accent{color:var(--terracotta)}.hero h1 .paw{display:inline-block;animation:wag 2.4s ease-in-out infinite}
+.hero p.lead{font-family:var(--font-body);font-weight:600;font-size:16px;color:var(--ink-soft);max-width:540px;margin:0 auto 6px;line-height:1.55;}
+.hero-meta{font-family:var(--font-hand);font-size:18px;color:var(--mustard-deep);margin-bottom:26px;}
+.search-wrap{max-width:580px;margin:0 auto}
+.search-label{display:block;text-align:left;font-family:var(--font-hand);font-size:20px;color:var(--sage-deep);padding-left:4px;margin-bottom:2px;}
+.search-bar{display:flex;align-items:center;gap:10px;background:transparent;border:none;border-bottom:2.5px solid var(--sage);border-radius:0;padding:8px 4px;transition:border-color var(--dur),box-shadow var(--dur);}
+.search-bar:focus-within{border-color:var(--terracotta);box-shadow:0 2px 0 -1px var(--terracotta-soft)}
+.search-bar svg{flex-shrink:0;color:var(--sage-deep)}
+.search-bar input{font:600 18px/1.5 var(--font-body);color:var(--ink);border:none;background:transparent;flex:1;outline:none;min-width:0;}
+.search-bar input::placeholder{font-family:var(--font-hand);font-size:21px;color:var(--ink-faint)}
+.search-clear{border:none;background:var(--terracotta-soft);cursor:pointer;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--terracotta-deep);flex-shrink:0;transition:transform var(--dur);}
+.search-clear:hover{transform:rotate(90deg)}
+.divider{position:relative;max-width:1320px;margin:30px auto 18px;border-top:2px dashed var(--line-dark);height:0;}
+.divider-stamp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-8deg);background:var(--cream);padding:0 16px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;}
+.divider-stamp svg{width:26px;height:26px;color:var(--sage);opacity:.6}
+.filter-section{max-width:1320px;margin:0 auto;padding:0 24px 8px;position:relative;z-index:2}
+.chips-rail{display:flex;gap:10px;overflow-x:auto;padding:14px 2px 10px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
+.chips-rail::-webkit-scrollbar{height:5px}.chips-rail::-webkit-scrollbar-thumb{background:var(--line-dark);border-radius:3px}
+.chip{background:var(--paper);color:var(--ink-soft);border:1.5px dashed var(--line-dark);border-radius:6px;padding:8px 14px;font-family:var(--font-display);font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;box-shadow:var(--shadow-xs);transition:transform .18s var(--ease-soft),background var(--dur),color var(--dur),border-color var(--dur);}
+.chip:nth-child(4n+1){transform:rotate(-1.4deg)}.chip:nth-child(4n+2){transform:rotate(1deg)}.chip:nth-child(4n+3){transform:rotate(-.7deg)}.chip:nth-child(4n){transform:rotate(1.3deg)}
+.chip:hover{transform:rotate(0) translateY(-3px);border-color:var(--sage-soft);box-shadow:var(--shadow-sm)}
+.chip.active{background:var(--sage);color:var(--paper);border:1.5px solid var(--sage-deep);transform:rotate(0);box-shadow:var(--shadow-sm);}
+.chip-count{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;min-width:19px;height:19px;padding:0 5px;font-family:var(--font-body);font-size:10px;font-weight:800;background:var(--cream-deep);color:var(--ink-soft);border:1px solid var(--line-dark);border-radius:999px;}
+.chip.active .chip-count{background:var(--paper);color:var(--sage-deep);border-color:var(--sage-soft)}
+.toolbar{max-width:1320px;margin:0 auto;padding:0 24px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:2;}
+.result-count{font-family:var(--font-hand);font-size:20px;color:var(--sage-deep);display:inline-flex;align-items:center;gap:6px;}
+.sort-wrap{display:flex;align-items:center;gap:8px}.sort-wrap label{font-family:var(--font-hand);font-size:18px;color:var(--ink-soft)}
+.sort-select{font:600 14px var(--font-body);color:var(--ink);background:var(--paper);border:1.5px solid var(--line-dark);border-radius:6px;padding:7px 12px;cursor:pointer;box-shadow:var(--shadow-xs);transition:border-color var(--dur);}
+.sort-select:hover{border-color:var(--sage-soft)}
+.mobile-toggle{display:none;max-width:1320px;margin:0 auto;padding:0 24px 14px;gap:0;position:relative;z-index:2}
+.mobile-toggle button{flex:1;padding:12px;border:none;cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:15px;background:var(--paper);color:var(--ink-soft);border:1.5px solid var(--line-dark);transition:all var(--dur);}
+.mobile-toggle button:first-child{border-radius:6px 0 0 6px;border-right:none}.mobile-toggle button:last-child{border-radius:0 6px 6px 0}
+.mobile-toggle button.active{background:var(--sage);color:var(--paper);border-color:var(--sage-deep)}
+.main{max-width:1320px;margin:0 auto;padding:0 24px 56px;display:grid;grid-template-columns:1fr 400px;gap:26px;align-items:start;position:relative;z-index:2;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(288px,1fr));gap:26px}
+.card{position:relative;background:var(--paper);border:1px solid var(--line-dark);border-radius:4px;box-shadow:var(--shadow-md);padding:22px 18px 16px;display:flex;flex-direction:column;gap:9px;cursor:pointer;content-visibility:auto;contain-intrinsic-size:0 220px;transition:transform var(--dur) var(--ease-soft),box-shadow var(--dur);}
+.card:nth-child(4n+1){transform:rotate(-1.1deg)}.card:nth-child(4n+2){transform:rotate(.7deg)}.card:nth-child(4n+3){transform:rotate(-.5deg)}.card:nth-child(4n){transform:rotate(.9deg)}
+.card:hover{transform:rotate(0) translateY(-5px);box-shadow:var(--shadow-lg)}
+.card.active{transform:rotate(0);border:1.5px solid var(--sage);box-shadow:var(--shadow-lg),0 0 0 3px var(--sage-tint);}
+.card-tape{position:absolute;top:-11px;left:20px;width:82px;height:26px;z-index:3;transform:rotate(-4deg);box-shadow:0 1px 2px rgba(90,81,69,.10);}
+.t-washi-a{background:var(--terracotta);opacity:.85;background-image:radial-gradient(rgba(255,255,255,.5) 1.6px,transparent 1.6px);background-size:7px 7px}
+.t-washi-b{background:var(--sage);opacity:.82;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.28) 0 3px,transparent 3px 7px)}
+.t-washi-c{background:var(--mustard);opacity:.82;background-image:linear-gradient(rgba(255,255,255,.32) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.32) 1px,transparent 1px);background-size:6px 6px}
+.t-washi-d{background:var(--dusty-blue);opacity:.82;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 2px,transparent 2px 5px)}
+.card-no{position:absolute;top:9px;right:14px;font-family:var(--font-hand);font-size:15px;color:var(--ink-faint);}
+.card-head{display:flex;flex-direction:column;gap:1px;padding-right:34px}
+.card-name{font-family:var(--font-display);font-weight:600;font-size:17px;line-height:1.3;color:var(--ink);}
+.card-name-alt{font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--ink-faint);line-height:1.35;}
+.card-district{display:inline-flex;align-items:center;gap:4px;width:fit-content;font-family:var(--font-body);font-weight:700;font-size:11.5px;padding:3px 11px;border-radius:4px;background:var(--sage-tint);color:var(--sage-deep);border:1px solid var(--sage-soft);}
+.card-district .dot{width:5px;height:5px;border-radius:50%;background:var(--sage-deep)}
+.card-address{font-family:var(--font-body);font-size:13.5px;font-weight:600;color:var(--ink-soft);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;border-top:1.5px dashed var(--line-dark);}
+.card-licence{font-family:var(--font-hand);font-size:14px;color:var(--ink-faint);}
+.card-map-btn{font-family:var(--font-display);font-weight:600;font-size:12.5px;text-decoration:none;color:var(--paper);display:inline-flex;align-items:center;gap:3px;padding:5px 13px;border-radius:5px;background:var(--terracotta);border:1px solid var(--terracotta-deep);box-shadow:var(--shadow-xs);transition:transform var(--dur),background var(--dur);}
+.card-map-btn:hover{transform:translateY(-2px);background:var(--terracotta-deep)}
+.dc-0{background:var(--terracotta-soft);color:var(--terracotta-deep);border-color:var(--terracotta)}.dc-1{background:var(--mustard-soft);color:var(--mustard-deep);border-color:var(--mustard)}.dc-2{background:var(--dusty-blue-soft);color:var(--dusty-blue-deep);border-color:var(--dusty-blue)}.dc-3{background:var(--sage-tint);color:var(--sage-deep);border-color:var(--sage-soft)}.dc-4{background:var(--terracotta-soft);color:var(--terracotta-deep);border-color:var(--terracotta)}.dc-5{background:var(--mustard-soft);color:var(--mustard-deep);border-color:var(--mustard)}
+.map-panel{position:sticky;top:92px;background:var(--paper);border:1px solid var(--line-dark);border-radius:4px;padding:16px 16px 0;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;min-height:480px;}
+.map-panel::before,.map-panel::after{content:"";position:absolute;top:-12px;width:74px;height:24px;z-index:3;box-shadow:0 1px 2px rgba(90,81,69,.10);}
+.map-panel::before{left:18px;background:var(--sage);opacity:.82;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.28) 0 3px,transparent 3px 7px);transform:rotate(-5deg);}
+.map-panel::after{right:18px;background:var(--mustard);opacity:.82;background-image:linear-gradient(rgba(255,255,255,.32) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.32) 1px,transparent 1px);background-size:6px 6px;transform:rotate(6deg);}
+.map-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:4px 2px 12px;}
+.map-header-info{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.map-title{font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.map-sub{font-family:var(--font-hand);font-size:15px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.map-close{border:1.5px solid var(--line-dark);background:var(--paper);cursor:pointer;width:32px;height:32px;border-radius:6px;flex-shrink:0;display:none;align-items:center;justify-content:center;color:var(--ink-soft);box-shadow:var(--shadow-xs);}
+.map-frame{flex:1;position:relative;min-height:380px;border:1px solid var(--line-dark);border-radius:3px;overflow:hidden;background:var(--cream);}
+.map-embed{width:100%;height:100%;border:0;position:absolute;inset:0;filter:saturate(.92) sepia(.06)}
+.map-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:36px;background:var(--paper);background-image:linear-gradient(rgba(120,108,86,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(120,108,86,.05) 1px,transparent 1px);background-size:20px 20px;}
+.map-placeholder svg{width:74px;height:74px;color:var(--sage);opacity:.55}
+.map-placeholder p{font-family:var(--font-hand);font-size:20px;color:var(--ink-soft);line-height:1.4;max-width:260px;}
+.map-actions{padding:14px 2px 16px;display:flex;gap:10px;}
+.map-actions a{flex:1;text-align:center;text-decoration:none;font-family:var(--font-display);font-weight:600;font-size:13.5px;padding:9px 12px;border-radius:5px;box-shadow:var(--shadow-xs);transition:transform var(--dur);}
+.map-actions a:hover{transform:translateY(-2px)}.map-actions .btn-primary{background:var(--sage);color:var(--paper);border:1px solid var(--sage-deep)}.map-actions .btn-ghost{background:var(--paper);color:var(--sage-deep);border:1.5px solid var(--sage-soft)}
+.empty-state{grid-column:1/-1;text-align:center;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;background:var(--paper);border:1px solid var(--line-dark);border-radius:4px;box-shadow:var(--shadow-md);transform:rotate(-1deg);position:relative;}
+.empty-state::before{content:"";position:absolute;top:-11px;left:50%;width:90px;height:26px;transform:translateX(-50%) rotate(-3deg);background:var(--terracotta);opacity:.85;background-image:radial-gradient(rgba(255,255,255,.5) 1.6px,transparent 1.6px);background-size:7px 7px;}
+.empty-state h3{font-family:var(--font-display);font-weight:600;font-size:22px;color:var(--ink)}
+.empty-state p{font-family:var(--font-hand);font-size:19px;color:var(--ink-soft);max-width:340px;line-height:1.4}
+.empty-state button{font-family:var(--font-display);font-weight:600;font-size:15px;border:1.5px solid var(--sage-deep);cursor:pointer;background:var(--sage);color:var(--paper);padding:11px 28px;border-radius:6px;box-shadow:var(--shadow-sm);transition:transform var(--dur);}
+.empty-state button:hover{transform:translateY(-2px)}
+.show-more-wrap{grid-column:1/-1;text-align:center;padding:20px 0}
+.show-more{font-family:var(--font-display);font-weight:600;font-size:15px;border:1.5px solid var(--terracotta-deep);cursor:pointer;background:var(--paper);color:var(--terracotta-deep);padding:13px 38px;border-radius:999px;box-shadow:var(--shadow-sm);transition:transform var(--dur),background var(--dur),color var(--dur);}
+.show-more:hover{transform:translateY(-2px);background:var(--terracotta);color:var(--paper)}
+.footer{max-width:1320px;margin:0 auto;padding:34px 24px;border-top:2px dashed var(--line-dark);text-align:center;position:relative;z-index:2;}
+.footer p{font-family:var(--font-body);font-size:13.5px;color:var(--ink-soft);line-height:1.6;margin-bottom:5px;font-weight:600}
+.footer .disclaimer{font-family:var(--font-hand);font-size:16px;color:var(--ink-faint);max-width:580px;margin:10px auto 0;}
+@media(max-width:1023px){.main{grid-template-columns:1fr}.map-panel{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:200;border-radius:18px 18px 0 0;max-height:78vh;box-shadow:0 -6px 28px rgba(90,81,69,.18);transform:translateY(100%);transition:transform .28s var(--ease-soft);border-bottom:none;}.map-panel.show{transform:translateY(0)}.map-close{display:flex}.map-frame{min-height:340px}.grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}}
+@media(max-width:767px){.header-inner{padding:10px 16px;gap:8px}.brand-sub{display:none}.hero{padding:28px 16px 10px}.filter-section,.toolbar{padding:0 16px 8px}.mobile-toggle{display:flex}.main{padding:0 16px 48px}.main.list-only .map-panel{display:none}.main.map-only .grid,.main.map-only .toolbar,.main.map-only .filter-section,.main.map-only .divider,.main.map-only .show-more-wrap{display:none}.main.map-only .map-panel{display:flex;position:relative;transform:none;max-height:none;border-radius:4px}.grid{grid-template-columns:1fr;gap:22px}.footer{padding:28px 16px}.deco-layer{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-paw" viewBox="0 0 32 32"><ellipse cx="16" cy="21" rx="7.5" ry="6"/><circle cx="8" cy="13" r="3"/><circle cx="16" cy="9" r="3.2"/><circle cx="24" cy="13" r="3"/></symbol></svg>
+<div class="deco-layer" aria-hidden="true">
+<svg class="float-paw fp-1" viewBox="0 0 32 32" fill="currentColor"><use href="#i-paw"/></svg>
+<svg class="float-paw fp-2" viewBox="0 0 32 32" fill="currentColor"><use href="#i-paw"/></svg>
+</div>
+<header class="header"><div class="header-inner">
+<a href="#" class="brand"><span class="brand-mark"><svg viewBox="0 0 32 32" fill="currentColor"><use href="#i-paw"/></svg></span><span class="brand-text"><span class="brand-name" data-i18n="brand">狗狗友善餐廳手帳</span><span class="brand-sub" data-i18n="brandSub">Hong Kong Dog-Friendly Spots</span></span></a>
+<div class="header-right"><div class="lang-toggle" role="group"><button id="langZh" class="active" onclick="setLocale('zh-HK')">繁中</button><button id="langEn" onclick="setLocale('en')">EN</button></div></div>
+</div></header>
+<section class="hero"><div class="hero-content">
+<span class="hero-kicker" data-i18n="heroKicker">～ 狗狗友善小店 ～</span>
+<h1><span class="paw">🐾</span> <span data-i18n="heroTitleA">記低每間</span><span class="accent" data-i18n="heroTitleB">歡迎狗狗</span><span data-i18n="heroTitleC">嘅小店</span></h1>
+<p class="lead" data-i18n="heroLead">全港 946 間獲准許狗隻進入嘅食肆 · 慢慢搵 · 標記 · 出發</p>
+<p class="hero-meta" data-i18n="heroMeta">Vol.1 · Hong Kong · 🐶 946 間</p>
+<div class="search-wrap"><label class="search-label" for="search" data-i18n="searchLabel">尋找 ✎</label><div class="search-bar">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+<input type="search" id="search" data-i18n-ph="searchPlaceholder" placeholder="搜尋餐廳名稱、地區或地址…" autocomplete="off">
+<button class="search-clear" id="searchClear" hidden onclick="clearSearch()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+</div></div></div></section>
+<div class="divider"><span class="divider-stamp"><svg viewBox="0 0 32 32" fill="currentColor"><use href="#i-paw"/></svg></span></div>
+<section class="filter-section"><div class="chips-rail" id="chipsRail"></div></section>
+<div class="toolbar"><div class="result-count" id="resultCount"></div><div class="sort-wrap"><label data-i18n="sortLabel">排序</label><select class="sort-select" id="sortSelect" onchange="state.sort=this.value;state.limit=60;renderCards()"><option value="district" data-i18n="sortByDistrict">按地區</option><option value="name" data-i18n="sortByName">按名稱</option></select></div></div>
+<div class="mobile-toggle"><button id="tabList" class="active" onclick="switchTab('list')" data-i18n="tabList">餐廳列表</button><button id="tabMap" onclick="switchTab('map')" data-i18n="tabMap">地圖</button></div>
+<main class="main list-only" id="main"><div class="grid" id="grid"></div>
+<aside class="map-panel" id="mapPanel"><div class="map-header"><div class="map-header-info"><span class="map-title" id="mapTitle" data-i18n="mapTitleDefault">餐廳位置</span><span class="map-sub" id="mapSub" data-i18n="selectToView">點選一間餐廳在地圖查看</span></div><button class="map-close" onclick="closeMap()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+<div class="map-frame"><div class="map-placeholder" id="mapPlaceholder"><svg viewBox="0 0 32 32" fill="currentColor"><use href="#i-paw"/></svg><p data-i18n="selectToView"></p></div><iframe class="map-embed" id="mapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" hidden></iframe></div>
+<div class="map-actions" id="mapActions" hidden><a class="btn-primary" id="mapExternalLink" target="_blank" rel="noopener" data-i18n="openInMaps">在地圖查看</a><a class="btn-ghost" id="directionsLink" target="_blank" rel="noopener" data-i18n="getDirections">獲取路線</a></div></aside></main>
+<footer class="footer"><p data-i18n="footerNote"></p><p class="disclaimer" data-i18n="footerDisclaimer"></p></footer>
+<script src="../data.js"></script>
+<script>
+const I18N={'zh-HK':{htmlLang:'zh-HK',pageTitle:'狗狗友善餐廳手帳 HK｜香港可帶狗食肆一覽',metaDesc:'香港 946 間獲准許狗隻進入的食肆，按地區搜尋，附 Google 地圖。',brand:'狗狗友善餐廳手帳',brandSub:'Hong Kong Dog-Friendly Spots',heroKicker:'～ 狗狗友善小店 ～',heroTitleA:'記低每間',heroTitleB:'歡迎狗狗',heroTitleC:'嘅小店',heroLead:'全港 946 間獲准許狗隻進入嘅食肆 · 慢慢搵 · 標記 · 出發',heroMeta:'Vol.1 · Hong Kong · 🐶 946 間',searchLabel:'尋找 ✎',searchPlaceholder:'搜尋餐廳名稱、地區或地址…',filterAll:'全港',sortLabel:'排序',sortByDistrict:'按地區',sortByName:'按名稱',resultCount:'共 {n} 間餐廳',resultCountFiltered:'篩選結果：{n} / {total} 間',cardLicence:'牌照',cardNo:'No.',openInMaps:'在地圖查看',getDirections:'獲取路線',noResultsTitle:'呢一頁仲未寫低嘢 🐶',noResultsBody:'試下其他關鍵字或地區啦',noResultsReset:'清除所有篩選',showMore:'翻下一頁',mapTitleDefault:'餐廳位置',selectToView:'點選一間餐廳在地圖查看',tabList:'餐廳列表',tabMap:'地圖',footerNote:'資料來源：食物環境衞生署 — 獲准許狗隻進入的食肆名單',footerDisclaimer:'餐廳允許狗隻嘅安排或會變更，建議前往前先致電確認。'},en:{htmlLang:'en',pageTitle:'Dog-Friendly Restaurants HK | 946 Spots · A Zakka Journal',metaDesc:'946 licensed dog-friendly restaurants across Hong Kong.',brand:'DOG EATS JOURNAL',brandSub:'Hong Kong dog-friendly spots',heroKicker:'～ pup-friendly eats ～',heroTitleA:'A little journal of',heroTitleB:'dog-friendly',heroTitleC:'cafés',heroLead:'946 licensed dog-friendly eateries across HK · browse · pin · go',heroMeta:'Vol.1 · Hong Kong · 🐶 946 spots',searchLabel:'look up ✎',searchPlaceholder:'Search name, district or address…',filterAll:'All HK',sortLabel:'Sort',sortByDistrict:'By district',sortByName:'By name',resultCount:'{n} restaurants',resultCountFiltered:'Showing {n} of {total}',cardLicence:'Licence',cardNo:'No.',openInMaps:'View on map',getDirections:'Get directions',noResultsTitle:'This page is still blank 🐶',noResultsBody:'Try a different name or district',noResultsReset:'Clear all filters',showMore:'Turn the page',mapTitleDefault:'Location',selectToView:'Pick a spot to see it on the map',tabList:'List',tabMap:'Map',footerNote:'Source: FEHD — list of food premises permitted to allow dogs',footerDisclaimer:'Dog policies may change — please call ahead to confirm.'}};
+const DISTRICT_ZH_TO_EN={'中西區':'Central & Western','南區':'Southern','東區':'Eastern','元朗區':'Yuen Long','沙田區':'Sha Tin','觀塘區':'Kwun Tong','黃大仙區':'Wong Tai Sin','油尖區':'Yau Tsim','旺角區':'Mong Kok','離島區':'Islands','九龍城區':'Kowloon City','葵青區':'Kwai Tsing','灣仔區':'Wan Chai','深水埗區':'Sham Shui Po','西貢區':'Sai Kung','大埔區':'Tai Po','荃灣區':'Tsuen Wan','屯門區':'Tuen Mun','北區':'North'};
+const TAPE_CLASSES=['t-washi-a','t-washi-b','t-washi-c','t-washi-d'];
+let currentLocale=localStorage.getItem('dog-locale')||'zh-HK';
+function t(key,vars){let s=(I18N[currentLocale]&&I18N[currentLocale][key])||I18N['zh-HK'][key]||key;if(vars)for(const[k,v]of Object.entries(vars))s=s.replaceAll('{'+k+'}',v);return s;}
+function getLocale(){return currentLocale;}
+function setLocale(loc){currentLocale=(loc==='en')?'en':'zh-HK';localStorage.setItem('dog-locale',currentLocale);applyLocale();}
+function districtName(zh){return(getLocale()==='en')?(DISTRICT_ZH_TO_EN[zh]||zh):zh;}
+function districtColorClass(d){return'dc-'+(DOG_DATA.d.indexOf(d)%6);}
+function applyLocale(){document.documentElement.lang=t('htmlLang');document.title=t('pageTitle');document.querySelector('meta[name="description"]').setAttribute('content',t('metaDesc'));document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));document.querySelectorAll('[data-i18n-ph]').forEach(el=>el.placeholder=t(el.dataset.i18nPh));document.getElementById('langZh').classList.toggle('active',currentLocale==='zh-HK');document.getElementById('langEn').classList.toggle('active',currentLocale==='en');document.getElementById('sortSelect').querySelectorAll('option').forEach(o=>o.textContent=t(o.dataset.i18n));renderChips();renderCards();if(selectedIdx>=0)updateMapInfo(selectedIdx);}
+const LOWER=s=>(s||'').toLowerCase();
+const RESTAURANTS=DOG_DATA.r.map(([en,zh,district,address,licence],i)=>({idx:i,en,zh,district,address,licence,haystack:`${LOWER(en)} ${LOWER(zh)} ${LOWER(district)} ${LOWER(DISTRICT_ZH_TO_EN[district]||'')} ${LOWER(address)} ${LOWER(licence)}`}));
+const districtCounts={};RESTAURANTS.forEach(r=>districtCounts[r.district]=(districtCounts[r.district]||0)+1);
+let state={q:'',district:'all',sort:'district',limit:60};let selectedIdx=-1;
+function computeFiltered(){const q=LOWER(state.q.trim());let out=RESTAURANTS;if(state.district!=='all')out=out.filter(r=>r.district===state.district);if(q){const terms=q.split(/\s+/).filter(Boolean);out=out.filter(r=>terms.every(t=>r.haystack.includes(t)));}if(state.sort==='name'){out=[...out].sort((a,b)=>(getLocale()==='en'?a.en:a.zh).localeCompare(getLocale()==='en'?b.en:b.zh,getLocale()));}else{out=[...out].sort((a,b)=>a.district===b.district?a.zh.localeCompare(b.zh,'zh-HK'):a.district.localeCompare(b.district,'zh-HK'));}return out;}
+function renderChips(){const rail=document.getElementById('chipsRail');const chips=[`<button class="chip ${state.district==='all'?'active':''}" onclick="setDistrict('all')">${t('filterAll')} <span class="chip-count">${RESTAURANTS.length}</span></button>`];for(const zh of DOG_DATA.d){const count=districtCounts[zh]||0;chips.push(`<button class="chip ${state.district===zh?'active':''}" onclick="setDistrict('${zh}')">${districtName(zh)} <span class="chip-count">${count}</span></button>`);}rail.innerHTML=chips.join('');}
+function escapeHtml(s){return(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+function cardHTML(r){const name=getLocale()==='en'?r.en:r.zh;const otherName=getLocale()==='en'?r.zh:r.en;const isActive=r.idx===selectedIdx;const tape=TAPE_CLASSES[r.idx%4];const no=String(r.idx+1).padStart(3,'0');return `<article class="card ${isActive?'active':''}" data-idx="${r.idx}" tabindex="0" onclick="selectCard(${r.idx})"><div class="card-tape ${tape}"></div><span class="card-no">${t('cardNo')} ${no}</span><div class="card-head"><div class="card-name">${escapeHtml(name)}</div><div class="card-name-alt">${escapeHtml(otherName)}</div></div><span class="card-district ${districtColorClass(r.district)}"><span class="dot"></span>${escapeHtml(districtName(r.district))}</span><div class="card-address">${escapeHtml(r.address)}</div><div class="card-footer"><span class="card-licence">${t('cardLicence')}: ${escapeHtml(r.licence)}</span><a class="card-map-btn" href="${mapExternalUrl(r)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${t('openInMaps')} →</a></div></article>`;}
+function renderCards(){const filtered=computeFiltered();const grid=document.getElementById('grid');const countEl=document.getElementById('resultCount');if(state.q||state.district!=='all'){countEl.innerHTML=`🐾 ${t('resultCountFiltered',{n:filtered.length,total:RESTAURANTS.length})}`;}else{countEl.innerHTML=`🐾 ${t('resultCount',{n:filtered.length})}`;}if(filtered.length===0){grid.innerHTML=`<div class="empty-state"><h3>${t('noResultsTitle')}</h3><p>${t('noResultsBody')}</p><button onclick="clearAll()">${t('noResultsReset')}</button></div>`;return;}const visible=filtered.slice(0,state.limit);let html=visible.map(r=>cardHTML(r)).join('');if(filtered.length>state.limit){html+=`<div class="show-more-wrap"><button class="show-more" onclick="state.limit+=60;renderCards()">${t('showMore')} (${filtered.length-state.limit}) →</button></div>`;}grid.innerHTML=html;}
+function mapEmbedUrl(idx){const r=RESTAURANTS[idx];return `https://www.google.com/maps?q=${encodeURIComponent(r.address+' '+r.zh+' Hong Kong')}&hl=${getLocale()==='en'?'en':'zh-TW'}&output=embed`;}
+function mapExternalUrl(r){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.address+' '+r.zh+' Hong Kong')}&hl=${getLocale()==='en'?'en':'zh-TW'}`;}
+function directionsUrl(idx){const r=RESTAURANTS[idx];return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(r.address+' '+r.zh+' Hong Kong')}&travelmode=walking`;}
+function selectCard(idx){selectedIdx=idx;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('active',+c.dataset.idx===idx));showMap(idx);}
+function showMap(idx){const iframe=document.getElementById('mapEmbed');const placeholder=document.getElementById('mapPlaceholder');const actions=document.getElementById('mapActions');iframe.src=mapEmbedUrl(idx);iframe.hidden=false;placeholder.hidden=true;actions.hidden=false;document.getElementById('mapExternalLink').href=mapExternalUrl(RESTAURANTS[idx]);document.getElementById('directionsLink').href=directionsUrl(idx);updateMapInfo(idx);if(window.innerWidth<=1023)document.getElementById('mapPanel').classList.add('show');}
+function updateMapInfo(idx){const r=RESTAURANTS[idx];const name=getLocale()==='en'?r.en:r.zh;document.getElementById('mapTitle').textContent=name;document.getElementById('mapSub').textContent=districtName(r.district)+' · '+r.address.substring(0,40);}
+function closeMap(){document.getElementById('mapPanel').classList.remove('show');}
+function setDistrict(d){state.district=d;state.limit=60;renderChips();renderCards();}
+function clearSearch(){state.q='';document.getElementById('search').value='';document.getElementById('searchClear').hidden=true;state.limit=60;renderCards();}
+function clearAll(){state.q='';state.district='all';state.limit=60;document.getElementById('search').value='';document.getElementById('searchClear').hidden=true;renderChips();renderCards();}
+function switchTab(tab){const main=document.getElementById('main');document.getElementById('tabList').classList.toggle('active',tab==='list');document.getElementById('tabMap').classList.toggle('active',tab==='map');main.classList.remove('list-only','map-only');main.classList.add(tab==='list'?'list-only':'map-only');if(tab==='map'&&selectedIdx>=0)document.getElementById('mapPanel').classList.add('show');}
+const debounce=(fn,ms)=>{let timer;return(...a)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...a),ms);};};
+document.getElementById('search').addEventListener('input',debounce(e=>{state.q=e.target.value;document.getElementById('searchClear').hidden=!state.q;state.limit=60;renderCards();},150));
+document.getElementById('grid').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('card'))selectCard(+e.target.dataset.idx);});
+function checkUrlParams(){const params=new URLSearchParams(location.search);const d=params.get('district');const q=params.get('q');if(d&&DOG_DATA.d.includes(d))state.district=d;if(q){state.q=q;document.getElementById('search').value=q;document.getElementById('searchClear').hidden=false;}const lang=params.get('lang');if(lang==='en'||lang==='zh-HK')currentLocale=lang;}
+window.addEventListener('DOMContentLoaded',()=>{checkUrlParams();applyLocale();});
+</script>
+</body></html>
