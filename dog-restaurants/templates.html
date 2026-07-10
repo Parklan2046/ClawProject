@@ -11,7 +11,7 @@
 body{font-family:"Nunito",system-ui,sans-serif;background:#0F0F14;color:#E8E8E8;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px;}
 h1{font-family:"Quicksand";font-size:clamp(24px,4vw,36px);margin-bottom:8px;text-align:center}
 .sub{color:#888;font-size:15px;margin-bottom:40px;text-align:center}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;max-width:800px;width:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;max-width:1100px;width:100%}
 .card{display:block;text-decoration:none;color:inherit;border-radius:16px;overflow:hidden;transition:transform .25s cubic-bezier(0.34,1.56,0.64,1);position:relative;}
 .card:hover{transform:translateY(-6px);}
 .card .preview{height:160px;display:flex;align-items:center;justify-content:center;font-family:"Quicksand";font-weight:700;font-size:24px;position:relative;overflow:hidden;}
@@ -22,15 +22,19 @@ h1{font-family:"Quicksand";font-size:clamp(24px,4vw,36px);margin-bottom:8px;text
 .t0 .preview{background:linear-gradient(135deg,#E8F1EA,#F7E2E5);color:#5B8E6C;}.t0 .badge{background:#7BA888;color:#fff;}
 .t4 .preview{background:#FFFDF7;color:#FF6B9D;font-family:"Bungee",sans-serif;border:4px solid #111;box-shadow:6px 6px 0 #111;}.t4 .badge{background:#FFE66D;color:#111;border:2px solid #111;}
 .t7 .preview{background:#FAF7F2;background-image:linear-gradient(rgba(120,108,86,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(120,108,86,.1) 1px,transparent 1px);background-size:14px 14px;color:#6B7A57;font-family:"Klee One",serif;}.t7 .badge{background:#8B9D7E;color:#fff;}
+.t8 .preview{background:linear-gradient(135deg,#EFF3E6,#E5ECD9);color:#4A7C59;font-family:"Baloo 2",sans-serif;}.t8 .badge{background:#4A7C59;color:#fff;}
+.t9 .preview{background:linear-gradient(180deg,#E8F0F5,#E8F0DE);color:#33691E;font-family:"Quicksand",sans-serif;}.t9 .badge{background:#7CB342;color:#fff;}
 </style>
 </head>
 <body>
 <h1>🐾 Dog-Friendly Restaurants HK</h1>
-<p class="sub">3 design templates — pick your favorite vibe</p>
+<p class="sub">5 design templates — pick your favorite vibe</p>
 <div class="grid">
-<a class="card t0" href="index.html"><div class="preview">🌸 Cute Flowery<span class="badge">V1</span></div><div class="info"><h3>Cute & Flowery</h3><p>Sage green, pastel flowers, paw prints, soft shadows, rounded corners</p></div></a>
-<a class="card t4" href="t4-memphis/index.html"><div class="preview">MEMPHIS!<span class="badge">V5</span></div><div class="info"><h3>Retro Memphis 80s</h3><p>Bright clashing colors, black outlines, hard sticker shadows, Bungee</p></div></a>
-<a class="card t7" href="t7-zakka/index.html"><div class="preview">📒 ZAKKA<span class="badge">V8</span></div><div class="info"><h3>Zakka Stationery 📒</h3><p>Grid paper, washi tape, handwritten fonts, sage/terracotta, journal feel</p></div></a>
+<a class="card t0" href="index.html"><div class="preview">🌸 Cute Flowery<span class="badge">V1</span></div><div class="info"><h3>Cute & Flowery</h3><p>Sage green, pastel flowers, paw prints, soft shadows</p></div></a>
+<a class="card t4" href="t4-memphis/index.html"><div class="preview">MEMPHIS!<span class="badge">V5</span></div><div class="info"><h3>Retro Memphis 80s</h3><p>Bright clashing colors, black outlines, hard sticker shadows</p></div></a>
+<a class="card t7" href="t7-zakka/index.html"><div class="preview">📒 ZAKKA<span class="badge">V8</span></div><div class="info"><h3>Zakka Stationery</h3><p>Grid paper, washi tape, handwritten fonts, journal feel</p></div></a>
+<a class="card t8" href="t8-forest/index.html"><div class="preview">🌳 FOREST<span class="badge">V9</span></div><div class="info"><h3>Dog Forest 🌳</h3><p>Scrolling dog illustrations, falling leaves, wooden trail map, cozy forest clearing</p></div></a>
+<a class="card t9" href="t9-meadow/index.html"><div class="preview">🦋 MEADOW<span class="badge">V10</span></div><div class="info"><h3>Dog Meadow 🦋</h3><p>Sunny park, frolicking dogs, butterflies, wildflowers, golden-hour vibes</p></div></a>
 </div>
 </body>
 </html>
