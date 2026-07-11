@@ -883,7 +883,7 @@ function switchTab(tab) {
   main.classList.remove('list-only','map-only');
   main.classList.add(tab === 'list' ? 'list-only' : 'map-only');
   if (tab === 'map' && selectedIdx >= 0) {
-    document.getElementById('mapPanel').classList.add('show');
+    showMap(selectedIdx);
   }
 }
 
