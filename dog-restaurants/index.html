@@ -978,6 +978,7 @@ function checkUrlParams() {
 window.addEventListener('DOMContentLoaded', () => {
   checkUrlParams();
   applyLocale();
+  if (selectedIdx >= 0) showMap(selectedIdx);
 });
 </script>
 </body>
