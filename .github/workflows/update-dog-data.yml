@@ -1,0 +1,66 @@
+name: Update Dog Restaurant Data
+
+on:
+  schedule:
+    # Run at 08:00 HKT (00:00 UTC) every day
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch latest data from FEHD API
+        id: fetch
+        run: |
+          python scripts/update-dog-data.py
+          # Check if data.js was modified
+          if git diff --quiet dog-restaurants/data.js dog-restaurants/.data-hash; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No data changes detected."
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Data changed — will commit and deploy."
+            # Extract count for commit message
+            COUNT=$(python3 -c "import json; d=json.loads(open('dog-restaurants/data.js').read().replace('const DOG_DATA=','').rstrip(';\n')); print(len(d['r']))")
+            echo "count=$COUNT" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit updated data
+        if: steps.fetch.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dog-restaurants/data.js dog-restaurants/.data-hash
+          git commit -m "data(dog-restaurants): auto-update from FEHD API (${{ steps.fetch.outputs.count }} restaurants)
+
+          Fetched from https://www.fehd.gov.hk/english/licensing/dog_restaurants/getData.php
+
+          Generated with Crush"
+          git push
+
+      - name: Deploy to DigitalOcean Droplet
+        if: steps.fetch.outputs.changed == 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USERNAME }}
+          password: ${{ secrets.DROPLET_PASSWORD }}
+          port: 22
+          timeout: 30s
+          script: |
+            echo "Deploying updated dog-restaurants data..."
+            cd /var/www/clawproject
+            git pull origin main
+            echo "Dog restaurant data updated at $(date)"
