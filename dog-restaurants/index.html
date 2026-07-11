@@ -496,6 +496,7 @@ body{
         </button>
       </div>
     </div>
+  <div class="hero-actions"><button class="hero-btn" onclick="surpriseMe()">🎲 <span data-i18n="surpriseMe">驚喜隨機</span></button><button class="hero-btn" onclick="nearMe()">📍 <span data-i18n="nearMe">附近</span></button></div>
   </div>
 </section>
 
@@ -512,6 +513,7 @@ body{
     <select class="sort-select" id="sortSelect" onchange="state.sort=this.value;state.limit=60;renderCards()">
       <option value="district" data-i18n="sortByDistrict">按地區</option>
       <option value="name" data-i18n="sortByName">按名稱</option>
+      <option value="distance" data-i18n="sortByDistance">按距離</option>
     </select>
   </div>
 </div>
@@ -620,7 +622,7 @@ const I18N = {
     sortByName:'By name',
     resultCount:'{n} restaurants',
     resultCountFiltered:'Showing {n} of {total}',
-    cardLicence:'Licence',
+    cardLicence:'Licence',copyAddress:'Copy address',copied:'Copied!',surpriseMe:'Surprise me',saved:'Saved',removed:'Removed',share:'Share',nearMe:'Near me',sortByDistance:'By distance',filterSaved:'Saved',
     openInMaps:'View on map',
     getDirections:'Get directions',
     copyAddress:'Copy address',
@@ -691,26 +693,30 @@ const LOWER = s => (s || '').toLowerCase();
 const DISTRICT_EN = {};
 for (const [k,v] of Object.entries(DISTRICT_ZH_TO_EN)) DISTRICT_EN[v] = k;
 
-const RESTAURANTS = DOG_DATA.r.map(([en,zh,district,address,licence], i) => ({
-  idx:i, en, zh, district, address, licence,
-  haystack: `${LOWER(en)} ${LOWER(zh)} ${LOWER(district)} ${LOWER(DISTRICT_ZH_TO_EN[district]||'')} ${LOWER(address)} ${LOWER(licence)}`
-}));
+const RESTAURANTS=DOG_DATA.r.map((row,i)=>{let en,zh,districtZh,districtEn,addressZh,addressEn,licence,lat,lng;if(row.length>=7){[en,zh,districtZh,districtEn,addressZh,addressEn,licence,lat,lng]=row;lat=lat||null;lng=lng||null;}else{[en,zh,districtZh,addressZh,licence]=row;districtEn=DISTRICT_ZH_TO_EN[districtZh]||'';addressEn='';lat=null;lng=null;}return{idx:i,en,zh,districtZh,districtEn,addressZh,addressEn,licence,lat,lng,district:districtZh,address:addressZh,haystack:`${LOWER(en)} ${LOWER(zh)} ${LOWER(districtZh)} ${LOWER(districtEn)} ${LOWER(addressZh)} ${LOWER(addressEn)} ${LOWER(licence)}`};});
 
 const districtCounts = {};
 RESTAURANTS.forEach(r => districtCounts[r.district] = (districtCounts[r.district]||0)+1);
 
-let state = { q:'', district:'all', sort:'district', limit:60 };
+let state = { q:'', district:'all', sort:'district', limit:60, filterFav:false };
 let selectedIdx = -1;
 
 function computeFiltered() {
   const q = LOWER(state.q.trim());
   let out = RESTAURANTS;
   if (state.district !== 'all') out = out.filter(r => r.district === state.district);
+  if (state.filterFav) out = out.filter(r => isFav(r.idx));
   if (q) {
     const terms = q.split(/\s+/).filter(Boolean);
     out = out.filter(r => terms.every(t => r.haystack.includes(t)));
   }
-  if (state.sort === 'name') {
+  if (state.sort === 'distance' && userLoc) {
+    out = [...out].sort((a,b) => {
+      const da = a.lat != null ? haversine(userLoc.lat, userLoc.lng, a.lat, a.lng) : Infinity;
+      const db = b.lat != null ? haversine(userLoc.lat, userLoc.lng, b.lat, b.lng) : Infinity;
+      return da - db;
+    });
+  } else if (state.sort === 'name') {
     out = [...out].sort((a,b) =>
       (getLocale()==='en'?a.en:a.zh).localeCompare(getLocale()==='en'?b.en:b.zh, getLocale()));
   } else {
@@ -747,6 +753,7 @@ function cardHTML(r) {
   const name = getLocale()==='en' ? r.en : r.zh;
   const otherName = getLocale()==='en' ? r.zh : r.en;
   const isActive = r.idx === selectedIdx;
+  const fav = isFav(r.idx);
   return `
   <article class="card ${isActive?'active':''}" data-idx="${r.idx}" tabindex="0" onclick="selectCard(${r.idx})">
     <div class="card-head">
@@ -755,13 +762,16 @@ function cardHTML(r) {
         <div class="card-name-alt">${escapeHtml(otherName)}</div>
       </div>
     </div>
-    <span class="card-district ${districtColorClass(r.district)}">📍 ${escapeHtml(districtName(r.district))}</span>
-    <div class="card-address">${escapeHtml(r.address)}</div>
+    <span class="card-district ${districtColorClass(r.district)}">📍 ${escapeHtml(rDistrict(r))}</span>
+    <div class="card-address">${escapeHtml(rAddress(r))}</div>
     <div class="card-footer">
       <span class="card-licence">${t('cardLicence')}: ${escapeHtml(r.licence)}</span>
-      <a class="card-map-btn" href="${mapExternalUrl(r)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
-        ${t('openInMaps')} →
-      </a>
+      <div class="card-actions">
+        <button class="card-icon-btn ${fav?'fav-active':''}" title="${t('saved')}" onclick="event.stopPropagation();toggleFav(${r.idx})">${fav?'❤️':'🤍'}</button>
+        <button class="card-icon-btn" title="${t('share')}" onclick="event.stopPropagation();shareCard(${r.idx})">📤</button>
+        <button class="card-icon-btn" title="${t('copyAddress')}" onclick="event.stopPropagation();copyAddress(${r.idx})">📋</button>
+        <a class="card-map-btn" href="${mapExternalUrl(r)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${t('openInMaps')} →</a>
+      </div>
     </div>
   </article>`;
 }
@@ -903,6 +913,20 @@ document.getElementById('grid').addEventListener('keydown', e => {
   }
 });
 
+let toastTimer;function toast(msg){let el=document.getElementById('toast');if(!el){el=document.createElement('div');el.id='toast';document.body.appendChild(el);}el.textContent=msg;el.className='toast show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.className='toast';},2000);}
+function surpriseMe(){const pool=computeFiltered().length?computeFiltered():RESTAURANTS;const r=pool[Math.floor(Math.random()*pool.length)];state.limit=Math.max(state.limit,r.idx+1);renderCards();selectCard(r.idx);toast(t('surpriseMe')+' 🎲');}
+async function shareCard(idx){const r=RESTAURANTS[idx];const name=getLocale()==='en'?r.en:r.zh;const url=location.origin+location.pathname+'?r='+r.idx;if(navigator.share){try{await navigator.share({title:name,text:rDistrict(r)+' · '+rAddress(r),url});}catch(e){}}else{try{await navigator.clipboard.writeText(url);toast(t('share')+' ✅');}catch(e){}}}
+const FAV_KEY='dog-favs';
+function getFavs(){try{return JSON.parse(localStorage.getItem(FAV_KEY))||[];}catch(e){return[];}}
+function isFav(idx){return getFavs().includes(idx);}
+function toggleFav(idx){let favs=getFavs();if(favs.includes(idx)){favs=favs.filter(f=>f!==idx);toast(t('removed'));}else{favs.push(idx);toast(t('saved'));}localStorage.setItem(FAV_KEY,JSON.stringify(favs));renderChips();renderCards();}
+function copyAddress(idx){const r=RESTAURANTS[idx];if(navigator.clipboard){navigator.clipboard.writeText(rAddress(r)).then(()=>toast(t('copied'))).catch(()=>{});}else{const ta=document.createElement('textarea');ta.value=rAddress(r);document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast(t('copied'));}catch(e){}document.body.removeChild(ta);}}
+function rDistrict(r){return getLocale()==='en'?(r.districtEn||DISTRICT_ZH_TO_EN[r.districtZh]||r.districtZh||r.district||''):(r.districtZh||r.district||'');}
+function rAddress(r){return getLocale()==='en'?(r.addressEn||r.addressZh||r.address||''):(r.addressZh||r.address||'');}
+function haversine(lat1,lng1,lat2,lng2){const R=6371,toRad=d=>d*Math.PI/180;const dLat=toRad(lat2-lat1),dLng=toRad(lng2-lng1);const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+let userLoc=null;
+function nearMe(){if(!navigator.geolocation){toast(t('nearMe')+' ❌');return;}toast(t('nearMe')+' …');navigator.geolocation.getCurrentPosition(pos=>{userLoc={lat:pos.coords.latitude,lng:pos.coords.longitude};state.sort='distance';document.getElementById('sortSelect').value='distance';state.limit=60;renderCards();},()=>{toast(t('nearMe')+' ❌');});}
+
 // check URL params for initial filter
 function checkUrlParams() {
   const params = new URLSearchParams(location.search);
@@ -912,6 +936,8 @@ function checkUrlParams() {
   if (q) { state.q = q; document.getElementById('search').value = q; document.getElementById('searchClear').hidden = false; }
   const lang = params.get('lang');
   if (lang === 'en' || lang === 'zh-HK') currentLocale = lang;
+  const r = params.get('r');
+  if (r !== null) { const idx = parseInt(r); if (idx >= 0 && idx < RESTAURANTS.length) selectedIdx = idx; }
 }
 
 /* ═══════════════════════════════════════════════════════════
