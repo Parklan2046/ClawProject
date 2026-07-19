@@ -84,6 +84,7 @@
 | Project | Status | What it does | Tech |
 |---------|:------:|--------------|------|
 | **[Spotify AI Dashboard](spotify-dashboard/)** | `🧪 Beta` | Polished now-playing panel with album art, device list, queue preview. Play/skip/search behind access code. | `Spotify Web API` `OAuth` `Python` |
+| **[跳一跳 Jump Jump](jumpjump/)** — 跳一跳 | `✅ Ready` | 蓄力跳躍休閒遊戲。Canvas 2D 等距投影，撳住蓄力放手跳，中心命中連擊加倍。Web Audio 合成音效、PWA 可安裝。核心邏輯 Rust→WASM（含 JS fallback）。 | `Canvas 2D` `Rust` `WebAssembly` `Web Audio` `PWA` |
 
 ---
 
