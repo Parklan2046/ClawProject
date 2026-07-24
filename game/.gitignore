@@ -1,0 +1,5 @@
+.godot/
+.crush/
+godot-login-*.png
+godot-login-*.wav
+*.import

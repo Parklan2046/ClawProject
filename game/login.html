@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>俠客行 · 登入</title>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="three-canvas" aria-hidden="true"></canvas>
+  <div class="bg-plate" aria-hidden="true"></div>
+  <div class="bg-wash" aria-hidden="true"></div>
+  <div class="mist m1" aria-hidden="true"></div>
+  <div class="mist m2" aria-hidden="true"></div>
+  <div class="mist m3" aria-hidden="true"></div>
+  <canvas id="dust-canvas" aria-hidden="true"></canvas>
+  <canvas id="ember-canvas" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="letterbox top" aria-hidden="true"></div>
+  <div class="letterbox bottom" aria-hidden="true"></div>
+
+  <div id="ui">
+    <div class="logo-wrap">
+      <div class="logo-seal">俠</div>
+      <h1 class="logo-title">俠客行</h1>
+      <p class="logo-sub">刀光劍影 · 情義江湖</p>
+      <div class="logo-divider"></div>
+    </div>
+
+    <div class="panel" id="login-panel">
+      <span class="panel-corner-tr"></span>
+      <span class="panel-corner-bl"></span>
+      <div class="panel-header">
+        <h2>踏入青石鎮</h2>
+        <p>暮色四合 · 風起塵揚</p>
+      </div>
+
+      <form id="login-form" autocomplete="on" novalidate>
+        <div class="field">
+          <label for="account">帳號</label>
+          <input id="account" name="account" type="text" maxlength="24" placeholder="少俠名號" autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="secret">密語</label>
+          <input id="secret" name="secret" type="password" maxlength="32" placeholder="江湖密語" autocomplete="current-password">
+        </div>
+        <div class="error-msg" id="error-msg" role="alert"></div>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary">進入江湖</button>
+          <button type="button" class="btn btn-ghost" id="btn-guest">遊客一遊</button>
+        </div>
+      </form>
+
+      <div class="links">
+        <a id="link-demo">預覽效果</a>
+        <a id="link-clear">清除記憶</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    俠客行 · 登入門面預覽<span>·</span>3D 視覺原型 v0.2<span>·</span>尚未接入遊戲
+  </div>
+</div>
+
+<div id="enter-veil"></div>
+
+<script src="login-scene.js"></script>
+<script src="login.js"></script>
+</body>
+</html>

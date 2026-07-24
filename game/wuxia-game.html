@@ -1,0 +1,4143 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>俠客行 — 武俠文字遊戲</title>
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/typed.js@2.1.0/dist/typed.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<style>
+:root {
+  --void: #0a0705;
+  --ink: #12100c;
+  --surface: #1a1610;
+  --elevated: #262018;
+  --gold: #D4AF37;
+  --gold-bright: #F0C940;
+  --gold-dim: #8B7355;
+  --cinnabar: #C0392B;
+  --cinnabar-light: #E74C3C;
+  --cinnabar-glow: #FF6B5A;
+  --jade: #27AE60;
+  --azure: #2980B9;
+  --cream: #F5E6C8;
+  --cream-dim: #B89A72;
+  --smoke: #7A6B56;
+  --border-gold: rgba(212,175,55,0.25);
+  --border-cinnabar: rgba(192,57,43,0.4);
+  --shadow-panel: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.08);
+  --shadow-glow: 0 0 12px rgba(212,175,55,0.15);
+  --shadow-cinnabar: 0 0 12px rgba(192,57,43,0.2);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--void);
+  background-image:
+    radial-gradient(ellipse 120% 60% at 30% 0%, rgba(139,90,43,0.10), transparent 55%),
+    radial-gradient(ellipse 100% 80% at 80% 100%, rgba(120,50,20,0.07), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0,0,0,0), transparent);
+  color: var(--cream);
+  font-family: "Noto Serif TC", "Source Han Serif TC", "標楷體", "DFKai-SB", "KaiTi", "STKaiti", "SimSun", serif;
+  font-size: 16px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+}
+
+#game-container {
+  width: 100%;
+  max-width: 820px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+}
+
+.screen { display: none; flex-direction: column; flex: 1; }
+.screen.active { display: flex; animation: fadeIn 0.4s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Title ===== */
+.title-bar {
+  text-align: center;
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border-gold);
+  margin-bottom: 14px;
+  position: relative;
+}
+.title-bar::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 50%;
+  transform: translateX(-50%);
+  width: 120px; height: 5px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.title-bar h1 {
+  font-size: 2em;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(212,175,55,0.2), 0 0 40px rgba(212,175,55,0.08);
+  letter-spacing: 0.2em;
+  font-weight: bold;
+}
+.title-bar .subtitle {
+  color: var(--smoke);
+  font-size: 0.85em;
+  margin-top: 6px;
+  letter-spacing: 0.1em;
+}
+
+/* ===== Character Creation ===== */
+.form-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: 8px;
+  padding: 28px;
+  margin: 12px 0;
+  box-shadow: var(--shadow-panel);
+}
+.form-panel h3 {
+  color: var(--cinnabar-light);
+  font-size: 1.3em;
+  margin-bottom: 20px;
+  font-weight: normal;
+  letter-spacing: 0.05em;
+}
+.form-group { margin-bottom: 22px; }
+.form-group label {
+  display: block;
+  color: var(--gold);
+  margin-bottom: 8px;
+  font-size: 1.05em;
+  font-weight: normal;
+}
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--ink);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 1em;
+  outline: none;
+  transition: all 0.3s;
+}
+.form-group input[type="text"]:focus {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-glow);
+}
+.sect-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+.sect-card {
+  background: var(--elevated);
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.sect-card:hover {
+  border-color: var(--gold);
+  background: rgba(212,175,55,0.06);
+  box-shadow: var(--shadow-glow);
+}
+.sect-card.selected {
+  border-color: var(--cinnabar);
+  background: rgba(192,57,43,0.1);
+  box-shadow: var(--shadow-cinnabar);
+}
+.sect-card .sect-name { color: var(--gold); font-weight: bold; font-size: 1.1em; }
+.sect-card .sect-desc { color: var(--smoke); font-size: 0.8em; margin-top: 5px; line-height: 1.5; }
+
+.gender-btn {
+  display: inline-block;
+  padding: 10px 28px;
+  background: var(--elevated);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  color: var(--cream);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1em;
+  margin-right: 10px;
+  transition: all 0.3s;
+}
+.gender-btn:hover { border-color: var(--gold); }
+.gender-btn.selected {
+  border-color: var(--cinnabar);
+  color: var(--cinnabar-glow);
+  background: rgba(192,57,43,0.1);
+}
+
+.attr-display {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.attr-box {
+  background: var(--elevated);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.attr-box .attr-name { color: var(--smoke); font-size: 0.85em; }
+.attr-box .attr-val { color: var(--gold); font-size: 1.4em; font-weight: bold; }
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-block;
+  padding: 11px 26px;
+  background: var(--surface);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  color: var(--gold);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1em;
+  transition: all 0.3s;
+  text-decoration: none;
+  outline: none;
+  margin: 4px;
+}
+.btn:hover {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  background: rgba(212,175,55,0.08);
+  box-shadow: var(--shadow-glow);
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.btn:disabled:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: var(--surface);
+  box-shadow: none;
+}
+.btn-cinnabar {
+  border-color: var(--cinnabar);
+  color: var(--cinnabar-glow);
+}
+.btn-cinnabar:hover {
+  background: rgba(192,57,43,0.12);
+  border-color: var(--cinnabar-light);
+  box-shadow: var(--shadow-cinnabar);
+}
+.btn-large { padding: 14px 40px; font-size: 1.15em; letter-spacing: 0.1em; }
+
+/* ===== Status Bar ===== */
+#status-bar {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-panel);
+}
+.status-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.status-name { font-size: 1.2em; color: var(--gold); }
+.status-meta { color: var(--smoke); font-size: 0.88em; }
+.status-bars { display: flex; flex-direction: column; gap: 5px; }
+.bar-row { display: flex; align-items: center; gap: 8px; }
+.bar-label { width: 36px; color: var(--smoke); font-size: 0.82em; text-align: right; flex-shrink: 0; }
+.bar-track {
+  flex: 1;
+  height: 16px;
+  background: var(--ink);
+  border: 1px solid var(--gold-dim);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.5s ease;
+}
+.bar-fill.hp { background: linear-gradient(90deg, #6B1A0F, var(--cinnabar), #E74C3C); }
+.bar-fill.mp { background: linear-gradient(90deg, #0D3B66, var(--azure), #5DADE2); }
+.bar-fill.exp { background: linear-gradient(90deg, #1A5F2E, var(--jade), #58D68D); height: 8px; }
+.bar-text {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.72em;
+  color: var(--cream);
+  text-shadow: 0 0 4px black, 0 0 4px black, 0 0 6px black;
+  white-space: nowrap;
+}
+.status-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(212,175,55,0.15);
+  font-size: 0.85em;
+  color: var(--smoke);
+}
+
+/* ===== Content Area ===== */
+#content-area {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: 8px;
+  padding: 24px;
+  flex: 1;
+  min-height: 280px;
+  box-shadow: var(--shadow-panel);
+  transition: background-image 0.45s ease;
+}
+.scene-title {
+  color: var(--cinnabar-light);
+  font-size: 1.35em;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-gold);
+  font-weight: normal;
+  letter-spacing: 0.03em;
+}
+.scene-text {
+  color: var(--cream);
+  font-size: 1.02em;
+  margin-bottom: 18px;
+  white-space: pre-wrap;
+  line-height: 1.9;
+}
+.scene-text p { margin-bottom: 10px; }
+
+.dialogue {
+  background: var(--elevated);
+  border-left: 3px solid var(--gold);
+  padding: 12px 16px;
+  margin: 12px 0;
+  border-radius: 0 6px 6px 0;
+  color: var(--cream);
+  line-height: 1.8;
+}
+.dialogue .speaker { color: var(--gold); font-weight: bold; }
+
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+.option-btn {
+  text-align: left;
+  padding: 12px 20px;
+  background: var(--elevated);
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+  color: var(--gold);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1em;
+  transition: all 0.3s;
+}
+.option-btn:hover {
+  border-color: var(--gold);
+  background: rgba(212,175,55,0.06);
+  color: var(--gold-bright);
+  padding-left: 26px;
+  box-shadow: var(--shadow-glow);
+}
+.option-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.option-btn:disabled:hover {
+  border-color: var(--gold-dim);
+  background: var(--elevated);
+  color: var(--gold);
+  padding-left: 20px;
+  box-shadow: none;
+}
+
+/* ===== Combat ===== */
+.combat-header {
+  text-align: center;
+  font-size: 1.4em;
+  color: var(--cinnabar-glow);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-cinnabar);
+  text-shadow: 0 0 10px rgba(231,76,60,0.2);
+  letter-spacing: 0.15em;
+}
+.enemy-panel {
+  background: var(--elevated);
+  border: 1px solid var(--cinnabar);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 0 10px rgba(192,57,43,0.1);
+}
+.enemy-name {
+  font-size: 1.2em;
+  color: var(--cinnabar-glow);
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+.combat-log {
+  background: var(--ink);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  padding: 12px 16px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+  font-size: 0.92em;
+  line-height: 1.7;
+}
+.combat-log p { margin-bottom: 4px; color: var(--cream); }
+.combat-log .dmg-out { color: var(--jade); }
+.combat-log .dmg-in { color: var(--cinnabar-light); }
+.combat-log .info { color: var(--gold); }
+.combat-log .crit { color: var(--gold-bright); font-weight: bold; text-shadow: 0 0 6px rgba(240,201,64,0.3); }
+.combat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.combat-actions .btn {
+  border-color: var(--cinnabar);
+  color: var(--cinnabar-glow);
+}
+.combat-actions .btn:hover {
+  border-color: var(--cinnabar-light);
+  background: rgba(192,57,43,0.1);
+  box-shadow: var(--shadow-cinnabar);
+}
+.combat-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ===== Log Area ===== */
+#log-area {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 14px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 0.88em;
+  box-shadow: var(--shadow-panel);
+}
+#log-area h4 { color: var(--gold); margin-bottom: 6px; font-size: 0.95em; }
+#log-area p { color: var(--smoke); margin-bottom: 2px; line-height: 1.6; }
+
+/* ===== Shop / Inventory ===== */
+.shop-item, .inv-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--elevated);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+.shop-item:hover, .inv-item:hover { border-color: var(--gold); }
+.shop-item-info { flex: 1; }
+.shop-item-name { color: var(--gold); font-size: 1.02em; }
+.shop-item-desc { color: var(--smoke); font-size: 0.85em; }
+.shop-item-price { color: var(--cinnabar-light); margin: 0 14px; white-space: nowrap; font-weight: bold; }
+
+.equip-slot {
+  background: var(--ink);
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.equip-slot .slot-label { color: var(--smoke); font-size: 0.85em; }
+.equip-slot .slot-item { color: var(--gold); }
+
+/* ===== Ending ===== */
+.ending-screen {
+  text-align: center;
+  padding: 40px 24px;
+}
+.ending-screen h1 {
+  font-size: 2.5em;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(212,175,55,0.4), 0 0 60px rgba(212,175,55,0.15);
+  margin-bottom: 28px;
+  letter-spacing: 0.25em;
+}
+.ending-screen .ending-text {
+  color: var(--cream);
+  font-size: 1.1em;
+  max-width: 520px;
+  margin: 0 auto 28px;
+  white-space: pre-wrap;
+  line-height: 2.1;
+}
+
+/* ===== Scene stage (location BG) ===== */
+#content-area {
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  isolation: isolate;
+}
+#content-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10,7,5,0.55) 0%, rgba(10,7,5,0.72) 45%, rgba(10,7,5,0.88) 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+#content-area > * { position: relative; z-index: 1; }
+#content-area.has-loc-bg {
+  border-color: rgba(232,238,247,0.12);
+  min-height: 420px;
+}
+
+/* ===== Anime portraits ===== */
+.portrait-hero {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin: 0 0 16px;
+  padding: 12px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.15));
+  border-radius: 12px;
+  border: 1px solid rgba(212,175,55,0.2);
+}
+.portrait-hero img {
+  width: 120px;
+  height: 160px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 10px;
+  border: 2px solid var(--gold-dim);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+  background: var(--ink);
+  flex-shrink: 0;
+}
+.portrait-hero .ph-meta { flex: 1; min-width: 0; }
+.portrait-hero .ph-name {
+  font-size: 1.35em;
+  color: var(--gold-bright);
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+.portrait-hero .ph-title {
+  color: var(--cream-dim);
+  font-size: 0.9em;
+  margin-top: 2px;
+}
+.portrait-hero .ph-desc {
+  color: var(--cream);
+  font-size: 0.88em;
+  margin-top: 8px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.chat-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 12px 0;
+}
+.chat-row.npc { flex-direction: row; }
+.chat-row.player { flex-direction: row-reverse; }
+.chat-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top center;
+  border: 2px solid var(--gold-dim);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  flex-shrink: 0;
+  background: var(--ink);
+}
+.chat-bubble {
+  max-width: 78%;
+  background: rgba(26,22,16,0.88);
+  border: 1px solid var(--border-gold);
+  border-radius: 4px 14px 14px 14px;
+  padding: 10px 14px;
+  color: var(--cream);
+  line-height: 1.75;
+  backdrop-filter: blur(6px);
+}
+.chat-row.player .chat-bubble {
+  border-radius: 14px 4px 14px 14px;
+  background: rgba(38,32,24,0.92);
+  border-color: rgba(212,175,55,0.35);
+}
+.chat-bubble .speaker {
+  display: block;
+  color: var(--gold);
+  font-weight: bold;
+  font-size: 0.88em;
+  margin-bottom: 2px;
+}
+
+/* ===== Romance / Girls ===== */
+.girl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.girl-card {
+  background: var(--elevated);
+  border: 1px solid var(--border-gold);
+  border-radius: 10px;
+  padding: 0 0 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.girl-card:hover {
+  border-color: var(--cinnabar-light);
+  background: rgba(192,57,43,0.06);
+  box-shadow: var(--shadow-cinnabar);
+  transform: translateY(-2px);
+}
+.girl-card.completed { border-color: var(--jade); }
+.girl-card .girl-thumb {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  background: var(--ink);
+  border-bottom: 1px solid var(--border-gold);
+}
+.girl-card .girl-icon { font-size: 2em; color: var(--cinnabar-light); margin: 10px 0 6px; }
+.girl-card .girl-title { color: var(--gold); font-size: 1.05em; font-weight: bold; margin-top: 8px; padding: 0 8px; }
+.girl-card .girl-desc { color: var(--smoke); font-size: 0.78em; margin: 5px 8px; line-height: 1.5; }
+.girl-card .girl-status {
+  font-size: 0.8em;
+  margin-top: 8px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  display: inline-block;
+}
+.girl-status.locked { background: rgba(100,100,100,0.2); color: #666; }
+.girl-status.met { background: rgba(212,175,55,0.12); color: var(--gold); }
+.girl-status.friend { background: rgba(231,76,60,0.12); color: var(--cinnabar-light); }
+.girl-status.love { background: rgba(231,76,60,0.25); color: var(--cinnabar-glow); font-weight: bold; }
+
+.affection-bar { margin: 10px 0; }
+.affection-bar .bar-track {
+  height: 14px;
+  background: var(--ink);
+  border: 1px solid var(--gold-dim);
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+}
+.affection-bar .bar-fill.aff {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cinnabar), var(--cinnabar-light), #FF8A80);
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+.affection-bar .bar-text {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.68em;
+  color: var(--cream);
+  text-shadow: 0 0 4px black;
+  white-space: nowrap;
+}
+.gift-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--elevated);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.gift-item .gift-name { color: var(--gold); font-size: 0.95em; }
+.gift-item .gift-aff { color: var(--cinnabar-light); font-size: 0.85em; }
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ===== Animation & Typing ===== */
+#typed-text { white-space: pre-wrap; display: block; }
+.typed-cursor { color: var(--gold); font-weight: bold; }
+
+.skip-hint {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  color: var(--smoke);
+  font-size: 0.8em;
+  cursor: pointer;
+  padding: 6px 14px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 20px;
+  background: rgba(10,7,5,0.8);
+  transition: all 0.3s;
+  z-index: 999;
+  animation: skipPulse 2s infinite;
+}
+.skip-hint:hover { color: var(--gold); border-color: var(--gold); }
+
+@keyframes skipPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.damage-float {
+  position: absolute;
+  font-size: 1.3em;
+  font-weight: bold;
+  color: var(--jade);
+  pointer-events: none;
+  z-index: 100;
+  text-shadow: 0 0 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.6);
+  white-space: nowrap;
+}
+.damage-float.crit {
+  color: var(--gold-bright);
+  font-size: 1.6em;
+  text-shadow: 0 0 12px rgba(240,201,64,0.4), 0 0 6px rgba(0,0,0,0.8);
+}
+.damage-float.player-dmg {
+  color: var(--cinnabar-light);
+  text-shadow: 0 0 8px rgba(231,76,60,0.4), 0 0 4px rgba(0,0,0,0.8);
+}
+
+.panel-enter { animation: panelEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes panelEnter {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.scene-title { animation: titleSlide 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes titleSlide {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.bar-fill { transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+
+.enemy-panel { position: relative; overflow: visible; }
+
+.combat-log p { animation: logFade 0.3s ease; }
+@keyframes logFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 3D Combat Overlay — Cinematic Redesign ===== */
+#combat-3d-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  background: #000;
+}
+#combat-3d-overlay.active {
+  display: flex;
+  animation: combatFadeIn 0.8s ease;
+}
+@keyframes combatFadeIn { from { opacity: 0; } to { opacity: 1; } }
+#combat-3d-overlay.fading-out {
+  animation: combatFadeOut 0.6s ease forwards;
+}
+@keyframes combatFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* Cinematic letterbox bars */
+.combat-letterbox {
+  position: absolute;
+  left: 0; width: 100%;
+  height: 0;
+  background: #000;
+  z-index: 20;
+  pointer-events: none;
+  transition: height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.combat-letterbox.top { top: 0; }
+.combat-letterbox.bottom { bottom: 0; }
+#combat-3d-overlay.active .combat-letterbox { height: 5vh; }
+
+/* Vignette overlay */
+.combat-vignette {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 15;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 80%, rgba(0,0,0,0.8) 100%);
+}
+
+#three-canvas-container {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+#combat-3d-ui {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px;
+  pointer-events: none;
+}
+#combat-3d-ui > * { pointer-events: auto; }
+
+/* Command UI hidden while a fight clip plays */
+.combat3d-actions, .combat3d-submenu {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+#combat-3d-overlay.clip-playing .combat3d-actions,
+#combat-3d-overlay.clip-playing .combat3d-submenu {
+  opacity: 0;
+  pointer-events: none !important;
+  transform: translateY(16px);
+}
+#combat-3d-overlay.clip-playing .combat-letterbox.top { height: 9vh; }
+#combat-3d-overlay.clip-playing .combat-letterbox.bottom { height: 9vh; }
+
+/* Enemy info — top center */
+.combat3d-enemy-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2vh;
+}
+.combat3d-enemy-name {
+  font-size: 1.5em;
+  color: var(--cinnabar-glow);
+  text-shadow: 0 0 16px rgba(231,76,60,0.5), 0 2px 8px rgba(0,0,0,0.8);
+  letter-spacing: 0.15em;
+  font-weight: bold;
+}
+.combat3d-hp-container {
+  width: 380px;
+  max-width: 70vw;
+}
+
+/* Premium HP bars */
+.c3d-hp-bar {
+  position: relative;
+  height: 20px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(212,175,55,0.3);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.3);
+}
+.c3d-hp-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+.c3d-hp-fill.enemy {
+  background: linear-gradient(180deg, #FF6B5A 0%, #C0392B 50%, #8B1A0F 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(192,57,43,0.4);
+}
+.c3d-hp-fill.player {
+  background: linear-gradient(180deg, #5DADE2 0%, #2980B9 50%, #1A5276 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(41,128,185,0.4);
+}
+.c3d-hp-fill.mp {
+  background: linear-gradient(180deg, #A569BD 0%, #7D3C98 50%, #5B2C6F 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 0 6px rgba(125,60,152,0.3);
+}
+.c3d-hp-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent);
+  border-radius: 2px 2px 0 0;
+}
+.c3d-hp-text {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75em;
+  color: #fff;
+  text-shadow: 0 0 4px #000, 0 0 2px #000;
+  white-space: nowrap;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
+/* Player info — bottom left frosted panel */
+.combat3d-player-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-top: auto;
+}
+.combat3d-player-panel {
+  background: rgba(10,7,5,0.75);
+  border: 1px solid rgba(212,175,55,0.2);
+  border-radius: 8px;
+  padding: 14px 18px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  min-width: 280px;
+}
+.combat3d-player-name {
+  font-size: 1.15em;
+  color: var(--gold);
+  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 8px rgba(212,175,55,0.2);
+}
+.combat3d-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+.combat3d-bar-row:last-child { margin-bottom: 0; }
+.combat3d-bar-label {
+  width: 28px;
+  font-size: 0.75em;
+  color: var(--smoke);
+  text-align: right;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+
+/* Combat log — elegant scroll panel */
+.combat3d-log {
+  background: rgba(10,7,5,0.75);
+  border: 1px solid rgba(212,175,55,0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  max-height: 90px;
+  overflow-y: auto;
+  font-size: 0.82em;
+  width: 240px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.combat3d-log p { margin-bottom: 3px; line-height: 1.5; }
+.combat3d-log .dmg-out { color: #58D68D; }
+.combat3d-log .dmg-in { color: #FF6B5A; }
+.combat3d-log .info { color: var(--gold); }
+.combat3d-log .crit { color: var(--gold-bright); font-weight: bold; }
+
+/* Action bar — elegant tiles */
+.combat3d-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding: 12px 0 4px;
+}
+.combat3d-actions .btn {
+  background: linear-gradient(180deg, rgba(38,32,24,0.9), rgba(18,16,12,0.9));
+  border: 1px solid rgba(192,57,43,0.4);
+  color: var(--cinnabar-glow);
+  backdrop-filter: blur(8px);
+  border-radius: 6px;
+  padding: 14px 26px;
+  min-height: 50px;
+  min-width: 118px;
+  font-size: 1em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.combat3d-actions .btn:hover {
+  background: linear-gradient(180deg, rgba(192,57,43,0.2), rgba(120,30,20,0.3));
+  border-color: var(--cinnabar-light);
+  color: #FF8A80;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(192,57,43,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.combat3d-actions .btn:active { transform: translateY(0); }
+.combat3d-actions .btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Skill submenu — scroll-style list */
+.combat3d-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.combat3d-submenu .option-btn {
+  background: rgba(18,16,12,0.85);
+  border: 1px solid rgba(212,175,55,0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 6px;
+  padding: 10px 16px;
+  color: var(--cream);
+  transition: all 0.3s;
+}
+.combat3d-submenu .option-btn:hover {
+  border-color: var(--cinnabar-light);
+  background: rgba(192,57,43,0.1);
+  color: var(--cinnabar-glow);
+}
+
+/* Skill name plate */
+#c3d-skill-plate {
+  position: absolute;
+  top: 30%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.1em;
+  letter-spacing: 0.25em;
+  color: var(--gold-bright);
+  border: 1px solid rgba(212,175,55,0.55);
+  border-radius: 4px;
+  padding: 10px 34px 10px 40px;
+  background: rgba(10,7,5,0.6);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 45;
+  font-weight: bold;
+  text-shadow: 0 0 18px rgba(212,175,55,0.35), 0 2px 8px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}
+
+/* VS text */
+.combat3d-vs-text {
+  position: absolute;
+  top: 42%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4em;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(212,175,55,0.5), 0 0 60px rgba(212,175,55,0.2), 0 4px 16px rgba(0,0,0,0.8);
+  letter-spacing: 0.4em;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  font-weight: bold;
+}
+
+/* Damage numbers */
+.damage-float {
+  position: absolute;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #58D68D;
+  pointer-events: none;
+  z-index: 100;
+  text-shadow: 0 0 10px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}
+.damage-float.crit {
+  color: var(--gold-bright);
+  font-size: 1.9em;
+  text-shadow: 0 0 14px rgba(240,201,64,0.5), 0 2px 6px rgba(0,0,0,0.8);
+}
+.damage-float.player-dmg {
+  color: #FF6B5A;
+  text-shadow: 0 0 10px rgba(231,76,60,0.4), 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* Turn indicator */
+.combat3d-turn-indicator {
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--smoke);
+  letter-spacing: 0.15em;
+  padding: 4px;
+  opacity: 0.7;
+  animation: turnPulse 2s infinite;
+}
+@keyframes turnPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  #game-container { padding: 8px; }
+  .title-bar h1 { font-size: 1.5em; }
+  .sect-grid { grid-template-columns: 1fr 1fr; }
+  .status-header { flex-direction: column; align-items: flex-start; }
+  .status-footer { flex-direction: column; }
+  .ending-screen h1 { font-size: 1.8em; }
+  .form-panel { padding: 18px; }
+  #content-area { padding: 16px; }
+  .skip-hint { bottom: 16px; right: 16px; font-size: 0.75em; }
+  #combat-3d-ui { padding: 12px; }
+  .combat3d-player-panel { min-width: 200px; padding: 10px 12px; }
+  .combat3d-log { display: none; }
+  .combat3d-actions .btn { padding: 12px 16px; min-height: 48px; min-width: 96px; font-size: 0.9em; }
+  #c3d-skill-plate { font-size: 1.4em; padding: 8px 20px 8px 26px; }
+  .combat3d-vs-text { font-size: 2.5em; }
+  .combat3d-hp-container { width: 260px; }
+}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <div class="title-bar">
+    <h1>俠 客 行</h1>
+    <div class="subtitle">武林風雲起，青石鎮中一少年</div>
+  </div>
+
+  <div id="create-screen" class="screen active">
+    <div class="form-panel">
+      <h3>— 創建角色 —</h3>
+      <div class="form-group">
+        <label>姓名</label>
+        <input type="text" id="input-name" maxlength="8" placeholder="請輸入少俠姓名（最多八字）">
+      </div>
+      <div class="form-group">
+        <label>性別</label>
+        <span class="gender-btn selected" data-gender="男" onclick="selectGender('男')">男</span>
+        <span class="gender-btn" data-gender="女" onclick="selectGender('女')">女</span>
+      </div>
+      <div class="form-group">
+        <label>門派</label>
+        <div class="sect-grid" id="sect-grid"></div>
+      </div>
+      <div id="attr-section" style="display:none;">
+        <label style="color:var(--gold); display:block; margin-bottom:8px;">天賦屬性（隨機產生）</label>
+        <div class="attr-display" id="attr-display"></div>
+        <button class="btn" onclick="rerollAttrs()">重新擲骰</button>
+      </div>
+      <div style="margin-top:28px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-cinnabar btn-large" onclick="startGame()">踏入江湖</button>
+        <button class="btn btn-large" id="continue-btn" style="display:none;" onclick="continueGame()">繼續旅程</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="play-screen" class="screen">
+    <div id="status-bar"></div>
+    <div id="content-area"></div>
+    <div id="log-area">
+      <h4>【江湖歷練】</h4>
+      <div id="log-list"></div>
+    </div>
+  </div>
+
+  <div id="ending-screen" class="screen">
+    <div class="ending-screen" id="ending-content"></div>
+  </div>
+</div>
+
+<div id="combat-3d-overlay">
+  <div id="three-canvas-container"></div>
+  <div class="combat-vignette"></div>
+  <div class="combat-letterbox top"></div>
+  <div class="combat-letterbox bottom"></div>
+  <div class="combat3d-vs-text" id="vs-text">對 決</div>
+  <div id="c3d-skill-plate"></div>
+  <div id="combat-3d-ui">
+    <div class="combat3d-enemy-info">
+      <div class="combat3d-enemy-name" id="c3d-enemy-name"></div>
+      <div class="combat3d-hp-container">
+        <div class="c3d-hp-bar">
+          <div class="c3d-hp-fill enemy" id="c3d-enemy-hp-bar" style="width:100%"></div>
+          <span class="c3d-hp-text" id="c3d-enemy-hp-text"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="combat3d-player-info">
+      <div class="combat3d-player-panel">
+        <div class="combat3d-player-name" id="c3d-player-name"></div>
+        <div class="combat3d-bar-row">
+          <span class="combat3d-bar-label">氣血</span>
+          <div class="c3d-hp-bar">
+            <div class="c3d-hp-fill player" id="c3d-player-hp-bar" style="width:100%"></div>
+            <span class="c3d-hp-text" id="c3d-player-hp-text"></span>
+          </div>
+        </div>
+        <div class="combat3d-bar-row">
+          <span class="combat3d-bar-label">內力</span>
+          <div class="c3d-hp-bar">
+            <div class="c3d-hp-fill mp" id="c3d-player-mp-bar" style="width:100%"></div>
+            <span class="c3d-hp-text" id="c3d-player-mp-text"></span>
+          </div>
+        </div>
+      </div>
+      <div class="combat3d-log" id="c3d-log"></div>
+    </div>
+
+    <div class="combat3d-turn-indicator" id="c3d-turn">你的回合</div>
+    <div class="combat3d-actions" id="c3d-actions">
+      <button class="btn" onclick="combatAttack()">普通攻擊</button>
+      <button class="btn" onclick="showCombatSkillMenu()">施展武功</button>
+      <button class="btn" onclick="showCombatItemMenu()">使用物品</button>
+      <button class="btn" onclick="combatDefend()">防禦</button>
+      <button class="btn" onclick="combatFlee()" id="c3d-flee-btn">逃跑</button>
+    </div>
+    <div class="combat3d-submenu" id="c3d-submenu"></div>
+  </div>
+</div>
+
+<script>
+const SECTS = {
+  shaolin: { name: '少林派', desc: '剛猛外功，攻守兼備', bonuses: { li: 5, gen: 5 }, skills: ['jingGangZhang', 'yiJinJing', 'nianHuaZhi'] },
+  wudang: { name: '武當派', desc: '內家心法，以柔克剛', bonuses: { nei: 5, gen: 3 }, skills: ['taiJiQuan', 'chunYangWuJi', 'liangYiJian'] },
+  huashan: { name: '華山派', desc: '劍法凌厲，迅猛絕倫', bonuses: { li: 3, agi: 5 }, skills: ['huaShanJian', 'ziXiaShenGong', 'duGuJiuJian'] },
+  emei: { name: '峨眉派', desc: '輕靈飄逸，靈巧多變', bonuses: { agi: 5, luc: 3 }, skills: ['eMeiJian', 'jiuYangShenGong', 'mieJian'] },
+  mojiao: { name: '魔教', desc: '功法詭異，陰毒狠辣', bonuses: { nei: 8, li: 2 }, skills: ['xiXingDaFa', 'kuiHuaBaoDian', 'huaGuMianZhang'] },
+};
+
+const ATTR_NAMES = { li: '力道', agi: '身法', nei: '內力', gen: '根骨', luc: '福緣' };
+
+const SKILLS = {
+  jingGangZhang:    { name: '金剛掌',     mpCost: 10, power: 1.5, desc: '少林剛猛掌法。' },
+  yiJinJing:        { name: '易筋經',     mpCost: 20, power: 0,   type: 'heal', healPct: 0.30, desc: '恢復三成氣血。' },
+  nianHuaZhi:       { name: '拈花指',     mpCost: 25, power: 2.0, desc: '少林絕技，指力驚人。' },
+  taiJiQuan:        { name: '太極拳',     mpCost: 8,  power: 1.3, desc: '以柔克剛。' },
+  chunYangWuJi:     { name: '純陽無極功', mpCost: 20, power: 0,   type: 'heal', healPct: 0.25, mpPct: 0.10, desc: '恢復氣血與內力。' },
+  liangYiJian:      { name: '兩儀劍法',   mpCost: 30, power: 2.2, desc: '陰陽相生之劍。' },
+  huaShanJian:      { name: '華山劍法',   mpCost: 8,  power: 1.4, desc: '迅捷凌厲。' },
+  ziXiaShenGong:    { name: '紫霞神功',   mpCost: 15, power: 1.8, desc: '紫氣東來，威力不凡。' },
+  duGuJiuJian:      { name: '獨孤九劍',   mpCost: 30, power: 2.5, desc: '天下無雙之劍。' },
+  eMeiJian:         { name: '峨眉劍法',   mpCost: 8,  power: 1.3, desc: '輕靈飄逸。' },
+  jiuYangShenGong:  { name: '九陽神功',   mpCost: 18, power: 0,   type: 'heal', healPct: 0.30, desc: '至陽心法，恢復三成氣血。' },
+  mieJian:          { name: '滅劍',       mpCost: 28, power: 2.3, desc: '峨眉絕學，劍勢兇猛。' },
+  xiXingDaFa:       { name: '吸星大法',   mpCost: 10, power: 1.3, type: 'absorb', absorbPct: 0.50, desc: '吸取對手氣血。' },
+  kuiHuaBaoDian:    { name: '葵花寶典',   mpCost: 20, power: 2.0, desc: '速如閃電，防不勝防。' },
+  huaGuMianZhang:   { name: '化骨綿掌',   mpCost: 35, power: 2.8, desc: '陰柔掌力，傷人無形。' },
+  feiXueJianFa:     { name: '飛雪劍法',   mpCost: 22, power: 2.3, desc: '劍如飛雪，冷冽無比。' },
+  huanYingBu:       { name: '幻影步',     mpCost: 12, power: 0, type: 'buff', desc: '提升身法，閃避下次攻擊。' },
+  bingXinJue:       { name: '冰心訣',     mpCost: 25, power: 0, type: 'heal', healPct: 0.40, mpPct: 0.20, desc: '恢復四成氣血與兩成內力。' },
+  xueHaiWuShuang:   { name: '血海無雙',   mpCost: 40, power: 3.0, desc: '魔教至高絕學，威力驚天。' },
+};
+
+const ITEMS = {
+  jinChuangYao:       { name: '金創藥',       type: 'consumable', desc: '恢復五十點氣血。',       effect: { kind: 'healHp', amt: 50 },  price: 15 },
+  shangDengJinChuang: { name: '上等金創藥',   type: 'consumable', desc: '恢復一百五十點氣血。',   effect: { kind: 'healHp', amt: 150 }, price: 40 },
+  neiLiDan:           { name: '內力丹',       type: 'consumable', desc: '恢復三十點內力。',       effect: { kind: 'healMp', amt: 30 },  price: 20 },
+  jiuZhuanHuanHunDan: { name: '九轉還魂丹',   type: 'consumable', desc: '完全恢復氣血與內力。',   effect: { kind: 'full' },             price: 100 },
+  tieJian:            { name: '鐵劍',         type: 'weapon',     desc: '攻擊力 +10',  bonus: { atk: 10 }, price: 30 },
+  jingGangJian:       { name: '精鋼劍',       type: 'weapon',     desc: '攻擊力 +20',  bonus: { atk: 20 }, price: 80 },
+  xuanTieZhongJian:   { name: '玄鐵重劍',     type: 'weapon',     desc: '攻擊力 +35',  bonus: { atk: 35 }, price: 0 },
+  tuLongDao:          { name: '屠龍刀',       type: 'weapon',     desc: '攻擊力 +50',  bonus: { atk: 50 }, price: 0 },
+  ruanWeiJia:         { name: '軟猬甲',       type: 'armor',      desc: '防禦力 +15',  bonus: { def: 15 }, price: 60 },
+  jinSiRuanJia:       { name: '金絲軟甲',     type: 'armor',      desc: '防禦力 +30',  bonus: { def: 30 }, price: 0 },
+  yiTianJian:         { name: '倚天劍',       type: 'weapon',     desc: '攻擊力 +45',  bonus: { atk: 45 }, price: 0 },
+  bingCanSiJia:       { name: '冰蠶絲甲',     type: 'armor',      desc: '防禦力 +25',  bonus: { def: 25 }, price: 0 },
+  tianShanXueLian:    { name: '天山雪蓮',     type: 'consumable', desc: '完全恢復氣血內力，永久提升五十點上限。', effect: { kind: 'snowLotus' }, price: 0 },
+  xianHua:            { name: '鮮花',         type: 'gift',       desc: '一束野花。',             aff: 8,  price: 5 },
+  zhenZhuZan:         { name: '珍珠簪',       type: 'gift',       desc: '精美的珍珠髮簪。',       aff: 15, price: 30 },
+  yuPei:              { name: '玉佩',         type: 'gift',       desc: '溫潤的和田玉佩。',       aff: 25, price: 50 },
+  guQin:              { name: '古琴',         type: 'gift',       desc: '一把音色優美的古琴。',   aff: 40, price: 100 },
+};
+
+const ENEMIES = {
+  shanZei: {
+    name: '山賊', maxHp: 60, atk: 15, def: 5, spd: 8,
+    skills: [{ name: '猛擊', power: 1.3 }],
+    exp: 30, gold: 20,
+    drops: [{ id: 'jinChuangYao', chance: 0.3 }],
+    flavor: '一名手持鋼刀的山賊攔住了你的去路，眼中閃爍著兇光。',
+  },
+  shanZeiTouMu: {
+    name: '山賊頭目', maxHp: 130, atk: 25, def: 10, spd: 10,
+    skills: [{ name: '猛擊', power: 1.3 }, { name: '狂斬', power: 1.6 }],
+    exp: 65, gold: 50,
+    drops: [{ id: 'jinChuangYao', chance: 0.5 }, { id: 'neiLiDan', chance: 0.2 }],
+    flavor: '山賊頭目橫刀而立，身上散發著一股狠戾之氣。「小子，留下買路財！」',
+  },
+  mojiaoZhuaYa: {
+    name: '魔教爪牙', maxHp: 110, atk: 28, def: 8, spd: 12,
+    skills: [{ name: '毒爪', power: 1.4 }, { name: '邪氣功', power: 1.5 }],
+    exp: 55, gold: 35,
+    drops: [{ id: 'neiLiDan', chance: 0.35 }],
+    flavor: '一名黑衣蒙面人從暗影中走出，指尖泛著詭異的紫黑色。',
+  },
+  mojiaoHuFa: {
+    name: '魔教護法', maxHp: 220, atk: 35, def: 15, spd: 14,
+    skills: [{ name: '血魔掌', power: 1.5 }, { name: '噬魂爪', power: 1.8 }],
+    exp: 110, gold: 80,
+    drops: [{ id: 'shangDengJinChuang', chance: 0.4 }, { id: 'neiLiDan', chance: 0.3 }],
+    flavor: '魔教護法一身暗紅長袍，周身繚繞著血色煞氣。「擅闖聖地者，死！」',
+  },
+  heiFengShouWei: {
+    name: '黑風寨守衛', maxHp: 200, atk: 38, def: 18, spd: 11,
+    skills: [{ name: '重斬', power: 1.4 }, { name: '盾擊', power: 1.3 }],
+    exp: 95, gold: 60,
+    drops: [{ id: 'jinChuangYao', chance: 0.4 }],
+    flavor: '身披黑甲的守衛手持巨盾，如鐵壁般擋在你面前。',
+  },
+  xuanMingZhenRen: {
+    name: '玄冥真人', maxHp: 600, atk: 52, def: 22, spd: 15,
+    skills: [{ name: '玄冥神掌', power: 1.6 }, { name: '寒冰真氣', power: 1.4 }, { name: '幽冥鬼爪', power: 1.9 }],
+    exp: 500, gold: 300,
+    drops: [],
+    flavor: '玄冥真人緩緩起身，黑袍無風自動。一股令人窒息的陰寒之氣撲面而來。',
+  },
+  zuiHan: {
+    name: '調戲醉漢', maxHp: 45, atk: 12, def: 3, spd: 6,
+    skills: [{ name: '醉拳', power: 1.2 }],
+    exp: 15, gold: 8,
+    drops: [],
+    flavor: '一個滿身酒氣的醉漢搖搖晃晃地走來，嘴裡說著污言穢語。',
+  },
+  tiaoXinZei: {
+    name: '採花大盜', maxHp: 160, atk: 30, def: 10, spd: 14,
+    skills: [{ name: '迷魂掌', power: 1.5 }, { name: '飛爪', power: 1.3 }],
+    exp: 70, gold: 40,
+    drops: [{ id: 'zhenZhuZan', chance: 0.5 }],
+    flavor: '一個身形輕巧的蒙面人從屋頂躍下，手中握著一把飛爪。',
+  },
+  xieJiaoTu: {
+    name: '邪教惡徒', maxHp: 180, atk: 32, def: 12, spd: 13,
+    skills: [{ name: '血祭', power: 1.4 }, { name: '邪焰', power: 1.6 }],
+    exp: 80, gold: 45,
+    drops: [],
+    flavor: '邪教惡徒雙眼赤紅，周身散發著令人作嘔的血腥氣息。',
+  },
+};
+
+const SHOP_LIST = [
+  'jinChuangYao', 'shangDengJinChuang', 'neiLiDan', 'jiuZhuanHuanHunDan',
+  'tieJian', 'jingGangJian', 'ruanWeiJia',
+  'xianHua', 'zhenZhuZan', 'yuPei', 'guQin',
+];
+
+const INN_GOSSIP = [
+  '聽說黑風寨的山賊最近搶了好幾個商隊，連官府都束手無策。',
+  '有人說玄冥真人修煉的是上古邪功「玄冥神掌」，中掌者經脈凍結，生不如死。',
+  '聽說鎮北的荒廢古廟裡最近常有魔教的人出沒，你最好小心點。',
+  '黑風寨的入口在鎮北的山路上，但守衛森嚴，沒有足夠的實力千萬別去送死。',
+  '據說玄冥真人有個弱點——他修煉邪功時傷了左手經脈，左手防守較弱。',
+  '鎮外的樹林深處靈氣充沛，在那裡修煉可事半功倍。',
+  '我聽說玄冥真人原是正派弟子，後來走火入魔才墮入魔道，真是可惜啊。',
+  '最近有不少江湖人士來到青石鎮，都想挑戰玄冥真人，但沒有一個人活著回來。',
+];
+
+let player = null;
+let tempGender = '男';
+let tempSect = null;
+let tempAttrs = null;
+let strongholdProgress = 0;
+let gossipShown = 0;
+let combat = null;
+let gameLog = [];
+let romance = null;
+let romanceCombatCallback = null;
+const SAVE_KEY = 'wuxia_save_v3';
+
+const ASSETS = {
+  girls: {
+    xiaoCui: 'assets/girls/xiaoCui.png',
+    lengShuang: 'assets/girls/lengShuang.png',
+    suWanEr: 'assets/girls/suWanEr.png',
+    yueJi: 'assets/girls/yueJi.png',
+    yaoXianEr: 'assets/girls/yaoXianEr.png',
+    hongXiu: 'assets/girls/hongXiu.png',
+    meiYing: 'assets/girls/meiYing.png',
+  },
+  bg: {
+    inn: 'assets/bg/inn.jpg',
+    town: 'assets/bg/town.jpg',
+    forest: 'assets/bg/forest.jpg',
+    tea: 'assets/bg/tea.jpg',
+    forge: 'assets/bg/forge.jpg',
+    stronghold: 'assets/bg/stronghold.jpg',
+    peak: 'assets/bg/peak.jpg',
+    night_inn: 'assets/bg/night_inn.jpg',
+  },
+};
+
+const LOC_BG = {
+  '青石鎮': 'town',
+  '悅來客棧': 'inn',
+  '鎮外': 'forest',
+  '茶樓': 'tea',
+  '鐵匠鋪': 'forge',
+  '黑風寨': 'stronghold',
+  '玄冥峰': 'peak',
+  '夜宴': 'night_inn',
+};
+
+function setLocationBg(key) {
+  const el = document.getElementById('content-area');
+  if (!el) return;
+  const path = ASSETS.bg[key];
+  if (path) {
+    el.style.backgroundImage = `url('${path}')`;
+    el.classList.add('has-loc-bg');
+  } else {
+    el.style.backgroundImage = '';
+    el.classList.remove('has-loc-bg');
+  }
+}
+
+function girlPortrait(id, cls) {
+  const src = ASSETS.girls[id];
+  if (!src) return '';
+  return `<img class="${cls || 'chat-avatar'}" src="${src}" alt="${(GIRLS[id] && GIRLS[id].name) || ''}" loading="lazy">`;
+}
+
+function girlHeroCard(id) {
+  const g = GIRLS[id];
+  if (!g) return '';
+  const src = ASSETS.girls[id] || '';
+  return `
+    <div class="portrait-hero">
+      <img src="${src}" alt="${g.name}" loading="lazy">
+      <div class="ph-meta">
+        <div class="ph-name">${g.name}</div>
+        <div class="ph-title">${g.title}</div>
+        <div class="ph-desc">${g.desc}</div>
+      </div>
+    </div>
+  `;
+}
+
+function npcBubble(id, text) {
+  const g = GIRLS[id];
+  const name = g ? g.name : '？？？';
+  return `
+    <div class="chat-row npc">
+      ${girlPortrait(id)}
+      <div class="chat-bubble"><span class="speaker">${name}</span>${text}</div>
+    </div>
+  `;
+}
+
+const GIRLS = {
+  xiaoCui: {
+    name: '小翠', title: '客棧侍女', icon: '☘', loc: 'inn',
+    desc: '客棧老王的女兒，天真善良，笑容溫暖。',
+    meetText: '你注意到客棧角落有一個忙碌的少女，她正在擦拭桌椅，動作輕快俐落。她看到你望過來，靦腆地笑了笑。',
+    dialogues: [
+      '「${name}少俠，您今天又要出門冒險嗎？要小心啊！」',
+      '「我爹說最近的江湖很不太平，您可千萬要保重。」',
+      '「其實……我一直很羨慕您能自由自在地行走江湖。」',
+      '「這是我煮的桂花茶，您嚐嚐看？」',
+      '「少俠，您知道嗎？每次看到您平安回來，我就放心了。」',
+    ],
+    questTitle: '醉漢糾纏',
+    questText: '小翠看起來面有難色。她告訴你，鎮上一個醉漢最近常來客棧騷擾她，讓她十分困擾。如果你能教訓那個醉漢一頓，她會非常感激。',
+    questEnemy: 'zuiHan',
+    questReqText: '教訓調戲小翠的醉漢',
+    reward50Text: '小翠感激地遞給你幾瓶她親手熬製的上等金創藥，並祝你平安。你的氣血上限也因她的悉心照顧而提升了。',
+    reward50: { items: { shangDengJinChuang: 3 }, maxHpBonus: 20 },
+    reward100Text: '小翠紅著臉遞給你一株天山雪蓮，說是她已故母親留下的珍寶。「這個……給你。你一定要平安回來。」',
+    reward100: { items: { tianShanXueLian: 2 }, maxHpBonus: 30, maxMpBonus: 15 },
+  },
+  lengShuang: {
+    name: '冷霜', title: '冷艷劍客', icon: '❄', loc: 'forest',
+    desc: '一位手持長劍的冷艷女子，據說是華山棄徒。',
+    meetText: '在鎮外的樹林中，你遇到一位白衣女子正在練劍。劍光如雪，寒氣逼人。她察覺到你的到來，冷冷地收劍回頭。',
+    dialogues: [
+      '「……你又是來勸我回華山的？不必浪費口舌。」',
+      '「劍道之路，唯勤而已。你的根基……尚可。」',
+      '「哼，看來你還算有些毅力。不像那些只會說空話的人。」',
+      '「我當年被逐出師門，是因為我追求的劍道太過極端。但我不後悔。」',
+      '「……你和其他人不一樣。至少，你從不虛偽。」',
+    ],
+    questTitle: '劍客的考驗',
+    questText: '冷霜冷冷地看著你：「想證明你配得上與我並肩？去擊敗鎮外的山賊頭目，讓我看看你的本事。」',
+    questEnemy: 'shanZeiTouMu',
+    questReqText: '擊敗山賊頭目以證明實力',
+    reward50Text: '冷霜微微點頭，遞給你一把倚天劍。「這把劍跟了我很多年……如今，它歸你了。用不好它，我會收回來。」',
+    reward50: { items: { yiTianJian: 1 } },
+    reward100Text: '冷霜破天荒地露出了一絲微笑。她將自己的絕學傾囊相授：「飛雪劍法——這是我畢生所悟。還有這本心法，能讓你的身法更上一層樓。」',
+    reward100: { items: {}, skills: ['feiXueJianFa'], attrBonus: { agi: 3 } },
+  },
+  suWanEr: {
+    name: '蘇婉兒', title: '富家千金', icon: '✿', loc: 'tea',
+    desc: '青石鎮首富蘇老爺的獨女，知書達理，端莊秀麗。',
+    meetText: '在鎮上的茶樓裡，你看到一位衣著華貴的小姐正在讀書。她氣質高雅，身邊跟著兩個丫鬟。注意到你的目光，她微微頷首。',
+    dialogues: [
+      '「這位少俠，我看你骨骼不凡，想必是名門之後？」',
+      '「家父總說江湖險惡，但我看少俠為人正直，令人敬佩。」',
+      '「其實我從小就嚮往江湖生活，可惜身為女子，被困在這方寸之地。」',
+      '「少俠，若你不嫌棄，改日我請你喝杯好茶。」',
+      '「你知道嗎？和你聊天是我一天中最開心的時光。」',
+    ],
+    questTitle: '明珠蒙塵',
+    questText: '蘇婉兒告訴你，她母親留下的珍珠簪被一個採花大盜偷走了。如果你能幫她找回珍珠簪，她會重重酬謝。',
+    questEnemy: 'tiaoXinZei',
+    questReqText: '擊敗採花大盜，奪回珍珠簪',
+    reward50Text: '蘇婉兒喜出望外，從家中取出三百兩銀票送給你。「少俠大恩大德，婉兒沒齒難忘。」',
+    reward50: { items: {}, gold: 300 },
+    reward100Text: '蘇婉兒從懷中取出一枚溫潤的玉佩：「這是我蘇家祖傳的和田玉佩，據說佩戴者福緣深厚。如今……送給你。」你的福緣永久提升了。',
+    reward100: { items: {}, gold: 200, attrBonus: { luc: 5 } },
+  },
+  yueJi: {
+    name: '月姬', title: '神秘舞姬', icon: '☾', loc: 'night_inn',
+    desc: '夜晚在客棧獻藝的神秘舞姬，身世成謎。',
+    meetText: '夜幕降臨，客棧裡來了一位面紗遮面的舞姬。她的舞姿如夢似幻，在場所有人都看呆了。舞畢，她徑直走向你。',
+    meetLevelReq: 2,
+    dialogues: [
+      '「少俠，你的眼神和其他人不一樣。他們看的是我的舞，你看的是……我。」',
+      '「我曾在宮中起舞，如今流落江湖，箇中苦楚不足為外人道。」',
+      '「你的內力渾厚，卻又收放自如。看來，你的師門不簡單啊。」',
+      '「每當月圓之夜，我便會來此起舞。你……會來看嗎？」',
+      '「如果有一天我不得不離開……你會記得我嗎？」',
+    ],
+    questTitle: '月下之約',
+    questText: '月姬告訴你，有一個邪教惡徒一直在跟蹤她，意圖不軌。她希望你能替她解決這個麻煩。「他今夜就會來，少俠，拜託了。」',
+    questEnemy: 'xieJiaoTu',
+    questReqText: '擊敗跟蹤月姬的邪教惡徒',
+    reward50Text: '月姬輕輕揭下面紗，露出一張絕美的容顏。她教你一套身法：「幻影步——以後，它就是你的護身符。」',
+    reward50: { items: {}, skills: ['huanYingBu'] },
+    reward100Text: '月姬將一件冰蠶絲甲披在你身上，觸感冰涼卻又堅韌無比。「這是我唯一的防身之物。從今以後……你替我擋風雨，可好？」你的身法也大幅提升了。',
+    reward100: { items: { bingCanSiJia: 1 }, attrBonus: { agi: 4 } },
+  },
+  yaoXianEr: {
+    name: '藥仙兒', title: '採藥少女', icon: '❀', loc: 'forest',
+    desc: '常在鎮外山間採藥的少女，精通藥理。',
+    meetText: '在鎮外的山間小路上，你遇到一個背著竹簍的少女，正在仔細地辨認草藥。她渾身散發著淡淡的藥香，看到你後友善地打了個招呼。',
+    dialogues: [
+      '「少俠，你受過傷吧？我聞得到你身上有瘀血的氣味。來，吃顆藥。」',
+      '「這座山上的草藥我瞭如指掌，有什麼需要儘管開口。」',
+      '「我師父說，最好的醫術不是治病，而是治心。你覺得呢？」',
+      '「每次你從鎮外回來，我都會準備好草藥等你。已經……成了習慣了呢。」',
+      '「少俠，你一定要活著回來。答應我。」',
+    ],
+    questTitle: '雪蓋靈峰',
+    questText: '藥仙兒告訴你，她需要天山雪蓮來煉製一種靈丹妙藥，但採藥途中被魔教爪牙封鎖了去路。如果你能清除那些魔教爪牙，她就能煉出絕世靈藥。',
+    questEnemy: 'mojiaoZhuaYa',
+    questReqText: '清除封路的魔教爪牙',
+    reward50Text: '藥仙兒高興地遞給你三顆九轉還魂丹：「這是我花費三個月煉成的，你帶著，關鍵時刻能救命！」',
+    reward50: { items: { jiuZhuanHuanHunDan: 3 } },
+    reward100Text: '藥仙兒將一顆散發著晶瑩光芒的丹藥遞給你：「這是我用天山雪蓮煉成的至寶。吃了它，你的根基會更穩固。」她又將自己獨創的冰心訣傳授給了你。',
+    reward100: { items: { tianShanXueLian: 1 }, skills: ['bingXinJue'], attrBonus: { gen: 3 } },
+  },
+  hongXiu: {
+    name: '紅袖', title: '鐵匠之女', icon: '⚒', loc: 'forge',
+    desc: '鎮上鐵匠的女兒，力大無窮，性格豪爽。',
+    meetText: '在雜貨鋪的後院，你看到一個虎背熊腰的姑娘正在打鐵。她揮舞鐵錘的架勢，比許多男子還要威猛。看到你進來，她放下鐵錘，大大咧咧地笑了。',
+    dialogues: [
+      '「嘿！少俠，你的兵器還趁手嗎？拿來我幫你磨磨！」',
+      '「我爹是青石鎮最好的鐵匠，我從小跟著他打鐵，這雙手比你的劍還硬！」',
+      '「你別看我這樣，我打的兵器，天下間找不出第二家！」',
+      '「每次你打完架回來，我都會幫你檢查兵器。嘿嘿，免費的！」',
+      '「少俠，你答應我，以後你的兵器……只讓我來打。好不好？」',
+    ],
+    questTitle: '玄鐵之約',
+    questText: '紅袖告訴你，她一直在尋找一塊傳說中的玄鐵礦石來鍛造絕世神兵。聽說山賊頭目手裡有一塊，如果你能弄到手，她就能為你打造一把屠龍刀！',
+    questEnemy: 'shanZeiTouMu',
+    questReqText: '從山賊頭目手中奪取玄鐵礦石',
+    reward50Text: '紅袖拍了拍你的肩膀，遞給你一把精鋼劍和一件軟猬甲。「拿著！這是我親手打的，比外面賣的好十倍！」你的力道也因為常幫她打鐵而提升了。',
+    reward50: { items: { jingGangJian: 1, ruanWeiJia: 1 }, attrBonus: { li: 2 } },
+    reward100Text: '紅袖雙手捧著一把散發著寒光的長刀，眼眶微紅：「屠龍刀……我打了一輩子鐵，終於打出了這把刀。它……只屬於你。」你的力道也大幅提升了。',
+    reward100: { items: { tuLongDao: 1 }, attrBonus: { li: 5 } },
+  },
+  meiYing: {
+    name: '魅影', title: '魔教聖女', icon: '☠', loc: 'stronghold',
+    desc: '魔教聖女，身世詭秘，亦正亦邪。據說她對玄冥真人的暴行深感不滿。',
+    meetText: '在黑風寨附近的山路上，一個黑衣女子突然出現在你面前。她面容冷峻，卻有一雙攝人心魄的眼睛。「你就是那個要挑戰玄冥真人的人？」',
+    meetLevelReq: 4,
+    dialogues: [
+      '「我是魔教聖女魅影。但別誤會，我和玄冥真人不是一路人。」',
+      '「他打著魔教的旗號為非作歹，敗壞了我教數百年的聲譽。」',
+      '「你的實力……比我想像的要強。也許，你真的能做到。」',
+      '「如果你失敗了，我會替你完成未竟之事。但……我希望你能活著。」',
+      '「答應我，無論結果如何……都不要放棄。」',
+    ],
+    questTitle: '聖女的試煉',
+    questText: '魅影告訴你，要擊敗玄冥真人，必須先突破他佈下的魔教護法陣。「擊敗魔教護法，證明你有資格與玄冥真人一戰。」',
+    questEnemy: 'mojiaoHuFa',
+    questReqText: '擊敗魔教護法，突破護法陣',
+    reward50Text: '魅影微微頷首，將吸星大法的秘籍遞給你：「這是魔教至高心法。用它，但要小心反噬。」你的內力也因修習此法而提升了。',
+    reward50: { items: {}, skills: ['xiXingDaFa'], attrBonus: { nei: 3 } },
+    reward100Text: '魅影將化骨綿掌與血海無雙兩門絕學傾囊相授，並將一身內力灌注於你體內。「去吧。玄冥真人……就交給你了。我相信你。」你的內力大幅提升了。',
+    reward100: { items: {}, skills: ['huaGuMianZhang', 'xueHaiWuShuang'], attrBonus: { nei: 6 } },
+  },
+};
+
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+
+let currentTyped = null;
+let currentNarrativeText = '';
+
+function destroyTyped() {
+  if (currentTyped) { currentTyped.destroy(); currentTyped = null; }
+}
+
+function typeNarrative(text, onComplete) {
+  const el = document.getElementById('typed-text');
+  if (!el) { if (onComplete) onComplete(); return; }
+  destroyTyped();
+  currentNarrativeText = text;
+  currentTyped = new Typed(el, {
+    strings: [text],
+    typeSpeed: 18,
+    showCursor: true,
+    cursorChar: '▍',
+    onComplete: function() { if (onComplete) onComplete(); }
+  });
+}
+
+function skipTyping() {
+  if (!currentTyped) return;
+  currentTyped.destroy();
+  currentTyped = null;
+  const el = document.getElementById('typed-text');
+  if (el) el.innerHTML = currentNarrativeText.replace(/\n/g, '<br>');
+  revealSceneContent();
+}
+
+function revealSceneContent() {
+  const extra = document.getElementById('scene-extra');
+  const options = document.getElementById('options-grid');
+  const skipHint = document.getElementById('skip-hint');
+  if (skipHint) skipHint.style.display = 'none';
+  if (extra) {
+    extra.style.opacity = '1';
+    anime({ targets: extra, opacity: [0, 1], translateY: [8, 0], duration: 400, easing: 'easeOutQuad' });
+  }
+  if (options) {
+    options.style.opacity = '1';
+    staggerIn('#options-grid .option-btn');
+  }
+}
+
+function staggerIn(selector) {
+  anime({
+    targets: selector,
+    opacity: [0, 1],
+    translateY: [12, 0],
+    delay: anime.stagger(70),
+    duration: 400,
+    easing: 'easeOutQuad'
+  });
+}
+
+function floatDamage(text, cls, container) {
+  const parent = container || document.querySelector('.enemy-panel');
+  if (!parent) return;
+  const el = document.createElement('div');
+  el.className = 'damage-float' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+  parent.appendChild(el);
+  el.style.left = randInt(35, 65) + '%';
+  el.style.top = randInt(20, 40) + '%';
+  anime({
+    targets: el,
+    translateY: [0, -50],
+    opacity: [1, 0],
+    scale: [1, 1.15],
+    duration: 1100,
+    easing: 'easeOutQuad',
+    complete: function() { el.remove(); }
+  });
+}
+
+function shakeScreen(intensity) {
+  intensity = intensity || 5;
+  anime({
+    targets: '#game-container',
+    translateX: [
+      { value: -intensity, duration: 40 },
+      { value: intensity, duration: 40 },
+      { value: Math.round(-intensity * 0.6), duration: 40 },
+      { value: Math.round(intensity * 0.6), duration: 40 },
+      { value: 0, duration: 40 }
+    ],
+    easing: 'easeInOutQuad'
+  });
+}
+
+function panelEnter(selector) {
+  const el = document.querySelector(selector);
+  if (el) el.classList.add('panel-enter');
+}
+
+function saveGame() {
+  if (!player) return;
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      player, strongholdProgress, gossipShown, romance, gameLog: gameLog.slice(-30),
+    }));
+  } catch (e) {}
+}
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d || !d.player) return false;
+    player = d.player;
+    strongholdProgress = d.strongholdProgress || 0;
+    gossipShown = d.gossipShown || 0;
+    romance = d.romance || null;
+    gameLog = d.gameLog || [];
+    return true;
+  } catch (e) { return false; }
+}
+
+function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
+function deleteSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+
+function rollAttributes() {
+  return {
+    li: randInt(6, 15), agi: randInt(6, 15), nei: randInt(6, 15),
+    gen: randInt(6, 15), luc: randInt(6, 15),
+  };
+}
+
+function renderSectGrid() {
+  const grid = document.getElementById('sect-grid');
+  grid.innerHTML = Object.entries(SECTS).map(([key, s]) => `
+    <div class="sect-card" data-sect="${key}" onclick="selectSect('${key}')">
+      <div class="sect-name">${s.name}</div>
+      <div class="sect-desc">${s.desc}</div>
+    </div>
+  `).join('');
+}
+
+function selectGender(g) {
+  tempGender = g;
+  document.querySelectorAll('.gender-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.gender === g);
+  });
+}
+
+function selectSect(key) {
+  tempSect = key;
+  document.querySelectorAll('.sect-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.sect === key);
+  });
+  if (!tempAttrs) { rerollAttrs(); }
+  document.getElementById('attr-section').style.display = 'block';
+  renderTempAttrs();
+}
+
+function rerollAttrs() { tempAttrs = rollAttributes(); renderTempAttrs(); }
+
+function renderTempAttrs() {
+  const el = document.getElementById('attr-display');
+  if (!tempAttrs) return;
+  let html = '';
+  for (const [key, name] of Object.entries(ATTR_NAMES)) {
+    let val = tempAttrs[key];
+    if (tempSect && SECTS[tempSect].bonuses[key]) val += SECTS[tempSect].bonuses[key];
+    html += `<div class="attr-box"><div class="attr-name">${name}</div><div class="attr-val" style="color:${val >= 14 ? 'var(--cinnabar-light)' : val >= 11 ? 'var(--gold)' : 'var(--cream)'}">${val}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function startGame() {
+  const nameInput = document.getElementById('input-name').value.trim();
+  const name = nameInput || '無名俠客';
+  if (!tempSect) { showCreateWarning('請選擇一個門派。'); return; }
+  const sect = SECTS[tempSect];
+  const baseAttrs = tempAttrs || rollAttributes();
+  const attrs = { ...baseAttrs };
+  for (const [k, v] of Object.entries(sect.bonuses)) {
+    attrs[k] = (attrs[k] || 0) + v;
+  }
+  player = {
+    name, gender: tempGender, sectId: tempSect,
+    sectName: sect.name, skills: [...sect.skills],
+    level: 1, exp: 0, expNeeded: 50,
+    attrs,
+    maxHp: 100 + attrs.gen * 8, hp: 100 + attrs.gen * 8,
+    maxMp: 40 + attrs.nei * 4, mp: 40 + attrs.nei * 4,
+    baseAttack: 10 + attrs.li * 2,
+    baseDefense: 5 + Math.floor(attrs.gen * 0.8),
+    gold: 50,
+    inventory: { jinChuangYao: 3, neiLiDan: 1 },
+    weapon: null, armor: null,
+    location: '青石鎮',
+  };
+  strongholdProgress = 0;
+  gossipShown = 0;
+  gameLog = [];
+  initRomance();
+  addLog(`你踏入了青石鎮，開始了你的江湖旅程。`);
+  showScreen('play-screen');
+  goToLocation('青石鎮');
+  saveGame();
+}
+
+function showCreateWarning(msg) {
+  let w = document.getElementById('create-warning');
+  if (!w) {
+    w = document.createElement('div');
+    w.id = 'create-warning';
+    w.style.cssText = 'color:var(--cinnabar-light); margin-top:12px;';
+    document.querySelector('#create-screen .form-panel').appendChild(w);
+  }
+  w.textContent = msg;
+}
+
+function continueGame() {
+  if (loadSave()) {
+    if (!romance) initRomance();
+    showScreen('play-screen');
+    if (player.location === '黑風寨' && strongholdProgress > 0 && strongholdProgress < 3) {
+      renderStronghold();
+    } else {
+      goToLocation(player.location || '青石鎮');
+    }
+    updateStatus();
+    renderLog();
+  }
+}
+
+function getEffectiveAttack() {
+  let a = player.baseAttack;
+  if (player.weapon && ITEMS[player.weapon]) a += ITEMS[player.weapon].bonus.atk;
+  return a;
+}
+function getEffectiveDefense() {
+  let d = player.baseDefense;
+  if (player.armor && ITEMS[player.armor]) d += ITEMS[player.armor].bonus.def;
+  return d;
+}
+
+function calcDamage(atk, def, power) {
+  power = power || 1;
+  let raw = atk * power - def + randInt(-3, 3);
+  return Math.max(1, Math.round(raw));
+}
+
+function checkLevelUp() {
+  let leveled = false;
+  while (player.exp >= player.expNeeded) {
+    player.exp -= player.expNeeded;
+    player.level++;
+    player.expNeeded = 50 + (player.level - 1) * 70;
+    player.maxHp += 20; player.maxMp += 10;
+    player.baseAttack += 3; player.baseDefense += 2;
+    player.hp = player.maxHp; player.mp = player.maxMp;
+    addLog(`等級提升！現在是第 ${player.level} 級，氣血內力完全恢復！`);
+    leveled = true;
+  }
+  return leveled;
+}
+
+function addToInventory(id, qty) {
+  qty = qty || 1;
+  player.inventory[id] = (player.inventory[id] || 0) + qty;
+}
+function removeFromInventory(id, qty) {
+  qty = qty || 1;
+  if (!player.inventory[id]) return;
+  player.inventory[id] -= qty;
+  if (player.inventory[id] <= 0) delete player.inventory[id];
+}
+
+function useConsumable(id) {
+  const item = ITEMS[id];
+  if (!item || item.type !== 'consumable') return false;
+  if (!player.inventory[id] || player.inventory[id] <= 0) return false;
+  const eff = item.effect;
+  let used = false;
+  if (eff.kind === 'healHp') {
+    if (player.hp >= player.maxHp) return false;
+    const heal = Math.min(eff.amt, player.maxHp - player.hp);
+    player.hp += heal;
+    addLog(`使用了${item.name}，恢復${heal}點氣血。`);
+    used = true;
+  } else if (eff.kind === 'healMp') {
+    if (player.mp >= player.maxMp) return false;
+    const heal = Math.min(eff.amt, player.maxMp - player.mp);
+    player.mp += heal;
+    addLog(`使用了${item.name}，恢復${heal}點內力。`);
+    used = true;
+  } else if (eff.kind === 'full') {
+    player.hp = player.maxHp; player.mp = player.maxMp;
+    addLog(`使用了${item.name}，氣血與內力完全恢復！`);
+    used = true;
+  } else if (eff.kind === 'snowLotus') {
+    player.hp = player.maxHp; player.mp = player.maxMp;
+    player.maxHp += 50; player.hp = player.maxHp;
+    addLog(`使用了${item.name}！氣血內力完全恢復，氣血上限永久提升五十點！`);
+    used = true;
+  }
+  if (used) { removeFromInventory(id, 1); updateStatus(); saveGame(); }
+  return used;
+}
+
+function equipItem(id) {
+  const item = ITEMS[id];
+  if (!item) return;
+  if (item.type === 'weapon') {
+    if (player.weapon) addToInventory(player.weapon, 1);
+    player.weapon = id;
+    removeFromInventory(id, 1);
+    addLog(`裝備了${item.name}。`);
+  } else if (item.type === 'armor') {
+    if (player.armor) addToInventory(player.armor, 1);
+    player.armor = id;
+    removeFromInventory(id, 1);
+    addLog(`裝備了${item.name}。`);
+  }
+  updateStatus(); saveGame(); showInventory();
+}
+
+function addLog(msg) {
+  gameLog.push(msg);
+  if (gameLog.length > 50) gameLog = gameLog.slice(-50);
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('log-list');
+  if (!el) return;
+  el.innerHTML = gameLog.slice(-12).map(m => `<p>${m}</p>`).join('');
+  const logArea = document.getElementById('log-area');
+  if (logArea) logArea.scrollTop = logArea.scrollHeight;
+}
+
+function updateStatus() {
+  const el = document.getElementById('status-bar');
+  if (!el || !player) return;
+  const hpPct = clamp(player.hp / player.maxHp * 100, 0, 100);
+  const mpPct = clamp(player.mp / player.maxMp * 100, 0, 100);
+  const expPct = clamp(player.exp / player.expNeeded * 100, 0, 100);
+  const weaponName = player.weapon ? ITEMS[player.weapon].name : '無';
+  const armorName = player.armor ? ITEMS[player.armor].name : '無';
+  el.innerHTML = `
+    <div class="status-header">
+      <span class="status-name">${player.name}</span>
+      <span class="status-meta">${player.sectName}｜第 ${player.level} 級｜${player.gender}</span>
+    </div>
+    <div class="status-bars">
+      <div class="bar-row">
+        <span class="bar-label">氣血</span>
+        <div class="bar-track">
+          <div class="bar-fill hp" style="width:${hpPct}%"></div>
+          <span class="bar-text">${player.hp} / ${player.maxHp}</span>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">內力</span>
+        <div class="bar-track">
+          <div class="bar-fill mp" style="width:${mpPct}%"></div>
+          <span class="bar-text">${player.mp} / ${player.maxMp}</span>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">經驗</span>
+        <div class="bar-track" style="height:10px;">
+          <div class="bar-fill exp" style="width:${expPct}%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="status-footer">
+      <span>位置：${player.location}</span>
+      <span>銀兩：${player.gold}</span>
+      <span>兵器：${weaponName}</span>
+      <span>防具：${armorName}</span>
+    </div>
+  `;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function renderScene(title, textHTML, options, locKey) {
+  destroyTyped();
+  const content = document.getElementById('content-area');
+  if (locKey) setLocationBg(locKey);
+  let html = `<div class="scene-title">${title}</div>`;
+  html += `<div class="scene-text">${textHTML}</div>`;
+  if (options && options.length > 0) {
+    html += '<div class="options-grid" id="options-grid">';
+    for (const opt of options) {
+      const disabled = opt.disabled ? 'disabled' : '';
+      const onclickStr = opt.action ? `onclick="${opt.action}"` : '';
+      html += `<button class="option-btn" ${onclickStr} ${disabled}>${opt.text}</button>`;
+    }
+    html += '</div>';
+  }
+  content.innerHTML = html;
+  updateStatus();
+  staggerIn('#options-grid .option-btn');
+}
+
+function renderTypedScene(title, narrative, extraHTML, options, locKey) {
+  destroyTyped();
+  const content = document.getElementById('content-area');
+  if (locKey) setLocationBg(locKey);
+  let html = `<div class="scene-title">${title}</div>`;
+  html += `<div class="scene-text"><span id="typed-text"></span></div>`;
+  if (extraHTML) {
+    html += `<div id="scene-extra" style="opacity:0;">${extraHTML}</div>`;
+  }
+  if (options && options.length > 0) {
+    html += '<div class="options-grid" id="options-grid" style="opacity:0;">';
+    for (const opt of options) {
+      const disabled = opt.disabled ? 'disabled' : '';
+      const onclickStr = opt.action ? `onclick="${opt.action}"` : '';
+      html += `<button class="option-btn" ${onclickStr} ${disabled}>${opt.text}</button>`;
+    }
+    html += '</div>';
+  }
+  html += '<div class="skip-hint" id="skip-hint" onclick="skipTyping()">點擊跳過 ▶</div>';
+  content.innerHTML = html;
+  updateStatus();
+
+  typeNarrative(narrative, function() {
+    revealSceneContent();
+  });
+}
+
+function goToLocation(loc) {
+  player.location = loc;
+  updateStatus();
+  saveGame();
+  if (loc === '青石鎮') renderTown();
+  else if (loc === '黑風寨') renderStronghold();
+}
+
+function renderTown() {
+  const canEnterStronghold = player.level >= 3;
+  renderTypedScene('【青石鎮】',
+    '暮色四合，殘陽如血。\n\n你踏著崎嶇的山路，終於看見了青石鎮的輪廓。鎮子依山而建，青灰色的屋瓦在夕陽下泛著微光，幾縷炊煙裊裊升起，為這座邊陲小鎮平添了幾分寧靜。\n\n然而，當你走近時，卻發現這份寧靜之下，暗流湧動。鎮口的告示牌上貼滿了官府的懸賞令，字跡已被風雨浸得模糊。幾個行人匆匆而過，眼神中帶著戒備與不安。遠處的黑風山隱沒在暮色中，山頂籠罩著一層不散的黑雲，如同一頭沉睡的凶獸。\n\n你握緊了腰間的兵器，深吸一口氣，踏入了青石鎮。',
+    null,
+    [
+      { text: '前往悅來客棧', action: 'goToInn()' },
+      { text: '探索鎮外', action: 'exploreOutside()' },
+      { text: '靜心修煉', action: 'trainMeditate()' },
+      { text: '結交紅顏', action: 'showRomanceHub()' },
+      { text: '整理背包', action: 'showInventoryFromTown()' },
+      { text: `前往黑風寨${canEnterStronghold ? '' : '（需三級以上）'}`, action: canEnterStronghold ? "goToLocation('黑風寨')" : '', disabled: !canEnterStronghold },
+    ],
+    'town'
+  );
+}
+
+function goToInn() {
+  const sectSkills = player.skills.map(id => SKILLS[id].name).join('、');
+  renderTypedScene('【悅來客棧】',
+    '你推門走進客棧，裡面暖意融融，飯菜的香氣撲面而來。客棧老闆老王正在櫃檯後忙碌，見你進來，連忙堆起笑臉迎了上來。',
+    `<div class="dialogue">
+      <span class="speaker">老王：</span>「${player.gender === '男' ? '少俠' : '姑娘'}，歡迎光臨悅來客棧！看您一身武林打扮，想必也是為了黑風寨的事而來吧？」
+    </div>
+    <div class="dialogue">
+      <span class="speaker">老王：</span>「這青石鎮最近可不太平啊……黑風寨的山賊日益猖獗，更有魔教爪牙在暗中活動。聽說那魔教首腦玄冥真人就藏在黑風寨裡修煉邪功，圖謀不軌。若有少俠這般英雄能挺身而出，百姓們就有救了！」
+    </div>
+    <p style="color:var(--smoke); font-size:0.9em;">你目前掌握的武功：${sectSkills}</p>`,
+    [
+      { text: '打聽消息', action: 'askGossip()' },
+      { text: '休息（恢復氣血內力，十兩銀）', action: 'restAtInn()', disabled: player.gold < 10 },
+      { text: '購買物品', action: 'openShop()' },
+      { text: '離開客棧', action: "goToLocation('青石鎮')" },
+    ],
+    'inn'
+  );
+}
+
+function askGossip() {
+  const idx = gossipShown % INN_GOSSIP.length;
+  const gossip = INN_GOSSIP[idx];
+  gossipShown++;
+  saveGame();
+  renderScene('【打聽消息】', `
+    <p>你向老王打聽近來的江湖消息。</p>
+    <div class="dialogue">
+      <span class="speaker">老王：</span>「${gossip}」
+    </div>
+    <p style="color:var(--smoke);">（你覺得這些情報可能對你的冒險有所幫助。）</p>
+  `, [
+    { text: '繼續打聽', action: 'askGossip()' },
+    { text: '返回', action: 'goToInn()' },
+  ], 'inn');
+}
+
+function restAtInn() {
+  if (player.gold < 10) return;
+  player.gold -= 10;
+  player.hp = player.maxHp;
+  player.mp = player.maxMp;
+  addLog('在客棧好好休息了一番，氣血內力完全恢復。');
+  saveGame();
+  goToInn();
+}
+
+function openShop() {
+  let html = '<div class="shop-items">';
+  for (const id of SHOP_LIST) {
+    const item = ITEMS[id];
+    if (!item || item.price <= 0) continue;
+    const canAfford = player.gold >= item.price;
+    const descLabel = item.type === 'gift' ? `好感度 +${item.aff}` : item.desc;
+    html += `
+      <div class="shop-item">
+        <div class="shop-item-info">
+          <div class="shop-item-name">${item.name}</div>
+          <div class="shop-item-desc">${descLabel}</div>
+        </div>
+        <span class="shop-item-price">${item.price}兩</span>
+        <button class="btn" ${canAfford ? '' : 'disabled'} onclick="buyItem('${id}')">購買</button>
+      </div>
+    `;
+  }
+  html += '</div>';
+  renderScene('【雜貨鋪】', `
+    <p>客棧旁邊有一間雜貨鋪，擺滿了各種江湖用品。掌櫃看著你，笑道：「少俠要看看貨嗎？都是實實在在的好東西！」</p>
+    <p style="color:var(--gold);">你身上有 ${player.gold} 兩銀子。</p>
+    ${html}
+  `, [
+    { text: '離開', action: 'goToInn()' },
+  ], 'inn');
+  staggerIn('.shop-item');
+}
+
+function buyItem(id) {
+  const item = ITEMS[id];
+  if (!item || player.gold < item.price) return;
+  player.gold -= item.price;
+  addToInventory(id, 1);
+  addLog(`購買了${item.name}。`);
+  saveGame();
+  openShop();
+}
+
+function exploreOutside() {
+  const narratives = [
+    '你走出青石鎮，沿著鄉間小路探索……',
+    '你來到鎮外的樹林中，四處張望……',
+    '你沿著溪邊前行，尋找蛛絲馬跡……',
+    '你穿過一片竹林，忽然聽到動靜……',
+  ];
+  const narrative = pick(narratives);
+  const roll = randInt(1, 100);
+  if (roll <= 25) { addLog(narrative); startCombat('shanZei'); }
+  else if (roll <= 38) { addLog(narrative); startCombat('shanZeiTouMu'); }
+  else if (roll <= 48) { addLog(narrative); startCombat('mojiaoZhuaYa'); }
+  else if (roll <= 63) {
+    const itemId = pick(['jinChuangYao', 'neiLiDan']);
+    addToInventory(itemId, 1);
+    addLog(`${narrative}你發現了一個${ITEMS[itemId].name}！`);
+    saveGame();
+    showExploreResult(`${narrative}你在路邊的草叢中發現了一個${ITEMS[itemId].name}，將其收入了囊中。`);
+  } else if (roll <= 78) {
+    const gold = randInt(5, 25);
+    player.gold += gold;
+    addLog(`${narrative}你撿到了 ${gold} 兩銀子！`);
+    saveGame();
+    showExploreResult(`${narrative}你在路邊發現了一個錢袋，裡面有 ${gold} 兩銀子！`);
+  } else if (roll <= 85) {
+    showExploreResult(`${narrative}你四處閒逛了一圈，沒有什麼特別的發現。`);
+  } else {
+    const attrs = Object.keys(ATTR_NAMES);
+    const attr = pick(attrs);
+    player.attrs[attr]++;
+    const exp = player.level * 8;
+    player.exp += exp;
+    addLog(`你在山間遇到一位隱世老者，指點了你一番。${ATTR_NAMES[attr]}提升了一點！獲得經驗值 ${exp} 點。`);
+    checkLevelUp();
+    saveGame();
+    showExploreResult(`${narrative}你遇到一位白髮蒼蒼的老者，他見你骨骼清奇，便指點了你幾招。<br><br><span style="color:var(--gold);">${ATTR_NAMES[attr]}永久提升了一點！</span><br><span style="color:var(--exp);">獲得經驗值 ${exp} 點。</span>`);
+  }
+}
+
+function showExploreResult(text) {
+  updateStatus();
+  const plainText = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  renderTypedScene('【探索結果】', plainText, null, [
+    { text: '返回青石鎮', action: "goToLocation('青石鎮')" },
+  ], 'forest');
+}
+
+function trainMeditate() {
+  const expGain = player.level * 8 + 10;
+  player.exp += expGain;
+  let narrative = '你找了一處清靜之地，盤膝而坐，運轉內功心法，靜心修煉。';
+  let extraHTML = `<p style="color:var(--exp);">獲得經驗值 ${expGain} 點。</p>`;
+  const roll = randInt(1, 100);
+  if (roll <= 25) {
+    const attrs = Object.keys(ATTR_NAMES);
+    const attr = pick(attrs);
+    player.attrs[attr]++;
+    extraHTML += `<p style="color:var(--gold);">修煉中忽然頓悟，${ATTR_NAMES[attr]}永久提升了一點！</p>`;
+    addLog(`修煉時頓悟，${ATTR_NAMES[attr]}提升一點。獲得經驗值 ${expGain} 點。`);
+  } else {
+    addLog(`靜心修煉，獲得經驗值 ${expGain} 點。`);
+  }
+  checkLevelUp();
+  saveGame();
+  renderTypedScene('【靜心修煉】', narrative, extraHTML, [
+    { text: '繼續修煉', action: 'trainMeditate()' },
+    { text: '返回', action: "goToLocation('青石鎮')" },
+  ], 'forest');
+}
+
+function showInventoryFromTown() { showInventory(true); }
+
+function showInventory(fromTown) {
+  const invEntries = Object.entries(player.inventory).filter(([_, q]) => q > 0);
+  const weapon = player.weapon ? ITEMS[player.weapon] : null;
+  const armor = player.armor ? ITEMS[player.armor] : null;
+
+  let html = `
+    <div class="equip-slot">
+      <span class="slot-label">兵器：</span>
+      <span class="slot-item">${weapon ? weapon.name + '（' + weapon.desc + '）' : '空手'}</span>
+    </div>
+    <div class="equip-slot">
+      <span class="slot-label">防具：</span>
+      <span class="slot-item">${armor ? armor.name + '（' + armor.desc + '）' : '無'}</span>
+    </div>
+  `;
+
+  if (invEntries.length === 0) {
+    html += '<p style="color:var(--smoke); text-align:center; padding:20px;">背包空空如也。</p>';
+  } else {
+    for (const [id, qty] of invEntries) {
+      const item = ITEMS[id];
+      let buttons = '';
+      let descLabel = item.desc;
+      if (item.type === 'consumable') {
+        buttons = `<button class="btn" onclick="useConsumable('${id}')">使用</button>`;
+      } else if (item.type === 'weapon' || item.type === 'armor') {
+        buttons = `<button class="btn" onclick="equipItem('${id}')">裝備</button>`;
+      } else if (item.type === 'gift') {
+        descLabel = `禮物 — 好感度 +${item.aff}`;
+      }
+      html += `
+        <div class="inv-item">
+          <div class="shop-item-info">
+            <div class="shop-item-name">${item.name} ${qty > 1 ? 'x' + qty : ''}</div>
+            <div class="shop-item-desc">${descLabel}</div>
+          </div>
+          ${buttons}
+        </div>
+      `;
+    }
+  }
+
+  renderScene('【背包】', html, [
+    { text: '返回', action: fromTown ? "goToLocation('青石鎮')" : 'returnFromInventory()' },
+  ]);
+  panelEnter('#content-area');
+  staggerIn('.inv-item, .equip-slot');
+}
+
+function returnFromInventory() {
+  if (combat) { updateCombat3DUI(); setCombat3DActionsEnabled(true); }
+  else goToLocation(player.location);
+}
+
+let combat3D = null;
+
+function createFighter(config) {
+  const g = new THREE.Group();
+  const matRobe = new THREE.MeshPhongMaterial({ color: config.bodyColor, shininess: 15, specular: 0x444444 });
+  const matRobeDark = new THREE.MeshPhongMaterial({ color: new THREE.Color(config.bodyColor).multiplyScalar(0.55), shininess: 15, specular: 0x222222 });
+  const matSkin = new THREE.MeshPhongMaterial({ color: 0xF5D5B8, shininess: 30, specular: 0x553333 });
+  const matHair = new THREE.MeshPhongMaterial({ color: config.hairColor || 0x1a1a1a, shininess: 80, specular: 0x666666 });
+  const matAccent = new THREE.MeshPhongMaterial({ color: config.accentColor, shininess: 100, specular: 0x888888, emissive: config.accentColor, emissiveIntensity: 0.15 });
+  const matWeapon = new THREE.MeshPhongMaterial({ color: 0xddddee, shininess: 120, specular: 0xffffff });
+
+  // --- Hips ---
+  const hips = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.3, 10), matRobeDark);
+  hips.position.y = 0.9;
+  hips.castShadow = true;
+  g.add(hips);
+
+  // --- Torso (tapered waist to shoulders) ---
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.3, 0.85, 10), matRobe);
+  torso.position.y = 1.45;
+  torso.castShadow = true;
+  g.add(torso);
+
+  // --- Collar/neck area ---
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.28, 0.15, 8), matRobe);
+  collar.position.y = 1.9;
+  g.add(collar);
+
+  // --- Robe skirt (flowing lower body) ---
+  const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.9, 12, 1, true), matRobeDark);
+  skirt.position.y = 0.5;
+  skirt.castShadow = true;
+  g.add(skirt);
+
+  // --- Neck ---
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.12, 8), matSkin);
+  neck.position.y = 2.05;
+  g.add(neck);
+
+  // --- Head ---
+  const headGroup = new THREE.Group();
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 14), matSkin);
+  head.scale.set(0.85, 1, 0.9);
+  head.castShadow = true;
+  headGroup.add(head);
+
+  // Hair cap covering top and back of head
+  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), matHair);
+  hairCap.position.y = 0.02;
+  headGroup.add(hairCap);
+
+  // Long flowing hair behind
+  const hairLong = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.45, 4, 8), matHair);
+  hairLong.position.set(0, -0.1, -0.16);
+  hairLong.scale.set(0.9, 1, 0.5);
+  headGroup.add(hairLong);
+
+  // Topknot bun
+  const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), matHair);
+  topknot.position.y = 0.28;
+  headGroup.add(topknot);
+
+  // Gold hair tie
+  const hairTie = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.02, 6, 8), matAccent);
+  hairTie.position.y = 0.22;
+  headGroup.add(hairTie);
+
+  // Eyes - small dark spheres on the face
+  const eyeMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2a, shininess: 100 });
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 4), eyeMat);
+  eyeL.position.set(-0.08, 0.02, 0.21);
+  headGroup.add(eyeL);
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 4), eyeMat);
+  eyeR.position.set(0.08, 0.02, 0.21);
+  headGroup.add(eyeR);
+
+  headGroup.position.y = 2.25;
+  g.add(headGroup);
+
+  // --- Belt/sash ---
+  const sash = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.06, 6, 12), matAccent);
+  sash.position.y = 1.05;
+  sash.rotation.x = Math.PI / 2;
+  g.add(sash);
+
+  // Sash tail
+  const sashTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.3, 4, 6), matAccent);
+  sashTail.position.set(0.15, 0.85, 0.12);
+  sashTail.rotation.z = 0.25;
+  g.add(sashTail);
+
+  // --- Left arm (upper + lower as group) ---
+  const armL = new THREE.Group();
+  const upperArmL = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.3, 4, 8), matRobe);
+  upperArmL.position.y = -0.15;
+  armL.add(upperArmL);
+  const foreArmL = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.28, 4, 8), matRobe);
+  foreArmL.position.y = -0.55;
+  armL.add(foreArmL);
+  const handL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), matSkin);
+  handL.position.y = -0.75;
+  armL.add(handL);
+  armL.position.set(-0.38, 1.85, 0);
+  armL.rotation.z = 0.22;
+  g.add(armL);
+
+  // --- Right arm (weapon arm, group for rotation) ---
+  const armR = new THREE.Group();
+  const upperArmR = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.3, 4, 8), matRobe);
+  upperArmR.position.y = -0.15;
+  armR.add(upperArmR);
+  const foreArmR = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.28, 4, 8), matRobe);
+  foreArmR.position.y = -0.55;
+  armR.add(foreArmR);
+  const handR = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), matSkin);
+  handR.position.y = -0.75;
+  armR.add(handR);
+  armR.position.set(0.38, 1.85, 0);
+  armR.rotation.z = -0.22;
+  g.add(armR);
+
+  // --- Sword (in right hand) ---
+  const weapon = new THREE.Group();
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.9, 0.06), matWeapon);
+  blade.position.y = -0.45;
+  weapon.add(blade);
+  const bladeTip = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 4), matWeapon);
+  bladeTip.position.y = -0.96;
+  weapon.add(bladeTip);
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.08), matAccent);
+  guard.position.y = 0.02;
+  weapon.add(guard);
+  const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.16, 6), matAccent);
+  hilt.position.y = 0.12;
+  weapon.add(hilt);
+  const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), matAccent);
+  pommel.position.y = 0.22;
+  weapon.add(pommel);
+  weapon.position.set(0, -0.75, 0.04);
+  armR.add(weapon);
+
+  // --- Legs (boots visible under skirt) ---
+  const legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.35, 4, 8), matRobeDark);
+  legL.position.set(-0.14, 0.2, 0);
+  g.add(legL);
+  const legR = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.35, 4, 8), matRobeDark);
+  legR.position.set(0.14, 0.2, 0);
+  g.add(legR);
+
+  // --- Boots ---
+  const bootMat = new THREE.MeshPhongMaterial({ color: 0x2a1a10, shininess: 10 });
+  const bootL = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), bootMat);
+  bootL.position.set(-0.14, 0.02, 0.03);
+  bootL.scale.set(1, 0.6, 1.3);
+  g.add(bootL);
+  const bootR = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), bootMat);
+  bootR.position.set(0.14, 0.02, 0.03);
+  bootR.scale.set(1, 0.6, 1.3);
+  g.add(bootR);
+
+  // --- Aura (subtle, not overwhelming) ---
+  const auraMat = new THREE.MeshBasicMaterial({ color: config.auraColor, transparent: true, opacity: 0.06 });
+  const aura = new THREE.Mesh(new THREE.SphereGeometry(1.1, 16, 12), auraMat);
+  aura.position.y = 1.2;
+  g.add(aura);
+
+  const auraLight = new THREE.PointLight(config.auraColor, 0.6, 4);
+  auraLight.position.set(0, 1.3, 0);
+  g.add(auraLight);
+
+  // Ground glow disc
+  const glowDiscMat = new THREE.MeshBasicMaterial({ color: config.auraColor, transparent: true, opacity: 0.1 });
+  const glowDisc = new THREE.Mesh(new THREE.CircleGeometry(0.8, 16), glowDiscMat);
+  glowDisc.rotation.x = -Math.PI / 2;
+  glowDisc.position.y = 0.015;
+  g.add(glowDisc);
+
+  g.userData = {
+    torso, chest: collar, skirt, headGroup, head, hairCap, hairLong, topknot, hairTie, neck,
+    sash, sashTail, armL, armR, weapon, legL, legR, bootL, bootR,
+    aura, auraLight, glowDisc, matRobe, matSkin, matHair, matAccent,
+  };
+  g.position.set(config.x, 0, 0);
+  g.rotation.y = config.facing;
+  return g;
+}
+
+function createPetals(scene, count) {
+  const geo = new THREE.PlaneGeometry(0.1, 0.07);
+  const colors = [0xFFB7C5, 0xFFC8DD, 0xFFE0EC, 0xF0C940];
+  const petals = [];
+  for (let i = 0; i < count; i++) {
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    const mat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.5 + Math.random() * 0.3, side: THREE.DoubleSide });
+    const p = new THREE.Mesh(geo, mat);
+    p.position.set(
+      (Math.random() - 0.5) * 18,
+      Math.random() * 10 + 3,
+      (Math.random() - 0.5) * 12 - 3
+    );
+    p.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    p.userData = {
+      vy: -0.004 - Math.random() * 0.006,
+      vx: (Math.random() - 0.5) * 0.008,
+      rotSpeed: (Math.random() - 0.5) * 0.015,
+      swayPhase: Math.random() * Math.PI * 2,
+    };
+    scene.add(p);
+    petals.push(p);
+  }
+  return petals;
+}
+
+function createScenery(scene) {
+  const bambooMat = new THREE.MeshPhongMaterial({ color: 0x4a7a40, shininess: 5, specular: 0x224422 });
+  const positions = [
+    [-6, -3], [-6.5, -1.5], [6, -3], [6.5, -1.5],
+    [-5, -4.5], [5, -4.5], [-7, -2.5], [7, -2.5],
+    [-4.5, -5], [4.5, -5],
+  ];
+  for (const [x, z] of positions) {
+    const h = 5 + Math.random() * 3;
+    const bamboo = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, h, 5), bambooMat);
+    bamboo.position.set(x + (Math.random() - 0.5) * 0.6, h / 2, z);
+    bamboo.rotation.z = (Math.random() - 0.5) * 0.08;
+    scene.add(bamboo);
+
+    const leafMat = new THREE.MeshPhongMaterial({ color: 0x5a8b50, shininess: 5, specular: 0x2a4a2a });
+    for (let j = 0; j < 3; j++) {
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.4, 6, 4), leafMat);
+      leaf.position.set(x + (Math.random() - 0.5) * 0.8, h - 0.5 + j * 0.3, z + (Math.random() - 0.5) * 0.5);
+      leaf.scale.set(1, 0.5, 1);
+      scene.add(leaf);
+    }
+  }
+
+  // Distant mountains — visible blue-grey silhouettes
+  const mountainMat = new THREE.MeshPhongMaterial({ color: 0x3a3550, shininess: 2, specular: 0x222244 });
+  for (let i = 0; i < 5; i++) {
+    const m = new THREE.Mesh(new THREE.ConeGeometry(3 + Math.random() * 2.5, 5 + Math.random() * 3, 5), mountainMat);
+    m.position.set((i - 2) * 4 + (Math.random() - 0.5) * 2, 1.5, -14 + (Math.random() - 0.5) * 2);
+    scene.add(m);
+  }
+
+  // Stone lanterns for atmosphere
+  const stoneMat = new THREE.MeshPhongMaterial({ color: 0x55504a, shininess: 5 });
+  const lanternMat = new THREE.MeshBasicMaterial({ color: 0xFFD89B, transparent: true, opacity: 0.7 });
+  const lanternPositions = [[-4, 0, -1], [4, 0, -1]];
+  for (const [lx, ly, lz] of lanternPositions) {
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 0.2, 6), stoneMat);
+    base.position.set(lx, 0.1, lz);
+    scene.add(base);
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.8, 6), stoneMat);
+    post.position.set(lx, 0.6, lz);
+    scene.add(post);
+    const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), lanternMat);
+    lantern.position.set(lx, 1.15, lz);
+    scene.add(lantern);
+    const lanternLight = new THREE.PointLight(0xFFD89B, 0.8, 4);
+    lanternLight.position.set(lx, 1.15, lz);
+    scene.add(lanternLight);
+  }
+}
+
+function createHitBurst(scene, position, color) {
+  const count = 16;
+  const particles = [];
+  const geo = new THREE.SphereGeometry(0.06, 4, 3);
+  for (let i = 0; i < count; i++) {
+    const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 1 });
+    const p = new THREE.Mesh(geo, mat);
+    p.position.copy(position);
+    const angle = (i / count) * Math.PI * 2;
+    p.userData = {
+      vx: Math.cos(angle) * (0.05 + Math.random() * 0.08),
+      vy: 0.05 + Math.random() * 0.08,
+      vz: Math.sin(angle) * (0.05 + Math.random() * 0.08),
+      life: 1,
+    };
+    scene.add(p);
+    particles.push(p);
+  }
+  return particles;
+}
+
+function initCombat3D(enemyId) {
+  const overlay = document.getElementById('combat-3d-overlay');
+  const container = document.getElementById('three-canvas-container');
+  overlay.classList.add('active');
+  overlay.classList.remove('fading-out');
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1520);
+  scene.fog = new THREE.FogExp2(0x1a1520, 0.028);
+
+  const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.set(0, 3.2, 7.5);
+  camera.lookAt(0, 1.3, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  container.appendChild(renderer.domElement);
+
+  // Lighting setup — bright romantic moonlit scene
+  const ambient = new THREE.AmbientLight(0x887799, 0.8);
+  scene.add(ambient);
+
+  const moonLight = new THREE.DirectionalLight(0xe0e8ff, 1.2);
+  moonLight.position.set(-2, 8, 3);
+  moonLight.castShadow = true;
+  moonLight.shadow.mapSize.set(2048, 2048);
+  moonLight.shadow.camera.near = 0.5;
+  moonLight.shadow.camera.far = 25;
+  moonLight.shadow.camera.left = -6;
+  moonLight.shadow.camera.right = 6;
+  moonLight.shadow.camera.top = 6;
+  moonLight.shadow.camera.bottom = -6;
+  moonLight.shadow.bias = -0.0005;
+  scene.add(moonLight);
+
+  const warmFill = new THREE.DirectionalLight(0xFFD89B, 0.6);
+  warmFill.position.set(3, 4, 3);
+  scene.add(warmFill);
+
+  const rimLight = new THREE.DirectionalLight(0xC0392B, 0.7);
+  rimLight.position.set(0, 2.5, -6);
+  scene.add(rimLight);
+
+  const hemi = new THREE.HemisphereLight(0x8a93b8, 0x2a2018, 0.35);
+  scene.add(hemi);
+
+  // Moon — brighter
+  const moonGeo = new THREE.CircleGeometry(2.5, 32);
+  const moonMat = new THREE.MeshBasicMaterial({ color: 0xF5F0E0, transparent: true, opacity: 0.45 });
+  const moon = new THREE.Mesh(moonGeo, moonMat);
+  moon.position.set(0, 5.5, -15);
+  scene.add(moon);
+
+  // Moon glow halo
+  const moonGlow = new THREE.Mesh(new THREE.CircleGeometry(5, 32), new THREE.MeshBasicMaterial({ color: 0xF5F0E0, transparent: true, opacity: 0.12 }));
+  moonGlow.position.set(0, 5.5, -15);
+  scene.add(moonGlow);
+  // Additional moon glow layers
+  const moonGlow2 = new THREE.Mesh(new THREE.CircleGeometry(8, 32), new THREE.MeshBasicMaterial({ color: 0x9090C0, transparent: true, opacity: 0.05 }));
+  moonGlow2.position.set(0, 5.5, -15.5);
+  scene.add(moonGlow2);
+
+  // Arena ground — weathered stone path, no stage markings
+  const groundGeo = new THREE.CircleGeometry(14, 48);
+  const groundMat = new THREE.MeshPhongMaterial({ color: 0x2f2b25, shininess: 8, specular: 0x3a332a });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Scattered stone slabs for a natural path feel
+  const slabMat = new THREE.MeshPhongMaterial({ color: 0x3d3830, shininess: 6, specular: 0x2a251e });
+  for (let i = 0; i < 7; i++) {
+    const slab = new THREE.Mesh(new THREE.CylinderGeometry(0.55 + Math.random() * 0.35, 0.6 + Math.random() * 0.35, 0.05, 6), slabMat);
+    slab.position.set((i - 3) * 1.1 + (Math.random() - 0.5) * 0.4, 0.028, (Math.random() - 0.5) * 0.5);
+    slab.rotation.y = Math.random() * Math.PI;
+    slab.receiveShadow = true;
+    scene.add(slab);
+  }
+
+  // Scenery
+  createScenery(scene);
+
+  // Characters
+  const isBoss = enemyId === 'xuanMingZhenRen';
+  const player3D = createFighter({
+    x: -2.5, facing: Math.PI * 0.12,
+    bodyColor: 0x1a4e87, headColor: 0xF0DCC8, hairColor: 0x1a1a1a, accentColor: 0xD4AF37,
+    auraColor: 0xD4AF37,
+  });
+  scene.add(player3D);
+
+  const enemyColor = isBoss ? 0x5B0A0A : 0x2a1a1a;
+  const enemyAccent = isBoss ? 0xC0392B : 0x8B4513;
+  const enemy3D = createFighter({
+    x: 2.5, facing: -Math.PI * 0.12,
+    bodyColor: enemyColor, headColor: 0xF0DCC8, hairColor: isBoss ? 0x6B0000 : 0x1a1a1a, accentColor: enemyAccent,
+    auraColor: 0xC0392B,
+  });
+  if (isBoss) {
+    enemy3D.scale.set(1.2, 1.2, 1.2);
+  }
+  scene.add(enemy3D);
+
+  const petals = createPetals(scene, 50);
+  const burstParticles = [];
+
+  const clock = new THREE.Clock();
+  let animId = null;
+  let camShake = 0;
+  const camRig = { px: 0, py: 2.9, pz: 7.8, tx: 0, ty: 1.35, tz: 0 };
+
+  function animate() {
+    animId = requestAnimationFrame(animate);
+    // Hit-stop: freeze the whole frame briefly on impact
+    if (performance.now() < (combat3D ? combat3D.hitStopUntil : 0)) return;
+    const t = clock.getElapsedTime();
+
+    // Idle bob (skipped when a fighter is downed / posing)
+    if (!player3D.userData.noBob) {
+      player3D.position.y = Math.sin(t * 1.4) * 0.025;
+      player3D.userData.torso.scale.y = 1 + Math.sin(t * 1.4) * 0.015;
+    }
+    player3D.userData.aura.scale.setScalar(1 + Math.sin(t * 1.8) * 0.04);
+    player3D.userData.auraLight.intensity = 0.5 + Math.sin(t * 2.2) * 0.2;
+    player3D.userData.glowDisc.material.opacity = 0.08 + Math.sin(t * 1.8) * 0.04;
+
+    if (!enemy3D.userData.noBob) {
+      enemy3D.position.y = Math.sin(t * 1.2 + 1) * 0.025;
+      enemy3D.userData.torso.scale.y = 1 + Math.sin(t * 1.2 + 1) * 0.015;
+    }
+    enemy3D.userData.aura.scale.setScalar(1 + Math.sin(t * 1.6 + 1) * 0.04);
+    enemy3D.userData.auraLight.intensity = 0.5 + Math.sin(t * 2.0 + 1) * 0.2;
+    enemy3D.userData.glowDisc.material.opacity = 0.08 + Math.sin(t * 1.6 + 1) * 0.04;
+
+    // Hair sway
+    player3D.userData.hairLong.rotation.x = Math.sin(t * 1.5) * 0.05 - 0.1;
+    enemy3D.userData.hairLong.rotation.x = Math.sin(t * 1.2 + 1) * 0.05 - 0.1;
+
+    // Camera: rig position (tweened by clips) + idle drift + shake
+    const idleX = Math.sin(t * 0.15) * 0.22;
+    const idleY = Math.sin(t * 0.2) * 0.09;
+    const shX = camShake > 0 ? (Math.random() - 0.5) * camShake : 0;
+    const shY = camShake > 0 ? (Math.random() - 0.5) * camShake * 0.5 : 0;
+    if (camShake > 0) camShake *= 0.85;
+    camera.position.set(camRig.px + idleX + shX, camRig.py + idleY + shY, camRig.pz);
+    camera.lookAt(camRig.tx, camRig.ty, camRig.tz);
+
+    // Petals
+    for (const p of petals) {
+      p.position.y += p.userData.vy;
+      p.position.x += p.userData.vx + Math.sin(t + p.userData.swayPhase) * 0.004;
+      p.rotation.z += p.userData.rotSpeed;
+      if (p.position.y < 0.1) {
+        p.position.y = 10 + Math.random() * 3;
+        p.position.x = (Math.random() - 0.5) * 18;
+      }
+    }
+
+    // Burst particles
+    for (let i = burstParticles.length - 1; i >= 0; i--) {
+      const bp = burstParticles[i];
+      bp.position.x += bp.userData.vx;
+      bp.position.y += bp.userData.vy;
+      bp.position.z += bp.userData.vz;
+      bp.userData.vy -= 0.006;
+      bp.userData.life -= 0.03;
+      bp.material.opacity = bp.userData.life;
+      bp.scale.setScalar(bp.userData.life);
+      if (bp.userData.life <= 0) {
+        scene.remove(bp);
+        bp.geometry.dispose();
+        bp.material.dispose();
+        burstParticles.splice(i, 1);
+      }
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  combat3D = {
+    scene, camera, renderer, container, player3D, enemy3D, petals, burstParticles,
+    animId, clock, overlay, camRig, hitStopUntil: 0, clipPlaying: false,
+    addShake: function(v) { camShake = Math.max(camShake, v); },
+    addBurst: function(pos, color) {
+      const burst = createHitBurst(scene, pos, color);
+      for (const b of burst) burstParticles.push(b);
+    },
+  };
+
+  window.addEventListener('resize', onCombat3DResize);
+
+  // VS text animation
+  const vsText = document.getElementById('vs-text');
+  anime({
+    targets: vsText,
+    opacity: [{ value: 0 }, { value: 1, duration: 400 }, { value: 1, duration: 600 }, { value: 0, duration: 400 }],
+    scale: [{ value: 0.3 }, { value: 1.3, duration: 400 }, { value: 1, duration: 600 }, { value: 1.8, duration: 400 }],
+    translateX: ['-50%', '-50%'],
+    translateY: ['-50%', '-50%'],
+    duration: 1800,
+    easing: 'easeOutQuad',
+  });
+
+  // Cinematic entrance: sweep from high wide shot into home framing
+  camRig.px = 0; camRig.py = 5.2; camRig.pz = 12.5;
+  camRig.tx = 0; camRig.ty = 1.0; camRig.tz = 0;
+  combat3D.camRig = camRig;
+  camHome(1600);
+}
+
+function onCombat3DResize() {
+  if (!combat3D) return;
+  const c = combat3D.container;
+  combat3D.camera.aspect = c.clientWidth / c.clientHeight;
+  combat3D.camera.updateProjectionMatrix();
+  combat3D.renderer.setSize(c.clientWidth, c.clientHeight);
+}
+
+/* ===== Cinematic clip system ===== */
+const CAM_HOME = { px: 0, py: 2.9, pz: 7.8, tx: 0, ty: 1.35, tz: 0 };
+
+function camTo(px, py, pz, tx, ty, tz, dur, easing) {
+  if (!combat3D) return;
+  anime.remove(combat3D.camRig);
+  anime({
+    targets: combat3D.camRig,
+    px: px, py: py, pz: pz, tx: tx, ty: ty, tz: tz,
+    duration: dur || 600,
+    easing: easing || 'easeInOutQuad',
+  });
+}
+
+function camHome(dur) {
+  camTo(CAM_HOME.px, CAM_HOME.py, CAM_HOME.pz, CAM_HOME.tx, CAM_HOME.ty, CAM_HOME.tz, dur || 650, 'easeOutQuad');
+}
+
+function hitStop(ms) {
+  if (!combat3D) return;
+  combat3D.hitStopUntil = performance.now() + ms;
+}
+
+function enterClip() {
+  const ov = document.getElementById('combat-3d-overlay');
+  if (ov) ov.classList.add('clip-playing');
+  if (combat3D) combat3D.clipPlaying = true;
+}
+
+function exitClip() {
+  const ov = document.getElementById('combat-3d-overlay');
+  if (ov) ov.classList.remove('clip-playing');
+  if (combat3D) combat3D.clipPlaying = false;
+}
+
+/* Skill identity: color per skill family */
+function skillFxColor(skillId) {
+  const sk = SKILLS[skillId];
+  if (!sk) return { hex: 0xD4AF37, css: '#D4AF37' };
+  const n = sk.name || '';
+  if (sk.type === 'heal') return { hex: 0x3DDC97, css: '#3DDC97' };
+  if (sk.type === 'absorb') return { hex: 0x9B59B6, css: '#BB8FCE' };
+  if (sk.type === 'buff') return { hex: 0x5DADE2, css: '#85C1E9' };
+  if (n.indexOf('劍') >= 0 || n.indexOf('刀') >= 0) return { hex: 0xA8D4E6, css: '#A8D4E6' };
+  if (n.indexOf('掌') >= 0 || n.indexOf('拳') >= 0 || n.indexOf('指') >= 0) return { hex: 0xFF6B5A, css: '#FF8A80' };
+  return { hex: 0xF0C940, css: '#F0C940' };
+}
+
+function showSkillPlate(name, cssColor) {
+  const el = document.getElementById('c3d-skill-plate');
+  if (!el) return;
+  el.textContent = '「 ' + name + ' 」';
+  el.style.color = cssColor || '#F0C940';
+  el.style.borderColor = cssColor || 'rgba(212,175,55,0.55)';
+  el.style.textShadow = '0 0 18px ' + (cssColor || 'rgba(212,175,55,0.35)') + ', 0 2px 8px rgba(0,0,0,0.8)';
+  anime.remove(el);
+  anime({
+    targets: el,
+    opacity: [{ value: 0, duration: 0 }, { value: 1, duration: 160 }, { value: 1, duration: 620 }, { value: 0, duration: 220 }],
+    scale: [{ value: 1.35, duration: 0 }, { value: 1, duration: 240, easing: 'easeOutBack' }, { value: 1, duration: 560 }, { value: 0.96, duration: 220 }],
+    translateX: ['-50%', '-50%'],
+    translateY: ['-50%', '-50%'],
+    duration: 1000,
+  });
+}
+
+/* Sword slash trail — crescent arc that sweeps and fades, facing the camera */
+function spawnSlashTrail(scene, origin, dir, colorHex, big) {
+  const geo = new THREE.RingGeometry(big ? 0.7 : 0.55, big ? 1.6 : 1.25, 24, 1, 0, Math.PI * 0.75);
+  const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(origin);
+  mesh.position.y = 1.5;
+  mesh.position.z = 0.3;
+  const startZ = dir > 0 ? 0.5 : Math.PI - 0.5 - Math.PI * 0.75;
+  mesh.rotation.z = startZ;
+  scene.add(mesh);
+  anime({
+    targets: mesh.rotation,
+    z: startZ + (dir > 0 ? -1.2 : 1.2),
+    duration: 200,
+    easing: 'easeInQuad',
+  });
+  anime({
+    targets: mat,
+    opacity: 0,
+    duration: 320,
+    easing: 'easeOutQuad',
+    complete: function () {
+      scene.remove(mesh);
+      geo.dispose();
+      mat.dispose();
+    },
+  });
+}
+
+/* Impact flash — brief white/cinnabar plane burst at hit point */
+function spawnImpactFlash(scene, position, colorHex) {
+  const geo = new THREE.CircleGeometry(0.55, 20);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.95, depthWrite: false });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(position);
+  scene.add(mesh);
+  const rim = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.62, 24), new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false }));
+  rim.position.copy(position);
+  scene.add(rim);
+  anime({ targets: mesh.scale, x: 2.2, y: 2.2, z: 2.2, duration: 180, easing: 'easeOutQuad' });
+  anime({ targets: rim.scale, x: 2.8, y: 2.8, z: 2.8, duration: 300, easing: 'easeOutQuad' });
+  anime({
+    targets: [mat, rim.material],
+    opacity: 0,
+    duration: 320,
+    easing: 'easeOutQuad',
+    complete: function () {
+      scene.remove(mesh); scene.remove(rim);
+      geo.dispose(); mat.dispose(); rim.geometry.dispose(); rim.material.dispose();
+    },
+  });
+}
+
+/* Dash streaks — speed lines while a fighter rushes */
+function spawnDashStreaks(scene, fromX, dir, colorHex) {
+  for (let i = 0; i < 5; i++) {
+    const len = 0.7 + Math.random() * 0.7;
+    const geo = new THREE.PlaneGeometry(len, 0.03);
+    const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(fromX - dir * (0.2 + Math.random() * 0.6), 0.7 + Math.random() * 1.2, (Math.random() - 0.5) * 0.5);
+    scene.add(mesh);
+    anime({ targets: mesh.position, x: mesh.position.x - dir * 1.2, duration: 220 + i * 30, easing: 'easeOutQuad' });
+    anime({
+      targets: mat, opacity: 0, duration: 260 + i * 30, easing: 'easeOutQuad',
+      complete: function () { scene.remove(mesh); geo.dispose(); mat.dispose(); },
+    });
+  }
+}
+
+/*
+ * playFightClip — the core cinematic exchange.
+ * opts: { attacker, defender, kind: 'attack'|'skill', skillId, crit, onImpact, onDone }
+ */
+function playFightClip(opts) {
+  if (!combat3D) { if (opts.onImpact) opts.onImpact(); if (opts.onDone) opts.onDone(); return; }
+  const c3 = combat3D;
+  const atk = opts.attacker;
+  const def = opts.defender;
+  const isPlayerAtk = atk === c3.player3D;
+  const dir = isPlayerAtk ? 1 : -1;
+  const aud = atk.userData;
+  const dud = def.userData;
+  const atkHomeX = isPlayerAtk ? -2.5 : 2.5;
+  const defHomeX = isPlayerAtk ? 2.5 : -2.5;
+  const isSkill = opts.kind === 'skill';
+  const isEnemySkill = opts.kind === 'enemySkill';
+  let fx = { hex: 0xE8EEF7, css: '#E8EEF7' };
+  if (isSkill) fx = skillFxColor(opts.skillId);
+  else if (isEnemySkill) fx = { hex: 0xC0392B, css: '#FF6B5A' };
+
+  enterClip();
+
+  // Beat 1 — camera behind attacker's shoulder, attacker winds up
+  camTo(atkHomeX - dir * 1.6, 2.1, 4.6, defHomeX * 0.4, 1.4, 0, 320, 'easeOutQuad');
+  anime({ targets: atk.rotation, z: dir * 0.1, duration: 260, easing: 'easeOutQuad' });
+  anime({ targets: aud.armR.rotation, x: -0.5, duration: 260, easing: 'easeOutQuad' });
+
+  if (isSkill || isEnemySkill) {
+    // Charge: aura + emissive, name plate
+    const skillName = isSkill ? SKILLS[opts.skillId].name : (opts.enemySkill ? opts.enemySkill.name : '');
+    showSkillPlate(skillName, fx.css);
+    aud.matRobe.emissive = new THREE.Color(fx.hex);
+    aud.matRobe.emissiveIntensity = 0.7;
+    anime({ targets: aud.aura.scale, x: 1.7, y: 1.7, z: 1.7, duration: 420, easing: 'easeOutQuad' });
+    c3.addBurst(new THREE.Vector3(atkHomeX, 1.2, 0), fx.hex);
+  }
+
+  const windup = (isSkill || isEnemySkill) ? 480 : 300;
+
+  setTimeout(function () {
+    if (!combat3D) return;
+    // Beat 2 — dash to the defender with speed streaks, whip-pan camera
+    const clashX = defHomeX - dir * 1.05;
+    spawnDashStreaks(c3.scene, atkHomeX, dir, fx.hex);
+    anime({ targets: atk.position, x: clashX, duration: 190, easing: 'easeInQuad' });
+    anime({ targets: atk.rotation, z: dir * 0.16, duration: 190, easing: 'easeInQuad' });
+    camTo(dir * 1.1, 1.9, 4.9, clashX * 0.6, 1.45, 0, 210, 'easeInQuad');
+
+    setTimeout(function () {
+      if (!combat3D) return;
+      // Beat 3 — the strike lands: slash trail, impact flash, hit-stop, shake
+      anime({ targets: aud.armR.rotation, x: -2.2, duration: 120, easing: 'easeInQuad' });
+      const hitPos = new THREE.Vector3(clashX + dir * 0.55, 1.45, 0.15);
+      spawnSlashTrail(c3.scene, hitPos, dir, fx.hex, isSkill || isEnemySkill || opts.crit);
+
+      if (opts.dodged) {
+        // Defender sidesteps in a blur — no impact, just afterimage
+        anime({ targets: def.position, x: defHomeX - dir * 0.9, z: 0.7, duration: 160, easing: 'easeOutQuad',
+          complete: function () {
+            anime({ targets: def.position, x: defHomeX, z: 0, duration: 420, easing: 'easeOutElastic(1, 0.55)' });
+          },
+        });
+        spawnDashStreaks(c3.scene, defHomeX, -dir, 0x85C1E9);
+      } else {
+        spawnImpactFlash(c3.scene, hitPos, fx.hex);
+        c3.addBurst(hitPos, fx.hex);
+        hitStop(opts.crit ? 110 : 70);
+        c3.addShake(opts.crit ? 0.22 : ((isSkill || isEnemySkill) ? 0.15 : 0.1));
+
+        // Defender reaction: stagger + red flash
+        anime({ targets: def.position, x: defHomeX + dir * 0.5, duration: 130, easing: 'easeOutQuad',
+          complete: function () {
+            anime({ targets: def.position, x: defHomeX, duration: 420, easing: 'easeOutElastic(1, 0.55)' });
+          },
+        });
+        anime({ targets: def.rotation, z: dir * 0.22, duration: 130, easing: 'easeOutQuad',
+          complete: function () {
+            anime({ targets: def.rotation, z: 0, duration: 400, easing: 'easeOutElastic(1, 0.55)' });
+          },
+        });
+        dud.matRobe.emissive = new THREE.Color(0xFF2222);
+        dud.matRobe.emissiveIntensity = 0.65;
+        setTimeout(function () {
+          if (dud.matRobe) { dud.matRobe.emissive = new THREE.Color(0x000000); dud.matRobe.emissiveIntensity = 0; }
+        }, 170);
+      }
+
+      if (opts.onImpact) opts.onImpact();
+
+      // Beat 4 — recover: attacker returns, camera pulls home
+      setTimeout(function () {
+        if (!combat3D) return;
+        anime({ targets: atk.position, x: atkHomeX, duration: 430, easing: 'easeOutQuad' });
+        anime({ targets: atk.rotation, z: 0, duration: 430, easing: 'easeOutQuad' });
+        anime({ targets: aud.armR.rotation, x: 0, duration: 380, easing: 'easeOutQuad' });
+        if (isSkill || isEnemySkill) {
+          anime({ targets: aud.aura.scale, x: 1, y: 1, z: 1, duration: 380, easing: 'easeOutQuad' });
+          setTimeout(function () {
+            if (aud.matRobe) { aud.matRobe.emissive = new THREE.Color(0x000000); aud.matRobe.emissiveIntensity = 0; }
+          }, 300);
+        }
+        camHome(520);
+        setTimeout(function () {
+          exitClip();
+          if (opts.onDone) opts.onDone();
+        }, 460);
+      }, opts.crit ? 200 : 140);
+    }, 200);
+  }, windup);
+}
+
+/* Shorter clip for defend / heal / buff (no dash) */
+function playSelfClip(fighter, type, skillId, onDone) {
+  if (!combat3D) { if (onDone) onDone(); return; }
+  const isPlayer = fighter === combat3D.player3D;
+  const homeX = isPlayer ? -2.5 : 2.5;
+  enterClip();
+  camTo(homeX * 0.7, 2.2, 5.2, homeX, 1.35, 0, 380, 'easeOutQuad');
+  if (skillId) showSkillPlate(SKILLS[skillId].name, skillFxColor(skillId).css);
+  animFighterAction(fighter, type);
+  setTimeout(function () {
+    if (!combat3D) return;
+    camHome(480);
+    setTimeout(function () {
+      exitClip();
+      if (onDone) onDone();
+    }, 400);
+  }, 780);
+}
+
+function animFighterAction(fighter, type, onComplete) {
+  const ud = fighter.userData;
+  const origX = fighter.position.x;
+  const isPlayer = fighter === combat3D.player3D;
+  const dir = isPlayer ? 1 : -1;
+
+  if (type === 'attack') {
+    // Camera zoom in slightly
+    anime({
+      targets: combat3D.camera.position,
+      z: 6,
+      duration: 250,
+      easing: 'easeOutQuad',
+      complete: function() {
+        anime({ targets: combat3D.camera.position, z: 7.5, duration: 400, easing: 'easeOutQuad' });
+      }
+    });
+    // Lunge forward
+    anime({
+      targets: fighter.position,
+      x: origX + 1.3 * dir,
+      duration: 220,
+      easing: 'easeOutQuad',
+      complete: function() {
+        anime({
+          targets: fighter.position,
+          x: origX,
+          duration: 400,
+          easing: 'easeOutElastic(1, 0.6)',
+          complete: function() { if (onComplete) onComplete(); }
+        });
+      }
+    });
+    // Weapon swing
+    anime({
+      targets: ud.armR.rotation,
+      x: [-0.3, -1.8, 0],
+      duration: 600,
+      easing: 'easeOutQuad',
+    });
+  } else if (type === 'hit') {
+    anime({
+      targets: fighter.position,
+      x: origX + 0.5 * (-dir),
+      z: 0.25 * (-dir),
+      duration: 120,
+      easing: 'easeOutQuad',
+      complete: function() {
+        anime({ targets: fighter.position, x: origX, z: 0, duration: 350, easing: 'easeOutElastic(1, 0.5)' });
+      }
+    });
+    // Red flash
+    ud.matRobe.emissive = new THREE.Color(0xFF0000);
+    ud.matRobe.emissiveIntensity = 0.6;
+    setTimeout(function() {
+      ud.matRobe.emissive = new THREE.Color(0x000000);
+      ud.matRobe.emissiveIntensity = 0;
+    }, 180);
+    // Hit burst particles
+    const burstPos = new THREE.Vector3(fighter.position.x, 1.4, 0);
+    combat3D.addBurst(burstPos, isPlayer ? 0xFF6B5A : 0xFFD700);
+    combat3D.addShake(0.08);
+  } else if (type === 'defend') {
+    ud.matRobe.emissive = new THREE.Color(0x2980B9);
+    ud.matRobe.emissiveIntensity = 0.35;
+    anime({
+      targets: [ud.aura.scale],
+      x: [1.4, 1], y: [1.4, 1], z: [1.4, 1],
+      duration: 700,
+      easing: 'easeOutQuad',
+      complete: function() {
+        ud.matRobe.emissive = new THREE.Color(0x000000);
+        ud.matRobe.emissiveIntensity = 0;
+      }
+    });
+  } else if (type === 'skill') {
+    const origScale = fighter.scale.x;
+    // Charge up
+    anime({
+      targets: fighter.scale,
+      x: origScale * 1.12, y: origScale * 1.12, z: origScale * 1.12,
+      duration: 350,
+      easing: 'easeOutQuad',
+    });
+    ud.matRobe.emissive = new THREE.Color(0xD4AF37);
+    ud.matRobe.emissiveIntensity = 0.7;
+    anime({
+      targets: [ud.aura.scale],
+      x: [1, 1.6], y: [1, 1.6], z: [1, 1.6],
+      duration: 350,
+      easing: 'easeOutQuad',
+      complete: function() {
+        // Burst release
+        anime({ targets: fighter.scale, x: origScale, y: origScale, z: origScale, duration: 300, easing: 'easeOutElastic(1, 0.5)' });
+        anime({ targets: ud.aura.scale, x: 1, y: 1, z: 1, duration: 400, easing: 'easeOutQuad' });
+        const burstPos = new THREE.Vector3(fighter.position.x + 0.5 * dir, 1.4, 0);
+        combat3D.addBurst(burstPos, 0xD4AF37);
+        combat3D.addShake(0.05);
+        if (onComplete) onComplete();
+      }
+    });
+    setTimeout(function() {
+      ud.matRobe.emissive = new THREE.Color(0x000000);
+      ud.matRobe.emissiveIntensity = 0;
+    }, 500);
+    return;
+  } else if (type === 'heal') {
+    ud.matRobe.emissive = new THREE.Color(0x27AE60);
+    ud.matRobe.emissiveIntensity = 0.45;
+    anime({
+      targets: [ud.aura.scale],
+      x: [1, 1.5, 1], y: [1, 1.5, 1], z: [1, 1.5, 1],
+      duration: 900,
+      easing: 'easeOutQuad',
+    });
+    // Green healing particles rising
+    for (let i = 0; i < 8; i++) {
+      setTimeout(function() {
+        const burstPos = new THREE.Vector3(
+          fighter.position.x + (Math.random() - 0.5) * 0.6,
+          0.5 + Math.random() * 0.3,
+          (Math.random() - 0.5) * 0.4
+        );
+        combat3D.addBurst(burstPos, 0x27AE60);
+      }, i * 80);
+    }
+    setTimeout(function() {
+      ud.matRobe.emissive = new THREE.Color(0x000000);
+      ud.matRobe.emissiveIntensity = 0;
+    }, 700);
+  } else if (type === 'defeat') {
+    ud.noBob = true;
+    // Stagger back, crumple, sink
+    anime({
+      targets: fighter.position,
+      x: origX + 0.5 * (-dir),
+      duration: 240,
+      easing: 'easeOutQuad',
+      complete: function () {
+        anime({
+          targets: fighter.rotation,
+          z: isPlayer ? -1.1 : 1.1,
+          duration: 620,
+          easing: 'easeInQuad',
+        });
+        anime({
+          targets: fighter.position,
+          y: -0.55,
+          duration: 620,
+          easing: 'easeInQuad',
+        });
+      },
+    });
+    anime({
+      targets: ud.matRobe,
+      opacity: [0.92, 0.25],
+      duration: 1100,
+      easing: 'easeOutQuad',
+    });
+  } else if (type === 'victory') {
+    ud.noBob = true;
+    // Sword raise flourish, then settle into a poised stance
+    anime({
+      targets: ud.armR.rotation,
+      x: [{ value: -2.6, duration: 320 }, { value: -0.4, duration: 500 }],
+      easing: 'easeOutQuad',
+    });
+    anime({
+      targets: fighter.rotation,
+      y: [{ value: fighter.rotation.y + 0.5, duration: 400 }, { value: fighter.rotation.y, duration: 500 }],
+      easing: 'easeInOutQuad',
+    });
+    ud.matRobe.emissive = new THREE.Color(0xD4AF37);
+    ud.matRobe.emissiveIntensity = 0.5;
+    // Golden burst
+    for (let i = 0; i < 3; i++) {
+      setTimeout(function() {
+        const burstPos = new THREE.Vector3(
+          fighter.position.x + (Math.random() - 0.5) * 1.2,
+          1 + Math.random() * 0.8,
+          (Math.random() - 0.5) * 0.6
+        );
+        combat3D.addBurst(burstPos, 0xD4AF37);
+      }, i * 200);
+    }
+    setTimeout(function() {
+      ud.matRobe.emissive = new THREE.Color(0x000000);
+      ud.matRobe.emissiveIntensity = 0;
+    }, 1200);
+  }
+}
+
+function cleanupCombat3D() {
+  if (!combat3D) return;
+  cancelAnimationFrame(combat3D.animId);
+  combat3D.renderer.dispose();
+  if (combat3D.renderer.domElement && combat3D.renderer.domElement.parentNode) {
+    combat3D.renderer.domElement.parentNode.removeChild(combat3D.renderer.domElement);
+  }
+  combat3D.scene.traverse(function(obj) {
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) {
+      if (Array.isArray(obj.material)) obj.material.forEach(function(m) { m.dispose(); });
+      else obj.material.dispose();
+    }
+  });
+  window.removeEventListener('resize', onCombat3DResize);
+  combat3D = null;
+}
+
+function updateCombat3DUI() {
+  if (!combat || !combat3D) return;
+  const e = combat.enemy;
+  const eHpPct = clamp(e.hp / e.maxHp * 100, 0, 100);
+  const pHpPct = clamp(player.hp / player.maxHp * 100, 0, 100);
+  const pMpPct = clamp(player.mp / player.maxMp * 100, 0, 100);
+
+  document.getElementById('c3d-enemy-name').textContent = e.name;
+  document.getElementById('c3d-enemy-hp-bar').style.width = eHpPct + '%';
+  document.getElementById('c3d-enemy-hp-text').textContent = Math.max(0, e.hp) + ' / ' + e.maxHp;
+  document.getElementById('c3d-player-name').textContent = player.name;
+  document.getElementById('c3d-player-hp-bar').style.width = pHpPct + '%';
+  document.getElementById('c3d-player-hp-text').textContent = player.hp + ' / ' + player.maxHp;
+  document.getElementById('c3d-player-mp-bar').style.width = pMpPct + '%';
+  document.getElementById('c3d-player-mp-text').textContent = player.mp + ' / ' + player.maxMp;
+
+  const logEl = document.getElementById('c3d-log');
+  if (logEl) {
+    logEl.innerHTML = combat.log.slice(-6).map(function(l) {
+      return '<p class="' + l.cls + '">' + l.text + '</p>';
+    }).join('');
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+}
+
+function setCombat3DActionsEnabled(enabled) {
+  const actions = document.getElementById('c3d-actions');
+  if (!actions) return;
+  actions.querySelectorAll('button').forEach(function(b) {
+    b.disabled = !enabled;
+    if (enabled && b.id === 'c3d-flee-btn' && combat.isBoss) b.disabled = true;
+  });
+  const turnEl = document.getElementById('c3d-turn');
+  if (turnEl) turnEl.textContent = enabled ? '你的回合' : '...';
+}
+
+function clearCombat3DSubmenu() {
+  const sub = document.getElementById('c3d-submenu');
+  if (sub) sub.innerHTML = '';
+}
+
+function showCombatSkillMenu() {
+  const sub = document.getElementById('c3d-submenu');
+  let html = '';
+  for (const skillId of player.skills) {
+    const sk = SKILLS[skillId];
+    const canUse = player.mp >= sk.mpCost;
+    html += '<button class="option-btn" ' + (canUse ? '' : 'disabled') + ' onclick="combatSkill(\'' + skillId + '\')">' +
+      sk.name + '（內力：' + sk.mpCost + '）— ' + sk.desc + '</button>';
+  }
+  html += '<button class="option-btn" onclick="clearCombat3DSubmenu()">返回</button>';
+  sub.innerHTML = html;
+}
+
+function showCombatItemMenu() {
+  const sub = document.getElementById('c3d-submenu');
+  const consumables = Object.entries(player.inventory)
+    .filter(function(e) { return e[1] > 0 && ITEMS[e[0]].type === 'consumable'; })
+    .map(function(e) { return { id: e[0], qty: e[1] }; });
+  if (consumables.length === 0) {
+    sub.innerHTML = '<p style="color:var(--smoke); padding:8px;">沒有可使用的物品。</p><button class="option-btn" onclick="clearCombat3DSubmenu()">返回</button>';
+    return;
+  }
+  let html = '';
+  for (const c of consumables) {
+    const item = ITEMS[c.id];
+    html += '<button class="option-btn" onclick="combatUseItem(\'' + c.id + '\')">' + item.name + ' x' + c.qty + ' — ' + item.desc + '</button>';
+  }
+  html += '<button class="option-btn" onclick="clearCombat3DSubmenu()">返回</button>';
+  sub.innerHTML = html;
+}
+
+function floatDamage3D(text, isCrit, onPlayer) {
+  const overlay = document.getElementById('combat-3d-ui');
+  if (!overlay) return;
+  const el = document.createElement('div');
+  el.className = 'damage-float' + (isCrit ? ' crit' : '') + (onPlayer ? ' player-dmg' : '');
+  el.textContent = text;
+  el.style.position = 'absolute';
+  // Player stands left (~28%), enemy right (~72%)
+  const baseX = onPlayer ? 22 : 66;
+  el.style.left = (baseX + Math.random() * 10) + '%';
+  el.style.top = (36 + Math.random() * 8) + '%';
+  overlay.appendChild(el);
+  anime({
+    targets: el,
+    translateY: [0, -70],
+    opacity: [1, 0],
+    scale: [0.8, isCrit ? 1.5 : 1.2],
+    duration: 1200,
+    easing: 'easeOutQuad',
+    complete: function() { el.remove(); }
+  });
+}
+
+function startCombat(enemyId) {
+  const tmpl = ENEMIES[enemyId];
+  combat = {
+    enemyId,
+    enemy: {
+      name: tmpl.name, maxHp: tmpl.maxHp, hp: tmpl.maxHp,
+      atk: tmpl.atk, def: tmpl.def, spd: tmpl.spd,
+      skills: tmpl.skills, exp: tmpl.exp, gold: tmpl.gold, drops: tmpl.drops || [],
+    },
+    log: [], defending: false, playerEscaped: false, dodgeNext: false,
+    isBoss: enemyId === 'xuanMingZhenRen',
+  };
+  combat.log.push({ cls: 'info', text: tmpl.flavor || tmpl.name + '出現了！' });
+  initCombat3D(enemyId);
+  updateCombat3DUI();
+  const fleeBtn = document.getElementById('c3d-flee-btn');
+  if (fleeBtn) fleeBtn.disabled = combat.isBoss;
+}
+
+function combatAttack() {
+  setCombat3DActionsEnabled(false);
+  const e = combat.enemy;
+  const isCrit = Math.random() < (player.attrs.agi * 0.015);
+  const power = isCrit ? 1.6 : 1;
+  const dmg = calcDamage(getEffectiveAttack(), e.def, power);
+  playFightClip({
+    attacker: combat3D.player3D,
+    defender: combat3D.enemy3D,
+    kind: 'attack',
+    crit: isCrit,
+    onImpact: function() {
+      e.hp -= dmg;
+      if (isCrit) {
+        combat.log.push({ cls: 'crit', text: '暴擊！你奮力一擊，對' + e.name + '造成 ' + dmg + ' 點傷害！' });
+        shakeScreen(6);
+      } else {
+        combat.log.push({ cls: 'dmg-out', text: '你發動攻擊，對' + e.name + '造成 ' + dmg + ' 點傷害。' });
+      }
+      updateCombat3DUI();
+      floatDamage3D('-' + dmg, isCrit, false);
+    },
+    onDone: function() {
+      if (e.hp <= 0) { setTimeout(function() { endCombat(true); }, 600); return; }
+      setTimeout(function() { enemyTurn(); }, 320);
+    },
+  });
+}
+
+function combatSkill(skillId) {
+  const sk = SKILLS[skillId];
+  if (!sk || player.mp < sk.mpCost) return;
+  setCombat3DActionsEnabled(false);
+  clearCombat3DSubmenu();
+  player.mp -= sk.mpCost;
+  const e = combat.enemy;
+
+  if (sk.type === 'heal') {
+    const healHp = Math.round(player.maxHp * (sk.healPct || 0));
+    const healMp = sk.mpPct ? Math.round(player.maxMp * sk.mpPct) : 0;
+    const actualHeal = Math.min(healHp, player.maxHp - player.hp);
+    player.hp += actualHeal;
+    if (healMp) player.mp = Math.min(player.maxMp, player.mp + healMp);
+    combat.log.push({ cls: 'info', text: '你施展' + sk.name + '，恢復了 ' + actualHeal + ' 點氣血' + (healMp ? '和 ' + healMp + ' 點內力' : '') + '。' });
+    updateCombat3DUI();
+    playSelfClip(combat3D.player3D, 'heal', skillId, function() {
+      setTimeout(function() { enemyTurn(); }, 250);
+    });
+    return;
+  }
+
+  if (sk.type === 'buff') {
+    combat.dodgeNext = true;
+    combat.log.push({ cls: 'info', text: '你施展' + sk.name + '，身法大增，下次攻擊將被閃避！' });
+    updateCombat3DUI();
+    playSelfClip(combat3D.player3D, 'defend', skillId, function() {
+      setTimeout(function() { enemyTurn(); }, 250);
+    });
+    return;
+  }
+
+  const isCrit = Math.random() < (player.attrs.agi * 0.01);
+  const dmg = calcDamage(getEffectiveAttack(), e.def, sk.power * (isCrit ? 1.3 : 1));
+
+  playFightClip({
+    attacker: combat3D.player3D,
+    defender: combat3D.enemy3D,
+    kind: 'skill',
+    skillId: skillId,
+    crit: isCrit,
+    onImpact: function() {
+      e.hp -= dmg;
+      if (sk.type === 'absorb') {
+        const absorbed = Math.round(dmg * (sk.absorbPct || 0.5));
+        const actualAbsorb = Math.min(absorbed, player.maxHp - player.hp);
+        player.hp += actualAbsorb;
+        combat.log.push({ cls: 'dmg-out', text: '你施展' + sk.name + '，對' + e.name + '造成 ' + dmg + ' 點傷害，並吸取了 ' + actualAbsorb + ' 點氣血！' });
+      } else if (isCrit) {
+        combat.log.push({ cls: 'crit', text: sk.name + '命中要害！對' + e.name + '造成 ' + dmg + ' 點傷害！' });
+        shakeScreen(5);
+      } else {
+        combat.log.push({ cls: 'dmg-out', text: '你施展' + sk.name + '，對' + e.name + '造成 ' + dmg + ' 點傷害！' });
+      }
+      updateCombat3DUI();
+      floatDamage3D('-' + dmg, isCrit, false);
+    },
+    onDone: function() {
+      if (e.hp <= 0) { setTimeout(function() { endCombat(true); }, 600); return; }
+      setTimeout(function() { enemyTurn(); }, 320);
+    },
+  });
+}
+
+function combatUseItem(itemId) {
+  const item = ITEMS[itemId];
+  if (!item || item.type !== 'consumable') return;
+  setCombat3DActionsEnabled(false);
+  clearCombat3DSubmenu();
+  const eff = item.effect;
+  if (eff.kind === 'healHp') {
+    const heal = Math.min(eff.amt, player.maxHp - player.hp);
+    player.hp += heal;
+    combat.log.push({ cls: 'info', text: '你使用了' + item.name + '，恢復 ' + heal + ' 點氣血。' });
+  } else if (eff.kind === 'healMp') {
+    const heal = Math.min(eff.amt, player.maxMp - player.mp);
+    player.mp += heal;
+    combat.log.push({ cls: 'info', text: '你使用了' + item.name + '，恢復 ' + heal + ' 點內力。' });
+  } else if (eff.kind === 'full') {
+    player.hp = player.maxHp; player.mp = player.maxMp;
+    combat.log.push({ cls: 'info', text: '你使用了' + item.name + '，氣血與內力完全恢復！' });
+  } else if (eff.kind === 'snowLotus') {
+    player.hp = player.maxHp; player.mp = player.maxMp;
+    player.maxHp += 50; player.hp = player.maxHp;
+    combat.log.push({ cls: 'info', text: '你使用了' + item.name + '！氣血內力完全恢復，氣血上限永久提升！' });
+  }
+  removeFromInventory(itemId, 1);
+  updateCombat3DUI();
+  playSelfClip(combat3D.player3D, 'heal', null, function() {
+    setTimeout(function() { enemyTurn(); }, 250);
+  });
+}
+
+function combatDefend() {
+  setCombat3DActionsEnabled(false);
+  combat.defending = true;
+  const mpRestore = Math.min(10, player.maxMp - player.mp);
+  player.mp += mpRestore;
+  combat.log.push({ cls: 'info', text: '你擺出防禦架勢，減少下次受到的傷害' + (mpRestore > 0 ? '，並回復了 ' + mpRestore + ' 點內力' : '') + '。' });
+  updateCombat3DUI();
+  playSelfClip(combat3D.player3D, 'defend', null, function() {
+    setTimeout(function() { enemyTurn(); }, 250);
+  });
+}
+
+function combatFlee() {
+  if (combat.isBoss) return;
+  setCombat3DActionsEnabled(false);
+  const chance = clamp(0.3 + (player.attrs.agi - combat.enemy.spd) * 0.05, 0.1, 0.9);
+  if (Math.random() < chance) {
+    combat.log.push({ cls: 'info', text: '你成功逃脫了！' });
+    combat.playerEscaped = true;
+    updateCombat3DUI();
+    setTimeout(function() {
+      exitCombat3D();
+      const hadRomanceCb = romanceCombatCallback;
+      romanceCombatCallback = null;
+      combat = null;
+      if (hadRomanceCb) showRomanceHub();
+      else goToLocation(player.location);
+    }, 800);
+  } else {
+    combat.log.push({ cls: 'info', text: '逃跑失敗！' });
+    updateCombat3DUI();
+    setTimeout(function() { enemyTurn(); }, 800);
+  }
+}
+
+function enemyTurn() {
+  const e = combat.enemy;
+  if (e.hp <= 0) return;
+
+  if (combat.dodgeNext) {
+    combat.dodgeNext = false;
+    combat.log.push({ cls: 'crit', text: '你以幻影步閃避了' + e.name + '的攻擊！' });
+    updateCombat3DUI();
+    playFightClip({
+      attacker: combat3D.enemy3D,
+      defender: combat3D.player3D,
+      kind: 'attack',
+      dodged: true,
+      onImpact: function() {
+        floatDamage3D('閃避', false, true);
+      },
+      onDone: function() {
+        setCombat3DActionsEnabled(true);
+      },
+    });
+    return;
+  }
+
+  let useSkill = false;
+  if (e.skills && e.skills.length > 0 && Math.random() < 0.5) useSkill = true;
+  const esk = useSkill ? pick(e.skills) : null;
+
+  playFightClip({
+    attacker: combat3D.enemy3D,
+    defender: combat3D.player3D,
+    kind: useSkill ? 'enemySkill' : 'attack',
+    enemySkill: esk,
+    onImpact: function() {
+      let dmg;
+      if (useSkill) {
+        dmg = calcDamage(e.atk, getEffectiveDefense(), esk.power);
+        combat.log.push({ cls: 'dmg-in', text: e.name + '使出' + esk.name + '！對你造成 ' + dmg + ' 點傷害！' });
+      } else {
+        dmg = calcDamage(e.atk, getEffectiveDefense(), 1);
+        combat.log.push({ cls: 'dmg-in', text: e.name + '發動攻擊，對你造成 ' + dmg + ' 點傷害。' });
+      }
+
+      if (combat.defending) {
+        dmg = Math.round(dmg * 0.4);
+        combat.log.push({ cls: 'info', text: '防禦生效！實際受到 ' + dmg + ' 點傷害。' });
+        combat.defending = false;
+      }
+
+      player.hp -= dmg;
+      updateCombat3DUI();
+      floatDamage3D('-' + dmg, false, true);
+    },
+    onDone: function() {
+      if (player.hp <= 0) {
+        player.hp = 0;
+        shakeScreen(8);
+        setTimeout(function() { endCombat(false); }, 700);
+        return;
+      }
+      setCombat3DActionsEnabled(true);
+    },
+  });
+}
+
+function exitCombat3D() {
+  const overlay = document.getElementById('combat-3d-overlay');
+  overlay.classList.add('fading-out');
+  overlay.classList.remove('clip-playing');
+  setTimeout(function() {
+    overlay.classList.remove('active', 'fading-out');
+    cleanupCombat3D();
+  }, 600);
+}
+
+function endCombat(victory) {
+  const e = combat.enemy;
+  if (victory) {
+    combat.log.push({ cls: 'info', text: '你擊敗了' + e.name + '！' });
+    addLog('擊敗了' + e.name + '！獲得經驗值 ' + e.exp + ' 點，銀兩 ' + e.gold + ' 兩。');
+    player.exp += e.exp;
+    player.gold += e.gold;
+    let drops = [];
+    for (const drop of e.drops) {
+      if (Math.random() < drop.chance) {
+        addToInventory(drop.id, 1);
+        drops.push(ITEMS[drop.id].name);
+      }
+    }
+    if (drops.length > 0) addLog('獲得物品：' + drops.join('、') + '。');
+    const leveled = checkLevelUp();
+
+    const wasBoss = combat.isBoss;
+    const pendingStage = combat.pendingStronghold || 0;
+
+    enterClip();
+    animFighterAction(combat3D.enemy3D, 'defeat');
+    animFighterAction(combat3D.player3D, 'victory');
+    // Slow victory orbit around the standing winner
+    camTo(0, 2.2, 5.2, 0, 1.3, 0, 1400, 'easeInOutQuad');
+    updateCombat3DUI();
+
+    setTimeout(function() {
+      exitCombat3D();
+      combat = null;
+      saveGame();
+
+      if (wasBoss) { showVictory(); return; }
+
+      if (pendingStage > 0) { strongholdProgress = pendingStage; saveGame(); }
+
+      renderTypedScene('【戰鬥勝利】',
+        '你擊敗了' + e.name + '！',
+        '<p>獲得經驗值 <span style="color:var(--exp);">' + e.exp + '</span> 點。</p>' +
+        '<p>獲得銀兩 <span style="color:var(--cinnabar-light);">' + e.gold + '</span> 兩。</p>' +
+        (drops.length > 0 ? '<p>獲得物品：<span style="color:var(--gold);">' + drops.join('、') + '</span></p>' : '') +
+        (leveled ? '<p style="color:var(--gold); font-size:1.1em;">★ 等級提升至 ' + player.level + ' 級！★</p>' : ''),
+        [
+          { text: '繼續', action: 'afterCombatContinue()' },
+        ]
+      );
+      saveGame();
+    }, wasBoss ? 2000 : 1600);
+  } else {
+    addLog('你被' + e.name + '擊敗了……所幸被路人救回了客棧。');
+    player.hp = Math.round(player.maxHp * 0.5);
+    player.mp = Math.round(player.maxMp * 0.5);
+    const lostGold = Math.round(player.gold * 0.1);
+    player.gold -= lostGold;
+    player.location = '青石鎮';
+    const wasInStronghold = strongholdProgress > 0 && strongholdProgress < 3;
+    romanceCombatCallback = null;
+
+    enterClip();
+    animFighterAction(combat3D.player3D, 'defeat');
+    camTo(-1.5, 1.6, 4.5, -2.5, 0.9, 0, 1200, 'easeInOutQuad');
+    updateCombat3DUI();
+
+    setTimeout(function() {
+      exitCombat3D();
+      combat = null;
+      if (wasInStronghold) strongholdProgress = 0;
+      saveGame();
+      renderTypedScene('【敗北】',
+        '你眼前一黑……',
+        '<p>不知過了多久，你在客棧中醒來。老王告訴你，是路過的好心人把你抬回來的。</p>' +
+        '<p>氣血恢復了一半。損失了 ' + lostGold + ' 兩銀子作為醫藥費。</p>' +
+        (wasInStronghold ? '<p style="color:var(--smoke);">你在黑風寨的進度已重置，需要重新突入。</p>' : ''),
+        [
+          { text: '繼續', action: "goToLocation('青石鎮')" },
+        ]
+      );
+    }, 1800);
+  }
+}
+
+function setActionsEnabled(enabled) {
+  setCombat3DActionsEnabled(enabled);
+}
+
+function afterCombatContinue() {
+  if (romanceCombatCallback) {
+    onRomanceQuestComplete();
+    return;
+  }
+  if (player.location === '黑風寨') renderStronghold();
+  else goToLocation(player.location);
+}
+
+function renderStronghold() {
+  player.location = '黑風寨';
+  updateStatus();
+  saveGame();
+
+  if (strongholdProgress === 0) {
+    renderTypedScene('【黑風寨 · 寨門】',
+      '你沿著山路來到黑風寨的寨門前。一座高大的木門擋在路中，兩側箭塔上隱約可見弓手的身影。空氣中瀰漫著血腥與肅殺之氣。\n\n一名身穿黑甲的守衛攔住了你的去路。',
+      `<div class="dialogue">
+        <span class="speaker">黑風寨守衛：</span>「站住！此乃魔教聖地，閒雜人等不得擅入。識相的就快滾，否則別怪刀劍無眼！」
+      </div>`,
+      [
+        { text: '強行突破！', action: "strongholdFight('heiFengShouWei', 1)" },
+        { text: '暫時撤退', action: "goToLocation('青石鎮')" },
+      ],
+      'stronghold'
+    );
+  } else if (strongholdProgress === 1) {
+    renderTypedScene('【黑風寨 · 通道】',
+      '你越過寨門，沿著石階深入黑風寨內部。兩旁的建築陰森恐怖，偶爾傳來詭異的低語聲。你知道，越往深處走，危險就越大。\n\n前方一個身影擋住了去路，正是魔教護法！',
+      `<div class="dialogue">
+        <span class="speaker">魔教護法：</span>「哼，居然能闖過寨門。不過到此為止了，本護法奉教主之命鎮守此地，你休想再前進一步！」
+      </div>`,
+      [
+        { text: '迎戰護法！', action: "strongholdFight('mojiaoHuFa', 2)" },
+        { text: '暫時撤退', action: "goToLocation('青石鎮')" },
+      ],
+      'stronghold'
+    );
+  } else if (strongholdProgress === 2) {
+    const hasXuanTie = player.inventory['xuanTieZhongJian'] || player.weapon === 'xuanTieZhongJian';
+    const hasJinSi = player.inventory['jinSiRuanJia'] || player.armor === 'jinSiRuanJia';
+    let treasureHTML = '';
+    if (!hasXuanTie) {
+      addToInventory('xuanTieZhongJian', 1);
+      treasureHTML += '<p style="color:var(--gold);">你在寶箱中發現了<strong>玄鐵重劍</strong>！攻擊力 +35。</p>';
+    }
+    if (!hasJinSi) {
+      addToInventory('jinSiRuanJia', 1);
+      treasureHTML += '<p style="color:var(--gold);">你在寶箱中發現了<strong>金絲軟甲</strong>！防禦力 +30。</p>';
+    }
+    if (!treasureHTML) {
+      treasureHTML = '<p style="color:var(--smoke);">寶箱已經空了，看來你之前已經拿走了所有東西。</p>';
+    }
+    renderTypedScene('【黑風寨 · 藏寶閣】',
+      '擊敗護法後，你來到了一間藏寶閣。這裡擺放著一個古樸的寶箱，箱子上刻著龍鳳花紋。\n\n你小心翼翼地打開寶箱——',
+      `${treasureHTML}
+      <p>前方的主殿傳來陣陣陰寒之氣，玄冥真人就在那裡。</p>
+      <p style="color:var(--cinnabar-light);">建議在挑戰最終Boss前確認裝備與補給充足。</p>`,
+      [
+        { text: '前往主殿，挑戰玄冥真人', action: 'strongholdBossIntro()' },
+        { text: '整裝待發，先回青石鎮', action: "goToLocation('青石鎮')" },
+      ],
+      'stronghold'
+    );
+    saveGame();
+  }
+}
+
+function strongholdFight(enemyId, nextStage) {
+  startCombat(enemyId);
+  combat.pendingStronghold = nextStage;
+}
+
+function strongholdBossIntro() {
+  renderTypedScene('【黑風寨 · 主殿】',
+    '你推開主殿沉重的大門，一股陰寒之氣撲面而來。大殿寬廣而幽暗，兩側燃著幽綠色的燈火。殿堂盡頭的高台上，一個身披黑袍的身影正背對著你盤膝而坐。\n\n聽到腳步聲，那人緩緩起身，轉過頭來。只見他面容蒼白如紙，雙眼卻閃爍著妖異的紅光。',
+    `<div class="dialogue">
+      <span class="speaker">玄冥真人：</span>「呵呵呵……多少年了，終於有人能走到這裡。小子，你很不錯，比之前那些廢物強多了。」
+    </div>
+    <div class="dialogue">
+      <span class="speaker">玄冥真人：</span>「不過，你的旅程到此為止了。我修煉玄冥神掌三十年，天下間無人能擋。今日，就讓你見識一下真正的力量！」
+    </div>
+    <div class="dialogue">
+      <span class="speaker">${player.name}：</span>「玄冥真人，你在青石鎮為非作歹，殘害百姓。今日我就要為民除害！」
+    </div>
+    <div class="dialogue">
+      <span class="speaker">玄冥真人：</span>「大言不慚！來吧，讓我看看你有多少本事！」
+    </div>
+    <p style="color:var(--cinnabar-glow); text-align:center; font-size:1.2em; letter-spacing:0.15em;">★ 最終決戰 ★</p>`,
+    [
+      { text: '拔出兵器，迎戰玄冥真人！', action: "strongholdBossFight()" },
+      { text: '暫時撤退', action: "goToLocation('青石鎮')" },
+    ],
+    'peak'
+  );
+}
+
+function strongholdBossFight() {
+  startCombat('xuanMingZhenRen');
+}
+
+function initRomance() {
+  romance = {};
+  for (const id of Object.keys(GIRLS)) {
+    romance[id] = { met: false, affection: 0, talkedToday: false, questDone: false, reward50: false, reward100: false };
+  }
+}
+
+function getGirlStatus(id) {
+  const r = romance[id];
+  if (!r.met) return { label: '未邂逅', cls: 'locked' };
+  if (r.affection >= 100) return { label: '♥ 紅顏知己 ♥', cls: 'love' };
+  if (r.affection >= 50) return { label: '心意相通', cls: 'friend' };
+  return { label: '初識', cls: 'met' };
+}
+
+function showRomanceHub() {
+  let cards = '';
+  for (const [id, g] of Object.entries(GIRLS)) {
+    const r = romance[id];
+    const status = getGirlStatus(id);
+    const lockedNote = g.meetLevelReq ? `(需 ${g.meetLevelReq} 級)` : '';
+    const src = ASSETS.girls[id] || '';
+    cards += `
+      <div class="girl-card ${r.reward100 ? 'completed' : ''}" onclick="visitGirl('${id}')">
+        <img class="girl-thumb" src="${src}" alt="${g.name}" loading="lazy">
+        <div class="girl-title">${g.name}</div>
+        <div class="girl-desc">${g.title}<br>${lockedNote}</div>
+        <div class="girl-status ${status.cls}">${status.label}</div>
+      </div>
+    `;
+  }
+  const completed = Object.values(romance).filter(r => r.reward100).length;
+  renderScene('【紅顏知己】', `
+    <p>江湖路遠，有人同行便不覺孤單。在這青石鎮中，流傳著不少奇女子的故事。或許，你該去結識一番。</p>
+    ${completed > 0 ? `<p style="color:var(--jade);">已結交紅顏：${completed} / 7</p>` : ''}
+    <div class="girl-grid">${cards}</div>
+  `, [
+    { text: '返回', action: "goToLocation('青石鎮')" },
+  ], 'town');
+  staggerIn('.girl-card');
+}
+
+function canMeetGirl(id) {
+  const g = GIRLS[id];
+  if (g.meetLevelReq && player.level < g.meetLevelReq) return false;
+  return true;
+}
+
+function visitGirl(id) {
+  const g = GIRLS[id];
+  const r = romance[id];
+  const loc = g.loc || 'town';
+
+  if (!canMeetGirl(id)) {
+    renderScene(`【${g.name}】`, `
+      ${girlHeroCard(id)}
+      <p>你四處打聽，卻找不到這位女子的蹤跡。</p>
+      <p style="color:var(--smoke);">需要達到 ${g.meetLevelReq} 級才能邂逅此人。</p>
+    `, [
+      { text: '返回', action: 'showRomanceHub()' },
+    ], loc);
+    return;
+  }
+
+  if (!r.met) {
+    r.met = true;
+    r.talkedToday = true;
+    r.affection += 5;
+    addLog(`邂逅了${g.name}（${g.title}）。`);
+    saveGame();
+    renderTypedScene(`【邂逅 · ${g.name}】`,
+      g.meetText,
+      `${girlHeroCard(id)}
+      ${npcBubble(id, g.dialogues[0].replace(/\$\{name\}/g, player.name))}
+      <p style="color:var(--jade); font-size:0.9em;">好感度 +5（初次邂逅）</p>
+      ${renderAffectionBar(id)}`,
+      [
+        { text: '繼續聊天', action: `girlTalk('${id}')` },
+        { text: '贈送禮物', action: `girlGiftMenu('${id}')` },
+        { text: '接受任務', action: `girlQuest('${id}')`, disabled: r.questDone },
+        { text: '返回', action: 'showRomanceHub()' },
+      ],
+      loc
+    );
+    return;
+  }
+
+  checkGirlRewards(id);
+  const status = getGirlStatus(id);
+  renderScene(`【${g.name} · ${g.title}】`, `
+    ${girlHeroCard(id)}
+    ${renderAffectionBar(id)}
+    <p style="color:var(--smoke);">狀態：${status.label}</p>
+    ${r.questDone ? '<p style="color:var(--jade); font-size:0.9em;">已完成她的請求。</p>' : ''}
+    ${r.reward50 ? '<p style="color:var(--gold); font-size:0.9em;">已獲得第一階段獎勵。</p>' : ''}
+    ${r.reward100 ? '<p style="color:var(--cinnabar-light); font-size:0.9em;">♥ 已結為紅顏知己 ♥</p>' : ''}
+  `, [
+    { text: r.talkedToday ? '今日已聊過' : '繼續聊天', action: `girlTalk('${id}')`, disabled: r.talkedToday },
+    { text: '贈送禮物', action: `girlGiftMenu('${id}')` },
+    { text: r.questDone ? '任務已完成' : '接受任務', action: `girlQuest('${id}')`, disabled: r.questDone },
+    { text: '返回', action: 'showRomanceHub()' },
+  ], loc);
+}
+
+function renderAffectionBar(id) {
+  const r = romance[id];
+  const pct = clamp(r.affection, 0, 100);
+  return `
+    <div class="affection-bar">
+      <div style="color:var(--smoke); font-size:0.85em; margin-bottom:2px;">❤ 好感度</div>
+      <div class="bar-track">
+        <div class="bar-fill aff" style="width:${pct}%"></div>
+        <span class="bar-text">${r.affection} / 100</span>
+      </div>
+    </div>
+  `;
+}
+
+function girlTalk(id) {
+  const g = GIRLS[id];
+  const r = romance[id];
+  const loc = g.loc || 'town';
+  const idx = Math.min(Math.floor(r.affection / 25), g.dialogues.length - 1);
+  const dialogue = g.dialogues[idx].replace(/\$\{name\}/g, player.name);
+  r.talkedToday = true;
+  r.affection = Math.min(100, r.affection + 5);
+  addLog(`與${g.name}聊天，好感度提升。`);
+  checkGirlRewards(id);
+  saveGame();
+  renderScene(`【${g.name}】`, `
+    ${girlHeroCard(id)}
+    ${renderAffectionBar(id)}
+    ${npcBubble(id, dialogue)}
+    <p style="color:var(--jade); font-size:0.9em;">好感度 +5</p>
+    ${r.reward100 ? '<p style="color:var(--cinnabar-light);">♥ 你們的感情已臻圓滿 ♥</p>' : ''}
+  `, [
+    { text: '贈送禮物', action: `girlGiftMenu('${id}')` },
+    { text: r.questDone ? '任務已完成' : '接受任務', action: `girlQuest('${id}')`, disabled: r.questDone },
+    { text: '返回', action: 'showRomanceHub()' },
+  ], loc);
+}
+
+function girlGiftMenu(id) {
+  const g = GIRLS[id];
+  const loc = g.loc || 'town';
+  const gifts = Object.entries(player.inventory)
+    .filter(([iid, q]) => q > 0 && ITEMS[iid] && ITEMS[iid].type === 'gift')
+    .map(([iid, q]) => ({ id: iid, ...ITEMS[iid], qty: q }));
+
+  if (gifts.length === 0) {
+    renderScene(`【贈送禮物 · ${g.name}】`, `
+      ${girlHeroCard(id)}
+      ${renderAffectionBar(id)}
+      <p style="color:var(--smoke);">你沒有可以贈送的禮物。可以在雜貨鋪購買鮮花、珍珠簪等禮物。</p>
+    `, [
+      { text: '返回', action: `visitGirl('${id}')` },
+    ], loc);
+    return;
+  }
+
+  let giftHTML = '';
+  for (const gift of gifts) {
+    giftHTML += `
+      <div class="gift-item">
+        <span class="gift-name">${gift.name} x${gift.qty}</span>
+        <span class="gift-aff">好感度 +${gift.aff}</span>
+        <button class="btn" onclick="girlGiveGift('${id}', '${gift.id}')">贈送</button>
+      </div>
+    `;
+  }
+
+  renderScene(`【贈送禮物 · ${g.name}】`, `
+    ${girlHeroCard(id)}
+    ${renderAffectionBar(id)}
+    <p>你有一些禮物可以送給${g.name}。</p>
+    ${giftHTML}
+  `, [
+    { text: '返回', action: `visitGirl('${id}')` },
+  ], loc);
+}
+
+function girlGiveGift(girlId, giftId) {
+  const g = GIRLS[girlId];
+  const r = romance[girlId];
+  const gift = ITEMS[giftId];
+  if (!gift || !player.inventory[giftId]) return;
+  removeFromInventory(giftId, 1);
+  r.affection = Math.min(100, r.affection + gift.aff);
+  addLog(`送給${g.name}一份${gift.name}，好感度 +${gift.aff}。`);
+  checkGirlRewards(girlId);
+  saveGame();
+  updateStatus();
+  visitGirl(girlId);
+}
+
+function girlQuest(id) {
+  const g = GIRLS[id];
+  const r = romance[id];
+  const loc = g.loc || 'town';
+  if (r.questDone) { visitGirl(id); return; }
+  renderScene(`【${g.questTitle} · ${g.name}】`, `
+    ${girlHeroCard(id)}
+    ${renderAffectionBar(id)}
+    <p>${g.questText}</p>
+    ${npcBubble(id, `拜託你了，${player.name}。`)}
+    <p style="color:var(--gold);">任務目標：${g.questReqText}</p>
+    <p style="color:var(--smoke); font-size:0.9em;">完成任務後好感度大幅提升，並獲得特殊獎勵。</p>
+  `, [
+    { text: '立即出發！', action: `girlStartQuest('${id}')` },
+    { text: '稍後再說', action: `visitGirl('${id}')` },
+  ], loc);
+}
+
+function girlStartQuest(id) {
+  const g = GIRLS[id];
+  startCombat(g.questEnemy);
+  romanceCombatCallback = id;
+}
+
+function onRomanceQuestComplete() {
+  const id = romanceCombatCallback;
+  if (!id) return;
+  const g = GIRLS[id];
+  const r = romance[id];
+  r.questDone = true;
+  r.affection = Math.min(100, r.affection + 25);
+  addLog(`完成了${g.name}的請求「${g.questTitle}」！好感度大幅提升。`);
+  checkGirlRewards(id);
+  saveGame();
+  romanceCombatCallback = null;
+
+  renderScene(`【任務完成 · ${g.questTitle}】`, `
+    ${girlHeroCard(id)}
+    ${renderAffectionBar(id)}
+    <p style="color:var(--jade); font-size:1.1em;">你成功完成了${g.name}的請求！</p>
+    ${npcBubble(id, `太好了……謝謝你，${player.name}。`)}
+    <p style="color:var(--gold);">好感度 +25</p>
+    ${r.reward50 ? `<div class="dialogue" style="border-left-color: var(--jade);"><span class="speaker">獎勵：</span>${g.reward50Text}</div>` : ''}
+    ${r.reward100 ? `<div class="dialogue" style="border-left-color: var(--cinnabar);"><span class="speaker">至寶：</span>${g.reward100Text}</div>` : ''}
+  `, [
+    { text: '繼續', action: `visitGirl('${id}')` },
+  ], g.loc || 'town');
+}
+
+function checkGirlRewards(id) {
+  const g = GIRLS[id];
+  const r = romance[id];
+  if (r.affection >= 50 && !r.reward50) {
+    r.reward50 = true;
+    const rw = g.reward50;
+    if (rw.items) for (const [iid, q] of Object.entries(rw.items)) addToInventory(iid, q);
+    if (rw.gold) player.gold += rw.gold;
+    if (rw.maxHpBonus) { player.maxHp += rw.maxHpBonus; player.hp += rw.maxHpBonus; }
+    if (rw.maxMpBonus) { player.maxMp += rw.maxMpBonus; player.mp += rw.maxMpBonus; }
+    if (rw.skills) for (const sk of rw.skills) { if (!player.skills.includes(sk)) player.skills.push(sk); }
+    if (rw.attrBonus) for (const [ak, av] of Object.entries(rw.attrBonus)) player.attrs[ak] = (player.attrs[ak] || 0) + av;
+    addLog(`與${g.name}好感度達到50！獲得獎勵！`);
+  }
+  if (r.affection >= 100 && !r.reward100) {
+    r.reward100 = true;
+    const rw = g.reward100;
+    if (rw.items) for (const [iid, q] of Object.entries(rw.items)) addToInventory(iid, q);
+    if (rw.gold) player.gold += rw.gold;
+    if (rw.maxHpBonus) { player.maxHp += rw.maxHpBonus; player.hp += rw.maxHpBonus; }
+    if (rw.maxMpBonus) { player.maxMp += rw.maxMpBonus; player.mp += rw.maxMpBonus; }
+    if (rw.skills) for (const sk of rw.skills) { if (!player.skills.includes(sk)) player.skills.push(sk); }
+    if (rw.attrBonus) for (const [ak, av] of Object.entries(rw.attrBonus)) player.attrs[ak] = (player.attrs[ak] || 0) + av;
+    addLog(`與${g.name}好感度達到滿值！結為紅顏知己！獲得至寶！`);
+  }
+}
+
+function showVictory() {
+  showScreen('ending-screen');
+  document.getElementById('ending-content').innerHTML = `
+    <h1>★ 天 下 太平 ★</h1>
+    <div class="ending-text">
+      玄冥真人轟然倒地，黑袍上沾滿了鮮血。他難以置信地望著你，嘴角泛起一絲苦笑。
+    </div>
+    <div class="dialogue" style="max-width:500px; margin:0 auto 28px;">
+      <span class="speaker">玄冥真人：</span>「不可能……我的玄冥神掌……你……你到底是什麼人……」
+    </div>
+    <div class="ending-text">
+      「邪不勝正，你的惡行到此為止了。」你收起兵器，頭也不回地走出了主殿。
+    </div>
+    <div class="ending-text">
+      隨著玄冥真人的倒台，黑風寨的惡勢力土崩瓦解。魔教教眾作鳥獸散，山賊們也紛紛逃入深山，再也不敢為禍一方。
+      青石鎮的百姓們奔相走告，歡呼雀躍。老王在客棧裡擺了三天三夜的慶功宴，每個人都在談論著你的名字。
+      從此，你的俠名傳遍江湖，成為一代武林傳說。而你的故事……才剛剛開始。
+    </div>
+    <p style="color:var(--gold); font-size:1.1em; margin: 20px 0;">
+      — 全 劇 終 —<br><br>
+      <span style="color:var(--smoke); font-size:0.9em;">
+        最終等級：${player.level}｜門派：${player.sectName}<br>
+        擊敗Boss：玄冥真人
+      </span>
+    </p>
+    <button class="btn btn-cinnabar btn-large" onclick="newGame()">重新開始</button>
+  `;
+  strongholdProgress = 3;
+  saveGame();
+  anime({
+    targets: '#ending-content > *',
+    opacity: [0, 1],
+    translateY: [20, 0],
+    delay: anime.stagger(300, { start: 400 }),
+    duration: 800,
+    easing: 'easeOutQuad'
+  });
+}
+
+function newGame() {
+  deleteSave();
+  player = null;
+  tempGender = '男';
+  tempSect = null;
+  tempAttrs = null;
+  strongholdProgress = 0;
+  gossipShown = 0;
+  gameLog = [];
+  combat = null;
+  romance = null;
+  romanceCombatCallback = null;
+  const nameInput = document.getElementById('input-name');
+  if (nameInput) nameInput.value = '';
+  document.querySelectorAll('.sect-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.gender-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.gender === '男');
+  });
+  const attrSec = document.getElementById('attr-section');
+  if (attrSec) attrSec.style.display = 'none';
+  const warn = document.getElementById('create-warning');
+  if (warn) warn.remove();
+  showScreen('create-screen');
+}
+
+function init() {
+  renderSectGrid();
+  if (hasSave()) {
+    document.getElementById('continue-btn').style.display = 'inline-block';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
