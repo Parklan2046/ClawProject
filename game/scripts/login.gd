@@ -1,6 +1,7 @@
 extends Control
 
 const OST_SCRIPT = preload("res://scripts/wuxia_ost.gd")
+const TOWN_3D_SCRIPT = preload("res://scripts/town_3d.gd")
 const BG := Color("#090b0e")
 const SURFACE := Color("#12161c")
 const SURFACE_SOFT := Color("#171c23")
@@ -12,7 +13,7 @@ const ACCENT_HOVER := Color("#cd5045")
 const ERROR := Color("#ef8d84")
 
 var reduce_motion := false
-var atmosphere: WuxiaAtmosphere
+var town_3d: SubViewportContainer
 var brand: VBoxContainer
 var panel: PanelContainer
 var form_margin: MarginContainer
@@ -46,25 +47,17 @@ func _build_scene() -> void:
 	app_theme.default_font_size = 15
 	theme = app_theme
 
-	var backdrop := TextureRect.new()
-	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.texture = load("res://assets/bg/town.jpg")
-	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	backdrop.modulate = Color(0.90, 0.94, 1.0, 0.94)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backdrop)
+	town_3d = TOWN_3D_SCRIPT.new()
+	town_3d.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	town_3d.reduce_motion = reduce_motion
+	town_3d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(town_3d)
 
 	var shade := ColorRect.new()
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.025, 0.031, 0.040, 0.16)
+	shade.color = Color(0.025, 0.031, 0.040, 0.10)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
-
-	atmosphere = WuxiaAtmosphere.new()
-	atmosphere.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	atmosphere.reduce_motion = reduce_motion
-	add_child(atmosphere)
 
 	ost = OST_SCRIPT.new()
 	add_child(ost)
