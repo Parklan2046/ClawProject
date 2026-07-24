@@ -1,5 +1,6 @@
 extends Control
 
+const OST_SCRIPT = preload("res://scripts/wuxia_ost.gd")
 const BG := Color("#090b0e")
 const SURFACE := Color("#12161c")
 const SURFACE_SOFT := Color("#171c23")
@@ -27,6 +28,8 @@ var success_title: Label
 var success_copy: Label
 var enter_button: Button
 var guest_button: Button
+var music_button: Button
+var ost: AudioStreamPlayer
 
 func _ready() -> void:
 	reduce_motion = _prefers_reduced_motion()
@@ -48,21 +51,30 @@ func _build_scene() -> void:
 	backdrop.texture = load("res://assets/bg/town.jpg")
 	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	backdrop.modulate = Color(0.50, 0.54, 0.59, 0.58)
+	backdrop.modulate = Color(0.90, 0.94, 1.0, 0.94)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 
 	var shade := ColorRect.new()
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.025, 0.031, 0.040, 0.62)
+	shade.color = Color(0.025, 0.031, 0.040, 0.16)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
 
 	atmosphere = WuxiaAtmosphere.new()
 	atmosphere.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	atmosphere.reduce_motion = reduce_motion
-	atmosphere.modulate = Color(1, 1, 1, 0.34)
 	add_child(atmosphere)
+
+	ost = OST_SCRIPT.new()
+	add_child(ost)
+
+	music_button = _button("音樂 · 開", false)
+	music_button.custom_minimum_size = Vector2(104, 36)
+	music_button.add_theme_font_size_override("font_size", 12)
+	music_button.tooltip_text = "開啟或關閉原創江湖配樂"
+	music_button.pressed.connect(_toggle_music)
+	add_child(music_button)
 
 	brand = VBoxContainer.new()
 	brand.add_theme_constant_override("separation", 14)
@@ -243,6 +255,8 @@ func _build_success_layer() -> void:
 func _apply_layout() -> void:
 	var s := get_viewport_rect().size
 	var mobile := s.x < 760.0
+	music_button.position = Vector2(s.x - 124.0, 18.0)
+	music_button.size = Vector2(104.0, 36.0)
 	if mobile:
 		var pad := clampf(s.x * 0.055, 18.0, 28.0)
 		var compact := s.y < 720.0
@@ -332,6 +346,10 @@ func _clear_form() -> void:
 	secret.clear()
 	error_label.text = " "
 	account.grab_focus()
+
+func _toggle_music() -> void:
+	ost.stream_paused = not ost.stream_paused
+	music_button.text = "音樂 · 關" if ost.stream_paused else "音樂 · 開"
 
 func _complete(name: String, guest: bool) -> void:
 	error_label.text = " "

@@ -17,3 +17,5 @@ godot --headless --path . --export-release Web web/index.html
 The Web preset is single-threaded and uses the Compatibility renderer for Mobile Safari support. Serve the `web/` directory through HTTP or HTTPS. Opening the export directly with `file://` is unsupported.
 
 The Web export uses `web_shell.html` for a custom cinematic loading screen. The loader reads Godot's real download progress and shows percentage plus estimated time remaining. Desktop and mobile use separate wuxia artwork so both lead characters remain visible at each aspect ratio.
+
+The login scene includes a procedural living-town layer with moving clouds, a drifting moon, lantern flicker, mist, fireflies, and depth-scaled pedestrians. `scripts/wuxia_ost.gd` synthesizes the original pentatonic soundtrack at runtime, so the project does not ship third-party music.
