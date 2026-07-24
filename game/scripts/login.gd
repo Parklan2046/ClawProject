@@ -2,6 +2,7 @@ extends Control
 
 const OST_SCRIPT = preload("res://scripts/wuxia_ost.gd")
 const TOWN_3D_SCRIPT = preload("res://scripts/town_3d.gd")
+const TOWN_BACKDROP = preload("res://assets/bg/town-hybrid.jpg")
 const BG := Color("#090b0e")
 const SURFACE := Color("#12161c")
 const SURFACE_SOFT := Color("#171c23")
@@ -13,6 +14,7 @@ const ACCENT_HOVER := Color("#cd5045")
 const ERROR := Color("#ef8d84")
 
 var reduce_motion := false
+var town_backdrop: TextureRect
 var town_3d: SubViewportContainer
 var brand: VBoxContainer
 var panel: PanelContainer
@@ -47,6 +49,19 @@ func _build_scene() -> void:
 	app_theme.default_font_size = 15
 	theme = app_theme
 
+	town_backdrop = TextureRect.new()
+	town_backdrop.name = "PaintedTownBackdrop"
+	town_backdrop.texture = TOWN_BACKDROP
+	town_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	town_backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	town_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	town_backdrop.offset_left = -34.0
+	town_backdrop.offset_top = -18.0
+	town_backdrop.offset_right = 34.0
+	town_backdrop.offset_bottom = 18.0
+	town_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(town_backdrop)
+
 	town_3d = TOWN_3D_SCRIPT.new()
 	town_3d.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	town_3d.reduce_motion = reduce_motion
@@ -55,7 +70,7 @@ func _build_scene() -> void:
 
 	var shade := ColorRect.new()
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.025, 0.031, 0.040, 0.10)
+	shade.color = Color(0.025, 0.031, 0.040, 0.06)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
 
@@ -190,6 +205,11 @@ func _build_scene() -> void:
 
 	_build_success_layer()
 	account.grab_focus()
+	if not reduce_motion:
+		var backdrop_tween := create_tween().set_loops()
+		backdrop_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		backdrop_tween.tween_property(town_backdrop, "position:x", -18.0, 14.0)
+		backdrop_tween.tween_property(town_backdrop, "position:x", 0.0, 14.0)
 
 func _build_success_layer() -> void:
 	success_layer = ColorRect.new()

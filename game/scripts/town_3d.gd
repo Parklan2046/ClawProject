@@ -5,23 +5,22 @@ var reduce_motion := false
 var viewport_3d: SubViewport
 var world_root: Node3D
 var camera: Camera3D
-var moon: MeshInstance3D
 var cloud_groups: Array[Node3D] = []
+var banner_nodes: Array[Node3D] = []
 var elapsed := 0.0
 var rng := RandomNumberGenerator.new()
 
-var wall_materials: Array[StandardMaterial3D] = []
-var wood_material: StandardMaterial3D
-var dark_wood_material: StandardMaterial3D
-var roof_material: StandardMaterial3D
-var roof_edge_material: StandardMaterial3D
-var stone_material: StandardMaterial3D
-var stone_alt_material: StandardMaterial3D
-var window_material: StandardMaterial3D
-var lantern_material: StandardMaterial3D
-var cloud_material: StandardMaterial3D
-var moon_material: StandardMaterial3D
-var mountain_material: StandardMaterial3D
+var wall_materials: Array[Material] = []
+var wood_material: Material
+var dark_wood_material: Material
+var roof_material: Material
+var roof_edge_material: Material
+var stone_material: Material
+var stone_alt_material: Material
+var window_material: Material
+var lantern_material: Material
+var banner_material: Material
+var brass_material: Material
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -36,6 +35,7 @@ func _build_viewport() -> void:
 	viewport_3d = SubViewport.new()
 	viewport_3d.name = "TownViewport"
 	viewport_3d.own_world_3d = true
+	viewport_3d.transparent_bg = true
 	viewport_3d.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	viewport_3d.msaa_3d = Viewport.MSAA_2X
 	viewport_3d.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
@@ -47,46 +47,34 @@ func _build_world() -> void:
 	viewport_3d.add_child(world_root)
 	_build_environment()
 	_build_camera()
-	_build_mountains()
 	_build_street()
 	_build_buildings()
 	_build_lanterns()
-	_build_moon()
 	_build_clouds()
 
 func _build_materials() -> void:
 	wall_materials = [
-		_material(Color("#514b43"), 0.92),
-		_material(Color("#444748"), 0.94),
-		_material(Color("#5a5146"), 0.90),
-		_material(Color("#3d4548"), 0.95)
+		_surface_material(Color("#665b4d"), "plaster", 0.94),
+		_surface_material(Color("#4c5556"), "plaster", 0.96),
+		_surface_material(Color("#796652"), "plaster", 0.92),
+		_surface_material(Color("#414d50"), "plaster", 0.97)
 	]
-	wood_material = _material(Color("#382923"), 0.84)
+	wood_material = _surface_material(Color("#4e2e20"), "wood", 0.82)
 	dark_wood_material = _material(Color("#171516"), 0.90)
-	roof_material = _material(Color("#17212b"), 0.70, 0.16)
-	roof_edge_material = _material(Color("#0b1118"), 0.68, 0.20)
-	stone_material = _material(Color("#2a3642"), 0.52, 0.18)
-	stone_alt_material = _material(Color("#202a34"), 0.62, 0.12)
-	mountain_material = _material(Color("#101b24"), 1.0)
+	roof_material = _surface_material(Color("#1a2b39"), "tiles", 0.66, 0.18)
+	roof_edge_material = _material(Color("#0a1219"), 0.62, 0.24)
+	stone_material = _surface_material(Color("#354554"), "stone", 0.48, 0.12)
+	stone_alt_material = _surface_material(Color("#25333e"), "stone", 0.58, 0.10)
 	window_material = _emissive_material(Color("#e89242"), 1.15)
 	lantern_material = _emissive_material(Color("#ff5d36"), 3.2)
-	moon_material = _emissive_material(Color("#cbdce1"), 2.1)
+	banner_material = _surface_material(Color("#7f201d"), "cloth", 0.88)
+	brass_material = _material(Color("#9d6d32"), 0.38, 0.72)
 
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()
 	var environment := Environment.new()
-	var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color("#07101c")
-	sky_material.sky_horizon_color = Color("#23384a")
-	sky_material.ground_bottom_color = Color("#05080d")
-	sky_material.ground_horizon_color = Color("#172735")
-	sky_material.sky_curve = 0.18
-	sky_material.ground_curve = 0.12
-	var sky := Sky.new()
-	sky.sky_material = sky_material
-	environment.background_mode = Environment.BG_SKY
-	environment.sky = sky
-	environment.background_energy_multiplier = 0.62
+	environment.background_mode = Environment.BG_COLOR
+	environment.background_color = Color(0.0, 0.0, 0.0, 0.0)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color("#657f9c")
 	environment.ambient_light_energy = 0.34
@@ -128,30 +116,6 @@ func _build_camera() -> void:
 	camera.look_at(Vector3(0.0, 3.1, -24.0), Vector3.UP)
 	camera.current = true
 
-func _build_mountains() -> void:
-	var mountain_data := [
-		Vector4(-25.0, -73.0, 16.0, 35.0),
-		Vector4(-9.0, -82.0, 20.0, 44.0),
-		Vector4(13.0, -78.0, 18.0, 39.0),
-		Vector4(30.0, -70.0, 14.0, 31.0),
-		Vector4(1.0, -98.0, 27.0, 52.0)
-	]
-	for i in mountain_data.size():
-		var data: Vector4 = mountain_data[i]
-		var mesh := CylinderMesh.new()
-		mesh.top_radius = 0.2
-		mesh.bottom_radius = data.z
-		mesh.height = data.w
-		mesh.radial_segments = 7
-		mesh.rings = 1
-		var instance := MeshInstance3D.new()
-		instance.name = "Mountain%02d" % i
-		instance.mesh = mesh
-		instance.material_override = mountain_material
-		instance.position = Vector3(data.x, data.w * 0.5 - 4.0, data.y)
-		instance.rotation_degrees.y = float(i) * 19.0
-		world_root.add_child(instance)
-
 func _build_street() -> void:
 	_box(world_root, "StreetBase", Vector3(0.0, -0.18, -25.0), Vector3(9.4, 0.35, 86.0), stone_material)
 	_box(world_root, "LeftWalk", Vector3(-5.2, 0.02, -25.0), Vector3(1.0, 0.35, 86.0), stone_alt_material)
@@ -183,13 +147,13 @@ func _build_street() -> void:
 func _build_buildings() -> void:
 	for side_value in [-1.0, 1.0]:
 		var side: float = side_value
-		for row in 10:
-			var depth := rng.randf_range(5.8, 7.5)
-			var width := rng.randf_range(5.4, 7.0)
-			var height := rng.randf_range(3.7, 5.0)
-			var x := side * rng.randf_range(7.0, 8.6)
-			var z := 9.0 - float(row) * 7.4 + rng.randf_range(-0.65, 0.65)
-			var levels := 2 if row % 3 == 1 else 1
+		for row in 3:
+			var depth := 7.8 - float(row) * 0.55
+			var width := 6.6 - float(row) * 0.38
+			var height := 4.9 - float(row) * 0.25
+			var x := side * (7.35 + float(row) * 0.18)
+			var z := 8.2 - float(row) * 9.1
+			var levels := 2 if row < 2 else 1
 			_build_house(side, Vector3(x, 0.0, z), width, depth, height, levels, row)
 
 func _build_house(side: float, origin: Vector3, width: float, depth: float, height: float, levels: int, index: int) -> void:
@@ -198,9 +162,12 @@ func _build_house(side: float, origin: Vector3, width: float, depth: float, heig
 	house.position = origin
 	world_root.add_child(house)
 	var wall_material := wall_materials[index % wall_materials.size()]
+	_box(house, "StoneFoundation", Vector3(0.0, 0.28, 0.0), Vector3(width * 1.06, 0.56, depth * 1.04), stone_alt_material)
 	_box(house, "LowerWall", Vector3(0.0, height * 0.5, 0.0), Vector3(width, height, depth), wall_material)
 	_add_timber_frame(house, width, depth, height, side)
 	_add_roof(house, Vector3(0.0, height + 0.25, 0.0), width, depth)
+	_add_veranda(house, side, width, depth, height)
+	_add_brackets(house, side, width, depth, height)
 
 	if levels == 2:
 		var upper_width := width * 0.78
@@ -210,8 +177,12 @@ func _build_house(side: float, origin: Vector3, width: float, depth: float, heig
 		_box(house, "UpperWall", Vector3(0.0, upper_y, 0.0), Vector3(upper_width, upper_height, upper_depth), wall_material)
 		_add_timber_frame(house, upper_width, upper_depth, upper_y + upper_height * 0.5, side, upper_y - upper_height * 0.5)
 		_add_roof(house, Vector3(0.0, upper_y + upper_height * 0.5 + 0.22, 0.0), upper_width, upper_depth)
+		_add_balcony(house, side, upper_width, upper_depth, upper_y - upper_height * 0.45)
+		_add_brackets(house, side, upper_width, upper_depth, upper_y + upper_height * 0.44)
 
 	_add_facade_details(house, side, width, depth, height)
+	_add_gable_facade(house, width, depth, height, index)
+	_add_banner(house, side, width, depth, height, index)
 
 func _add_timber_frame(parent: Node3D, width: float, depth: float, top_y: float, side: float, base_y: float = 0.0) -> void:
 	var inner_x := -side * width * 0.505
@@ -245,8 +216,8 @@ func _add_roof(parent: Node3D, position: Vector3, width: float, depth: float) ->
 		_box(roof, "Eave", Vector3(0.0, 0.25, z_end), Vector3(width * 1.16, 0.16, 0.16), roof_edge_material)
 	for side_value in [-1.0, 1.0]:
 		var side: float = side_value
-		for strip in 3:
-			var x := side * width * (0.13 + float(strip) * 0.17)
+		for strip in 8:
+			var x := side * width * (0.065 + float(strip) * 0.058)
 			var y := 0.72 - absf(x) * tan(slope)
 			var tile_mesh := CylinderMesh.new()
 			tile_mesh.top_radius = 0.035
@@ -260,17 +231,94 @@ func _add_roof(parent: Node3D, position: Vector3, width: float, depth: float) ->
 			tile_line.position = Vector3(x, y, 0.0)
 			tile_line.rotation_degrees.x = 90.0
 			roof.add_child(tile_line)
+	for z_end in [-depth * 0.64, depth * 0.64]:
+		var cap_mesh := SphereMesh.new()
+		cap_mesh.radius = 0.17
+		cap_mesh.height = 0.34
+		cap_mesh.radial_segments = 10
+		cap_mesh.rings = 5
+		var cap := MeshInstance3D.new()
+		cap.name = "RidgeCap"
+		cap.mesh = cap_mesh
+		cap.material_override = brass_material
+		cap.position = Vector3(0.0, 0.78, z_end)
+		roof.add_child(cap)
 
 func _add_facade_details(parent: Node3D, side: float, width: float, depth: float, height: float) -> void:
 	var inner_x := -side * width * 0.515
 	_box(parent, "Door", Vector3(inner_x, height * 0.38, 0.0), Vector3(0.14, height * 0.72, depth * 0.24), dark_wood_material)
 	for z_offset in [-depth * 0.31, depth * 0.31]:
 		_box(parent, "Window", Vector3(inner_x - side * 0.015, height * 0.62, z_offset), Vector3(0.12, height * 0.25, depth * 0.18), window_material)
-		for bar in [-0.28, 0.0, 0.28]:
-			_box(parent, "WindowBar", Vector3(inner_x - side * 0.03, height * 0.62 + bar * height * 0.22, z_offset), Vector3(0.14, 0.055, depth * 0.19), dark_wood_material)
+		for bar in [-0.36, -0.12, 0.12, 0.36]:
+			_box(parent, "WindowBar", Vector3(inner_x - side * 0.03, height * 0.62 + bar * height * 0.22, z_offset), Vector3(0.14, 0.045, depth * 0.19), dark_wood_material)
+		for z_bar in [-0.31, -0.10, 0.10, 0.31]:
+			_box(parent, "WindowLattice", Vector3(inner_x - side * 0.035, height * 0.62, z_offset + z_bar * depth * 0.16), Vector3(0.15, height * 0.27, 0.045), dark_wood_material)
+
+func _add_gable_facade(parent: Node3D, width: float, depth: float, height: float, index: int) -> void:
+	var front_z := depth * 0.507
+	_box(parent, "GableSill", Vector3(0.0, 0.78, front_z), Vector3(width * 0.94, 0.22, 0.16), dark_wood_material)
+	_box(parent, "GableMidBeam", Vector3(0.0, height * 0.53, front_z), Vector3(width * 0.94, 0.20, 0.16), wood_material)
+	_box(parent, "GableTopBeam", Vector3(0.0, height * 0.90, front_z), Vector3(width * 0.96, 0.24, 0.18), dark_wood_material)
+	for x_ratio_value in [-0.42, -0.21, 0.0, 0.21, 0.42]:
+		var x_ratio: float = float(x_ratio_value)
+		_box(parent, "GablePost", Vector3(width * x_ratio, height * 0.52, front_z), Vector3(0.18, height * 0.80, 0.17), wood_material)
+	for x_ratio_value in [-0.29, 0.29]:
+		var x_ratio: float = float(x_ratio_value)
+		var window_x: float = width * x_ratio
+		_box(parent, "GableWindowGlow", Vector3(window_x, height * 0.62, front_z + 0.025), Vector3(width * 0.23, height * 0.29, 0.12), window_material)
+		for line in [-0.30, -0.10, 0.10, 0.30]:
+			_box(parent, "GableWindowBarH", Vector3(window_x, height * (0.62 + line * 0.25), front_z + 0.07), Vector3(width * 0.25, 0.045, 0.08), dark_wood_material)
+			_box(parent, "GableWindowBarV", Vector3(window_x + width * line * 0.18, height * 0.62, front_z + 0.075), Vector3(0.045, height * 0.31, 0.08), dark_wood_material)
+	var medallion_mesh := CylinderMesh.new()
+	medallion_mesh.top_radius = 0.42
+	medallion_mesh.bottom_radius = 0.42
+	medallion_mesh.height = 0.12
+	medallion_mesh.radial_segments = 18
+	var medallion := MeshInstance3D.new()
+	medallion.name = "CarvedMedallion"
+	medallion.mesh = medallion_mesh
+	medallion.material_override = brass_material if index == 0 else dark_wood_material
+	medallion.position = Vector3(0.0, height * 0.79, front_z + 0.10)
+	medallion.rotation_degrees.x = 90.0
+	parent.add_child(medallion)
+	for x_ratio_value in [-0.35, 0.35]:
+		var x_ratio: float = float(x_ratio_value)
+		_box(parent, "DiagonalBrace", Vector3(width * x_ratio, height * 0.29, front_z + 0.04), Vector3(width * 0.28, 0.13, 0.10), brass_material, Vector3(0.0, 0.0, (-1.0 if x_ratio < 0.0 else 1.0) * deg_to_rad(34.0)))
+
+func _add_veranda(parent: Node3D, side: float, width: float, depth: float, height: float) -> void:
+	var inner_x := -side * (width * 0.5 + 0.72)
+	_box(parent, "VerandaDeck", Vector3(inner_x, 0.64, 0.0), Vector3(1.42, 0.20, depth * 0.92), wood_material)
+	for z_offset in [-depth * 0.41, -depth * 0.14, depth * 0.14, depth * 0.41]:
+		_box(parent, "VerandaPost", Vector3(inner_x - side * 0.50, height * 0.49, z_offset), Vector3(0.15, height * 0.96, 0.15), dark_wood_material)
+		_box(parent, "RailPost", Vector3(inner_x - side * 0.58, 1.12, z_offset), Vector3(0.11, 1.0, 0.11), brass_material)
+	_box(parent, "VerandaRail", Vector3(inner_x - side * 0.58, 1.48, 0.0), Vector3(0.10, 0.11, depth * 0.92), brass_material)
+	_box(parent, "VerandaCanopy", Vector3(inner_x, height * 0.84, 0.0), Vector3(1.72, 0.14, depth * 1.02), roof_material, Vector3(0.0, 0.0, side * deg_to_rad(8.0)))
+
+func _add_balcony(parent: Node3D, side: float, width: float, depth: float, y: float) -> void:
+	var inner_x := -side * (width * 0.5 + 0.58)
+	_box(parent, "BalconyDeck", Vector3(inner_x, y, 0.0), Vector3(1.18, 0.20, depth * 0.96), wood_material)
+	for z_offset in [-depth * 0.42, -depth * 0.21, 0.0, depth * 0.21, depth * 0.42]:
+		_box(parent, "BalconyPicket", Vector3(inner_x - side * 0.48, y + 0.54, z_offset), Vector3(0.09, 0.92, 0.09), brass_material)
+	_box(parent, "BalconyRail", Vector3(inner_x - side * 0.48, y + 0.92, 0.0), Vector3(0.11, 0.11, depth * 0.94), brass_material)
+
+func _add_brackets(parent: Node3D, side: float, width: float, depth: float, y: float) -> void:
+	var inner_x := -side * (width * 0.5 + 0.22)
+	for z_offset in [-depth * 0.38, -depth * 0.19, 0.0, depth * 0.19, depth * 0.38]:
+		_box(parent, "BracketA", Vector3(inner_x, y - 0.10, z_offset), Vector3(0.70, 0.16, 0.16), wood_material, Vector3(0.0, 0.0, side * deg_to_rad(22.0)))
+		_box(parent, "BracketB", Vector3(inner_x - side * 0.18, y - 0.30, z_offset), Vector3(0.42, 0.12, 0.12), brass_material, Vector3(0.0, 0.0, side * deg_to_rad(-28.0)))
+
+func _add_banner(parent: Node3D, side: float, width: float, depth: float, height: float, index: int) -> void:
+	var pivot := Node3D.new()
+	pivot.name = "HangingBanner"
+	pivot.position = Vector3(-side * (width * 0.53 + 0.18), height * 0.70, depth * (0.12 if index % 2 == 0 else -0.12))
+	pivot.set_meta("phase", float(index) * 1.73 + side)
+	parent.add_child(pivot)
+	_box(pivot, "BannerCloth", Vector3(-side * 0.08, -0.72, 0.0), Vector3(0.08, 1.54, 0.82), banner_material)
+	_box(pivot, "BannerRod", Vector3(0.0, 0.08, 0.0), Vector3(0.18, 0.10, 1.08), brass_material)
+	banner_nodes.append(pivot)
 
 func _build_lanterns() -> void:
-	for row in 12:
+	for row in 6:
 		var z := 10.0 - float(row) * 5.7
 		for side_value in [-1.0, 1.0]:
 			var side: float = side_value
@@ -307,19 +355,6 @@ func _build_lanterns() -> void:
 				light.omni_range = 8.4
 				light.shadow_enabled = false
 				world_root.add_child(light)
-
-func _build_moon() -> void:
-	var mesh := SphereMesh.new()
-	mesh.radius = 3.1
-	mesh.height = 6.2
-	mesh.radial_segments = 24
-	mesh.rings = 12
-	moon = MeshInstance3D.new()
-	moon.name = "Moon"
-	moon.mesh = mesh
-	moon.material_override = moon_material
-	moon.position = Vector3(-13.0, 21.0, -54.0)
-	world_root.add_child(moon)
 
 func _build_clouds() -> void:
 	var cloud_specs := [
@@ -397,8 +432,9 @@ func _process(delta: float) -> void:
 	)
 	camera.position = camera_position
 	camera.look_at(Vector3(sin(elapsed * 0.045) * 0.42, 3.1, -24.0), Vector3.UP)
-	moon.position.x = -13.0 + sin(elapsed * 0.018) * 2.8
-	moon.position.y = 21.0 + cos(elapsed * 0.014) * 0.8
+	for banner in banner_nodes:
+		var phase := float(banner.get_meta("phase"))
+		banner.rotation.z = sin(elapsed * 0.72 + phase) * 0.035
 
 func _box(parent: Node, node_name: String, position: Vector3, box_size: Vector3, material: Material, rotation: Vector3 = Vector3.ZERO) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
@@ -417,6 +453,89 @@ func _material(color: Color, roughness: float, metallic: float = 0.0) -> Standar
 	material.albedo_color = color
 	material.roughness = roughness
 	material.metallic = metallic
+	return material
+
+func _surface_material(color: Color, pattern: String, roughness: float, metallic: float = 0.0) -> ShaderMaterial:
+	var shader := Shader.new()
+	var pattern_code := ""
+	match pattern:
+		"wood":
+			pattern_code = """
+	float grain = sin(UV.y * 74.0 + sin(UV.x * 19.0) * 2.8) * 0.5 + 0.5;
+	float plank = smoothstep(0.47, 0.52, abs(fract(UV.x * 4.0) - 0.5));
+	tone = mix(0.70, 1.14, grain * 0.42) * mix(0.72, 1.0, plank);
+	bump = (grain - 0.5) * 0.24;
+"""
+		"tiles":
+			pattern_code = """
+	vec2 tile_uv = UV * vec2(13.0, 7.0);
+	tile_uv.x += floor(tile_uv.y) * 0.5;
+	vec2 cell = abs(fract(tile_uv) - 0.5);
+	float seam = smoothstep(0.43, 0.49, max(cell.x, cell.y));
+	float curve = 1.0 - cell.x * cell.x * 1.7;
+	tone = mix(0.43, 1.18 * curve, 1.0 - seam);
+	bump = (1.0 - seam) * curve * 0.30 - 0.10;
+"""
+		"stone":
+			pattern_code = """
+	vec2 block_uv = UV * vec2(7.0, 11.0);
+	block_uv.x += floor(block_uv.y) * 0.5;
+	vec2 cell = abs(fract(block_uv) - 0.5);
+	float joint = smoothstep(0.42, 0.49, max(cell.x, cell.y));
+	float mottled = hash21(floor(block_uv)) * 0.22;
+	tone = mix(0.46, 0.90 + mottled, 1.0 - joint);
+	bump = (1.0 - joint) * (mottled - 0.08);
+"""
+		"cloth":
+			pattern_code = """
+	float weave = sin(UV.x * 210.0) * sin(UV.y * 170.0);
+	float fold = sin(UV.x * 16.0 + sin(UV.y * 7.0)) * 0.5 + 0.5;
+	tone = 0.72 + fold * 0.34 + weave * 0.035;
+	bump = weave * 0.06 + (fold - 0.5) * 0.10;
+"""
+		_:
+			pattern_code = """
+	vec2 p = UV * 9.0;
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	float a = hash21(i);
+	float b = hash21(i + vec2(1.0, 0.0));
+	float c = hash21(i + vec2(0.0, 1.0));
+	float d = hash21(i + vec2(1.0, 1.0));
+	float grain = mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+	float stain = sin(UV.y * 13.0 + grain * 2.4) * 0.5 + 0.5;
+	float edge_wear = pow(abs(UV.x - 0.5) * 2.0, 3.0) * 0.10;
+	tone = 0.78 + grain * 0.17 + stain * 0.10 - edge_wear;
+	bump = (grain - 0.5) * 0.08;
+"""
+	shader.code = """
+shader_type spatial;
+render_mode diffuse_burley, specular_schlick_ggx;
+uniform vec4 base_color : source_color;
+uniform float surface_roughness = 0.8;
+uniform float surface_metallic = 0.0;
+float hash21(vec2 p) {
+	p = fract(p * vec2(123.34, 456.21));
+	p += dot(p, p + 45.32);
+	return fract(p.x * p.y);
+}
+void fragment() {
+	float tone = 1.0;
+	float bump = 0.0;
+%s
+	ALBEDO = base_color.rgb * tone;
+	ROUGHNESS = clamp(surface_roughness - bump * 0.18, 0.18, 1.0);
+	METALLIC = surface_metallic;
+	NORMAL_MAP = vec3(0.5 + dFdx(bump) * 0.85, 0.5 + dFdy(bump) * 0.85, 1.0);
+	NORMAL_MAP_DEPTH = 0.42;
+}
+""" % pattern_code
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	material.set_shader_parameter("base_color", color)
+	material.set_shader_parameter("surface_roughness", roughness)
+	material.set_shader_parameter("surface_metallic", metallic)
 	return material
 
 func _emissive_material(color: Color, energy: float) -> StandardMaterial3D:
