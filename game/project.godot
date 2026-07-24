@@ -3,6 +3,9 @@
 config/name="俠客行"
 run/main_scene="res://scenes/login.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/image="res://assets/loading-wuxia-v1.png"
+boot_splash/bg_color=Color(0.02, 0.027, 0.035, 1)
+boot_splash/fullsize=true
 
 [display]
 

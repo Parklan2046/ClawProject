@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,viewport-fit=cover">
-	<title>俠客行</title>
+	<title>$GODOT_PROJECT_NAME</title>
 	<style>
 		:root {
 			color-scheme: dark;
@@ -209,7 +209,7 @@
 			#status, #status-progress { transition: none; }
 		}
 	</style>
-	<meta name="theme-color" content="#090b0e"><meta name="description" content="俠客行 Godot 網頁版登入門面">
+	$GODOT_HEAD_INCLUDE
 </head>
 <body>
 	<canvas id="canvas">你的瀏覽器不支援 Canvas。</canvas>
@@ -217,7 +217,7 @@
 	<div id="status" aria-live="polite">
 		<picture>
 			<source media="(max-width: 600px)" srcset="loading-mobile-v1.png">
-			<img id="status-splash" src="index.png" alt="">
+			<img id="status-splash" src="$GODOT_SPLASH" alt="">
 		</picture>
 		<div id="status-grain"></div>
 		<header id="status-copy">
@@ -237,9 +237,9 @@
 		</section>
 		<div id="status-notice"></div>
 	</div>
-	<script src="index.js"></script>
+	<script src="$GODOT_URL"></script>
 	<script>
-	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":12873208,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+	const GODOT_CONFIG = $GODOT_CONFIG;
 	const engine = new Engine(GODOT_CONFIG);
 
 	(() => {
@@ -304,4 +304,3 @@
 	</script>
 </body>
 </html>
-
