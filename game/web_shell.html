@@ -241,6 +241,29 @@
 			line-height: 1.55;
 			letter-spacing: .08em;
 		}
+		#status-audio {
+			position: absolute;
+			z-index: 4;
+			top: max(22px, calc(env(safe-area-inset-top) + 16px));
+			right: clamp(24px, 4vw, 64px);
+			min-width: 138px;
+			padding: 10px 14px;
+			border: 1px solid rgba(201,167,101,.5);
+			border-radius: 999px;
+			background: rgba(7,9,12,.68);
+			color: rgba(241,234,220,.82);
+			font: 500 11px/1 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+			letter-spacing: .08em;
+			backdrop-filter: blur(10px);
+			cursor: pointer;
+			transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+		}
+		#status-audio:hover,
+		#status-audio[aria-pressed="true"] {
+			border-color: rgba(240,212,154,.9);
+			background: rgba(111,23,20,.78);
+			color: #fff8e8;
+		}
 		#status-notice {
 			display: none;
 			position: absolute;
@@ -308,6 +331,13 @@
 			}
 			#status-hint { display: none; }
 			#status-episode { margin-bottom: 12px; }
+			#status-audio {
+				top: max(18px, calc(env(safe-area-inset-top) + 12px));
+				right: 16px;
+				min-width: 0;
+				padding: 9px 12px;
+				font-size: 10px;
+			}
 		}
 		@media (prefers-reduced-motion: reduce) {
 			#status-splash, .mist, #status-embers { animation: none; }
@@ -319,7 +349,11 @@
 <body>
 	<canvas id="canvas">你的瀏覽器不支援 Canvas。</canvas>
 	<noscript>你的瀏覽器需要啟用 JavaScript 才能進入江湖。</noscript>
+	<audio id="niming-ost" preload="auto" autoplay loop playsinline>
+		<source src="guzheng-theme.mp3" type="audio/mpeg">
+	</audio>
 	<div id="status" aria-live="polite">
+		<button id="status-audio" type="button" aria-pressed="false">♫ 播放古箏配樂</button>
 		<picture>
 			<source media="(max-width: 600px)" srcset="loading-mobile-v1.png">
 			<img id="status-splash" src="$GODOT_SPLASH" alt="">
@@ -363,10 +397,45 @@
 		const percent = document.getElementById("status-percent");
 		const time = document.getElementById("status-time");
 		const state = document.getElementById("status-state");
+		const soundtrack = document.getElementById("niming-ost");
+		const audioButton = document.getElementById("status-audio");
 		const startedAt = performance.now();
 		let smoothedRate = 0;
 		let lastCurrent = 0;
 		let lastTime = startedAt;
+
+		window.nimingOST = soundtrack;
+		soundtrack.volume = .34;
+
+		function syncAudioButton() {
+			const playing = !soundtrack.paused;
+			audioButton.setAttribute("aria-pressed", String(playing));
+			audioButton.textContent = playing ? "♫ 古箏配樂播放中" : "♫ 播放古箏配樂";
+		}
+
+		audioButton.addEventListener("click", async () => {
+			if (soundtrack.paused) {
+				try {
+					await soundtrack.play();
+				} catch (error) {
+					console.warn("Soundtrack playback requires another user gesture.", error);
+				}
+			} else {
+				soundtrack.pause();
+			}
+			syncAudioButton();
+		});
+		soundtrack.addEventListener("play", syncAudioButton);
+		soundtrack.addEventListener("pause", syncAudioButton);
+		syncAudioButton();
+		soundtrack.play().then(syncAudioButton).catch(syncAudioButton);
+		const unlockSoundtrack = event => {
+			if (event.target === audioButton || !soundtrack.paused) return;
+			soundtrack.play().then(syncAudioButton).catch(syncAudioButton);
+		};
+		document.addEventListener("pointerdown", unlockSoundtrack, { once: true, capture: true });
+		document.addEventListener("click", unlockSoundtrack, { once: true, capture: true });
+		document.addEventListener("keydown", unlockSoundtrack, { once: true, capture: true });
 
 		function updateProgress(current, total) {
 			if (!(current > 0 && total > 0)) {

@@ -32,7 +32,7 @@ var success_copy: Label
 var enter_button: Button
 var guest_button: Button
 var music_button: Button
-var ost: AudioStreamPlayer
+var ost: WuxiaOST
 var session_player_name := "無名"
 
 func _ready() -> void:
@@ -78,10 +78,10 @@ func _build_scene() -> void:
 	ost = OST_SCRIPT.new()
 	add_child(ost)
 
-	music_button = _button("音樂 · 開", false)
+	music_button = _button("音樂 · 關" if ost.is_music_paused() else "音樂 · 開", false)
 	music_button.custom_minimum_size = Vector2(104, 36)
 	music_button.add_theme_font_size_override("font_size", 12)
-	music_button.tooltip_text = "開啟或關閉原創江湖配樂"
+	music_button.tooltip_text = "開啟或關閉古箏主題配樂"
 	music_button.pressed.connect(_toggle_music)
 	add_child(music_button)
 
@@ -362,8 +362,9 @@ func _clear_form() -> void:
 	account.grab_focus()
 
 func _toggle_music() -> void:
-	ost.stream_paused = not ost.stream_paused
-	music_button.text = "音樂 · 關" if ost.stream_paused else "音樂 · 開"
+	ost.toggle_music()
+	await get_tree().process_frame
+	music_button.text = "音樂 · 關" if ost.is_music_paused() else "音樂 · 開"
 
 func _complete(name: String, guest: bool) -> void:
 	error_label.text = " "
