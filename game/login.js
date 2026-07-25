@@ -1,4 +1,4 @@
-/* 俠客行 登入 — boot, 2D fallback, form logic */
+/* 逆命大郎 登入 — boot, 2D fallback, form logic */
 (function () {
   'use strict';
 
@@ -188,7 +188,7 @@
         '<div style="font-size:1.6rem;letter-spacing:0.4em;margin-bottom:16px;color:#e8c96a;">已進入門扉</div>' +
         '<div style="font-size:0.9rem;letter-spacing:0.18em;color:#a8a494;line-height:1.9;">' +
         label + '<br>' +
-        '此頁為登入視覺原型 · 尚未接入《俠客行》本體<br>' +
+        '此頁為登入視覺原型 · 尚未接入《逆命大郎》本體<br>' +
         '<button id="back-btn" style="margin-top:28px;padding:12px 28px;background:transparent;border:1px solid rgba(201,168,76,0.45);color:#e8e4d9;letter-spacing:0.28em;cursor:pointer;font-family:inherit;">返回登入</button>' +
         '</div></div>';
       document.body.appendChild(note);

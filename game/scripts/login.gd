@@ -89,7 +89,7 @@ func _build_scene() -> void:
 	add_child(brand)
 
 	var seal := Label.new()
-	seal.text = "俠"
+	seal.text = "逆"
 	seal.custom_minimum_size = Vector2(54, 54)
 	seal.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -100,7 +100,7 @@ func _build_scene() -> void:
 	brand.add_child(seal)
 
 	var title := Label.new()
-	title.text = "俠 客 行"
+	title.text = "逆 命 大 郎"
 	title.add_theme_font_size_override("font_size", 58)
 	title.add_theme_color_override("font_color", TEXT)
 	brand.add_child(title)
@@ -112,13 +112,13 @@ func _build_scene() -> void:
 	brand.add_child(rule)
 
 	var statement := Label.new()
-	statement.text = "今夜，江湖有門。"
+	statement.text = "一餅起家，一命重寫。"
 	statement.add_theme_font_size_override("font_size", 28)
 	statement.add_theme_color_override("font_color", TEXT)
 	brand.add_child(statement)
 
 	var subcopy := Label.new()
-	subcopy.text = "沿青石路入鎮，續寫你的名號。"
+	subcopy.text = "踏入陽谷縣，改寫大郎死局。"
 	subcopy.add_theme_font_size_override("font_size", 16)
 	subcopy.add_theme_color_override("font_color", MUTED)
 	brand.add_child(subcopy)
@@ -139,13 +139,13 @@ func _build_scene() -> void:
 	form_margin.add_child(form_root)
 
 	var form_title := Label.new()
-	form_title.text = "回到青石鎮"
+	form_title.text = "重返陽谷縣"
 	form_title.add_theme_font_size_override("font_size", 25)
 	form_title.add_theme_color_override("font_color", TEXT)
 	form_root.add_child(form_title)
 
 	form_copy_label = Label.new()
-	form_copy_label.text = "輸入名號，繼續你的江湖路。"
+	form_copy_label.text = "輸入名號，繼續你的逆命之路。"
 	form_copy_label.add_theme_font_size_override("font_size", 14)
 	form_copy_label.add_theme_color_override("font_color", MUTED)
 	form_root.add_child(form_copy_label)

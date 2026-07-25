@@ -7,10 +7,12 @@
 	<style>
 		:root {
 			color-scheme: dark;
-			--ink: #080b0f;
-			--paper: #eee8dc;
-			--muted: #aaa59b;
-			--red: #bd4439;
+			--ink: #07090c;
+			--paper: #f1eadc;
+			--muted: #a9a397;
+			--red: #9f2d26;
+			--gold: #c9a765;
+			--gold-bright: #f0d49a;
 		}
 		* { box-sizing: border-box; }
 		html, body, #canvas {
@@ -45,8 +47,8 @@
 			position: absolute;
 			inset: 0;
 			background:
-				linear-gradient(180deg, rgba(3,5,8,.06) 30%, rgba(3,5,8,.88) 100%),
-				linear-gradient(90deg, rgba(3,5,8,.25), transparent 38%, transparent 62%, rgba(3,5,8,.25));
+				linear-gradient(180deg, rgba(3,5,8,.1) 25%, rgba(3,5,8,.22) 54%, rgba(3,5,8,.94) 100%),
+				linear-gradient(90deg, rgba(3,5,8,.72), transparent 37%, transparent 68%, rgba(3,5,8,.34));
 			z-index: 1;
 		}
 		#status.leaving {
@@ -60,8 +62,9 @@
 			height: 100%;
 			object-fit: cover;
 			object-position: center;
-			transform: scale(1.02);
-			animation: breathe 8s ease-out both;
+			transform: scale(1.035);
+			filter: saturate(.82) contrast(1.06);
+			animation: breathe 12s cubic-bezier(.2,.75,.25,1) both;
 		}
 		#status-grain {
 			position: absolute;
@@ -71,73 +74,144 @@
 			pointer-events: none;
 			background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
 		}
+		#status-atmosphere {
+			position: absolute;
+			inset: 0;
+			z-index: 2;
+			overflow: hidden;
+			pointer-events: none;
+		}
+		.mist {
+			position: absolute;
+			left: -25%;
+			width: 150%;
+			height: 17%;
+			border-radius: 50%;
+			background: radial-gradient(ellipse at center, rgba(177,195,203,.16), rgba(79,97,107,.07) 48%, transparent 72%);
+			filter: blur(18px);
+			opacity: .62;
+			animation: drift 18s ease-in-out infinite alternate;
+		}
+		.mist-a { top: 38%; }
+		.mist-b { top: 57%; animation-duration: 25s; animation-direction: alternate-reverse; opacity: .42; }
+		#status-embers {
+			position: absolute;
+			inset: 46% 0 0;
+			opacity: .7;
+			background-image:
+				radial-gradient(circle, rgba(255,177,84,.95) 0 1px, transparent 1.8px),
+				radial-gradient(circle, rgba(190,61,37,.9) 0 1px, transparent 1.7px);
+			background-size: 137px 173px, 211px 149px;
+			background-position: 20px 0, 90px 30px;
+			animation: embers 10s linear infinite;
+			mask-image: linear-gradient(90deg, #000, transparent 47%, transparent 60%, #000);
+		}
 		#status-copy {
-			position: relative;
+			position: absolute;
 			z-index: 3;
-			align-self: start;
-			justify-self: center;
-			margin-top: clamp(34px, 6vh, 72px);
-			text-align: center;
+			top: clamp(52px, 8vh, 90px);
+			left: clamp(38px, 6.2vw, 108px);
+			text-align: left;
 			text-shadow: 0 2px 28px rgba(0,0,0,.9);
 		}
 		#status-seal {
 			display: inline-grid;
-			width: 40px;
-			height: 40px;
-			margin-bottom: 14px;
+			width: 42px;
+			height: 42px;
+			margin-bottom: 19px;
 			place-items: center;
-			border: 1px solid rgba(238,232,220,.62);
-			background: rgba(145,39,32,.88);
-			font: 500 20px/1 "Noto Serif TC","Songti TC","PMingLiU",serif;
+			border: 1px solid rgba(245,213,157,.72);
+			background: rgba(140,35,28,.9);
+			box-shadow: inset 0 0 0 3px rgba(65,11,9,.32), 0 8px 25px rgba(0,0,0,.28);
+			font: 600 20px/1 "Noto Serif TC","Songti TC","PMingLiU",serif;
+			transform: rotate(-2deg);
+		}
+		#status-kicker {
+			display: inline-block;
+			margin: 0 0 0 13px;
+			color: var(--gold-bright);
+			font: 600 10px/1 "Noto Sans TC","Microsoft JhengHei",sans-serif;
+			letter-spacing: .3em;
+			vertical-align: 17px;
 		}
 		#status-title {
 			margin: 0;
-			font: 300 clamp(42px, 5.5vw, 78px)/1.05 "Noto Serif TC","Songti TC","PMingLiU",serif;
-			letter-spacing: .28em;
-			text-indent: .28em;
+			max-width: 3.2em;
+			font: 700 clamp(56px, 7vw, 104px)/.9 "Noto Serif TC","Songti TC","PMingLiU",serif;
+			letter-spacing: .08em;
+			text-wrap: balance;
+			background: linear-gradient(180deg, #fff8e8 5%, #d9c49b 76%, #977847);
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+			filter: drop-shadow(0 5px 1px rgba(0,0,0,.28));
 		}
 		#status-subtitle {
-			margin: 13px 0 0;
+			margin: 18px 0 0 3px;
 			color: rgba(238,232,220,.76);
-			font: 400 12px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
-			letter-spacing: .42em;
-			text-indent: .42em;
+			font: 500 12px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+			letter-spacing: .34em;
+		}
+		#status-subtitle::before {
+			content: "";
+			display: inline-block;
+			width: 38px;
+			height: 1px;
+			margin-right: 12px;
+			background: var(--red);
+			vertical-align: middle;
 		}
 		#status-loader {
-			position: relative;
+			position: absolute;
 			z-index: 3;
-			align-self: end;
-			justify-self: center;
-			width: min(560px, calc(100vw - 48px));
-			margin-bottom: max(44px, calc(env(safe-area-inset-bottom) + 30px));
+			right: clamp(38px, 6.2vw, 108px);
+			bottom: max(45px, calc(env(safe-area-inset-bottom) + 32px));
+			width: min(540px, calc(100vw - 76px));
 			font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+		}
+		#status-episode {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			margin-bottom: 17px;
+			color: var(--gold-bright);
+			font-size: 10px;
+			font-weight: 600;
+			letter-spacing: .28em;
+		}
+		#status-episode::after {
+			content: "";
+			flex: 1;
+			height: 1px;
+			background: linear-gradient(90deg, rgba(201,167,101,.55), transparent);
 		}
 		#status-meta {
 			display: flex;
 			align-items: baseline;
 			justify-content: space-between;
-			margin-bottom: 12px;
+			margin-bottom: 14px;
 			color: rgba(238,232,220,.78);
 			font-size: 12px;
 			letter-spacing: .14em;
 		}
 		#status-percent {
-			color: var(--paper);
-			font: 300 22px/1 "Noto Serif TC","Songti TC",serif;
+			color: var(--gold-bright);
+			font: 500 22px/1 "Noto Serif TC","Songti TC",serif;
 			letter-spacing: .02em;
 		}
 		#status-track {
 			position: relative;
-			height: 2px;
+			height: 3px;
 			overflow: visible;
-			background: rgba(238,232,220,.22);
+			background: rgba(238,232,220,.16);
+			box-shadow: 0 1px 0 rgba(0,0,0,.7);
 		}
 		#status-progress {
 			position: absolute;
 			inset: 0 auto 0 0;
 			width: 0;
-			background: var(--red);
-			box-shadow: 0 0 18px rgba(189,68,57,.9);
+			background: linear-gradient(90deg, #6f1714, #bd493b 58%, #e1a05d);
+			box-shadow: 0 0 20px rgba(189,68,57,.76);
 			transition: width 180ms ease-out;
 		}
 		#status-progress::after {
@@ -145,19 +219,27 @@
 			position: absolute;
 			top: 50%;
 			right: -3px;
-			width: 6px;
-			height: 6px;
-			border-radius: 50%;
-			background: #f0b3aa;
-			box-shadow: 0 0 16px rgba(240,179,170,.95);
-			transform: translateY(-50%);
+			width: 8px;
+			height: 8px;
+			background: #f1cf8b;
+			box-shadow: 0 0 18px rgba(240,179,90,.95);
+			transform: translateY(-50%) rotate(45deg);
 		}
 		#status-chapter {
 			margin: 12px 0 0;
 			color: var(--muted);
 			font-size: 11px;
 			letter-spacing: .16em;
-			text-align: center;
+			text-align: left;
+		}
+		#status-hint {
+			margin: 18px 0 0;
+			padding-top: 14px;
+			border-top: 1px solid rgba(238,232,220,.1);
+			color: rgba(238,232,220,.48);
+			font-size: 10px;
+			line-height: 1.55;
+			letter-spacing: .08em;
 		}
 		#status-notice {
 			display: none;
@@ -175,8 +257,16 @@
 			transform: translateX(-50%);
 		}
 		@keyframes breathe {
-			from { transform: scale(1.06); }
-			to { transform: scale(1.02); }
+			from { transform: scale(1.065) translate3d(-.5%, 0, 0); }
+			to { transform: scale(1.035) translate3d(.25%, 0, 0); }
+		}
+		@keyframes drift {
+			from { transform: translate3d(-4%, 0, 0) scale(1); }
+			to { transform: translate3d(5%, -10%, 0) scale(1.06); }
+		}
+		@keyframes embers {
+			from { transform: translate3d(0, 8%, 0); }
+			to { transform: translate3d(1%, -12%, 0); }
 		}
 		@media (max-width: 600px) {
 			#status::before {
@@ -186,7 +276,8 @@
 				object-position: 50% center;
 			}
 			#status-copy {
-				margin-top: max(30px, calc(env(safe-area-inset-top) + 22px));
+				top: max(28px, calc(env(safe-area-inset-top) + 20px));
+				left: 24px;
 			}
 			#status-seal {
 				width: 34px;
@@ -195,17 +286,31 @@
 				font-size: 17px;
 			}
 			#status-title {
-				font-size: clamp(38px, 13vw, 54px);
+				max-width: none;
+				font-size: clamp(45px, 13vw, 58px);
+				letter-spacing: .06em;
+			}
+			#status-subtitle {
+				margin-top: 11px;
+				font-size: 10px;
+			}
+			#status-kicker {
+				vertical-align: 14px;
+				font-size: 8px;
 			}
 			#status-loader {
-				margin-bottom: max(36px, calc(env(safe-area-inset-bottom) + 24px));
+				right: 24px;
+				bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
+				width: calc(100vw - 48px);
 			}
 			#status-meta {
 				font-size: 11px;
 			}
+			#status-hint { display: none; }
+			#status-episode { margin-bottom: 12px; }
 		}
 		@media (prefers-reduced-motion: reduce) {
-			#status-splash { animation: none; }
+			#status-splash, .mist, #status-embers { animation: none; }
 			#status, #status-progress { transition: none; }
 		}
 	</style>
@@ -220,20 +325,27 @@
 			<img id="status-splash" src="$GODOT_SPLASH" alt="">
 		</picture>
 		<div id="status-grain"></div>
+		<div id="status-atmosphere" aria-hidden="true">
+			<div class="mist mist-a"></div>
+			<div class="mist mist-b"></div>
+			<div id="status-embers"></div>
+		</div>
 		<header id="status-copy">
-			<div id="status-seal">俠</div>
-			<h1 id="status-title">俠客行</h1>
-			<p id="status-subtitle">江湖載入中</p>
+			<div><span id="status-seal">逆</span><span id="status-kicker">一餅起家 · 一命重寫</span></div>
+			<h1 id="status-title">逆命大郎</h1>
+			<p id="status-subtitle">北宋商戰武俠 RPG</p>
 		</header>
 		<section id="status-loader">
+			<div id="status-episode">序章 · 死局重生</div>
 			<div id="status-meta">
-				<span id="status-state">正在整理行囊</span>
+				<span id="status-state">正在升起爐火</span>
 				<span><strong id="status-percent">0%</strong> · <span id="status-time">估算時間中</span></span>
 			</div>
 			<div id="status-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
 				<div id="status-progress"></div>
 			</div>
-			<p id="status-chapter">第一章 · 青石鎮</p>
+			<p id="status-chapter">陽谷縣 · 景陽岡下</p>
+			<p id="status-hint">提示：恩義換來人心，把柄只能換來一時服從。</p>
 		</section>
 		<div id="status-notice"></div>
 	</div>
@@ -258,7 +370,7 @@
 
 		function updateProgress(current, total) {
 			if (!(current > 0 && total > 0)) {
-				state.textContent = "正在喚醒江湖";
+				state.textContent = "正在點燃炊餅爐火";
 				return;
 			}
 			const now = performance.now();
@@ -274,7 +386,7 @@
 			fill.style.width = value + "%";
 			track.setAttribute("aria-valuenow", String(value));
 			percent.textContent = value + "%";
-			state.textContent = value < 22 ? "正在展開江湖畫卷" : value < 72 ? "正在載入俠客記憶" : "正在推開青石鎮門";
+			state.textContent = value < 22 ? "正在展開陽谷縣輿圖" : value < 48 ? "正在清點商盟貨物" : value < 76 ? "正在召集江湖人物" : "正在改寫大郎命數";
 			if (smoothedRate > 0 && ratio < .995) {
 				const remaining = Math.max(Math.ceil((total - current) / smoothedRate), 1);
 				time.textContent = remaining > 60 ? "剩餘約 " + Math.ceil(remaining / 60) + " 分鐘" : "剩餘約 " + remaining + " 秒";
@@ -287,14 +399,22 @@
 			console.error(error);
 			loader.style.display = "none";
 			notice.style.display = "block";
-			notice.textContent = "江湖暫時無法開啟。請重新整理頁面再試。" + (error && error.message ? " " + error.message : "");
+			notice.textContent = "命運之門暫時無法開啟，請重新整理頁面再試。" + (error && error.message ? " " + error.message : "");
+		}
+
+		if (new URLSearchParams(location.search).has("loading-preview")) {
+			const previewTotal = 1000;
+			updateProgress(680, previewTotal);
+			state.textContent = "正在召集江湖人物";
+			time.textContent = "剩餘約 4 秒";
+			return;
 		}
 
 		engine.startGame({ onProgress: updateProgress }).then(() => {
 			fill.style.width = "100%";
 			percent.textContent = "100%";
 			time.textContent = "門扉已開";
-			state.textContent = "歡迎來到江湖";
+			state.textContent = "命運已改寫";
 			setTimeout(() => {
 				overlay.classList.add("leaving");
 				setTimeout(() => overlay.remove(), 620);
