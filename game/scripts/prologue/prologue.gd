@@ -44,6 +44,9 @@ var inspection_buttons: Dictionary = {}
 var contract_result := ""
 var repair_score := 0.0
 var reduce_motion := false
+var mobile := false
+var compact := false
+var repair_copy_label: Label
 
 func _ready() -> void:
 	reduce_motion = _prefers_reduced_motion()
@@ -215,11 +218,11 @@ func _build_ui() -> void:
 	repair_title.add_theme_font_size_override("font_size", 20)
 	repair_title.add_theme_color_override("font_color", TEXT)
 	repair_vbox.add_child(repair_title)
-	var repair_copy := Label.new()
-	repair_copy.text = "前世知識只係方法，能否落到雙手，先係真正本事。"
-	repair_copy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	repair_copy.add_theme_color_override("font_color", MUTED)
-	repair_vbox.add_child(repair_copy)
+	repair_copy_label = Label.new()
+	repair_copy_label.text = "前世知識只係方法，能否落到雙手，先係真正本事。"
+	repair_copy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	repair_copy_label.add_theme_color_override("font_color", MUTED)
+	repair_vbox.add_child(repair_copy_label)
 	gauge = GAUGE_SCRIPT.new()
 	gauge.finished.connect(_repair_finished)
 	repair_vbox.add_child(gauge)
@@ -465,14 +468,14 @@ func _show_summary() -> void:
 	var title := Label.new()
 	title.text = "序章完成 · 死局重生"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_font_size_override("font_size", 26 if mobile else 28)
 	title.add_theme_color_override("font_color", TEXT)
 	summary_content.add_child(title)
 	var summary := RichTextLabel.new()
 	summary.bbcode_enabled = true
 	summary.fit_content = true
 	summary.scroll_active = false
-	summary.custom_minimum_size.y = 132
+	summary.custom_minimum_size.y = (84 if compact else 100) if mobile else 132
 	summary.text = "[center]前世專長　[color=#d3b36f]%s[/color]\n行事信念　[color=#d3b36f]%s[/color]\n掌櫃契約　[color=#d3b36f]%s[/color]\n修爐評價　[color=#d3b36f]%s[/color]\n\n存檔已寫入。下一次命運選擇，將由第一籠炊餅開始。[/center]" % [
 		GameState.origin_name(),
 		GameState.principle_name(),
@@ -483,13 +486,16 @@ func _show_summary() -> void:
 	summary.add_theme_color_override("default_color", MUTED)
 	summary_content.add_child(summary)
 	var chapter_button := _button("進入第一章 · 一餅逆命", true)
+	chapter_button.custom_minimum_size.y = (44 if compact else 46) if mobile else 50
 	chapter_button.disabled = true
 	chapter_button.tooltip_text = "第一章將在下一個製作階段開放"
 	summary_content.add_child(chapter_button)
 	var replay_button := _button("重新體驗序章", false)
+	replay_button.custom_minimum_size.y = (44 if compact else 46) if mobile else 50
 	replay_button.pressed.connect(func() -> void: get_tree().reload_current_scene())
 	summary_content.add_child(replay_button)
 	var login_button := _button("返回登入頁", false)
+	login_button.custom_minimum_size.y = (44 if compact else 46) if mobile else 50
 	login_button.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/login.tscn"))
 	summary_content.add_child(login_button)
 	summary_panel.visible = true
@@ -534,7 +540,7 @@ func _show_choices(title: String, options: Array) -> void:
 		child.queue_free()
 	for option in options:
 		var button := _button("%s\n%s" % [option.label, option.description], false)
-		button.custom_minimum_size.y = 60
+		button.custom_minimum_size.y = (64 if compact else 72) if mobile else 60
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(option.action)
 		choice_list.add_child(button)
@@ -558,28 +564,41 @@ func _apply_layout() -> void:
 	if ui_root == null:
 		return
 	var size_value: Vector2 = get_viewport().get_visible_rect().size
-	var mobile: bool = size_value.x < 720.0
+	mobile = size_value.x < 760.0
+	compact = size_value.y < 600.0
 	top_bar.position = Vector2.ZERO
-	top_bar.size = Vector2(size_value.x, 24 if mobile else 30)
-	bottom_bar.position = Vector2(0, size_value.y - (20 if mobile else 26))
-	bottom_bar.size = Vector2(size_value.x, 20 if mobile else 26)
+	top_bar.size = Vector2(size_value.x, 28 if mobile else 30)
+	bottom_bar.position = Vector2(0, size_value.y - (24 if mobile else 26))
+	bottom_bar.size = Vector2(size_value.x, 24 if mobile else 26)
 	var pad := 18.0 if mobile else clampf(size_value.x * 0.045, 40.0, 72.0)
-	chapter_label.position = Vector2(pad, 38 if mobile else 48)
-	chapter_label.size = Vector2(size_value.x * 0.55, 28)
-	objective_label.position = Vector2(size_value.x * 0.48, 38 if mobile else 48)
-	objective_label.size = Vector2(size_value.x * 0.52 - pad, 28)
+	chapter_label.position = Vector2(pad, 40 if mobile else 48)
+	chapter_label.size = Vector2(size_value.x * 0.55, 30)
+	chapter_label.add_theme_font_size_override("font_size", 15 if mobile else 12)
+	objective_label.position = Vector2(size_value.x * 0.48, 40 if mobile else 48)
+	objective_label.size = Vector2(size_value.x * 0.52 - pad, 30)
+	objective_label.add_theme_font_size_override("font_size", 15 if mobile else 12)
+	speaker_label.add_theme_font_size_override("font_size", 15 if mobile else 13)
 	if mobile:
-		dialogue_panel.position = Vector2(pad, size_value.y - 260)
-		dialogue_panel.size = Vector2(size_value.x - pad * 2, 224)
-		dialogue_body.add_theme_font_size_override("normal_font_size", 16)
-		choice_panel.position = Vector2(pad, maxf(86, size_value.y * 0.16))
-		choice_panel.size = Vector2(size_value.x - pad * 2, minf(448, size_value.y - 116))
-		inspect_panel.position = Vector2(pad, size_value.y - 260)
-		inspect_panel.size = Vector2(size_value.x - pad * 2, 224)
-		repair_panel.position = Vector2(pad, size_value.y - 300)
-		repair_panel.size = Vector2(size_value.x - pad * 2, 264)
+		dialogue_panel.position = Vector2(pad, size_value.y - 264)
+		dialogue_panel.size = Vector2(size_value.x - pad * 2, 236)
+		dialogue_body.add_theme_font_size_override("normal_font_size", 18)
+		choice_panel.position = Vector2(pad, maxf(90, size_value.y * 0.16))
+		choice_panel.size = Vector2(size_value.x - pad * 2, minf(488, size_value.y - 130))
+		inspect_panel.position = Vector2(pad, size_value.y - 264)
+		inspect_panel.size = Vector2(size_value.x - pad * 2, 236)
+		inspect_grid.add_theme_constant_override("h_separation", 6)
+		for id in inspection_buttons:
+			var inspect_button: Button = inspection_buttons[id]
+			inspect_button.custom_minimum_size = Vector2(130, 48)
+		inspect_title.add_theme_font_size_override("font_size", 17)
+		choice_title.add_theme_font_size_override("font_size", 20)
+		repair_panel.position = Vector2(pad, size_value.y - 308)
+		repair_panel.size = Vector2(size_value.x - pad * 2, 272)
+		if repair_copy_label != null:
+			repair_copy_label.visible = not compact
+			repair_copy_label.add_theme_font_size_override("font_size", 16)
 		gauge.custom_minimum_size = Vector2(size_value.x - pad * 2 - 44, 88)
-		summary_panel.position = Vector2(pad, 82)
+		summary_panel.position = Vector2(pad, 86)
 		summary_panel.size = Vector2(size_value.x - pad * 2, size_value.y - 118)
 	else:
 		dialogue_panel.position = Vector2(pad, size_value.y - 260)
@@ -589,8 +608,17 @@ func _apply_layout() -> void:
 		choice_panel.size = Vector2(minf(500, size_value.x * 0.38), minf(530, size_value.y - 180))
 		inspect_panel.position = Vector2(size_value.x - 415 - pad, size_value.y - 270)
 		inspect_panel.size = Vector2(415, 216)
+		inspect_grid.add_theme_constant_override("h_separation", 8)
+		for id in inspection_buttons:
+			var inspect_button: Button = inspection_buttons[id]
+			inspect_button.custom_minimum_size = Vector2(155, 48)
+		inspect_title.add_theme_font_size_override("font_size", 16)
+		choice_title.add_theme_font_size_override("font_size", 19)
 		repair_panel.position = Vector2(size_value.x - minf(560, size_value.x * 0.42) - pad, size_value.y - 330)
 		repair_panel.size = Vector2(minf(560, size_value.x * 0.42), 276)
+		if repair_copy_label != null:
+			repair_copy_label.visible = true
+			repair_copy_label.add_theme_font_size_override("font_size", 15)
 		gauge.custom_minimum_size = Vector2(minf(500, size_value.x * 0.38), 88)
 		var summary_width := minf(520, size_value.x - pad * 2)
 		summary_panel.position = Vector2((size_value.x - summary_width) * 0.5, 105)
@@ -600,7 +628,7 @@ func _button(label: String, primary: bool) -> Button:
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(0, 50)
-	button.add_theme_font_size_override("font_size", 14)
+	button.add_theme_font_size_override("font_size", 16)
 	button.add_theme_color_override("font_color", TEXT)
 	button.add_theme_color_override("font_hover_color", TEXT)
 	button.add_theme_color_override("font_pressed_color", TEXT)

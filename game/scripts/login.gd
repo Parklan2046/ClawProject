@@ -32,6 +32,10 @@ var success_copy: Label
 var enter_button: Button
 var guest_button: Button
 var music_button: Button
+var demo_link: LinkButton
+var clear_link: LinkButton
+var success_continue_button: Button
+var success_back_button: Button
 var ost: WuxiaOST
 var session_player_name := "無名"
 
@@ -188,6 +192,7 @@ func _build_scene() -> void:
 	demo.add_theme_font_size_override("font_size", 13)
 	demo.add_theme_color_override("font_color", MUTED)
 	demo.pressed.connect(_fill_demo)
+	demo_link = demo
 	links.add_child(demo)
 
 	var clear := LinkButton.new()
@@ -195,6 +200,7 @@ func _build_scene() -> void:
 	clear.add_theme_font_size_override("font_size", 13)
 	clear.add_theme_color_override("font_color", MUTED)
 	clear.pressed.connect(_clear_form)
+	clear_link = clear
 	links.add_child(clear)
 
 	preview_note = Label.new()
@@ -259,11 +265,13 @@ func _build_success_layer() -> void:
 	var continue_button := _button("前往遊戲", true)
 	continue_button.custom_minimum_size.x = 150
 	continue_button.pressed.connect(_go_to_game)
+	success_continue_button = continue_button
 	actions.add_child(continue_button)
 
 	var back_button := _button("返回", false)
 	back_button.custom_minimum_size.x = 110
 	back_button.pressed.connect(_close_success)
+	success_back_button = back_button
 	actions.add_child(back_button)
 
 func _apply_layout() -> void:
@@ -277,23 +285,43 @@ func _apply_layout() -> void:
 		brand.position = Vector2(pad, 24)
 		brand.size = Vector2(s.x - pad * 2.0, 154)
 		brand.get_child(0).visible = not compact
-		brand.get_child(1).add_theme_font_size_override("font_size", 36 if compact else 38)
+		brand.get_child(0).add_theme_font_size_override("font_size", 22)
+		brand.get_child(1).add_theme_font_size_override("font_size", 34 if compact else 40)
 		brand.get_child(2).visible = not compact
 		brand.get_child(3).visible = false
 		brand.get_child(4).visible = false
-		form_root.add_theme_constant_override("separation", 8 if compact else 10)
+		form_root.add_theme_constant_override("separation", 10 if compact else 12)
 		form_margin.add_theme_constant_override("margin_top", 20 if compact else 24)
 		form_margin.add_theme_constant_override("margin_bottom", 18 if compact else 22)
 		form_margin.add_theme_constant_override("margin_left", 22)
 		form_margin.add_theme_constant_override("margin_right", 22)
 		form_copy_label.visible = not compact
+		form_copy_label.add_theme_font_size_override("font_size", 15)
 		preview_note.visible = not compact
+		preview_note.add_theme_font_size_override("font_size", 14)
+		account.add_theme_font_size_override("font_size", 18)
+		secret.add_theme_font_size_override("font_size", 18)
+		error_label.add_theme_font_size_override("font_size", 15)
+		enter_button.add_theme_font_size_override("font_size", 17)
+		guest_button.add_theme_font_size_override("font_size", 17)
+		if demo_link != null:
+			demo_link.add_theme_font_size_override("font_size", 15)
+		if clear_link != null:
+			clear_link.add_theme_font_size_override("font_size", 15)
+		music_button.add_theme_font_size_override("font_size", 14)
+		if success_continue_button != null:
+			success_continue_button.add_theme_font_size_override("font_size", 16)
+		if success_back_button != null:
+			success_back_button.add_theme_font_size_override("font_size", 16)
+		success_title.add_theme_font_size_override("font_size", 26)
+		success_copy.add_theme_font_size_override("font_size", 16)
 		var panel_top := 142.0 if compact else 170.0
 		panel.position = Vector2(pad, panel_top)
 		panel.size = Vector2(s.x - pad * 2.0, s.y - panel_top - 18.0)
 	else:
 		var panel_width := clampf(s.x * 0.30, 390.0, 450.0)
 		brand.get_child(0).visible = true
+		brand.get_child(0).add_theme_font_size_override("font_size", 25)
 		brand.position = Vector2(s.x * 0.075, s.y * 0.28)
 		brand.size = Vector2(s.x * 0.44, 340)
 		brand.get_child(1).add_theme_font_size_override("font_size", 58)
@@ -307,7 +335,25 @@ func _apply_layout() -> void:
 		form_margin.add_theme_constant_override("margin_right", 34)
 		form_margin.add_theme_constant_override("margin_bottom", 28)
 		form_copy_label.visible = true
+		form_copy_label.add_theme_font_size_override("font_size", 14)
 		preview_note.visible = true
+		preview_note.add_theme_font_size_override("font_size", 12)
+		account.add_theme_font_size_override("font_size", 16)
+		secret.add_theme_font_size_override("font_size", 16)
+		error_label.add_theme_font_size_override("font_size", 13)
+		enter_button.add_theme_font_size_override("font_size", 15)
+		guest_button.add_theme_font_size_override("font_size", 15)
+		if demo_link != null:
+			demo_link.add_theme_font_size_override("font_size", 13)
+		if clear_link != null:
+			clear_link.add_theme_font_size_override("font_size", 13)
+		music_button.add_theme_font_size_override("font_size", 12)
+		if success_continue_button != null:
+			success_continue_button.add_theme_font_size_override("font_size", 15)
+		if success_back_button != null:
+			success_back_button.add_theme_font_size_override("font_size", 15)
+		success_title.add_theme_font_size_override("font_size", 28)
+		success_copy.add_theme_font_size_override("font_size", 15)
 		panel.position = Vector2(s.x - panel_width - s.x * 0.075, (s.y - 550.0) * 0.5)
 		panel.size = Vector2(panel_width, 550)
 	var success_width := minf(380.0, s.x - 36.0)
