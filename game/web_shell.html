@@ -388,6 +388,33 @@
 	const GODOT_CONFIG = $GODOT_CONFIG;
 	const engine = new Engine(GODOT_CONFIG);
 
+	// Cache-bust the heavy Godot assets (.pck / .wasm / audio worklets) so a
+	// new deploy actually reaches players — iPhone Safari otherwise caches the
+	// 55 MB bundle indefinitely. The stamp is derived from GODOT_CONFIG.fileSizes,
+	// which Godot regenerates on every export, so the query string changes the
+	// moment the build content changes.
+	(() => {
+		const sizes = GODOT_CONFIG.fileSizes || {};
+		const version = (sizes["index.pck"] || 0) + "-" + (sizes["index.wasm"] || 0);
+		const bustable = /\.(pck|wasm|worklet\.js)(\?.*)?$/i;
+		const stamp = (url) => {
+			if (typeof url !== "string" || !bustable.test(url)) return url;
+			const sep = url.indexOf("?") === -1 ? "?" : "&";
+			return url + sep + "v=" + version;
+		};
+		const origFetch = window.fetch;
+		if (origFetch) {
+			window.fetch = function (input, init) {
+				if (typeof input === "string") input = stamp(input);
+				return origFetch.call(this, input, init);
+			};
+		}
+		const origOpen = XMLHttpRequest.prototype.open;
+		XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+			return origOpen.call(this, method, stamp(url), ...rest);
+		};
+	})();
+
 	(() => {
 		const overlay = document.getElementById("status");
 		const loader = document.getElementById("status-loader");
