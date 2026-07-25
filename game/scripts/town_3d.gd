@@ -7,6 +7,7 @@ var world_root: Node3D
 var camera: Camera3D
 var cloud_groups: Array[Node3D] = []
 var banner_nodes: Array[Node3D] = []
+var fire_nodes: Array[MeshInstance3D] = []
 var elapsed := 0.0
 var rng := RandomNumberGenerator.new()
 
@@ -50,6 +51,7 @@ func _build_world() -> void:
 	_build_street()
 	_build_buildings()
 	_build_lanterns()
+	_build_fire_braziers()
 	_build_clouds()
 
 func _build_materials() -> void:
@@ -66,7 +68,7 @@ func _build_materials() -> void:
 	stone_material = _surface_material(Color("#354554"), "stone", 0.48, 0.12)
 	stone_alt_material = _surface_material(Color("#25333e"), "stone", 0.58, 0.10)
 	window_material = _emissive_material(Color("#e89242"), 1.15)
-	lantern_material = _emissive_material(Color("#ff5d36"), 3.2)
+	lantern_material = _emissive_material(Color("#c92f25"), 1.45)
 	banner_material = _surface_material(Color("#7f201d"), "cloth", 0.88)
 	brass_material = _material(Color("#9d6d32"), 0.38, 0.72)
 
@@ -145,16 +147,7 @@ func _build_street() -> void:
 	world_root.add_child(stones)
 
 func _build_buildings() -> void:
-	for side_value in [-1.0, 1.0]:
-		var side: float = side_value
-		for row in 3:
-			var depth := 7.8 - float(row) * 0.55
-			var width := 6.6 - float(row) * 0.38
-			var height := 4.9 - float(row) * 0.25
-			var x := side * (7.35 + float(row) * 0.18)
-			var z := 8.2 - float(row) * 9.1
-			var levels := 2 if row < 2 else 1
-			_build_house(side, Vector3(x, 0.0, z), width, depth, height, levels, row)
+	_build_house(-1.0, Vector3(-8.45, 0.0, 1.8), 5.75, 8.1, 4.55, 2, 0)
 
 func _build_house(side: float, origin: Vector3, width: float, depth: float, height: float, levels: int, index: int) -> void:
 	var house := Node3D.new()
@@ -318,49 +311,121 @@ func _add_banner(parent: Node3D, side: float, width: float, depth: float, height
 	banner_nodes.append(pivot)
 
 func _build_lanterns() -> void:
-	for row in 6:
-		var z := 10.0 - float(row) * 5.7
-		for side_value in [-1.0, 1.0]:
-			var side: float = side_value
-			var post_x := side * 5.45
-			var post_mesh := CylinderMesh.new()
-			post_mesh.top_radius = 0.055
-			post_mesh.bottom_radius = 0.075
-			post_mesh.height = 3.4
-			post_mesh.radial_segments = 8
-			var post := MeshInstance3D.new()
-			post.name = "LanternPost"
-			post.mesh = post_mesh
-			post.material_override = dark_wood_material
-			post.position = Vector3(post_x, 1.7, z)
-			world_root.add_child(post)
-			_box(world_root, "LanternArm", Vector3(post_x - side * 0.34, 3.28, z), Vector3(0.72, 0.08, 0.08), dark_wood_material)
-			var lantern_mesh := SphereMesh.new()
-			lantern_mesh.radius = 0.24
-			lantern_mesh.height = 0.58
-			lantern_mesh.radial_segments = 12
-			lantern_mesh.rings = 6
-			var lantern := MeshInstance3D.new()
-			lantern.name = "Lantern"
-			lantern.mesh = lantern_mesh
-			lantern.material_override = lantern_material
-			lantern.position = Vector3(post_x - side * 0.63, 2.98, z)
-			world_root.add_child(lantern)
-			if row % 3 == 0:
-				var light := OmniLight3D.new()
-				light.name = "LanternLight"
-				light.position = lantern.position
-				light.light_color = Color("#ff8a52")
-				light.light_energy = 3.4
-				light.omni_range = 8.4
-				light.shadow_enabled = false
-				world_root.add_child(light)
+	for row in 5:
+		var z := 7.2 - float(row) * 4.9
+		var post_x := -5.55
+		var post_mesh := CylinderMesh.new()
+		post_mesh.top_radius = 0.045
+		post_mesh.bottom_radius = 0.065
+		post_mesh.height = 3.5
+		post_mesh.radial_segments = 8
+		var post := MeshInstance3D.new()
+		post.name = "RedLanternPost"
+		post.mesh = post_mesh
+		post.material_override = dark_wood_material
+		post.position = Vector3(post_x, 1.75, z)
+		world_root.add_child(post)
+		_box(world_root, "LanternArm", Vector3(post_x + 0.42, 3.36, z), Vector3(0.86, 0.09, 0.09), dark_wood_material)
+		var lantern_mesh := SphereMesh.new()
+		lantern_mesh.radius = 0.29
+		lantern_mesh.height = 0.76
+		lantern_mesh.radial_segments = 16
+		lantern_mesh.rings = 8
+		var lantern := MeshInstance3D.new()
+		lantern.name = "ChineseRedLantern"
+		lantern.mesh = lantern_mesh
+		lantern.material_override = lantern_material
+		lantern.position = Vector3(post_x + 0.74, 2.98, z)
+		world_root.add_child(lantern)
+		_box(world_root, "LanternTop", lantern.position + Vector3(0.0, 0.39, 0.0), Vector3(0.22, 0.08, 0.22), brass_material)
+		_box(world_root, "LanternBottom", lantern.position + Vector3(0.0, -0.39, 0.0), Vector3(0.18, 0.08, 0.18), brass_material)
+		var tassel_mesh := CylinderMesh.new()
+		tassel_mesh.top_radius = 0.025
+		tassel_mesh.bottom_radius = 0.012
+		tassel_mesh.height = 0.46
+		tassel_mesh.radial_segments = 6
+		var tassel := MeshInstance3D.new()
+		tassel.name = "LanternTassel"
+		tassel.mesh = tassel_mesh
+		tassel.material_override = banner_material
+		tassel.position = lantern.position + Vector3(0.0, -0.64, 0.0)
+		world_root.add_child(tassel)
+		if row % 2 == 0:
+			var light := OmniLight3D.new()
+			light.name = "RedLanternGlow"
+			light.position = lantern.position
+			light.light_color = Color("#ef3f30")
+			light.light_energy = 2.2
+			light.omni_range = 7.2
+			light.shadow_enabled = false
+			world_root.add_child(light)
+
+func _build_fire_braziers() -> void:
+	var orange_flame := _emissive_material(Color("#e93d18"), 1.65)
+	var gold_flame := _emissive_material(Color("#ff9f32"), 1.85)
+	var brazier_positions := [
+		Vector3(-4.45, 0.0, 5.6),
+		Vector3(4.35, 0.0, -3.8)
+	]
+	for i in brazier_positions.size():
+		var position: Vector3 = brazier_positions[i]
+		var pedestal := CylinderMesh.new()
+		pedestal.top_radius = 0.33
+		pedestal.bottom_radius = 0.48
+		pedestal.height = 0.72
+		pedestal.radial_segments = 12
+		var base := MeshInstance3D.new()
+		base.name = "FireBrazierBase"
+		base.mesh = pedestal
+		base.material_override = brass_material
+		base.position = position + Vector3(0.0, 0.36, 0.0)
+		world_root.add_child(base)
+		var bowl := CylinderMesh.new()
+		bowl.top_radius = 0.58
+		bowl.bottom_radius = 0.30
+		bowl.height = 0.30
+		bowl.radial_segments = 16
+		var bowl_instance := MeshInstance3D.new()
+		bowl_instance.name = "FireBrazierBowl"
+		bowl_instance.mesh = bowl
+		bowl_instance.material_override = dark_wood_material
+		bowl_instance.position = position + Vector3(0.0, 0.82, 0.0)
+		world_root.add_child(bowl_instance)
+		for lobe_index in 4:
+			var flame_mesh := SphereMesh.new()
+			flame_mesh.radius = 0.18 + float(lobe_index % 2) * 0.05
+			flame_mesh.height = 0.76 + float(lobe_index) * 0.12
+			flame_mesh.radial_segments = 10
+			flame_mesh.rings = 6
+			var flame := MeshInstance3D.new()
+			flame.name = "AnimatedFireLobe"
+			flame.mesh = flame_mesh
+			flame.material_override = gold_flame if lobe_index == 0 else orange_flame
+			var offset_x := (float(lobe_index) - 1.5) * 0.14
+			var base_y := position.y + 1.16 + float(lobe_index % 2) * 0.13
+			flame.position = Vector3(position.x + offset_x, base_y, position.z + (0.10 if lobe_index % 2 == 0 else -0.08))
+			flame.rotation_degrees.z = -16.0 + float(lobe_index) * 11.0
+			flame.set_meta("phase", float(i) * 2.9 + float(lobe_index) * 1.7)
+			flame.set_meta("base_y", base_y)
+			flame.set_meta("base_scale", Vector3(0.82, 1.0 + float(lobe_index) * 0.08, 0.82))
+			world_root.add_child(flame)
+			fire_nodes.append(flame)
+		var firelight := OmniLight3D.new()
+		firelight.name = "FireGlow"
+		firelight.position = position + Vector3(0.0, 1.20, 0.0)
+		firelight.light_color = Color("#ff6f32")
+		firelight.light_energy = 5.2
+		firelight.omni_range = 8.0
+		firelight.shadow_enabled = false
+		world_root.add_child(firelight)
 
 func _build_clouds() -> void:
 	var cloud_specs := [
-		Vector4(-18.0, 16.5, -34.0, 0.72),
-		Vector4(8.0, 19.0, -45.0, 0.46),
-		Vector4(-4.0, 13.5, -25.0, 0.92)
+		Vector4(-18.0, 17.2, -34.0, 0.72),
+		Vector4(8.0, 20.0, -45.0, 0.46),
+		Vector4(-4.0, 13.8, -25.0, 0.92),
+		Vector4(16.0, 8.4, -20.0, 0.58),
+		Vector4(-22.0, 5.2, -16.0, 0.38)
 	]
 	var cloud_shader := Shader.new()
 	cloud_shader.code = """
@@ -409,7 +474,7 @@ void fragment() {
 		cloud_instance.mesh = cloud_mesh
 		var cloud_shader_material := ShaderMaterial.new()
 		cloud_shader_material.shader = cloud_shader
-		cloud_shader_material.set_shader_parameter("opacity", 0.30 - float(i) * 0.055)
+		cloud_shader_material.set_shader_parameter("opacity", 0.30 - float(i) * 0.028)
 		cloud_shader_material.set_shader_parameter("seed", float(i) * 7.31)
 		cloud_instance.material_override = cloud_shader_material
 		group.add_child(cloud_instance)
@@ -435,6 +500,13 @@ func _process(delta: float) -> void:
 	for banner in banner_nodes:
 		var phase := float(banner.get_meta("phase"))
 		banner.rotation.z = sin(elapsed * 0.72 + phase) * 0.035
+	for flame in fire_nodes:
+		var phase := float(flame.get_meta("phase"))
+		var base_y := float(flame.get_meta("base_y"))
+		var base_scale: Vector3 = flame.get_meta("base_scale")
+		var flicker := sin(elapsed * 7.4 + phase)
+		flame.position.y = base_y + flicker * 0.045
+		flame.scale = base_scale * Vector3(1.0 - flicker * 0.08, 1.0 + flicker * 0.16, 1.0 - flicker * 0.08)
 
 func _box(parent: Node, node_name: String, position: Vector3, box_size: Vector3, material: Material, rotation: Vector3 = Vector3.ZERO) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
