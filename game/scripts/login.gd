@@ -33,6 +33,7 @@ var enter_button: Button
 var guest_button: Button
 var music_button: Button
 var ost: AudioStreamPlayer
+var session_player_name := "無名"
 
 func _ready() -> void:
 	reduce_motion = _prefers_reduced_motion()
@@ -366,6 +367,7 @@ func _toggle_music() -> void:
 
 func _complete(name: String, guest: bool) -> void:
 	error_label.text = " "
+	session_player_name = name
 	success_copy.text = "遊客模式已準備好。" if guest else "少俠「%s」，你的旅程已準備好。" % name
 	success_layer.visible = true
 	success_layer.modulate.a = 1.0 if reduce_motion else 0.0
@@ -381,10 +383,8 @@ func _close_success() -> void:
 	tween.tween_callback(func() -> void: success_layer.visible = false)
 
 func _go_to_game() -> void:
-	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.location.href='../wuxia-game.html';")
-	else:
-		success_copy.text = "網頁匯出後，此按鈕會開啟現有遊戲。"
+	GameState.player_name = session_player_name
+	get_tree().change_scene_to_file("res://scenes/prologue.tscn")
 
 func _prefers_reduced_motion() -> bool:
 	if not OS.has_feature("web"):

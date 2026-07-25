@@ -15,6 +15,7 @@ func _ready() -> void:
 	generator.mix_rate = MIX_RATE
 	generator.buffer_length = 0.45
 	stream = generator
+	playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	volume_db = -11.0
 	play()
 	playback = get_stream_playback() as AudioStreamGeneratorPlayback

@@ -7,6 +7,11 @@ boot_splash/image="res://assets/loading-wuxia-v1.png"
 boot_splash/bg_color=Color(0.02, 0.027, 0.035, 1)
 boot_splash/fullsize=true
 
+[autoload]
+
+GameState="*res://scripts/core/game_state.gd"
+SaveManager="*res://scripts/core/save_manager.gd"
+
 [display]
 
 window/size/viewport_width=1440
