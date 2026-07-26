@@ -170,8 +170,13 @@ files. Do not delete or hand-edit them.
   re-testing the web export.
 - Viewport default 1440x900, `window/stretch/mode = "disabled"` (no auto-stretch;
   scenes handle their own layout via `_apply_layout`).
-- Font: `assets/fonts/NotoSansTC-Variable.ttf`, loaded per-scene into a fresh
-  `Theme` with MSDF enabled in `project.godot`.
+- Font (dual-face system): `assets/fonts/NotoSansTC-Variable.ttf` is the
+  default UI face; `assets/fonts/NotoSerifTC-Variable.ttf` is the literary
+  face applied to dialogue body/speaker, choice labels, summary text, and the
+  login title. Sans is the `Theme.default_font`; serif is loaded per-scene and
+  attached via `add_theme_font_override("font"/"normal_font", serif_font)`.
+  MSDF enabled in `project.godot`. New serif `.ttf` must be imported by the
+  editor once (open project → it auto-imports) before it loads at runtime.
 
 ## Style
 - Tabs for indentation in GDScript (Godot convention).

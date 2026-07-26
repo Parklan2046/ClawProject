@@ -44,6 +44,16 @@ func is_music_paused() -> bool:
 		""" % WEB_AUDIO_ID))
 	return stream_paused
 
+static func stop_web_audio() -> void:
+	if not OS.has_feature("web"):
+		return
+	JavaScriptBridge.eval("""
+		(() => {
+			const audio = document.getElementById('%s');
+			if (audio) audio.pause();
+		})()
+	""" % WEB_AUDIO_ID)
+
 func _try_resume_web_audio() -> void:
 	JavaScriptBridge.eval("""
 		(() => {

@@ -2,7 +2,6 @@ extends Node3D
 
 const WORLD_SCRIPT = preload("res://scripts/prologue/prologue_world.gd")
 const GAUGE_SCRIPT = preload("res://scripts/ui/timing_gauge.gd")
-const OST_SCRIPT = preload("res://scripts/wuxia_ost.gd")
 const MODERN_PORTRAIT = preload("res://assets/characters/prologue/modern-player-neutral-v1.png")
 const WU_DALANG_PORTRAIT = preload("res://assets/characters/prologue/wu-dalang-neutral-v1.png")
 const PAN_JINLIAN_PORTRAIT = preload("res://assets/characters/prologue/pan-jinlian-glamorous-v2.png")
@@ -56,6 +55,7 @@ var pan_portrait: TextureRect
 var portrait_tweens: Dictionary = {}
 var song_era := false
 var pan_present := false
+var serif_font: Font
 
 func _ready() -> void:
 	reduce_motion = _prefers_reduced_motion()
@@ -63,9 +63,7 @@ func _ready() -> void:
 	world.name = "PrologueWorld"
 	add_child(world)
 	_build_ui()
-	var ost := OST_SCRIPT.new()
-	ost.volume_db = -12.0
-	add_child(ost)
+	WuxiaOST.stop_web_audio()
 	get_viewport().size_changed.connect(_apply_layout)
 	_apply_layout()
 	GameState.reset_prologue()
@@ -82,6 +80,7 @@ func _build_ui() -> void:
 	app_theme.default_font = load("res://assets/fonts/NotoSansTC-Variable.ttf")
 	app_theme.default_font_size = 15
 	ui_root.theme = app_theme
+	serif_font = load("res://assets/fonts/NotoSerifTC-Variable.ttf")
 	layer.add_child(ui_root)
 
 	var veil := ColorRect.new()
@@ -104,7 +103,7 @@ func _build_ui() -> void:
 
 	chapter_label = Label.new()
 	chapter_label.text = "序章 00 · LAST ORDER"
-	chapter_label.add_theme_font_size_override("font_size", 12)
+	chapter_label.add_theme_font_size_override("font_size", 14)
 	chapter_label.add_theme_color_override("font_color", GOLD)
 	chapter_label.add_theme_constant_override("outline_size", 5)
 	chapter_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
@@ -113,7 +112,7 @@ func _build_ui() -> void:
 	objective_label = Label.new()
 	objective_label.text = "目標｜撐過今晚"
 	objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	objective_label.add_theme_font_size_override("font_size", 12)
+	objective_label.add_theme_font_size_override("font_size", 14)
 	objective_label.add_theme_color_override("font_color", TEXT)
 	objective_label.add_theme_constant_override("outline_size", 5)
 	objective_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
@@ -124,17 +123,20 @@ func _build_ui() -> void:
 	ui_root.add_child(dialogue_panel)
 
 	var dialogue_margin := MarginContainer.new()
-	for side in ["margin_left", "margin_top", "margin_right", "margin_bottom"]:
-		dialogue_margin.add_theme_constant_override(side, 22 if side != "margin_bottom" else 18)
+	dialogue_margin.add_theme_constant_override("margin_left", 26)
+	dialogue_margin.add_theme_constant_override("margin_top", 24)
+	dialogue_margin.add_theme_constant_override("margin_right", 26)
+	dialogue_margin.add_theme_constant_override("margin_bottom", 22)
 	dialogue_panel.add_child(dialogue_margin)
 
 	var dialogue_vbox := VBoxContainer.new()
-	dialogue_vbox.add_theme_constant_override("separation", 9)
+	dialogue_vbox.add_theme_constant_override("separation", 12)
 	dialogue_margin.add_child(dialogue_vbox)
 
 	speaker_label = Label.new()
 	speaker_label.text = "旁白"
-	speaker_label.add_theme_font_size_override("font_size", 13)
+	speaker_label.add_theme_font_override("font", serif_font)
+	speaker_label.add_theme_font_size_override("font_size", 20)
 	speaker_label.add_theme_color_override("font_color", GOLD)
 	dialogue_vbox.add_child(speaker_label)
 
@@ -142,13 +144,15 @@ func _build_ui() -> void:
 	dialogue_body.bbcode_enabled = true
 	dialogue_body.fit_content = true
 	dialogue_body.scroll_active = false
-	dialogue_body.custom_minimum_size.y = 68
-	dialogue_body.add_theme_font_size_override("normal_font_size", 18)
+	dialogue_body.custom_minimum_size.y = 84
+	dialogue_body.add_theme_font_override("normal_font", serif_font)
+	dialogue_body.add_theme_font_size_override("normal_font_size", 22)
+	dialogue_body.add_theme_constant_override("line_separation", 8)
 	dialogue_body.add_theme_color_override("default_color", TEXT)
 	dialogue_vbox.add_child(dialogue_body)
 
 	continue_button = _button("繼續  ›", true)
-	continue_button.custom_minimum_size = Vector2(132, 44)
+	continue_button.custom_minimum_size = Vector2(144, 48)
 	continue_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	continue_button.pressed.connect(_advance_line)
 	dialogue_vbox.add_child(continue_button)
@@ -164,14 +168,15 @@ func _build_ui() -> void:
 	choice_margin.add_theme_constant_override("margin_bottom", 20)
 	choice_panel.add_child(choice_margin)
 	var choice_vbox := VBoxContainer.new()
-	choice_vbox.add_theme_constant_override("separation", 10)
+	choice_vbox.add_theme_constant_override("separation", 12)
 	choice_margin.add_child(choice_vbox)
 	choice_title = Label.new()
-	choice_title.add_theme_font_size_override("font_size", 19)
+	choice_title.add_theme_font_override("font", serif_font)
+	choice_title.add_theme_font_size_override("font_size", 22)
 	choice_title.add_theme_color_override("font_color", TEXT)
 	choice_vbox.add_child(choice_title)
 	choice_list = VBoxContainer.new()
-	choice_list.add_theme_constant_override("separation", 8)
+	choice_list.add_theme_constant_override("separation", 10)
 	choice_vbox.add_child(choice_list)
 
 	inspect_panel = PanelContainer.new()
@@ -190,7 +195,7 @@ func _build_ui() -> void:
 	inspect_title = Label.new()
 	inspect_title.text = "調查屋內線索 · 0 / 4"
 	inspect_title.add_theme_color_override("font_color", GOLD)
-	inspect_title.add_theme_font_size_override("font_size", 16)
+	inspect_title.add_theme_font_size_override("font_size", 18)
 	inspect_vbox.add_child(inspect_title)
 	inspect_grid = GridContainer.new()
 	inspect_grid.columns = 2
@@ -206,7 +211,7 @@ func _build_ui() -> void:
 	]
 	for spec in inspect_specs:
 		var button := _button(spec[1], false)
-		button.custom_minimum_size = Vector2(155, 48)
+		button.custom_minimum_size = Vector2(159, 52)
 		button.pressed.connect(_inspect.bind(spec[0]))
 		inspect_grid.add_child(button)
 		inspection_buttons[spec[0]] = button
@@ -226,13 +231,14 @@ func _build_ui() -> void:
 	repair_margin.add_child(repair_vbox)
 	var repair_title := Label.new()
 	repair_title.text = "修復爐灶 · 清灰／補泥／試火"
-	repair_title.add_theme_font_size_override("font_size", 20)
+	repair_title.add_theme_font_size_override("font_size", 22)
 	repair_title.add_theme_color_override("font_color", TEXT)
 	repair_vbox.add_child(repair_title)
 	repair_copy_label = Label.new()
 	repair_copy_label.text = "前世知識只係方法，能否落到雙手，先係真正本事。"
 	repair_copy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	repair_copy_label.add_theme_color_override("font_color", MUTED)
+	repair_copy_label.add_theme_font_size_override("font_size", 17)
+	repair_copy_label.add_theme_color_override("font_color", Color("#c4bdb0"))
 	repair_vbox.add_child(repair_copy_label)
 	gauge = GAUGE_SCRIPT.new()
 	gauge.finished.connect(_repair_finished)
@@ -605,22 +611,25 @@ func _show_summary() -> void:
 	var title := Label.new()
 	title.text = "序章完成 · 死局重生"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 26 if mobile else 28)
+	title.add_theme_font_override("font", serif_font)
+	title.add_theme_font_size_override("font_size", 28 if mobile else 32)
 	title.add_theme_color_override("font_color", TEXT)
 	summary_content.add_child(title)
 	var summary := RichTextLabel.new()
 	summary.bbcode_enabled = true
 	summary.fit_content = true
 	summary.scroll_active = false
-	summary.custom_minimum_size.y = (84 if compact else 100) if mobile else 132
+	summary.custom_minimum_size.y = (100 if compact else 118) if mobile else 152
 	summary.text = "[center]前世專長　[color=#d3b36f]%s[/color]\n行事信念　[color=#d3b36f]%s[/color]\n掌櫃契約　[color=#d3b36f]%s[/color]\n修爐評價　[color=#d3b36f]%s[/color]\n\n存檔已寫入。下一次命運選擇，將由第一籠炊餅開始。[/center]" % [
 		GameState.origin_name(),
 		GameState.principle_name(),
 		_contract_name(),
 		_repair_rank()
 	]
-	summary.add_theme_font_size_override("normal_font_size", 16)
-	summary.add_theme_color_override("default_color", MUTED)
+	summary.add_theme_font_override("normal_font", serif_font)
+	summary.add_theme_font_size_override("normal_font_size", 18)
+	summary.add_theme_constant_override("line_separation", 6)
+	summary.add_theme_color_override("default_color", Color("#c4bdb0"))
 	summary_content.add_child(summary)
 	var chapter_button := _button("進入第一章 · 一餅逆命", true)
 	chapter_button.custom_minimum_size.y = (44 if compact else 46) if mobile else 50
@@ -681,11 +690,41 @@ func _show_choices(title: String, options: Array) -> void:
 		choice_list.remove_child(child)
 		child.queue_free()
 	for option in options:
-		var button := _button("%s\n%s" % [option.label, option.description], false)
-		button.custom_minimum_size.y = (64 if compact else 72) if mobile else 60
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.pressed.connect(option.action)
-		choice_list.add_child(button)
+		var option_button := Button.new()
+		option_button.text = ""
+		option_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		option_button.custom_minimum_size.y = (80 if compact else 88) if mobile else 74
+		option_button.add_theme_font_size_override("font_size", 18)
+		option_button.add_theme_stylebox_override("normal", _panel_style(Color("#171b21"), Color("#3a414b"), 10, 1))
+		option_button.add_theme_stylebox_override("hover", _panel_style(Color("#242a33"), Color("#8c7448"), 10, 1))
+		option_button.add_theme_stylebox_override("pressed", _panel_style(Color("#0f1217"), Color("#8c7448"), 10, 1))
+		option_button.pressed.connect(option.action)
+		var content := MarginContainer.new()
+		content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_theme_constant_override("margin_left", 16)
+		content.add_theme_constant_override("margin_top", 9)
+		content.add_theme_constant_override("margin_right", 16)
+		content.add_theme_constant_override("margin_bottom", 9)
+		var lines := VBoxContainer.new()
+		lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lines.add_theme_constant_override("separation", 3)
+		var opt_label := Label.new()
+		opt_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		opt_label.text = option.label
+		opt_label.add_theme_font_override("font", serif_font)
+		opt_label.add_theme_font_size_override("font_size", 20)
+		opt_label.add_theme_color_override("font_color", TEXT)
+		var opt_desc := Label.new()
+		opt_desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		opt_desc.text = option.description
+		opt_desc.add_theme_font_size_override("font_size", 16)
+		opt_desc.add_theme_color_override("font_color", MUTED)
+		lines.add_child(opt_label)
+		lines.add_child(opt_desc)
+		content.add_child(lines)
+		option_button.add_child(content)
+		choice_list.add_child(option_button)
 	choice_panel.visible = true
 
 func _contract_name() -> String:
@@ -715,11 +754,11 @@ func _apply_layout() -> void:
 	var pad := 18.0 if mobile else clampf(size_value.x * 0.045, 40.0, 72.0)
 	chapter_label.position = Vector2(pad, 40 if mobile else 48)
 	chapter_label.size = Vector2(size_value.x * 0.55, 30)
-	chapter_label.add_theme_font_size_override("font_size", 15 if mobile else 12)
+	chapter_label.add_theme_font_size_override("font_size", 15 if mobile else 14)
 	objective_label.position = Vector2(size_value.x * 0.48, 40 if mobile else 48)
 	objective_label.size = Vector2(size_value.x * 0.52 - pad, 30)
-	objective_label.add_theme_font_size_override("font_size", 15 if mobile else 12)
-	speaker_label.add_theme_font_size_override("font_size", 15 if mobile else 13)
+	objective_label.add_theme_font_size_override("font_size", 15 if mobile else 14)
+	speaker_label.add_theme_font_size_override("font_size", 18 if mobile else 20)
 	var portrait_size := Vector2(size_value.x * 0.78, size_value.y * 0.58) if mobile else Vector2(minf(430, size_value.x * 0.34), size_value.y - 56)
 	var portrait_y := 72.0 if mobile else 38.0
 	for portrait in [modern_portrait, wu_portrait]:
@@ -728,10 +767,11 @@ func _apply_layout() -> void:
 	pan_portrait.position = Vector2(size_value.x - portrait_size.x * (0.70 if mobile else 1.0) + (0.0 if mobile else 20.0), portrait_y)
 	pan_portrait.size = portrait_size
 	if mobile:
-		var dialogue_height := 250.0 if compact else 294.0
+		var dialogue_height := 300.0 if compact else 332.0
 		dialogue_panel.position = Vector2(pad, size_value.y - dialogue_height - 28.0)
 		dialogue_panel.size = Vector2(size_value.x - pad * 2, dialogue_height)
-		dialogue_body.add_theme_font_size_override("normal_font_size", 18)
+		dialogue_body.add_theme_font_size_override("normal_font_size", 19)
+		dialogue_body.add_theme_constant_override("line_separation", 6)
 		choice_panel.position = Vector2(pad, maxf(90, size_value.y * 0.16))
 		choice_panel.size = Vector2(size_value.x - pad * 2, minf(488, size_value.y - 130))
 		inspect_panel.position = Vector2(pad, size_value.y - 264)
@@ -739,21 +779,22 @@ func _apply_layout() -> void:
 		inspect_grid.add_theme_constant_override("h_separation", 6)
 		for id in inspection_buttons:
 			var inspect_button: Button = inspection_buttons[id]
-			inspect_button.custom_minimum_size = Vector2(130, 48)
-		inspect_title.add_theme_font_size_override("font_size", 17)
-		choice_title.add_theme_font_size_override("font_size", 20)
-		repair_panel.position = Vector2(pad, size_value.y - 308)
-		repair_panel.size = Vector2(size_value.x - pad * 2, 272)
+			inspect_button.custom_minimum_size = Vector2(134, 52)
+		inspect_title.add_theme_font_size_override("font_size", 18)
+		choice_title.add_theme_font_size_override("font_size", 22)
+		repair_panel.position = Vector2(pad, size_value.y - 322)
+		repair_panel.size = Vector2(size_value.x - pad * 2, 286)
 		if repair_copy_label != null:
 			repair_copy_label.visible = not compact
-			repair_copy_label.add_theme_font_size_override("font_size", 16)
-		gauge.custom_minimum_size = Vector2(size_value.x - pad * 2 - 44, 88)
+			repair_copy_label.add_theme_font_size_override("font_size", 17)
+		gauge.custom_minimum_size = Vector2(size_value.x - pad * 2 - 44, 100)
 		summary_panel.position = Vector2(pad, 86)
 		summary_panel.size = Vector2(size_value.x - pad * 2, size_value.y - 118)
 	else:
-		dialogue_panel.position = Vector2(pad, size_value.y - 260)
-		dialogue_panel.size = Vector2(minf(860, size_value.x * 0.62), 206)
-		dialogue_body.add_theme_font_size_override("normal_font_size", 18)
+		dialogue_panel.position = Vector2(pad, size_value.y - 274)
+		dialogue_panel.size = Vector2(minf(900, size_value.x * 0.64), 252)
+		dialogue_body.add_theme_font_size_override("normal_font_size", 22)
+		dialogue_body.add_theme_constant_override("line_separation", 8)
 		choice_panel.position = Vector2(size_value.x - minf(500, size_value.x * 0.38) - pad, 108)
 		choice_panel.size = Vector2(minf(500, size_value.x * 0.38), minf(530, size_value.y - 180))
 		inspect_panel.position = Vector2(size_value.x - 415 - pad, size_value.y - 270)
@@ -761,15 +802,15 @@ func _apply_layout() -> void:
 		inspect_grid.add_theme_constant_override("h_separation", 8)
 		for id in inspection_buttons:
 			var inspect_button: Button = inspection_buttons[id]
-			inspect_button.custom_minimum_size = Vector2(155, 48)
-		inspect_title.add_theme_font_size_override("font_size", 16)
-		choice_title.add_theme_font_size_override("font_size", 19)
+			inspect_button.custom_minimum_size = Vector2(159, 52)
+		inspect_title.add_theme_font_size_override("font_size", 18)
+		choice_title.add_theme_font_size_override("font_size", 22)
 		repair_panel.position = Vector2(size_value.x - minf(560, size_value.x * 0.42) - pad, size_value.y - 330)
 		repair_panel.size = Vector2(minf(560, size_value.x * 0.42), 276)
 		if repair_copy_label != null:
 			repair_copy_label.visible = true
-			repair_copy_label.add_theme_font_size_override("font_size", 15)
-		gauge.custom_minimum_size = Vector2(minf(500, size_value.x * 0.38), 88)
+			repair_copy_label.add_theme_font_size_override("font_size", 17)
+		gauge.custom_minimum_size = Vector2(minf(500, size_value.x * 0.38), 100)
 		var summary_width := minf(520, size_value.x - pad * 2)
 		summary_panel.position = Vector2((size_value.x - summary_width) * 0.5, 105)
 		summary_panel.size = Vector2(summary_width, minf(620, size_value.y - 160))
@@ -780,7 +821,7 @@ func _button(label: String, primary: bool) -> Button:
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(0, 50)
-	button.add_theme_font_size_override("font_size", 16)
+	button.add_theme_font_size_override("font_size", 18)
 	button.add_theme_color_override("font_color", TEXT)
 	button.add_theme_color_override("font_hover_color", TEXT)
 	button.add_theme_color_override("font_pressed_color", TEXT)

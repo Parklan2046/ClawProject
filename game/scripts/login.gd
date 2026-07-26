@@ -107,14 +107,10 @@ func _build_scene() -> void:
 
 	var title := Label.new()
 	title.text = "逆命大郎"
-	title.add_theme_font_size_override("font_size", 72)
-	title.add_theme_color_override("font_color", Color("#f7ead2"))
-	title.add_theme_color_override("font_outline_color", Color(0.035, 0.025, 0.025, 0.96))
-	title.add_theme_constant_override("outline_size", 9)
-	title.add_theme_color_override("font_shadow_color", Color(0.65, 0.10, 0.075, 0.72))
-	title.add_theme_constant_override("shadow_offset_x", 5)
-	title.add_theme_constant_override("shadow_offset_y", 6)
-	title.add_theme_constant_override("shadow_outline_size", 3)
+	title.add_theme_font_override("font", load("res://assets/fonts/NotoSerifTC-Variable.ttf"))
+	title.add_theme_font_size_override("font_size", 96)
+	title.add_theme_constant_override("outline_size", 0)
+	title.material = _title_gradient_material()
 	brand.add_child(title)
 
 	var rule := HSeparator.new()
@@ -289,7 +285,7 @@ func _apply_layout() -> void:
 		brand.size = Vector2(s.x - pad * 2.0, 154)
 		brand.get_child(0).visible = not compact
 		brand.get_child(0).add_theme_font_size_override("font_size", 22)
-		brand.get_child(1).add_theme_font_size_override("font_size", 38 if compact else 46)
+		brand.get_child(1).add_theme_font_size_override("font_size", 46 if compact else 52)
 		brand.get_child(2).visible = not compact
 		brand.get_child(3).visible = false
 		brand.get_child(4).visible = false
@@ -327,7 +323,7 @@ func _apply_layout() -> void:
 		brand.get_child(0).add_theme_font_size_override("font_size", 25)
 		brand.position = Vector2(s.x * 0.068, s.y * 0.245)
 		brand.size = Vector2(s.x * 0.44, 340)
-		brand.get_child(1).add_theme_font_size_override("font_size", 72)
+		brand.get_child(1).add_theme_font_size_override("font_size", 96)
 		brand.get_child(2).visible = true
 		brand.get_child(3).add_theme_font_size_override("font_size", 28)
 		brand.get_child(3).visible = true
@@ -490,6 +486,36 @@ func _box(fill: Color, border: Color, radius: int, border_width: int) -> StyleBo
 	style.content_margin_top = 9
 	style.content_margin_bottom = 9
 	return style
+
+func _title_gradient_material() -> ShaderMaterial:
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+uniform vec4 color_top : source_color = vec4(1.000, 0.973, 0.910, 1.0);
+uniform vec4 color_mid : source_color = vec4(0.851, 0.769, 0.608, 1.0);
+uniform vec4 color_bot : source_color = vec4(0.592, 0.471, 0.278, 1.0);
+uniform vec4 shadow_tint : source_color = vec4(0.020, 0.015, 0.015, 1.0);
+uniform vec2 shadow_offset = vec2(0.004, 0.055);
+uniform float shadow_strength : hint_range(0.0, 1.0) = 0.55;
+void fragment() {
+	vec4 glyph = texture(TEXTURE, UV);
+	vec4 shade = texture(TEXTURE, UV - shadow_offset);
+	float t = UV.y;
+	vec3 grad;
+	if (t < 0.05) {
+		grad = color_top.rgb;
+	} else if (t < 0.76) {
+		grad = mix(color_top.rgb, color_mid.rgb, (t - 0.05) / 0.71);
+	} else {
+		grad = mix(color_mid.rgb, color_bot.rgb, (t - 0.76) / 0.24);
+	}
+	float shadow_a = shade.a * shadow_strength;
+	COLOR = vec4(mix(shadow_tint.rgb, grad, glyph.a), max(glyph.a, shadow_a));
+}
+"""
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	return material
 
 func _spacer(height: float) -> Control:
 	var spacer := Control.new()

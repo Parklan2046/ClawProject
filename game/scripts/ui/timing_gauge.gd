@@ -13,7 +13,7 @@ var target_width := 0.18
 var speed := 0.82
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(280, 88)
+	custom_minimum_size = Vector2(280, 100)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_process(false)
 
@@ -76,7 +76,7 @@ func _draw() -> void:
 	var line_y := size.y * 0.58
 	var left := 12.0
 	var width := size.x - 24.0
-	draw_string(font, Vector2(left, 20), "修爐火候  %d / %d" % [mini(round_index + 1, round_count), round_count], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#d6c7a6"))
+	draw_string(font, Vector2(left, 22), "修爐火候  %d / %d" % [mini(round_index + 1, round_count), round_count], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#e0d2b0"))
 	draw_rect(Rect2(left, line_y - 5, width, 10), Color(0.12, 0.13, 0.15, 0.96), true)
 	var target_x := left + width * (target_center - target_width * 0.5)
 	draw_rect(Rect2(target_x, line_y - 8, width * target_width, 16), Color("#8f6c35"), true)
@@ -85,4 +85,4 @@ func _draw() -> void:
 	draw_line(Vector2(needle_x, line_y - 20), Vector2(needle_x, line_y + 20), Color("#f0c56e"), 4.0)
 	draw_circle(Vector2(needle_x, line_y), 6.0, Color("#c44232"))
 	var hint := "點擊或按空白鍵 · 停在金色區" if size.x < 320 else "點擊火候尺或按空白鍵，令指針停在金色區域。"
-	draw_string(font, Vector2(left, size.y - 6), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9ca2aa"))
+	draw_string(font, Vector2(left, size.y - 6), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#bcc2c9"))
