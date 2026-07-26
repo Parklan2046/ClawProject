@@ -3,6 +3,9 @@ extends Node3D
 const WORLD_SCRIPT = preload("res://scripts/prologue/prologue_world.gd")
 const GAUGE_SCRIPT = preload("res://scripts/ui/timing_gauge.gd")
 const OST_SCRIPT = preload("res://scripts/wuxia_ost.gd")
+const MODERN_PORTRAIT = preload("res://assets/characters/prologue/modern-player-neutral-v1.png")
+const WU_DALANG_PORTRAIT = preload("res://assets/characters/prologue/wu-dalang-neutral-v1.png")
+const PAN_JINLIAN_PORTRAIT = preload("res://assets/characters/prologue/pan-jinlian-glamorous-v2.png")
 const TEXT := Color("#f1ede4")
 const MUTED := Color("#a9a397")
 const GOLD := Color("#d3b36f")
@@ -47,6 +50,12 @@ var reduce_motion := false
 var mobile := false
 var compact := false
 var repair_copy_label: Label
+var modern_portrait: TextureRect
+var wu_portrait: TextureRect
+var pan_portrait: TextureRect
+var portrait_tweens: Dictionary = {}
+var song_era := false
+var pan_present := false
 
 func _ready() -> void:
 	reduce_motion = _prefers_reduced_motion()
@@ -80,6 +89,8 @@ func _build_ui() -> void:
 	veil.color = Color(0.01, 0.015, 0.022, 0.12)
 	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_root.add_child(veil)
+
+	_build_portrait_layer()
 
 	top_bar = ColorRect.new()
 	top_bar.color = Color(0.015, 0.018, 0.024, 0.96)
@@ -248,7 +259,68 @@ func _build_ui() -> void:
 	fade.z_index = 100
 	ui_root.add_child(fade)
 
+func _build_portrait_layer() -> void:
+	modern_portrait = _portrait_rect(MODERN_PORTRAIT, "ModernPlayerPortrait")
+	wu_portrait = _portrait_rect(WU_DALANG_PORTRAIT, "WuDalangPortrait")
+	pan_portrait = _portrait_rect(PAN_JINLIAN_PORTRAIT, "PanJinlianPortrait")
+	ui_root.add_child(modern_portrait)
+	ui_root.add_child(wu_portrait)
+	ui_root.add_child(pan_portrait)
+
+func _portrait_rect(texture_value: Texture2D, node_name: String) -> TextureRect:
+	var portrait := TextureRect.new()
+	portrait.name = node_name
+	portrait.texture = texture_value
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait.modulate = Color(1, 1, 1, 0)
+	return portrait
+
+func _update_portraits_for_speaker(speaker: String) -> void:
+	var active_portrait: TextureRect = null
+	if speaker == "我":
+		active_portrait = wu_portrait if song_era else modern_portrait
+	elif speaker == "潘金蓮":
+		active_portrait = pan_portrait
+
+	if active_portrait == null:
+		_hide_portraits()
+		return
+
+	var show_pair := song_era and pan_present and speaker in ["我", "潘金蓮"]
+	for portrait in [modern_portrait, wu_portrait, pan_portrait]:
+		if portrait == active_portrait:
+			_fade_portrait(portrait, 1.0, true)
+		elif show_pair and portrait in [wu_portrait, pan_portrait]:
+			_fade_portrait(portrait, 0.0 if mobile else 0.24, false)
+		else:
+			_fade_portrait(portrait, 0.0, false)
+
+func _hide_portraits() -> void:
+	for portrait in [modern_portrait, wu_portrait, pan_portrait]:
+		if portrait != null:
+			_fade_portrait(portrait, 0.0, false)
+
+func _fade_portrait(portrait: TextureRect, target_alpha: float, active: bool) -> void:
+	if portrait_tweens.has(portrait):
+		var previous: Tween = portrait_tweens[portrait]
+		if previous and previous.is_valid():
+			previous.kill()
+	var target_color := Color(1, 1, 1, target_alpha) if active else Color(0.46, 0.48, 0.52, target_alpha)
+	if reduce_motion:
+		portrait.modulate = target_color
+		return
+	var tween := create_tween()
+	portrait_tweens[portrait] = tween
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(portrait, "modulate", target_color, 0.28)
+
 func _start_modern_intro() -> void:
+	song_era = false
+	pan_present = false
+	_hide_portraits()
 	world.build_modern_restaurant()
 	chapter_label.text = "序章 00 · LAST ORDER"
 	objective_label.text = "目標｜收拾最後一夜"
@@ -263,7 +335,7 @@ func _modern_receipts_beat() -> void:
 	objective_label.text = "回顧｜一盤失敗的帳"
 	_run_lines([
 		{"speaker": "旁白", "text": "退款、推廣費、騎手補貼、逾期利息。每張單據都合理，疊在一起卻足以壓垮一間店。"},
-		{"speaker": "你", "text": "營業額升得越快，現金反而越薄。我不是輸在冇客，是輸在把增長當成利潤。"},
+		{"speaker": "我", "text": "營業額升得越快，現金反而越薄。我不是輸在冇客，是輸在把增長當成利潤。"},
 		{"speaker": "記憶", "text": "你仍記得第一間小廚房開張時，自己怎樣計每一克材料、每一條送餐路線、每一句客人投訴。"}
 	], _modern_phone_beat)
 
@@ -273,7 +345,7 @@ func _modern_phone_beat() -> void:
 	_run_lines([
 		{"speaker": "電話留言", "text": "『對唔住。我頂唔住喇。銀行戶口我已經交返畀公司，之後唔好再搵我。』"},
 		{"speaker": "旁白", "text": "合夥人的留言只有十一秒。三年的承諾，到最後比一張外賣訂單還短。"},
-		{"speaker": "你", "text": "走可以。但至少要有人留下來，記住這盤生意到底點樣死。"}
+		{"speaker": "我", "text": "走可以。但至少要有人留下來，記住這盤生意到底點樣死。"}
 	], _modern_window_beat)
 
 func _modern_window_beat() -> void:
@@ -281,7 +353,7 @@ func _modern_window_beat() -> void:
 	objective_label.text = "抉擇｜你還剩下甚麼"
 	_run_lines([
 		{"speaker": "旁白", "text": "雨幕後仍有食肆亮燈、貨車穿街、騎手趕路。這座城市不會因一間店失敗而停下。"},
-		{"speaker": "你", "text": "三年，由一個爐做到十二個點。店可以輸，判斷、手藝同踩過的坑，冇人可以扣走。"},
+		{"speaker": "我", "text": "三年，由一個爐做到十二個點。店可以輸，判斷、手藝同踩過的坑，冇人可以扣走。"},
 		{"speaker": "旁白", "text": "你回到桌前，把最後四樣仍屬於自己的本事逐一寫下。"}
 	], _finish_modern_investigation)
 
@@ -327,17 +399,19 @@ func _select_principle(id: String) -> void:
 	GameState.principle_id = id
 	choice_panel.visible = false
 	_run_lines([
-		{"speaker": "你", "text": "如果命運肯畀第二次機會，我會用「[color=#d3b36f]%s[/color]」走到最後。" % GameState.principle_name()},
+		{"speaker": "我", "text": "如果命運肯畀第二次機會，我會用「[color=#d3b36f]%s[/color]」走到最後。" % GameState.principle_name()},
 		{"speaker": "旁白", "text": "窗外一道白光撕開夜雨。手機墜地，蒸汽、車聲和心跳同時遠去。"},
 		{"speaker": "？？？", "text": "大郎……大郎！你醒下啊！"}
 	], _cross_to_song)
 
 func _cross_to_song() -> void:
 	dialogue_panel.visible = false
+	_hide_portraits()
 	var duration := 0.01 if reduce_motion else 0.85
 	var tween := create_tween()
 	tween.tween_property(fade, "color:a", 1.0, duration)
 	tween.tween_callback(func() -> void:
+		song_era = true
 		world.build_song_home()
 		chapter_label.text = "序章 01 · 醒在死局"
 		objective_label.text = "目標｜認清你的處境"
@@ -350,13 +424,14 @@ func _start_song_intro() -> void:
 		{"speaker": "旁白", "text": "霉木、麵粉、冷灰。你在一張硬木床上醒來，喉嚨乾裂，胸口像被另一個人的一生壓住。"},
 		{"speaker": "旁白", "text": "沒有雪櫃低鳴，沒有雨夜車聲。只有窗格滲入的晨光、灶內未盡的焦味，以及一間窮得太具體的屋。"},
 		{"speaker": "陌生記憶", "text": "北宋。陽谷縣。賣炊餅。武家大郎。妻，潘金蓮。弟，武松。"},
-		{"speaker": "你", "text": "武大郎……如果呢個故事照原本行落去，我連自己點死、死後邊個被逼上梁山都知道。"},
+		{"speaker": "我", "text": "武大郎……如果呢個故事照原本行落去，我連自己點死、死後邊個被逼上梁山都知道。"},
 		{"speaker": "陌生記憶", "text": "肩上的擔、街坊的笑、每日走過的巷。這副身體矮小，卻記得如何捱過每一個冬天。"},
 		{"speaker": "旁白", "text": "死局未到，貧窮已經先一步收網。屋內四件東西，將決定你今日能不能重新開爐。"}
 	], _start_inspection)
 
 func _start_inspection() -> void:
 	dialogue_panel.visible = false
+	_hide_portraits()
 	inspect_panel.visible = true
 	objective_label.text = "調查｜屋內線索 0 / 4"
 	world.reset_camera()
@@ -372,28 +447,28 @@ func _inspect(id: String) -> void:
 			"title": "十七文錢",
 			"lines": [
 				{"speaker": "十七文錢", "text": "錢袋輕得近乎侮辱。十七文，連一袋好麵粉都買不到。"},
-				{"speaker": "你", "text": "但現金少不代表冇生意。先做預售、收訂金、只買今日用得着的材料——前世第一間店也是這樣開始。"}
+				{"speaker": "我", "text": "但現金少不代表冇生意。先做預售、收訂金、只買今日用得着的材料——前世第一間店也是這樣開始。"}
 			]
 		},
 		"steamer": {
 			"title": "破裂蒸籠",
 			"lines": [
 				{"speaker": "破裂蒸籠", "text": "竹篾斷了兩處，邊緣積滿舊麵粉。裂口不大，卻會令蒸氣走掉，餅皮又乾又硬。"},
-				{"speaker": "你", "text": "換不起就修。用濕竹條補口，再調整每籠數量，今日仍可以出貨。"}
+				{"speaker": "我", "text": "換不起就修。用濕竹條補口，再調整每籠數量，今日仍可以出貨。"}
 			]
 		},
 		"debt": {
 			"title": "王婆欠單",
 			"lines": [
 				{"speaker": "王婆欠單", "text": "紙上寫着三百二十文，利息每七日再加一成。落款是王婆指印，武大的手印卻模糊得不自然。"},
-				{"speaker": "你", "text": "本金、利息、日期全部混在一行。這不是怕人看不懂，是怕人看得太懂。要先留證，再談還錢。"}
+				{"speaker": "我", "text": "本金、利息、日期全部混在一行。這不是怕人看不懂，是怕人看得太懂。要先留證，再談還錢。"}
 			]
 		},
 		"stove": {
 			"title": "熄滅爐灶",
 			"lines": [
 				{"speaker": "熄滅爐灶", "text": "爐膛堵塞，泥縫裂開，三根濕柴塞在風口。不是不能用，只是每次點火都浪費一半柴。"},
-				{"speaker": "你", "text": "清灰、通風、補泥，再慢火試爐。這不是古代難題，只是另一種廚房設備維修。"}
+				{"speaker": "我", "text": "清灰、通風、補泥，再慢火試爐。這不是古代難題，只是另一種廚房設備維修。"}
 			]
 		}
 	}[id]
@@ -420,13 +495,14 @@ func _after_inspection() -> void:
 
 func _start_pan_scene() -> void:
 	inspect_panel.visible = false
+	pan_present = true
 	objective_label.text = "對話｜潘金蓮"
 	_run_lines([
 		{"speaker": "潘金蓮", "text": "你由朝早醒到而家，先數錢，再看欠單，連蒸籠裂在哪裡都知道。"},
 		{"speaker": "潘金蓮", "text": "大郎，你以前見到欠債只會叫我放心，見到壞爐只會多行兩條街。今日，你第一次真的在想辦法。"},
-		{"speaker": "你", "text": "以前的武大……把所有辛苦都當成自己一個人的責任，結果誰都保護不了。"},
+		{"speaker": "我", "text": "以前的武大……把所有辛苦都當成自己一個人的責任，結果誰都保護不了。"},
 		{"speaker": "潘金蓮", "text": "你說話也變了。但一個人突然變好，比突然變壞更令人害怕。我要知道你想從我身上拿甚麼。"},
-		{"speaker": "你", "text": "我要你那本真正的帳、你對街坊口味的了解，還有你每次提醒他卻沒有人聽的判斷。"},
+		{"speaker": "我", "text": "我要你那本真正的帳、你對街坊口味的了解，還有你每次提醒他卻沒有人聽的判斷。"},
 		{"speaker": "潘金蓮", "text": "可以。但我要做掌櫃，不是站在門口替你招客。店舖、利潤、風險，都要白紙黑字。你敢不敢？"}
 	], _show_contract_choice)
 
@@ -446,7 +522,7 @@ func _choose_contract(id: String) -> void:
 		GameState.relationship.pan_respect += 10
 		GameState.set_flag("pan_equal_partner", true)
 		_run_lines([
-			{"speaker": "你", "text": "一半唔係我分畀你。由今日開始，本來就有一半係你。"},
+			{"speaker": "我", "text": "一半唔係我分畀你。由今日開始，本來就有一半係你。"},
 			{"speaker": "潘金蓮", "text": "好。咁我就睇下，今日呢個武大郎可以行到幾遠。"}
 		], _start_repair_intro)
 	elif id == "trial":
@@ -454,7 +530,7 @@ func _choose_contract(id: String) -> void:
 		GameState.relationship.pan_respect += 4
 		GameState.set_flag("pan_trial_partner", true)
 		_run_lines([
-			{"speaker": "你", "text": "七日。所有數目你都可以睇，做得成，我哋再正式落契。"},
+			{"speaker": "我", "text": "七日。所有數目你都可以睇，做得成，我哋再正式落契。"},
 			{"speaker": "潘金蓮", "text": "至少你今次冇叫我盲目信你。七日，我記住。"}
 		], _start_repair_intro)
 	else:
@@ -462,7 +538,7 @@ func _choose_contract(id: String) -> void:
 		GameState.relationship.pan_respect -= 4
 		GameState.set_flag("pan_independent_stall", true)
 		_run_lines([
-			{"speaker": "你", "text": "店係武家嘅。我可以畀工錢，但唔會分權。"},
+			{"speaker": "我", "text": "店係武家嘅。我可以畀工錢，但唔會分權。"},
 			{"speaker": "潘金蓮", "text": "明白。咁你做你嘅餅，我亦會為自己留一條路。"}
 		], _start_repair_intro)
 
@@ -471,12 +547,13 @@ func _start_repair_intro() -> void:
 	objective_label.text = "玩法｜修復爐灶"
 	_run_lines([
 		{"speaker": "旁白", "text": "契約可以改變兩個人的關係，雙手才可以改變今日。你捲起衣袖，先把濕柴移開，再清走堵住風口的爐灰。"},
-		{"speaker": "你", "text": "裂縫不能一次塞死，要薄泥分層補。先小火收乾，再逐步加熱，否則泥裡的水一脹就會再裂。"},
+		{"speaker": "我", "text": "裂縫不能一次塞死，要薄泥分層補。先小火收乾，再逐步加熱，否則泥裡的水一脹就會再裂。"},
 		{"speaker": "潘金蓮", "text": "你連補爐都像在計一盤生意。好，火候過了泥會爆；不夠火，今日便開不了爐。你有三次機會。"}
 	], _start_repair_game)
 
 func _start_repair_game() -> void:
 	dialogue_panel.visible = false
+	_hide_portraits()
 	repair_panel.visible = true
 	gauge.start(3)
 
@@ -504,12 +581,13 @@ func _repair_finished(score: float) -> void:
 	_run_lines([
 		{"speaker": "修爐結果", "text": result_text},
 		{"speaker": "潘金蓮", "text": "火着咗。"},
-		{"speaker": "你", "text": "唔止個爐。由今日開始，成條命都要重新着一次。"},
+		{"speaker": "我", "text": "唔止個爐。由今日開始，成條命都要重新着一次。"},
 		{"speaker": "旁白", "text": "窗外天色微亮。陽谷縣仍未知道，一間只有十七文本錢的炊餅店，已經偏離了原本的命數。"}
 	], _show_summary)
 
 func _show_summary() -> void:
 	dialogue_panel.visible = false
+	_hide_portraits()
 	chapter_label.text = "序章完成 · 死局重生"
 	objective_label.text = "下一章｜一餅逆命"
 	for child in summary_content.get_children():
@@ -587,6 +665,7 @@ func _advance_line() -> void:
 		return
 	var line: Dictionary = current_lines[current_line_index]
 	speaker_label.text = str(line.get("speaker", "旁白"))
+	_update_portraits_for_speaker(speaker_label.text)
 	dialogue_body.text = str(line.get("text", ""))
 	dialogue_body.visible_ratio = 1.0 if reduce_motion else 0.0
 	continue_button.text = "繼續  ›" if current_line_index < current_lines.size() - 1 else "確認  ›"
@@ -641,9 +720,17 @@ func _apply_layout() -> void:
 	objective_label.size = Vector2(size_value.x * 0.52 - pad, 30)
 	objective_label.add_theme_font_size_override("font_size", 15 if mobile else 12)
 	speaker_label.add_theme_font_size_override("font_size", 15 if mobile else 13)
+	var portrait_size := Vector2(size_value.x * 0.78, size_value.y * 0.58) if mobile else Vector2(minf(430, size_value.x * 0.34), size_value.y - 56)
+	var portrait_y := 72.0 if mobile else 38.0
+	for portrait in [modern_portrait, wu_portrait]:
+		portrait.position = Vector2(-portrait_size.x * 0.30 if mobile else -20.0, portrait_y)
+		portrait.size = portrait_size
+	pan_portrait.position = Vector2(size_value.x - portrait_size.x * (0.70 if mobile else 1.0) + (0.0 if mobile else 20.0), portrait_y)
+	pan_portrait.size = portrait_size
 	if mobile:
-		dialogue_panel.position = Vector2(pad, size_value.y - 264)
-		dialogue_panel.size = Vector2(size_value.x - pad * 2, 236)
+		var dialogue_height := 250.0 if compact else 294.0
+		dialogue_panel.position = Vector2(pad, size_value.y - dialogue_height - 28.0)
+		dialogue_panel.size = Vector2(size_value.x - pad * 2, dialogue_height)
 		dialogue_body.add_theme_font_size_override("normal_font_size", 18)
 		choice_panel.position = Vector2(pad, maxf(90, size_value.y * 0.16))
 		choice_panel.size = Vector2(size_value.x - pad * 2, minf(488, size_value.y - 130))
@@ -686,6 +773,8 @@ func _apply_layout() -> void:
 		var summary_width := minf(520, size_value.x - pad * 2)
 		summary_panel.position = Vector2((size_value.x - summary_width) * 0.5, 105)
 		summary_panel.size = Vector2(summary_width, minf(620, size_value.y - 160))
+	if dialogue_panel.visible:
+		_update_portraits_for_speaker(speaker_label.text)
 
 func _button(label: String, primary: bool) -> Button:
 	var button := Button.new()
