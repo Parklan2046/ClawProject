@@ -11,6 +11,7 @@ const MUTED := Color("#9ca2aa")
 const LINE := Color("#343a43")
 const ACCENT := Color("#b8453b")
 const ACCENT_HOVER := Color("#cd5045")
+const GOLD := Color("#d8b86e")
 const ERROR := Color("#ef8d84")
 
 var reduce_motion := false
@@ -105,15 +106,23 @@ func _build_scene() -> void:
 	brand.add_child(seal)
 
 	var title := Label.new()
-	title.text = "逆 命 大 郎"
-	title.add_theme_font_size_override("font_size", 58)
-	title.add_theme_color_override("font_color", TEXT)
+	title.text = "逆命大郎"
+	title.add_theme_font_size_override("font_size", 72)
+	title.add_theme_color_override("font_color", Color("#f7ead2"))
+	title.add_theme_color_override("font_outline_color", Color(0.035, 0.025, 0.025, 0.96))
+	title.add_theme_constant_override("outline_size", 9)
+	title.add_theme_color_override("font_shadow_color", Color(0.65, 0.10, 0.075, 0.72))
+	title.add_theme_constant_override("shadow_offset_x", 5)
+	title.add_theme_constant_override("shadow_offset_y", 6)
+	title.add_theme_constant_override("shadow_outline_size", 3)
 	brand.add_child(title)
 
 	var rule := HSeparator.new()
-	rule.custom_minimum_size = Vector2(88, 1)
+	rule.custom_minimum_size = Vector2(176, 2)
 	rule.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	rule.add_theme_stylebox_override("separator", _box(ACCENT, ACCENT, 0, 0))
+	var rule_style := StyleBoxFlat.new()
+	rule_style.bg_color = GOLD
+	rule.add_theme_stylebox_override("separator", rule_style)
 	brand.add_child(rule)
 
 	var statement := Label.new()
@@ -212,12 +221,6 @@ func _build_scene() -> void:
 
 	_build_success_layer()
 	account.grab_focus()
-	if not reduce_motion:
-		var backdrop_tween := create_tween().set_loops()
-		backdrop_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		backdrop_tween.tween_property(town_backdrop, "position:x", -18.0, 14.0)
-		backdrop_tween.tween_property(town_backdrop, "position:x", 0.0, 14.0)
-
 func _build_success_layer() -> void:
 	success_layer = ColorRect.new()
 	success_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -286,7 +289,7 @@ func _apply_layout() -> void:
 		brand.size = Vector2(s.x - pad * 2.0, 154)
 		brand.get_child(0).visible = not compact
 		brand.get_child(0).add_theme_font_size_override("font_size", 22)
-		brand.get_child(1).add_theme_font_size_override("font_size", 34 if compact else 40)
+		brand.get_child(1).add_theme_font_size_override("font_size", 38 if compact else 46)
 		brand.get_child(2).visible = not compact
 		brand.get_child(3).visible = false
 		brand.get_child(4).visible = false
@@ -322,9 +325,9 @@ func _apply_layout() -> void:
 		var panel_width := clampf(s.x * 0.30, 390.0, 450.0)
 		brand.get_child(0).visible = true
 		brand.get_child(0).add_theme_font_size_override("font_size", 25)
-		brand.position = Vector2(s.x * 0.075, s.y * 0.28)
+		brand.position = Vector2(s.x * 0.068, s.y * 0.245)
 		brand.size = Vector2(s.x * 0.44, 340)
-		brand.get_child(1).add_theme_font_size_override("font_size", 58)
+		brand.get_child(1).add_theme_font_size_override("font_size", 72)
 		brand.get_child(2).visible = true
 		brand.get_child(3).add_theme_font_size_override("font_size", 28)
 		brand.get_child(3).visible = true

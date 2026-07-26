@@ -56,18 +56,18 @@ func _build_world() -> void:
 
 func _build_materials() -> void:
 	wall_materials = [
-		_surface_material(Color("#665b4d"), "plaster", 0.94),
+		_surface_material(Color("#493b32"), "plaster", 0.94),
 		_surface_material(Color("#4c5556"), "plaster", 0.96),
 		_surface_material(Color("#796652"), "plaster", 0.92),
 		_surface_material(Color("#414d50"), "plaster", 0.97)
 	]
-	wood_material = _surface_material(Color("#4e2e20"), "wood", 0.82)
+	wood_material = _surface_material(Color("#3b241c"), "wood", 0.84)
 	dark_wood_material = _material(Color("#171516"), 0.90)
 	roof_material = _surface_material(Color("#1a2b39"), "tiles", 0.66, 0.18)
 	roof_edge_material = _material(Color("#0a1219"), 0.62, 0.24)
 	stone_material = _surface_material(Color("#354554"), "stone", 0.48, 0.12)
 	stone_alt_material = _surface_material(Color("#25333e"), "stone", 0.58, 0.10)
-	window_material = _emissive_material(Color("#e89242"), 1.15)
+	window_material = _emissive_material(Color("#d27a38"), 0.92)
 	lantern_material = _emissive_material(Color("#c92f25"), 1.45)
 	banner_material = _surface_material(Color("#7f201d"), "cloth", 0.88)
 	brass_material = _material(Color("#9d6d32"), 0.38, 0.72)
@@ -147,7 +147,7 @@ func _build_street() -> void:
 	world_root.add_child(stones)
 
 func _build_buildings() -> void:
-	_build_house(-1.0, Vector3(-8.45, 0.0, 1.8), 5.75, 8.1, 4.55, 2, 0)
+	_build_house(-1.0, Vector3(-10.15, -0.20, -0.20), 5.10, 7.45, 4.20, 2, 0)
 
 func _build_house(side: float, origin: Vector3, width: float, depth: float, height: float, levels: int, index: int) -> void:
 	var house := Node3D.new()
@@ -491,12 +491,12 @@ func _process(delta: float) -> void:
 			group.position.x = -36.0
 		group.position.y += sin(elapsed * 0.08 + float(i)) * delta * 0.035
 	var camera_position := Vector3(
-		sin(elapsed * 0.075) * 0.72,
-		4.8 + sin(elapsed * 0.052) * 0.16,
-		17.5 + cos(elapsed * 0.038) * 0.24
+		sin(elapsed * 0.075) * 0.16,
+		4.8 + sin(elapsed * 0.052) * 0.06,
+		17.5 + cos(elapsed * 0.038) * 0.08
 	)
 	camera.position = camera_position
-	camera.look_at(Vector3(sin(elapsed * 0.045) * 0.42, 3.1, -24.0), Vector3.UP)
+	camera.look_at(Vector3(sin(elapsed * 0.045) * 0.10, 3.1, -24.0), Vector3.UP)
 	for banner in banner_nodes:
 		var phase := float(banner.get_meta("phase"))
 		banner.rotation.z = sin(elapsed * 0.72 + phase) * 0.035
