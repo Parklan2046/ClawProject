@@ -487,8 +487,7 @@ func _show_summary() -> void:
 	summary_content.add_child(summary)
 	var chapter_button := _button("進入第一章 · 一餅逆命", true)
 	chapter_button.custom_minimum_size.y = (44 if compact else 46) if mobile else 50
-	chapter_button.disabled = true
-	chapter_button.tooltip_text = "第一章將在下一個製作階段開放"
+	chapter_button.pressed.connect(_enter_chapter_one)
 	summary_content.add_child(chapter_button)
 	var replay_button := _button("重新體驗序章", false)
 	replay_button.custom_minimum_size.y = (44 if compact else 46) if mobile else 50
@@ -499,6 +498,11 @@ func _show_summary() -> void:
 	login_button.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/login.tscn"))
 	summary_content.add_child(login_button)
 	summary_panel.visible = true
+
+func _enter_chapter_one() -> void:
+	GameState.begin_chapter_one()
+	SaveManager.save_game()
+	get_tree().change_scene_to_file("res://scenes/chapter_one.tscn")
 
 func _run_lines(lines: Array, finished_callback: Callable) -> void:
 	current_lines = lines
