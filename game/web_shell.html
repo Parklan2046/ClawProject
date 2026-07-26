@@ -415,6 +415,249 @@
 		};
 	})();
 
+	// Original procedural sound design for the prologue. Keeping these cues in
+	// Web Audio avoids extra downloads and lets iPhone Safari unlock everything
+	// from the same first gesture that starts the game.
+	(() => {
+		class NimingSFX {
+			constructor() {
+				this.context = null;
+				this.sfxGain = null;
+				this.ambienceGain = null;
+				this.ambienceNodes = [];
+			}
+
+			ensureContext() {
+				if (this.context) return this.context;
+				const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+				if (!AudioContextClass) return null;
+				this.context = new AudioContextClass();
+				this.sfxGain = this.context.createGain();
+				this.sfxGain.gain.value = .78;
+				this.sfxGain.connect(this.context.destination);
+				return this.context;
+			}
+
+			unlock() {
+				const context = this.ensureContext();
+				if (context && context.state === "suspended") context.resume().catch(() => {});
+				return context;
+			}
+
+			tone(startHz, endHz, duration, gain = .08, type = "sine", delay = 0) {
+				const context = this.unlock();
+				if (!context || !this.sfxGain) return;
+				const start = context.currentTime + delay;
+				const oscillator = context.createOscillator();
+				const envelope = context.createGain();
+				oscillator.type = type;
+				oscillator.frequency.setValueAtTime(Math.max(startHz, 20), start);
+				oscillator.frequency.exponentialRampToValueAtTime(Math.max(endHz, 20), start + duration);
+				envelope.gain.setValueAtTime(.0001, start);
+				envelope.gain.exponentialRampToValueAtTime(gain, start + Math.min(.025, duration * .18));
+				envelope.gain.exponentialRampToValueAtTime(.0001, start + duration);
+				oscillator.connect(envelope).connect(this.sfxGain);
+				oscillator.start(start);
+				oscillator.stop(start + duration + .03);
+			}
+
+			noise(duration, gain = .08, filterType = "bandpass", frequency = 1200, delay = 0, sweepTo = 0) {
+				const context = this.unlock();
+				if (!context || !this.sfxGain) return;
+				const frameCount = Math.max(1, Math.floor(context.sampleRate * duration));
+				const buffer = context.createBuffer(1, frameCount, context.sampleRate);
+				const data = buffer.getChannelData(0);
+				let state = 0;
+				for (let index = 0; index < frameCount; index++) {
+					state = state * .72 + (Math.random() * 2 - 1) * .28;
+					data[index] = state;
+				}
+				const start = context.currentTime + delay;
+				const source = context.createBufferSource();
+				const filter = context.createBiquadFilter();
+				const envelope = context.createGain();
+				source.buffer = buffer;
+				filter.type = filterType;
+				filter.frequency.setValueAtTime(frequency, start);
+				if (sweepTo > 0) filter.frequency.exponentialRampToValueAtTime(sweepTo, start + duration);
+				filter.Q.value = filterType === "bandpass" ? 1.2 : .4;
+				envelope.gain.setValueAtTime(.0001, start);
+				envelope.gain.linearRampToValueAtTime(gain, start + Math.min(.035, duration * .16));
+				envelope.gain.exponentialRampToValueAtTime(.0001, start + duration);
+				source.connect(filter).connect(envelope).connect(this.sfxGain);
+				source.start(start);
+			}
+
+			play(id) {
+				switch (id) {
+					case "notification":
+						this.tone(880, 1080, .10, .075, "sine");
+						this.tone(1120, 1380, .13, .065, "sine", .12);
+						break;
+					case "paper":
+						this.noise(.26, .075, "bandpass", 1900, 0, 820);
+						this.noise(.18, .045, "highpass", 2600, .08);
+						break;
+					case "voicemail":
+						this.tone(142, 132, .17, .075, "square");
+						this.tone(142, 128, .17, .065, "square", .23);
+						break;
+					case "rain_focus":
+						this.noise(.48, .075, "highpass", 1700, 0, 3200);
+						break;
+					case "choice":
+						this.tone(430, 620, .16, .065, "triangle");
+						this.tone(620, 820, .16, .045, "sine", .08);
+						break;
+					case "transition":
+						this.noise(1.45, .23, "lowpass", 5400, 0, 120);
+						this.tone(96, 38, 1.35, .18, "sine");
+						this.tone(62, 54, .14, .16, "sine", .18);
+						this.tone(62, 50, .16, .13, "sine", .49);
+						break;
+					case "wake":
+						this.noise(.52, .085, "lowpass", 680, 0, 180);
+						this.tone(118, 72, .46, .07, "triangle");
+						break;
+					case "memory":
+						this.tone(318, 184, .72, .045, "sine");
+						this.tone(476, 286, .62, .025, "sine", .04);
+						break;
+					case "coins":
+						this.tone(1780, 1420, .16, .075, "triangle");
+						this.tone(2210, 1680, .18, .055, "triangle", .07);
+						this.tone(1320, 980, .20, .04, "sine", .14);
+						break;
+					case "steamer":
+						this.noise(.42, .09, "highpass", 1500, 0, 3900);
+						this.tone(540, 310, .18, .045, "triangle");
+						break;
+					case "debt":
+						this.noise(.34, .07, "bandpass", 1600, 0, 720);
+						this.tone(176, 124, .34, .045, "sine", .08);
+						break;
+					case "stove":
+						this.tone(116, 72, .28, .14, "triangle");
+						this.noise(.34, .08, "lowpass", 540, .04, 150);
+						break;
+					case "pan_enter":
+						this.noise(.28, .045, "highpass", 2200);
+						this.tone(392, 588, .42, .05, "sine", .06);
+						break;
+					case "contract_equal":
+						this.noise(.12, .08, "bandpass", 1100);
+						this.tone(440, 880, .48, .085, "triangle", .04);
+						break;
+					case "contract_trial":
+						this.noise(.12, .065, "bandpass", 980);
+						this.tone(390, 560, .34, .065, "triangle", .04);
+						break;
+					case "contract_refuse":
+						this.noise(.14, .08, "bandpass", 760);
+						this.tone(224, 112, .48, .085, "triangle", .03);
+						break;
+					case "repair_prepare":
+						this.noise(.44, .09, "lowpass", 820, 0, 230);
+						this.tone(128, 92, .32, .06, "triangle", .08);
+						break;
+					case "gauge_start":
+						this.tone(520, 510, .09, .05, "triangle");
+						break;
+					case "gauge_perfect":
+						this.tone(720, 1360, .28, .10, "sine");
+						this.noise(.17, .055, "highpass", 2800, .03);
+						break;
+					case "gauge_good":
+						this.tone(460, 680, .22, .075, "triangle");
+						break;
+					case "gauge_miss":
+						this.noise(.30, .095, "lowpass", 620, 0, 150);
+						this.tone(132, 74, .28, .07, "square");
+						break;
+					case "fire_master":
+						this.noise(1.10, .15, "bandpass", 920, 0, 2400);
+						this.tone(168, 326, .92, .11, "sine");
+						this.tone(520, 1040, .62, .055, "sine", .18);
+						break;
+					case "fire_steady":
+						this.noise(.82, .12, "bandpass", 760, 0, 1680);
+						this.tone(142, 228, .66, .085, "sine");
+						break;
+					case "fire_fragile":
+						this.noise(.62, .085, "lowpass", 680, 0, 210);
+						this.tone(108, 76, .44, .055, "triangle");
+						break;
+					case "summary":
+						this.tone(196, 192, .72, .13, "sine");
+						this.tone(294, 588, .74, .065, "sine", .08);
+						this.tone(440, 880, .64, .045, "sine", .18);
+						break;
+				}
+			}
+
+			startAmbience(id) {
+				const context = this.unlock();
+				if (!context) return;
+				this.stopAmbience(.18);
+				const gain = context.createGain();
+				gain.gain.setValueAtTime(.0001, context.currentTime);
+				gain.gain.exponentialRampToValueAtTime(id === "modern" ? .18 : .13, context.currentTime + .8);
+				gain.connect(context.destination);
+				const duration = 4;
+				const buffer = context.createBuffer(1, context.sampleRate * duration, context.sampleRate);
+				const data = buffer.getChannelData(0);
+				let state = 0;
+				for (let index = 0; index < data.length; index++) {
+					state = state * (id === "modern" ? .82 : .91) + (Math.random() * 2 - 1) * (id === "modern" ? .18 : .09);
+					data[index] = state;
+				}
+				const noiseSource = context.createBufferSource();
+				const filter = context.createBiquadFilter();
+				noiseSource.buffer = buffer;
+				noiseSource.loop = true;
+				filter.type = id === "modern" ? "highpass" : "lowpass";
+				filter.frequency.value = id === "modern" ? 1200 : 780;
+				noiseSource.connect(filter).connect(gain);
+				noiseSource.start();
+				const hum = context.createOscillator();
+				const humGain = context.createGain();
+				hum.type = "sine";
+				hum.frequency.value = id === "modern" ? 58 : 86;
+				humGain.gain.value = id === "modern" ? .035 : .018;
+				hum.connect(humGain).connect(gain);
+				hum.start();
+				this.ambienceGain = gain;
+				this.ambienceNodes = [noiseSource, hum];
+			}
+
+			stopAmbience(fade = .35) {
+				if (!this.context || !this.ambienceGain) return;
+				const context = this.context;
+				const gain = this.ambienceGain;
+				const nodes = this.ambienceNodes.slice();
+				const end = context.currentTime + Math.max(.01, Number(fade) || .01);
+				gain.gain.cancelScheduledValues(context.currentTime);
+				gain.gain.setValueAtTime(Math.max(gain.gain.value, .0001), context.currentTime);
+				gain.gain.exponentialRampToValueAtTime(.0001, end);
+				nodes.forEach(node => {
+					try { node.stop(end + .03); } catch (_) {}
+				});
+				this.ambienceGain = null;
+				this.ambienceNodes = [];
+			}
+
+			stopAll() {
+				this.stopAmbience(.08);
+			}
+		}
+
+		window.nimingSFX = new NimingSFX();
+		const unlockSFX = () => window.nimingSFX.unlock();
+		document.addEventListener("pointerdown", unlockSFX, { once: true, capture: true });
+		document.addEventListener("touchstart", unlockSFX, { once: true, capture: true });
+		document.addEventListener("keydown", unlockSFX, { once: true, capture: true });
+	})();
+
 	(() => {
 		const overlay = document.getElementById("status");
 		const loader = document.getElementById("status-loader");

@@ -1,6 +1,8 @@
 extends Control
 
 signal finished(score: float)
+signal round_started(round_number: int, total_rounds: int)
+signal struck(score: float, perfect: bool)
 
 var active := false
 var value := 0.0
@@ -26,6 +28,7 @@ func start(rounds: int = 3) -> void:
 	active = true
 	set_process(true)
 	queue_redraw()
+	round_started.emit(1, round_count)
 
 func _process(delta: float) -> void:
 	if not active:
@@ -54,8 +57,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _strike() -> void:
 	var distance := absf(value - target_center)
 	var round_score := clampf(1.0 - distance / 0.5, 0.0, 1.0)
-	if distance <= target_width * 0.5:
+	var perfect := distance <= target_width * 0.5
+	if perfect:
 		round_score = 1.0
+	struck.emit(round_score, perfect)
 	total_score += round_score
 	round_index += 1
 	if round_index >= round_count:
@@ -70,6 +75,7 @@ func _strike() -> void:
 	value = 0.06
 	direction = 1.0
 	queue_redraw()
+	round_started.emit(round_index + 1, round_count)
 
 func _draw() -> void:
 	var font := get_theme_default_font()

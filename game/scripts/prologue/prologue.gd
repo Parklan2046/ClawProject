@@ -2,6 +2,7 @@ extends Node3D
 
 const WORLD_SCRIPT = preload("res://scripts/prologue/prologue_world.gd")
 const GAUGE_SCRIPT = preload("res://scripts/ui/timing_gauge.gd")
+const SFX_SCRIPT = preload("res://scripts/audio/prologue_sfx.gd")
 const MODERN_PORTRAIT = preload("res://assets/characters/prologue/modern-player-neutral-v1.png")
 const WU_DALANG_PORTRAIT = preload("res://assets/characters/prologue/wu-dalang-neutral-v1.png")
 const PAN_JINLIAN_PORTRAIT = preload("res://assets/characters/prologue/pan-jinlian-glamorous-v2.png")
@@ -12,6 +13,7 @@ const RED := Color("#af3f35")
 const INK := Color("#090b0f")
 
 var world: Node3D
+var sfx: Node
 var ui_root: Control
 var chapter_label: Label
 var objective_label: Label
@@ -62,6 +64,9 @@ func _ready() -> void:
 	world = WORLD_SCRIPT.new()
 	world.name = "PrologueWorld"
 	add_child(world)
+	sfx = SFX_SCRIPT.new()
+	sfx.name = "PrologueSFX"
+	add_child(sfx)
 	_build_ui()
 	WuxiaOST.stop_web_audio()
 	get_viewport().size_changed.connect(_apply_layout)
@@ -242,6 +247,8 @@ func _build_ui() -> void:
 	repair_vbox.add_child(repair_copy_label)
 	gauge = GAUGE_SCRIPT.new()
 	gauge.finished.connect(_repair_finished)
+	gauge.round_started.connect(_on_repair_round_started)
+	gauge.struck.connect(_on_repair_struck)
 	repair_vbox.add_child(gauge)
 
 	summary_panel = PanelContainer.new()
@@ -328,16 +335,18 @@ func _start_modern_intro() -> void:
 	pan_present = false
 	_hide_portraits()
 	world.build_modern_restaurant()
+	sfx.start_ambience("modern")
 	chapter_label.text = "序章 00 · LAST ORDER"
 	objective_label.text = "目標｜收拾最後一夜"
 	_run_lines([
 		{"speaker": "旁白", "text": "凌晨三點十七分。最後一張訂單早已送出，捲閘落了一半，雨仍然密密打在玻璃上。"},
 		{"speaker": "旁白", "text": "十二個外賣點，只剩這間中央廚房未熄燈。雪櫃壓縮機偶爾低鳴，像一盤生意最後的呼吸。"},
-		{"speaker": "手機通知", "text": "[color=#df776b]平台扣款：HK$18,420。供應商催款：最後期限。合夥人帳戶：已停用。[/color]"}
+		{"speaker": "手機通知", "text": "[color=#df776b]平台扣款：HK$18,420。供應商催款：最後期限。合夥人帳戶：已停用。[/color]", "cue": "notification"}
 	], _modern_receipts_beat)
 
 func _modern_receipts_beat() -> void:
 	world.focus("receipts")
+	sfx.play("paper")
 	objective_label.text = "回顧｜一盤失敗的帳"
 	_run_lines([
 		{"speaker": "旁白", "text": "退款、推廣費、騎手補貼、逾期利息。每張單據都合理，疊在一起卻足以壓垮一間店。"},
@@ -347,6 +356,7 @@ func _modern_receipts_beat() -> void:
 
 func _modern_phone_beat() -> void:
 	world.focus("phone")
+	sfx.play("voicemail")
 	objective_label.text = "回顧｜最後一段留言"
 	_run_lines([
 		{"speaker": "電話留言", "text": "『對唔住。我頂唔住喇。銀行戶口我已經交返畀公司，之後唔好再搵我。』"},
@@ -356,6 +366,7 @@ func _modern_phone_beat() -> void:
 
 func _modern_window_beat() -> void:
 	world.focus("window")
+	sfx.play("rain_focus")
 	objective_label.text = "抉擇｜你還剩下甚麼"
 	_run_lines([
 		{"speaker": "旁白", "text": "雨幕後仍有食肆亮燈、貨車穿街、騎手趕路。這座城市不會因一間店失敗而停下。"},
@@ -383,6 +394,7 @@ func _show_origin_choice() -> void:
 	_show_choices("前世留下的專長", options)
 
 func _select_origin(id: String) -> void:
+	sfx.play("choice")
 	GameState.origin_id = id
 	choice_panel.visible = false
 	var data: Dictionary = GameState.ORIGINS[id]
@@ -402,17 +414,19 @@ func _show_principle_choice() -> void:
 	])
 
 func _select_principle(id: String) -> void:
+	sfx.play("choice")
 	GameState.principle_id = id
 	choice_panel.visible = false
 	_run_lines([
 		{"speaker": "我", "text": "如果命運肯畀第二次機會，我會用「[color=#d3b36f]%s[/color]」走到最後。" % GameState.principle_name()},
-		{"speaker": "旁白", "text": "窗外一道白光撕開夜雨。手機墜地，蒸汽、車聲和心跳同時遠去。"},
+		{"speaker": "旁白", "text": "窗外一道白光撕開夜雨。手機墜地，蒸汽、車聲和心跳同時遠去。", "cue": "transition"},
 		{"speaker": "？？？", "text": "大郎……大郎！你醒下啊！"}
 	], _cross_to_song)
 
 func _cross_to_song() -> void:
 	dialogue_panel.visible = false
 	_hide_portraits()
+	sfx.stop_ambience(0.55)
 	var duration := 0.01 if reduce_motion else 0.85
 	var tween := create_tween()
 	tween.tween_property(fade, "color:a", 1.0, duration)
@@ -426,10 +440,11 @@ func _cross_to_song() -> void:
 	tween.tween_callback(_start_song_intro)
 
 func _start_song_intro() -> void:
+	sfx.start_ambience("song_home")
 	_run_lines([
-		{"speaker": "旁白", "text": "霉木、麵粉、冷灰。你在一張硬木床上醒來，喉嚨乾裂，胸口像被另一個人的一生壓住。"},
+		{"speaker": "旁白", "text": "霉木、麵粉、冷灰。你在一張硬木床上醒來，喉嚨乾裂，胸口像被另一個人的一生壓住。", "cue": "wake"},
 		{"speaker": "旁白", "text": "沒有雪櫃低鳴，沒有雨夜車聲。只有窗格滲入的晨光、灶內未盡的焦味，以及一間窮得太具體的屋。"},
-		{"speaker": "陌生記憶", "text": "北宋。陽谷縣。賣炊餅。武家大郎。妻，潘金蓮。弟，武松。"},
+		{"speaker": "陌生記憶", "text": "北宋。陽谷縣。賣炊餅。武家大郎。妻，潘金蓮。弟，武松。", "cue": "memory"},
 		{"speaker": "我", "text": "武大郎……如果呢個故事照原本行落去，我連自己點死、死後邊個被逼上梁山都知道。"},
 		{"speaker": "陌生記憶", "text": "肩上的擔、街坊的笑、每日走過的巷。這副身體矮小，卻記得如何捱過每一個冬天。"},
 		{"speaker": "旁白", "text": "死局未到，貧窮已經先一步收網。屋內四件東西，將決定你今日能不能重新開爐。"}
@@ -445,6 +460,7 @@ func _start_inspection() -> void:
 func _inspect(id: String) -> void:
 	if inspected[id]:
 		return
+	sfx.play(id)
 	inspected[id] = true
 	inspect_panel.visible = false
 	world.focus(id)
@@ -502,6 +518,7 @@ func _after_inspection() -> void:
 func _start_pan_scene() -> void:
 	inspect_panel.visible = false
 	pan_present = true
+	sfx.play("pan_enter")
 	objective_label.text = "對話｜潘金蓮"
 	_run_lines([
 		{"speaker": "潘金蓮", "text": "你由朝早醒到而家，先數錢，再看欠單，連蒸籠裂在哪裡都知道。"},
@@ -521,6 +538,7 @@ func _show_contract_choice() -> void:
 	])
 
 func _choose_contract(id: String) -> void:
+	sfx.play("contract_" + id)
 	contract_result = id
 	choice_panel.visible = false
 	if id == "equal":
@@ -550,6 +568,7 @@ func _choose_contract(id: String) -> void:
 
 func _start_repair_intro() -> void:
 	world.focus("stove")
+	sfx.play("repair_prepare")
 	objective_label.text = "玩法｜修復爐灶"
 	_run_lines([
 		{"speaker": "旁白", "text": "契約可以改變兩個人的關係，雙手才可以改變今日。你捲起衣袖，先把濕柴移開，再清走堵住風口的爐灰。"},
@@ -563,29 +582,44 @@ func _start_repair_game() -> void:
 	repair_panel.visible = true
 	gauge.start(3)
 
+func _on_repair_round_started(_round_number: int, _total_rounds: int) -> void:
+	sfx.play("gauge_start")
+
+func _on_repair_struck(score: float, perfect: bool) -> void:
+	if perfect:
+		sfx.play("gauge_perfect")
+	elif score >= 0.56:
+		sfx.play("gauge_good")
+	else:
+		sfx.play("gauge_miss")
+
 func _repair_finished(score: float) -> void:
 	repair_score = score
 	repair_panel.visible = false
 	world.reset_camera()
 	var result_text := ""
+	var result_cue := ""
 	if score >= 0.82:
 		GameState.set_flag("stove_quality", "master")
 		GameState.reputation += 2
 		result_text = "泥縫在火光中逐漸收實，爐膛發出均勻低鳴。呢個爐比以前更穩、更慳柴。"
+		result_cue = "fire_master"
 	elif score >= 0.52:
 		GameState.set_flag("stove_quality", "steady")
 		GameState.reputation += 1
 		result_text = "火焰終於穩定。爐灶仍然粗陋，但足以蒸出今日第一籠餅。"
+		result_cue = "fire_steady"
 	else:
 		GameState.set_flag("stove_quality", "fragile")
 		result_text = "裂縫勉強封住，火仍從旁邊漏出。今日可以開爐，但之後一定要重新修理。"
+		result_cue = "fire_fragile"
 	GameState.set_flag("prologue_complete", true)
 	GameState.set_flag("contract_result", contract_result)
 	GameState.set_flag("repair_score", repair_score)
 	GameState.checkpoint = "chapter_01_first_fire"
 	SaveManager.save_game()
 	_run_lines([
-		{"speaker": "修爐結果", "text": result_text},
+		{"speaker": "修爐結果", "text": result_text, "cue": result_cue},
 		{"speaker": "潘金蓮", "text": "火着咗。"},
 		{"speaker": "我", "text": "唔止個爐。由今日開始，成條命都要重新着一次。"},
 		{"speaker": "旁白", "text": "窗外天色微亮。陽谷縣仍未知道，一間只有十七文本錢的炊餅店，已經偏離了原本的命數。"}
@@ -594,6 +628,7 @@ func _repair_finished(score: float) -> void:
 func _show_summary() -> void:
 	dialogue_panel.visible = false
 	_hide_portraits()
+	sfx.play("summary")
 	chapter_label.text = "序章完成 · 死局重生"
 	objective_label.text = "下一章｜一餅逆命"
 	for child in summary_content.get_children():
@@ -675,6 +710,9 @@ func _advance_line() -> void:
 	var line: Dictionary = current_lines[current_line_index]
 	speaker_label.text = str(line.get("speaker", "旁白"))
 	_update_portraits_for_speaker(speaker_label.text)
+	var cue := str(line.get("cue", ""))
+	if not cue.is_empty():
+		sfx.play(cue)
 	dialogue_body.text = str(line.get("text", ""))
 	dialogue_body.visible_ratio = 1.0 if reduce_motion else 0.0
 	continue_button.text = "繼續  ›" if current_line_index < current_lines.size() - 1 else "確認  ›"
