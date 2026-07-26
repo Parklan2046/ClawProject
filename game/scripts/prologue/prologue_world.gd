@@ -89,77 +89,82 @@ func build_modern_restaurant() -> void:
 func build_song_home() -> void:
 	_clear_world()
 	_setup_world(Color("#111116"), Color("#554334"), 0.72)
-	camera_home = Vector3(0, 4.0, 9.35)
-	camera_target = Vector3(0, 1.45, 0.55)
+	# Match the painting's low, almost level one-point perspective. The previous
+	# camera looked down from above, so every foreground prop appeared pasted on.
+	camera.fov = 44.0
+	camera_home = Vector3(0.0, 2.38, 10.85)
+	camera_target = Vector3(0.0, 1.95, 0.10)
 	_place_camera(camera_home, camera_target)
 	_add_background("res://assets/bg/prologue-song-home-v1.png")
+	key_light.light_color = Color("#c6a17d")
+	key_light.light_energy = 0.72
 
 	var wood := Color("#4b3323")
 	var dark_wood := Color("#271a13")
 
-	_box("TableShadow", Vector3(3.55, 0.025, 1.42), Vector3(0.25, 0.035, 1.28), Color(0.02, 0.015, 0.012, 0.34))
-	_box("Table", Vector3(3.25, 0.16, 1.25), Vector3(0.25, 0.70, 1.25), Color("#3e291d"), 0.0, 0.58)
-	_box("TableEdge", Vector3(3.10, 0.14, 0.10), Vector3(0.25, 0.59, 1.82), dark_wood, 0.0, 0.62)
+	_box("TableShadow", Vector3(3.55, 0.025, 1.42), Vector3(0.25, 0.035, 0.82), Color(0.02, 0.015, 0.012, 0.34))
+	_box("Table", Vector3(3.25, 0.16, 1.25), Vector3(0.25, 0.70, 0.80), Color("#34231a"), 0.0, 0.66)
+	_box("TableEdge", Vector3(3.10, 0.14, 0.10), Vector3(0.25, 0.59, 1.37), dark_wood, 0.0, 0.62)
 	for x in [-1.05, 1.55]:
-		for z in [0.80, 1.70]:
+		for z in [0.35, 1.25]:
 			_box("TableLeg", Vector3(0.15, 0.64, 0.15), Vector3(x, 0.32, z), dark_wood)
 
-	_cylinder("StoveShadow", 1.00, 0.025, Vector3(-2.72, 0.04, 1.55), Color(0.02, 0.015, 0.012, 0.34))
-	_box("StoveBase", Vector3(1.75, 0.90, 1.28), Vector3(-2.72, 0.45, 1.55), Color("#383633"), 0.0, 0.96)
+	_cylinder("StoveShadow", 1.00, 0.025, Vector3(-2.72, 0.04, 1.02), Color(0.02, 0.015, 0.012, 0.34))
+	_box("StoveBase", Vector3(1.75, 0.90, 1.28), Vector3(-2.72, 0.45, 1.02), Color("#2b2926"), 0.0, 0.98)
 	for row in 3:
 		for column in 3:
 			_box(
 				"StoveBrick_%d_%d" % [row, column],
 				Vector3(0.50, 0.20, 0.055),
-				Vector3(-3.22 + column * 0.50 + (0.12 if row % 2 else 0.0), 0.20 + row * 0.23, 2.22),
-				Color("#5b5249") if (row + column) % 2 == 0 else Color("#49443f"),
+				Vector3(-3.22 + column * 0.50 + (0.12 if row % 2 else 0.0), 0.20 + row * 0.23, 1.69),
+				Color("#51473d") if (row + column) % 2 == 0 else Color("#403b36"),
 				0.0,
 				0.94
 			)
-	_box("FireMouth", Vector3(0.58, 0.35, 0.08), Vector3(-2.72, 0.38, 2.23), Color("#171311"), 0.0, 1.0)
+	_box("FireMouth", Vector3(0.58, 0.35, 0.08), Vector3(-2.72, 0.38, 1.70), Color("#171311"), 0.0, 1.0)
 	for index in 3:
-		var log := _cylinder("FireLog%d" % index, 0.060, 0.46, Vector3(-2.88 + index * 0.16, 0.33, 2.16), Color("#3a2117"), 0.0, 0.95)
+		var log := _cylinder("FireLog%d" % index, 0.060, 0.46, Vector3(-2.88 + index * 0.16, 0.33, 1.63), Color("#3a2117"), 0.0, 0.95)
 		log.rotation_degrees.z = 90.0
 	for index in 3:
 		var flame := _cylinder(
 			"Flame%d" % index,
 			0.075 - index * 0.010,
 			0.25 + index * 0.06,
-			Vector3(-2.88 + index * 0.16, 0.58 + index * 0.04, 2.14),
+			Vector3(-2.88 + index * 0.16, 0.58 + index * 0.04, 1.61),
 			Color(0.93, 0.27 + index * 0.08, 0.08, 0.76),
 			0.0,
 			0.24,
 			Color("#f47b35")
 		)
 		flame.rotation_degrees.z = -8.0 + index * 8.0
-	_cylinder("StoveRing", 0.50, 0.14, Vector3(-2.72, 0.98, 1.55), Color("#292826"), 0.06, 0.78)
-	_add_omni(Vector3(-2.72, 1.20, 1.76), Color("#ff823e"), 2.2, 3.4)
+	_cylinder("StoveRing", 0.50, 0.14, Vector3(-2.72, 0.98, 1.02), Color("#292826"), 0.06, 0.78)
+	_add_omni(Vector3(-2.72, 1.20, 1.23), Color("#ff823e"), 2.2, 3.4)
 
-	_cylinder("SteamerBottom", 0.58, 0.28, Vector3(-0.62, 0.91, 1.15), Color("#755033"), 0.0, 0.72)
-	_cylinder("SteamerRim", 0.60, 0.055, Vector3(-0.62, 1.07, 1.15), Color("#9a6a42"), 0.0, 0.64)
-	var steamer_top := _cylinder("SteamerTop", 0.58, 0.24, Vector3(-0.62, 1.22, 1.15), Color("#66452e"), 0.0, 0.74)
+	_cylinder("SteamerBottom", 0.58, 0.28, Vector3(-0.62, 0.91, 0.70), Color("#755033"), 0.0, 0.72)
+	_cylinder("SteamerRim", 0.60, 0.055, Vector3(-0.62, 1.07, 0.70), Color("#9a6a42"), 0.0, 0.64)
+	var steamer_top := _cylinder("SteamerTop", 0.58, 0.24, Vector3(-0.62, 1.22, 0.70), Color("#66452e"), 0.0, 0.74)
 	steamer_top.rotation_degrees.z = 4.0
 	for index in 9:
-		var slat := _box("SteamerSlat%d" % index, Vector3(0.035, 0.26, 0.92), Vector3(-0.98 + index * 0.09, 1.22, 1.15), Color("#7d5638"))
+		var slat := _box("SteamerSlat%d" % index, Vector3(0.035, 0.26, 0.92), Vector3(-0.98 + index * 0.09, 1.22, 0.70), Color("#7d5638"))
 		slat.rotation_degrees.z = 90.0
-	_box("SteamerBrokenSlat", Vector3(0.04, 0.035, 0.48), Vector3(-1.05, 1.38, 1.34), Color("#6f462a")).rotation_degrees.y = 22.0
+	_box("SteamerBrokenSlat", Vector3(0.04, 0.035, 0.48), Vector3(-1.05, 1.38, 0.89), Color("#6f462a")).rotation_degrees.y = 22.0
 
-	_sphere("CoinPouch", 0.18, Vector3(1.16, 0.89, 1.08), Color("#44231f"), 0.0, 0.82)
-	_box("PouchTie", Vector3(0.09, 0.13, 0.09), Vector3(1.16, 1.05, 1.08), Color("#2e1916"))
-	var debt := _box("DebtPaper", Vector3(0.60, 0.020, 0.78), Vector3(0.28, 0.79, 1.30), Color("#cdbf9d"))
+	_sphere("CoinPouch", 0.18, Vector3(1.16, 0.89, 0.63), Color("#44231f"), 0.0, 0.82)
+	_box("PouchTie", Vector3(0.09, 0.13, 0.09), Vector3(1.16, 1.05, 0.63), Color("#2e1916"))
+	var debt := _box("DebtPaper", Vector3(0.60, 0.020, 0.78), Vector3(0.28, 0.79, 0.85), Color("#cdbf9d"))
 	debt.rotation_degrees.y = -8.0
-	_label_3d("欠", Vector3(0.28, 0.84, 1.25), 24, Color("#8f2925"))
+	_label_3d("欠", Vector3(0.28, 0.84, 0.80), 24, Color("#8f2925"))
 	for index in 4:
-		_box("DebtLine%d" % index, Vector3(0.30 - index * 0.025, 0.008, 0.018), Vector3(0.28, 0.832, 1.13 + index * 0.10), Color("#755c4b")).rotation_degrees.y = debt.rotation_degrees.y
+		_box("DebtLine%d" % index, Vector3(0.30 - index * 0.025, 0.008, 0.018), Vector3(0.28, 0.832, 0.68 + index * 0.10), Color("#755c4b")).rotation_degrees.y = debt.rotation_degrees.y
 
-	_cylinder("SackShadow", 0.56, 0.025, Vector3(2.45, 0.035, 1.48), Color(0.02, 0.015, 0.012, 0.30))
-	_sphere("FlourSack", 0.48, Vector3(2.45, 0.47, 1.48), Color("#746d60"), 0.0, 0.98)
-	_box("SackTie", Vector3(0.18, 0.13, 0.18), Vector3(2.45, 0.94, 1.48), Color("#5d4935"))
+	_cylinder("SackShadow", 0.56, 0.025, Vector3(2.45, 0.035, 0.95), Color(0.02, 0.015, 0.012, 0.30))
+	_sphere("FlourSack", 0.48, Vector3(2.45, 0.47, 0.95), Color("#625b50"), 0.0, 0.98)
+	_box("SackTie", Vector3(0.18, 0.13, 0.18), Vector3(2.45, 0.94, 0.95), Color("#51412f"))
 	focus_points = {
-		"coins": Vector3(1.16, 0.92, 1.08),
-		"steamer": Vector3(-0.62, 1.16, 1.15),
-		"debt": Vector3(0.28, 0.82, 1.30),
-		"stove": Vector3(-2.72, 0.82, 1.55)
+		"coins": Vector3(1.16, 0.92, 0.63),
+		"steamer": Vector3(-0.62, 1.16, 0.70),
+		"debt": Vector3(0.28, 0.82, 0.85),
+		"stove": Vector3(-2.72, 0.82, 1.02)
 	}
 
 func focus(id: String) -> void:

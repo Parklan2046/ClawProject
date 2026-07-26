@@ -22,8 +22,6 @@ var window_material: Material
 var lantern_material: Material
 var banner_material: Material
 var brass_material: Material
-var earth_material: Material
-var earth_alt_material: Material
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -50,8 +48,10 @@ func _build_world() -> void:
 	viewport_3d.add_child(world_root)
 	_build_environment()
 	_build_camera()
-	_build_street()
-	_build_buildings()
+	# The high-resolution painting already has the correct one-point street
+	# perspective. Overlaying a second procedural road creates competing seams.
+	# Keep the foreground depth to animated lanterns, fire and clouds. A full
+	# primitive house duplicated the painted left facade and broke its roofline.
 	_build_lanterns()
 	_build_fire_braziers()
 	_build_clouds()
@@ -73,8 +73,6 @@ func _build_materials() -> void:
 	lantern_material = _emissive_material(Color("#c92f25"), 1.45)
 	banner_material = _surface_material(Color("#7f201d"), "cloth", 0.88)
 	brass_material = _material(Color("#9d6d32"), 0.38, 0.72)
-	earth_material = _surface_material(Color("#2c2418"), "earth", 0.97)
-	earth_alt_material = _surface_material(Color("#231d12"), "earth", 0.95)
 
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()
@@ -126,8 +124,6 @@ func _build_street() -> void:
 	_box(world_root, "StreetBase", Vector3(0.0, -0.18, -25.0), Vector3(9.4, 0.35, 86.0), stone_material)
 	_box(world_root, "LeftWalk", Vector3(-5.2, 0.02, -25.0), Vector3(1.0, 0.35, 86.0), stone_alt_material)
 	_box(world_root, "RightWalk", Vector3(5.2, 0.02, -25.0), Vector3(1.0, 0.35, 86.0), stone_alt_material)
-	_box(world_root, "LeftGround", Vector3(-12.0, -0.18, -25.0), Vector3(13.0, 0.36, 88.0), earth_material)
-	_box(world_root, "RightGround", Vector3(12.0, -0.18, -25.0), Vector3(13.0, 0.36, 88.0), earth_alt_material)
 
 	var stone_mesh := BoxMesh.new()
 	stone_mesh.size = Vector3(1.0, 0.08, 1.0)
@@ -153,7 +149,9 @@ func _build_street() -> void:
 	world_root.add_child(stones)
 
 func _build_buildings() -> void:
-	_build_house(-1.0, Vector3(-9.70, -0.20, -0.20), 5.10, 7.45, 4.20, 2, 0)
+	# The painting already contains the upper storeys. This low, near-side annex
+	# adds real depth without drawing a second building over the backdrop.
+	_build_house(-1.0, Vector3(-12.20, -0.20, -2.60), 4.20, 5.70, 3.50, 1, 0)
 
 func _build_house(side: float, origin: Vector3, width: float, depth: float, height: float, levels: int, index: int) -> void:
 	var house := Node3D.new()
@@ -570,15 +568,6 @@ func _surface_material(color: Color, pattern: String, roughness: float, metallic
 	float fold = sin(UV.x * 16.0 + sin(UV.y * 7.0)) * 0.5 + 0.5;
 	tone = 0.72 + fold * 0.34 + weave * 0.035;
 	bump = weave * 0.06 + (fold - 0.5) * 0.10;
-"""
-		"earth":
-			pattern_code = """
-	vec2 cell = floor(UV * vec2(11.0, 7.0));
-	float n = hash21(cell);
-	float pebble = hash21(cell + 0.5);
-	float rut = smoothstep(0.46, 0.5, abs(fract(UV.y * 5.0) - 0.5));
-	tone = 0.58 + n * 0.32 + pebble * 0.12 - rut * 0.18;
-	bump = (n - 0.5) * 0.22;
 """
 		_:
 			pattern_code = """
