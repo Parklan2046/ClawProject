@@ -251,12 +251,44 @@ func _build_ui() -> void:
 func _start_modern_intro() -> void:
 	world.build_modern_restaurant()
 	chapter_label.text = "序章 00 · LAST ORDER"
-	objective_label.text = "目標｜撐過今晚"
+	objective_label.text = "目標｜收拾最後一夜"
 	_run_lines([
-		{"speaker": "旁白", "text": "凌晨三點十七分。最後一張訂單早已送出，雨仍然打在玻璃上。"},
-		{"speaker": "手機通知", "text": "[color=#df776b]平台扣款：HK$18,420。供應商催款：最後期限。合伙人帳戶：已停用。[/color]"},
-		{"speaker": "你", "text": "三年。由一間小廚房做到十二個外賣點……原來輸掉一盤生意，只需要一個晚上。"},
-		{"speaker": "旁白", "text": "你望住枱面散亂的單據。失敗沒有帶走你最重要的東西——你仍記得自己如何由零開始。"}
+		{"speaker": "旁白", "text": "凌晨三點十七分。最後一張訂單早已送出，捲閘落了一半，雨仍然密密打在玻璃上。"},
+		{"speaker": "旁白", "text": "十二個外賣點，只剩這間中央廚房未熄燈。雪櫃壓縮機偶爾低鳴，像一盤生意最後的呼吸。"},
+		{"speaker": "手機通知", "text": "[color=#df776b]平台扣款：HK$18,420。供應商催款：最後期限。合夥人帳戶：已停用。[/color]"}
+	], _modern_receipts_beat)
+
+func _modern_receipts_beat() -> void:
+	world.focus("receipts")
+	objective_label.text = "回顧｜一盤失敗的帳"
+	_run_lines([
+		{"speaker": "旁白", "text": "退款、推廣費、騎手補貼、逾期利息。每張單據都合理，疊在一起卻足以壓垮一間店。"},
+		{"speaker": "你", "text": "營業額升得越快，現金反而越薄。我不是輸在冇客，是輸在把增長當成利潤。"},
+		{"speaker": "記憶", "text": "你仍記得第一間小廚房開張時，自己怎樣計每一克材料、每一條送餐路線、每一句客人投訴。"}
+	], _modern_phone_beat)
+
+func _modern_phone_beat() -> void:
+	world.focus("phone")
+	objective_label.text = "回顧｜最後一段留言"
+	_run_lines([
+		{"speaker": "電話留言", "text": "『對唔住。我頂唔住喇。銀行戶口我已經交返畀公司，之後唔好再搵我。』"},
+		{"speaker": "旁白", "text": "合夥人的留言只有十一秒。三年的承諾，到最後比一張外賣訂單還短。"},
+		{"speaker": "你", "text": "走可以。但至少要有人留下來，記住這盤生意到底點樣死。"}
+	], _modern_window_beat)
+
+func _modern_window_beat() -> void:
+	world.focus("window")
+	objective_label.text = "抉擇｜你還剩下甚麼"
+	_run_lines([
+		{"speaker": "旁白", "text": "雨幕後仍有食肆亮燈、貨車穿街、騎手趕路。這座城市不會因一間店失敗而停下。"},
+		{"speaker": "你", "text": "三年，由一個爐做到十二個點。店可以輸，判斷、手藝同踩過的坑，冇人可以扣走。"},
+		{"speaker": "旁白", "text": "你回到桌前，把最後四樣仍屬於自己的本事逐一寫下。"}
+	], _finish_modern_investigation)
+
+func _finish_modern_investigation() -> void:
+	world.reset_camera()
+	_run_lines([
+		{"speaker": "旁白", "text": "如果人生真的可以重新開店，你只能帶走其中一種最深的本能。"}
 	], _show_origin_choice)
 
 func _show_origin_choice() -> void:
@@ -315,10 +347,12 @@ func _cross_to_song() -> void:
 
 func _start_song_intro() -> void:
 	_run_lines([
-		{"speaker": "旁白", "text": "霉木、麵粉、冷灰。你在一張硬木床上醒來，胸口像被另一個人的一生壓住。"},
-		{"speaker": "陌生記憶", "text": "陽谷縣。賣炊餅。武家大郎。妻，潘金蓮。弟，武松。"},
-		{"speaker": "你", "text": "武大郎……如果呢個故事照原本行落去，我連自己點死都知道。"},
-		{"speaker": "旁白", "text": "屋內每一件東西都在提醒你：死局未到，但貧窮已經先一步收網。"}
+		{"speaker": "旁白", "text": "霉木、麵粉、冷灰。你在一張硬木床上醒來，喉嚨乾裂，胸口像被另一個人的一生壓住。"},
+		{"speaker": "旁白", "text": "沒有雪櫃低鳴，沒有雨夜車聲。只有窗格滲入的晨光、灶內未盡的焦味，以及一間窮得太具體的屋。"},
+		{"speaker": "陌生記憶", "text": "北宋。陽谷縣。賣炊餅。武家大郎。妻，潘金蓮。弟，武松。"},
+		{"speaker": "你", "text": "武大郎……如果呢個故事照原本行落去，我連自己點死、死後邊個被逼上梁山都知道。"},
+		{"speaker": "陌生記憶", "text": "肩上的擔、街坊的笑、每日走過的巷。這副身體矮小，卻記得如何捱過每一個冬天。"},
+		{"speaker": "旁白", "text": "死局未到，貧窮已經先一步收網。屋內四件東西，將決定你今日能不能重新開爐。"}
 	], _start_inspection)
 
 func _start_inspection() -> void:
@@ -333,15 +367,37 @@ func _inspect(id: String) -> void:
 	inspected[id] = true
 	inspect_panel.visible = false
 	world.focus(id)
-	var content: Array = {
-		"coins": ["十七文錢", "錢袋輕得近乎侮辱。十七文，連一袋好麵粉都買唔到。"],
-		"steamer": ["破裂蒸籠", "竹篾斷了兩處，邊緣積滿舊麵粉。修得好，今日仍可開爐。"],
-		"debt": ["王婆欠單", "紙上寫住三百二十文，利息每七日再加一成。落款是王婆的指印。"],
-		"stove": ["熄滅爐灶", "爐膛堵塞，泥縫裂開。不是不能用，只是以前的武大郎沒有時間，也沒有方法。"]
+	var content: Dictionary = {
+		"coins": {
+			"title": "十七文錢",
+			"lines": [
+				{"speaker": "十七文錢", "text": "錢袋輕得近乎侮辱。十七文，連一袋好麵粉都買不到。"},
+				{"speaker": "你", "text": "但現金少不代表冇生意。先做預售、收訂金、只買今日用得着的材料——前世第一間店也是這樣開始。"}
+			]
+		},
+		"steamer": {
+			"title": "破裂蒸籠",
+			"lines": [
+				{"speaker": "破裂蒸籠", "text": "竹篾斷了兩處，邊緣積滿舊麵粉。裂口不大，卻會令蒸氣走掉，餅皮又乾又硬。"},
+				{"speaker": "你", "text": "換不起就修。用濕竹條補口，再調整每籠數量，今日仍可以出貨。"}
+			]
+		},
+		"debt": {
+			"title": "王婆欠單",
+			"lines": [
+				{"speaker": "王婆欠單", "text": "紙上寫着三百二十文，利息每七日再加一成。落款是王婆指印，武大的手印卻模糊得不自然。"},
+				{"speaker": "你", "text": "本金、利息、日期全部混在一行。這不是怕人看不懂，是怕人看得太懂。要先留證，再談還錢。"}
+			]
+		},
+		"stove": {
+			"title": "熄滅爐灶",
+			"lines": [
+				{"speaker": "熄滅爐灶", "text": "爐膛堵塞，泥縫裂開，三根濕柴塞在風口。不是不能用，只是每次點火都浪費一半柴。"},
+				{"speaker": "你", "text": "清灰、通風、補泥，再慢火試爐。這不是古代難題，只是另一種廚房設備維修。"}
+			]
+		}
 	}[id]
-	_run_lines([
-		{"speaker": content[0], "text": content[1]}
-	], _after_inspection)
+	_run_lines(content.lines, _after_inspection)
 
 func _after_inspection() -> void:
 	world.reset_camera()
@@ -366,10 +422,12 @@ func _start_pan_scene() -> void:
 	inspect_panel.visible = false
 	objective_label.text = "對話｜潘金蓮"
 	_run_lines([
-		{"speaker": "潘金蓮", "text": "你由朝早醒到而家，先數錢，再睇帳，仲識得檢查爐膛。"},
-		{"speaker": "潘金蓮", "text": "大郎，你以前只會叫我放心。今日，你第一次真係想辦法。"},
-		{"speaker": "你", "text": "我唔會叫你再等運氣。呢間舖要重新開，但我需要你本帳，同埋你對街坊嘅了解。"},
-		{"speaker": "潘金蓮", "text": "可以。但我要做掌櫃，唔係企在門口替你招客。白紙黑字，你敢唔敢？"}
+		{"speaker": "潘金蓮", "text": "你由朝早醒到而家，先數錢，再看欠單，連蒸籠裂在哪裡都知道。"},
+		{"speaker": "潘金蓮", "text": "大郎，你以前見到欠債只會叫我放心，見到壞爐只會多行兩條街。今日，你第一次真的在想辦法。"},
+		{"speaker": "你", "text": "以前的武大……把所有辛苦都當成自己一個人的責任，結果誰都保護不了。"},
+		{"speaker": "潘金蓮", "text": "你說話也變了。但一個人突然變好，比突然變壞更令人害怕。我要知道你想從我身上拿甚麼。"},
+		{"speaker": "你", "text": "我要你那本真正的帳、你對街坊口味的了解，還有你每次提醒他卻沒有人聽的判斷。"},
+		{"speaker": "潘金蓮", "text": "可以。但我要做掌櫃，不是站在門口替你招客。店舖、利潤、風險，都要白紙黑字。你敢不敢？"}
 	], _show_contract_choice)
 
 func _show_contract_choice() -> void:
@@ -412,8 +470,9 @@ func _start_repair_intro() -> void:
 	world.focus("stove")
 	objective_label.text = "玩法｜修復爐灶"
 	_run_lines([
-		{"speaker": "旁白", "text": "說話可以改變關係，雙手先可以改變今日。你捲起衣袖，清走爐灰，再用濕泥補上裂縫。"},
-		{"speaker": "潘金蓮", "text": "火候過咗，泥會爆；唔夠火，今日就開唔到爐。你有三次機會。"}
+		{"speaker": "旁白", "text": "契約可以改變兩個人的關係，雙手才可以改變今日。你捲起衣袖，先把濕柴移開，再清走堵住風口的爐灰。"},
+		{"speaker": "你", "text": "裂縫不能一次塞死，要薄泥分層補。先小火收乾，再逐步加熱，否則泥裡的水一脹就會再裂。"},
+		{"speaker": "潘金蓮", "text": "你連補爐都像在計一盤生意。好，火候過了泥會爆；不夠火，今日便開不了爐。你有三次機會。"}
 	], _start_repair_game)
 
 func _start_repair_game() -> void:
