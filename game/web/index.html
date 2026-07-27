@@ -350,8 +350,10 @@
 	<canvas id="canvas">你的瀏覽器不支援 Canvas。</canvas>
 	<noscript>你的瀏覽器需要啟用 JavaScript 才能進入江湖。</noscript>
 	<audio id="niming-ost" preload="auto" autoplay loop playsinline>
-		<source src="guzheng-theme.mp3" type="audio/mpeg">
+		<source src="guzheng-theme.mp3?v=3076930" type="audio/mpeg">
 	</audio>
+	<audio id="niming-story-modern" preload="auto" loop playsinline src="audio/prologue/s1.mp3?v=4782426"></audio>
+	<audio id="niming-story-song" preload="auto" loop playsinline src="audio/prologue/s2.mp3?v=2603541"></audio>
 	<div id="status" aria-live="polite">
 		<button id="status-audio" type="button" aria-pressed="false">♫ 播放古箏配樂</button>
 		<picture>
@@ -385,7 +387,7 @@
 	</div>
 	<script src="index.js"></script>
 	<script>
-	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":33141056,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":33145336,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 	const engine = new Engine(GODOT_CONFIG);
 
 	// Cache-bust the heavy Godot assets (.pck / .wasm / audio worklets) so a
@@ -413,6 +415,122 @@
 		XMLHttpRequest.prototype.open = function (method, url, ...rest) {
 			return origOpen.call(this, method, stamp(url), ...rest);
 		};
+	})();
+
+	// Two unlocked HTML audio channels allow the modern office and Song-house
+	// themes to overlap briefly during the time-travel crossfade on iOS Safari.
+	(() => {
+		class NimingStoryMusic {
+			constructor(modern, song) {
+				this.tracks = { modern, song };
+				this.baseVolumes = { modern: .20, song: .22 };
+				this.activeId = "";
+				this.unlocked = false;
+				this.animations = new Map();
+				this.duckTimer = 0;
+				Object.values(this.tracks).forEach(audio => {
+					audio.volume = 0;
+					audio.loop = true;
+				});
+			}
+
+			unlock() {
+				if (this.unlocked) return;
+				this.unlocked = true;
+				Object.values(this.tracks).forEach(audio => {
+					audio.muted = true;
+					audio.volume = 0;
+					const attempt = audio.play();
+					if (attempt) {
+						attempt.then(() => {
+							audio.pause();
+							audio.currentTime = 0;
+							audio.muted = false;
+						}).catch(() => {
+							audio.muted = false;
+						});
+					}
+				});
+			}
+
+			playTrack(id, fadeSeconds = 1.5) {
+				const incoming = this.tracks[id];
+				if (!incoming || id === this.activeId) return;
+				const outgoing = this.tracks[this.activeId];
+				clearTimeout(this.duckTimer);
+				incoming.muted = false;
+				incoming.currentTime = 0;
+				incoming.volume = 0;
+				incoming.play().catch(() => {});
+				this.animate(incoming, this.baseVolumes[id], fadeSeconds);
+				if (outgoing && !outgoing.paused) {
+					this.animate(outgoing, 0, fadeSeconds);
+					setTimeout(() => {
+						if (this.activeId !== id) return;
+						outgoing.pause();
+						outgoing.currentTime = 0;
+					}, Math.max(20, fadeSeconds * 1000 + 40));
+				}
+				this.activeId = id;
+			}
+
+			duck(amountDb = 8, holdSeconds = 1.6) {
+				const audio = this.tracks[this.activeId];
+				if (!audio) return;
+				clearTimeout(this.duckTimer);
+				const factor = Math.pow(10, -Math.abs(Number(amountDb) || 0) / 20);
+				this.animate(audio, this.baseVolumes[this.activeId] * factor, .16);
+				const activeAtStart = this.activeId;
+				this.duckTimer = setTimeout(() => {
+					if (this.activeId === activeAtStart) {
+						this.animate(audio, this.baseVolumes[activeAtStart], .42);
+					}
+				}, Math.max(0, Number(holdSeconds) || 0) * 1000);
+			}
+
+			stopAll(fadeSeconds = .5) {
+				clearTimeout(this.duckTimer);
+				const duration = Math.max(.01, Number(fadeSeconds) || .01);
+				Object.values(this.tracks).forEach(audio => this.animate(audio, 0, duration));
+				setTimeout(() => {
+					Object.values(this.tracks).forEach(audio => {
+						audio.pause();
+						audio.currentTime = 0;
+					});
+				}, duration * 1000 + 40);
+				this.activeId = "";
+			}
+
+			animate(audio, target, seconds) {
+				if (!audio) return;
+				const previous = this.animations.get(audio);
+				if (previous) cancelAnimationFrame(previous);
+				const from = audio.volume;
+				const safeTarget = Math.max(0, Math.min(1, target));
+				const started = performance.now();
+				const duration = Math.max(10, Number(seconds) * 1000 || 10);
+				const step = now => {
+					const progress = Math.min(1, (now - started) / duration);
+					const eased = .5 - Math.cos(progress * Math.PI) * .5;
+					audio.volume = from + (safeTarget - from) * eased;
+					if (progress < 1) {
+						this.animations.set(audio, requestAnimationFrame(step));
+					} else {
+						this.animations.delete(audio);
+					}
+				};
+				this.animations.set(audio, requestAnimationFrame(step));
+			}
+		}
+
+		window.nimingStoryMusic = new NimingStoryMusic(
+			document.getElementById("niming-story-modern"),
+			document.getElementById("niming-story-song")
+		);
+		const unlockStoryMusic = () => window.nimingStoryMusic.unlock();
+		document.addEventListener("pointerdown", unlockStoryMusic, { once: true, capture: true });
+		document.addEventListener("touchstart", unlockStoryMusic, { once: true, capture: true });
+		document.addEventListener("keydown", unlockStoryMusic, { once: true, capture: true });
 	})();
 
 	// Original procedural sound design for the prologue. Keeping these cues in
@@ -506,8 +624,8 @@
 						this.noise(.48, .075, "highpass", 1700, 0, 3200);
 						break;
 					case "choice":
-						this.tone(430, 620, .16, .065, "triangle");
-						this.tone(620, 820, .16, .045, "sine", .08);
+						this.tone(430, 620, .16, .105, "triangle");
+						this.tone(620, 820, .16, .075, "sine", .08);
 						break;
 					case "transition":
 						this.noise(1.45, .23, "lowpass", 5400, 0, 120);
@@ -546,15 +664,15 @@
 						break;
 					case "contract_equal":
 						this.noise(.12, .08, "bandpass", 1100);
-						this.tone(440, 880, .48, .085, "triangle", .04);
+						this.tone(440, 880, .48, .13, "triangle", .04);
 						break;
 					case "contract_trial":
 						this.noise(.12, .065, "bandpass", 980);
-						this.tone(390, 560, .34, .065, "triangle", .04);
+						this.tone(390, 560, .34, .105, "triangle", .04);
 						break;
 					case "contract_refuse":
 						this.noise(.14, .08, "bandpass", 760);
-						this.tone(224, 112, .48, .085, "triangle", .03);
+						this.tone(224, 112, .48, .13, "triangle", .03);
 						break;
 					case "repair_prepare":
 						this.noise(.44, .09, "lowpass", 820, 0, 230);
