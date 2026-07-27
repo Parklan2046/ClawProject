@@ -387,7 +387,7 @@
 	</div>
 	<script src="index.js"></script>
 	<script>
-	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":33145336,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":33149496,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 	const engine = new Engine(GODOT_CONFIG);
 
 	// Cache-bust the heavy Godot assets (.pck / .wasm / audio worklets) so a
@@ -621,17 +621,17 @@
 						this.tone(142, 128, .17, .065, "square", .23);
 						break;
 					case "rain_focus":
-						this.noise(.48, .075, "highpass", 1700, 0, 3200);
+						this.noise(.48, .035, "highpass", 1700, 0, 3200);
 						break;
 					case "choice":
 						this.tone(430, 620, .16, .105, "triangle");
 						this.tone(620, 820, .16, .075, "sine", .08);
 						break;
 					case "transition":
-						this.noise(1.45, .23, "lowpass", 5400, 0, 120);
-						this.tone(96, 38, 1.35, .18, "sine");
-						this.tone(62, 54, .14, .16, "sine", .18);
-						this.tone(62, 50, .16, .13, "sine", .49);
+						this.noise(1.45, .11, "lowpass", 5400, 0, 120);
+						this.tone(96, 38, 1.35, .11, "sine");
+						this.tone(62, 54, .14, .09, "sine", .18);
+						this.tone(62, 50, .16, .075, "sine", .49);
 						break;
 					case "wake":
 						this.noise(.52, .085, "lowpass", 680, 0, 180);
@@ -719,7 +719,7 @@
 				this.stopAmbience(.18);
 				const gain = context.createGain();
 				gain.gain.setValueAtTime(.0001, context.currentTime);
-				gain.gain.exponentialRampToValueAtTime(id === "modern" ? .18 : .13, context.currentTime + .8);
+				gain.gain.exponentialRampToValueAtTime(id === "modern" ? .07 : .045, context.currentTime + .8);
 				gain.connect(context.destination);
 				const duration = 4;
 				const buffer = context.createBuffer(1, context.sampleRate * duration, context.sampleRate);
@@ -794,6 +794,8 @@
 
 		window.nimingOST = soundtrack;
 		soundtrack.volume = .34;
+		let userPausedSoundtrack = false;
+		let sceneAllowsSoundtrack = true;
 
 		function syncAudioButton() {
 			const playing = !soundtrack.paused;
@@ -801,14 +803,28 @@
 			audioButton.textContent = playing ? "♫ 古箏配樂播放中" : "♫ 播放古箏配樂";
 		}
 
+		async function requestSoundtrackPlayback() {
+			if (userPausedSoundtrack || !sceneAllowsSoundtrack || !soundtrack.paused) {
+				syncAudioButton();
+				return !soundtrack.paused;
+			}
+			try {
+				await soundtrack.play();
+				syncAudioButton();
+				return true;
+			} catch (_) {
+				syncAudioButton();
+				return false;
+			}
+		}
+
 		audioButton.addEventListener("click", async () => {
 			if (soundtrack.paused) {
-				try {
-					await soundtrack.play();
-				} catch (error) {
-					console.warn("Soundtrack playback requires another user gesture.", error);
-				}
+				userPausedSoundtrack = false;
+				sceneAllowsSoundtrack = true;
+				await requestSoundtrackPlayback();
 			} else {
+				userPausedSoundtrack = true;
 				soundtrack.pause();
 			}
 			syncAudioButton();
@@ -816,14 +832,33 @@
 		soundtrack.addEventListener("play", syncAudioButton);
 		soundtrack.addEventListener("pause", syncAudioButton);
 		syncAudioButton();
-		soundtrack.play().then(syncAudioButton).catch(syncAudioButton);
 		const unlockSoundtrack = event => {
-			if (event.target === audioButton || !soundtrack.paused) return;
-			soundtrack.play().then(syncAudioButton).catch(syncAudioButton);
+			if (event.target === audioButton) return;
+			requestSoundtrackPlayback();
 		};
-		document.addEventListener("pointerdown", unlockSoundtrack, { once: true, capture: true });
-		document.addEventListener("click", unlockSoundtrack, { once: true, capture: true });
-		document.addEventListener("keydown", unlockSoundtrack, { once: true, capture: true });
+		document.addEventListener("pointerdown", unlockSoundtrack, { capture: true });
+		document.addEventListener("touchstart", unlockSoundtrack, { capture: true, passive: true });
+		document.addEventListener("click", unlockSoundtrack, { capture: true });
+		document.addEventListener("keydown", unlockSoundtrack, { capture: true });
+		window.addEventListener("focus", requestSoundtrackPlayback);
+		document.addEventListener("visibilitychange", () => {
+			if (!document.hidden) requestSoundtrackPlayback();
+		});
+		window.nimingOSTController = {
+			resume() {
+				sceneAllowsSoundtrack = true;
+				return requestSoundtrackPlayback();
+			},
+			suspend() {
+				sceneAllowsSoundtrack = false;
+				soundtrack.pause();
+				syncAudioButton();
+			},
+			toggle() {
+				audioButton.click();
+			}
+		};
+		requestSoundtrackPlayback();
 
 		function updateProgress(current, total) {
 			if (!(current > 0 && total > 0)) {

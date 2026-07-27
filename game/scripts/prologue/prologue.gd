@@ -721,7 +721,7 @@ func _advance_line() -> void:
 	if not cue.is_empty():
 		sfx.play(cue)
 		if cue == "transition":
-			music.duck(8.0, 1.6)
+			music.duck(4.0, 1.6)
 	dialogue_body.text = str(line.get("text", ""))
 	dialogue_body.visible_ratio = 1.0 if reduce_motion else 0.0
 	continue_button.text = "繼續  ›" if current_line_index < current_lines.size() - 1 else "確認  ›"

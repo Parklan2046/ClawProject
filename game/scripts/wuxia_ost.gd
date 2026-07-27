@@ -22,6 +22,11 @@ func toggle_music() -> void:
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("""
 			(() => {
+				const controller = window.nimingOSTController;
+				if (controller && typeof controller.toggle === 'function') {
+					controller.toggle();
+					return;
+				}
 				const audio = document.getElementById('%s');
 				if (!audio) return;
 				if (audio.paused) {
@@ -49,6 +54,11 @@ static func stop_web_audio() -> void:
 		return
 	JavaScriptBridge.eval("""
 		(() => {
+			const controller = window.nimingOSTController;
+			if (controller && typeof controller.suspend === 'function') {
+				controller.suspend();
+				return;
+			}
 			const audio = document.getElementById('%s');
 			if (audio) audio.pause();
 		})()
@@ -57,6 +67,11 @@ static func stop_web_audio() -> void:
 func _try_resume_web_audio() -> void:
 	JavaScriptBridge.eval("""
 		(() => {
+			const controller = window.nimingOSTController;
+			if (controller && typeof controller.resume === 'function') {
+				controller.resume();
+				return;
+			}
 			const audio = document.getElementById('%s');
 			if (audio) audio.play().catch(() => {});
 		})()

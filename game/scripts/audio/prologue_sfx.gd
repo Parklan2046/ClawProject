@@ -3,6 +3,10 @@ extends Node
 
 const SAMPLE_RATE := 22050
 const PLAYER_COUNT := 8
+const AMBIENCE_VOLUMES := {
+	"modern": -26.0,
+	"song_home": -28.0
+}
 
 var players: Array[AudioStreamPlayer] = []
 var ambience_player: AudioStreamPlayer
@@ -23,7 +27,7 @@ func _ready() -> void:
 	ambience_player = AudioStreamPlayer.new()
 	ambience_player.name = "PrologueAmbience"
 	ambience_player.bus = "Master"
-	ambience_player.volume_db = -18.0
+	ambience_player.volume_db = -28.0
 	add_child(ambience_player)
 	_build_native_streams()
 
@@ -50,6 +54,7 @@ func start_ambience(id: String) -> void:
 	if stream == null:
 		return
 	ambience_player.stream = stream
+	ambience_player.volume_db = float(AMBIENCE_VOLUMES.get(id, -28.0))
 	ambience_player.play()
 
 func stop_ambience(fade_seconds := 0.35) -> void:
@@ -65,7 +70,7 @@ func stop_ambience(fade_seconds := 0.35) -> void:
 	tween.tween_property(ambience_player, "volume_db", -46.0, fade_seconds)
 	tween.tween_callback(func() -> void:
 		ambience_player.stop()
-		ambience_player.volume_db = -18.0
+		ambience_player.volume_db = -28.0
 	)
 
 func stop_all() -> void:
@@ -104,9 +109,9 @@ func _build_native_streams() -> void:
 		"notification": _tone(0.24, 920.0, 1360.0, 0.22, "sine", 12.0),
 		"paper": _noise(0.24, 0.18, 0.62, 720.0),
 		"voicemail": _tone(0.42, 148.0, 132.0, 0.20, "square", 18.0),
-		"rain_focus": _noise(0.42, 0.16, 0.36, 1400.0),
+		"rain_focus": _noise(0.42, 0.09, 0.36, 1400.0),
 		"choice": _tone(0.20, 480.0, 720.0, 0.27, "triangle", 10.0),
-		"transition": _noise_tone(1.35, 0.34, 92.0, 42.0),
+		"transition": _noise_tone(1.35, 0.20, 92.0, 42.0),
 		"wake": _noise_tone(0.48, 0.22, 118.0, 76.0),
 		"memory": _tone(0.72, 310.0, 188.0, 0.13, "sine", 5.0),
 		"coins": _tone(0.34, 1820.0, 1160.0, 0.20, "triangle", 18.0),
@@ -214,10 +219,14 @@ func _wav_from_samples(samples: PackedFloat32Array) -> AudioStreamWAV:
 	return stream
 
 func _native_volume(cue: String) -> float:
-	if cue in ["transition", "fire_master", "summary"]:
+	if cue == "transition":
+		return -11.0
+	if cue in ["fire_master", "summary"]:
 		return -7.0
 	if cue == "choice" or cue.begins_with("contract_"):
 		return -7.0
+	if cue == "rain_focus":
+		return -14.0
 	if cue in ["gauge_start", "paper", "debt"]:
 		return -13.0
 	return -10.0

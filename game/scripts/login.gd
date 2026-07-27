@@ -18,6 +18,19 @@ var reduce_motion := false
 var town_backdrop: TextureRect
 var town_3d: SubViewportContainer
 var brand: VBoxContainer
+var title_stage: Control
+var title_art: Node2D
+var title_ink_wash: Polygon2D
+var title_brush: Line2D
+var title_brush_tip: Line2D
+var title_echo_top: Label
+var title_echo_bottom: Label
+var title_top: Label
+var title_bottom: Label
+var title_kicker: Label
+var title_seal: Label
+var brand_statement: Label
+var brand_subcopy: Label
 var panel: PanelContainer
 var form_margin: MarginContainer
 var form_root: VBoxContainer
@@ -91,47 +104,31 @@ func _build_scene() -> void:
 	add_child(music_button)
 
 	brand = VBoxContainer.new()
-	brand.add_theme_constant_override("separation", 14)
+	brand.add_theme_constant_override("separation", 10)
 	add_child(brand)
 
-	var seal := Label.new()
-	seal.text = "逆"
-	seal.custom_minimum_size = Vector2(54, 54)
-	seal.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	seal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	seal.add_theme_font_size_override("font_size", 25)
-	seal.add_theme_color_override("font_color", TEXT)
-	seal.add_theme_stylebox_override("normal", _box(ACCENT, ACCENT, 8, 0))
-	brand.add_child(seal)
-
-	var title := Label.new()
-	title.text = "逆命大郎"
-	title.add_theme_font_override("font", load("res://assets/fonts/NotoSerifTC-Variable.ttf"))
-	title.add_theme_font_size_override("font_size", 96)
-	title.add_theme_constant_override("outline_size", 0)
-	title.material = _title_gradient_material()
-	brand.add_child(title)
+	_build_artistic_title()
 
 	var rule := HSeparator.new()
-	rule.custom_minimum_size = Vector2(176, 2)
+	rule.custom_minimum_size = Vector2(228, 1)
 	rule.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var rule_style := StyleBoxFlat.new()
-	rule_style.bg_color = GOLD
+	rule_style.bg_color = Color(GOLD, 0.64)
 	rule.add_theme_stylebox_override("separator", rule_style)
 	brand.add_child(rule)
 
-	var statement := Label.new()
-	statement.text = "一餅起家，一命重寫。"
-	statement.add_theme_font_size_override("font_size", 28)
-	statement.add_theme_color_override("font_color", TEXT)
-	brand.add_child(statement)
+	brand_statement = Label.new()
+	brand_statement.text = "一餅起家  ·  十日改命"
+	brand_statement.add_theme_font_override("font", load("res://assets/fonts/NotoSerifTC-Variable.ttf"))
+	brand_statement.add_theme_font_size_override("font_size", 24)
+	brand_statement.add_theme_color_override("font_color", Color("#f1e5c8"))
+	brand.add_child(brand_statement)
 
-	var subcopy := Label.new()
-	subcopy.text = "踏入陽谷縣，改寫大郎死局。"
-	subcopy.add_theme_font_size_override("font_size", 16)
-	subcopy.add_theme_color_override("font_color", MUTED)
-	brand.add_child(subcopy)
+	brand_subcopy = Label.new()
+	brand_subcopy.text = "穿越陽谷縣，重寫武大郎的命數。"
+	brand_subcopy.add_theme_font_size_override("font_size", 15)
+	brand_subcopy.add_theme_color_override("font_color", Color("#b7afa2"))
+	brand.add_child(brand_subcopy)
 
 	panel = PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _box(SURFACE, LINE, 14, 1))
@@ -217,6 +214,160 @@ func _build_scene() -> void:
 
 	_build_success_layer()
 	account.grab_focus()
+
+func _build_artistic_title() -> void:
+	var serif_font: Font = load("res://assets/fonts/NotoSerifTC-Variable.ttf")
+	title_stage = Control.new()
+	title_stage.name = "ArtisticGameTitle"
+	title_stage.custom_minimum_size = Vector2(470, 206)
+	title_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	brand.add_child(title_stage)
+
+	title_art = Node2D.new()
+	title_stage.add_child(title_art)
+
+	title_ink_wash = Polygon2D.new()
+	title_ink_wash.polygon = PackedVector2Array([
+		Vector2(-22, 60),
+		Vector2(286, 31),
+		Vector2(438, 62),
+		Vector2(401, 113),
+		Vector2(92, 145),
+		Vector2(-36, 112)
+	])
+	title_ink_wash.color = Color(0.075, 0.045, 0.036, 0.58)
+	title_art.add_child(title_ink_wash)
+
+	title_brush = Line2D.new()
+	title_brush.points = PackedVector2Array([
+		Vector2(-16, 160),
+		Vector2(76, 150),
+		Vector2(202, 163),
+		Vector2(326, 147),
+		Vector2(431, 123)
+	])
+	title_brush.width = 7.0
+	title_brush.default_color = Color(0.76, 0.56, 0.25, 0.46)
+	title_brush.antialiased = true
+	title_art.add_child(title_brush)
+
+	title_brush_tip = Line2D.new()
+	title_brush_tip.points = PackedVector2Array([
+		Vector2(360, 151),
+		Vector2(438, 123),
+		Vector2(461, 101)
+	])
+	title_brush_tip.width = 2.0
+	title_brush_tip.default_color = Color(0.95, 0.82, 0.48, 0.74)
+	title_brush_tip.antialiased = true
+	title_art.add_child(title_brush_tip)
+
+	title_echo_top = _title_label("逆命", serif_font, Color(0.19, 0.035, 0.028, 0.92))
+	title_stage.add_child(title_echo_top)
+	title_echo_bottom = _title_label("大郎", serif_font, Color(0.19, 0.035, 0.028, 0.92))
+	title_stage.add_child(title_echo_bottom)
+
+	title_top = _title_label("逆命", serif_font, Color.WHITE)
+	title_top.material = _title_gradient_material()
+	title_stage.add_child(title_top)
+	title_bottom = _title_label("大郎", serif_font, Color.WHITE)
+	title_bottom.material = _title_gradient_material()
+	title_stage.add_child(title_bottom)
+
+	title_kicker = Label.new()
+	title_kicker.text = "大宋 · 陽谷縣\n凡人改命錄"
+	title_kicker.add_theme_font_override("font", serif_font)
+	title_kicker.add_theme_font_size_override("font_size", 14)
+	title_kicker.add_theme_color_override("font_color", Color("#d6bd82"))
+	title_kicker.add_theme_constant_override("line_spacing", 7)
+	title_stage.add_child(title_kicker)
+
+	title_seal = Label.new()
+	title_seal.text = "武\n記"
+	title_seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_seal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_seal.add_theme_font_override("font", serif_font)
+	title_seal.add_theme_font_size_override("font_size", 19)
+	title_seal.add_theme_color_override("font_color", Color("#f5dcc5"))
+	title_seal.add_theme_stylebox_override("normal", _seal_style())
+	title_stage.add_child(title_seal)
+
+	_apply_title_layout(false, false)
+
+func _title_label(value: String, font: Font, color: Color) -> Label:
+	var label := Label.new()
+	label.text = value
+	label.add_theme_font_override("font", font)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.055, 0.025, 0.018, 0.96))
+	label.add_theme_constant_override("outline_size", 5)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
+
+func _seal_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#9f302b")
+	style.border_color = Color("#e1aa7b")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(3)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 5
+	style.content_margin_bottom = 5
+	return style
+
+func _apply_title_layout(mobile: bool, compact: bool) -> void:
+	if mobile:
+		var viewport_width := get_viewport_rect().size.x
+		var horizontal_pad := clampf(viewport_width * 0.055, 18.0, 28.0)
+		var available_width := viewport_width - horizontal_pad * 2.0
+		var mobile_title_size := 43 if viewport_width < 360.0 else (48 if compact else 52)
+		title_stage.custom_minimum_size = Vector2(0, 76 if compact else 88)
+		title_top.text = "逆命大郎"
+		title_echo_top.text = "逆命大郎"
+		title_top.position = Vector2(0, -8)
+		title_echo_top.position = Vector2(4, -4)
+		title_top.size = Vector2(available_width, 76)
+		title_echo_top.size = title_top.size
+		title_top.add_theme_font_size_override("font_size", mobile_title_size)
+		title_echo_top.add_theme_font_size_override("font_size", mobile_title_size)
+		title_bottom.visible = false
+		title_echo_bottom.visible = false
+		title_kicker.visible = false
+		title_seal.position = Vector2(available_width - 42, 31 if compact else 38)
+		title_seal.size = Vector2(38, 42)
+		title_seal.add_theme_font_size_override("font_size", 14)
+		title_art.scale = Vector2(0.72, 0.43)
+		title_art.position = Vector2(2, -6)
+	else:
+		title_stage.custom_minimum_size = Vector2(470, 206)
+		title_top.text = "逆命"
+		title_echo_top.text = "逆命"
+		title_bottom.text = "大郎"
+		title_echo_bottom.text = "大郎"
+		title_top.position = Vector2(0, -17)
+		title_echo_top.position = Vector2(6, -11)
+		title_bottom.position = Vector2(76, 70)
+		title_echo_bottom.position = Vector2(82, 76)
+		title_top.size = Vector2(292, 124)
+		title_echo_top.size = title_top.size
+		title_bottom.size = Vector2(300, 132)
+		title_echo_bottom.size = title_bottom.size
+		title_top.add_theme_font_size_override("font_size", 94)
+		title_echo_top.add_theme_font_size_override("font_size", 94)
+		title_bottom.add_theme_font_size_override("font_size", 102)
+		title_echo_bottom.add_theme_font_size_override("font_size", 102)
+		title_bottom.visible = true
+		title_echo_bottom.visible = true
+		title_kicker.visible = true
+		title_kicker.position = Vector2(346, 33)
+		title_kicker.size = Vector2(120, 72)
+		title_seal.position = Vector2(356, 116)
+		title_seal.size = Vector2(48, 58)
+		title_seal.add_theme_font_size_override("font_size", 19)
+		title_art.scale = Vector2.ONE
+		title_art.position = Vector2.ZERO
+
 func _build_success_layer() -> void:
 	success_layer = ColorRect.new()
 	success_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -281,14 +432,14 @@ func _apply_layout() -> void:
 	if mobile:
 		var pad := clampf(s.x * 0.055, 18.0, 28.0)
 		var compact := s.y < 720.0
-		brand.position = Vector2(pad, 24)
-		brand.size = Vector2(s.x - pad * 2.0, 154)
-		brand.get_child(0).visible = not compact
-		brand.get_child(0).add_theme_font_size_override("font_size", 22)
-		brand.get_child(1).add_theme_font_size_override("font_size", 46 if compact else 52)
-		brand.get_child(2).visible = not compact
-		brand.get_child(3).visible = false
-		brand.get_child(4).visible = false
+		brand.position = Vector2(pad, 54)
+		brand.size = Vector2(s.x - pad * 2.0, 126 if compact else 152)
+		brand.add_theme_constant_override("separation", 8)
+		_apply_title_layout(true, compact)
+		brand.get_child(1).visible = not compact
+		brand_statement.visible = not compact
+		brand_statement.add_theme_font_size_override("font_size", 17)
+		brand_subcopy.visible = false
 		form_root.add_theme_constant_override("separation", 10 if compact else 12)
 		form_margin.add_theme_constant_override("margin_top", 20 if compact else 24)
 		form_margin.add_theme_constant_override("margin_bottom", 18 if compact else 22)
@@ -314,20 +465,19 @@ func _apply_layout() -> void:
 			success_back_button.add_theme_font_size_override("font_size", 16)
 		success_title.add_theme_font_size_override("font_size", 26)
 		success_copy.add_theme_font_size_override("font_size", 16)
-		var panel_top := 142.0 if compact else 170.0
+		var panel_top := 148.0 if compact else 194.0
 		panel.position = Vector2(pad, panel_top)
 		panel.size = Vector2(s.x - pad * 2.0, s.y - panel_top - 18.0)
 	else:
 		var panel_width := clampf(s.x * 0.30, 390.0, 450.0)
-		brand.get_child(0).visible = true
-		brand.get_child(0).add_theme_font_size_override("font_size", 25)
-		brand.position = Vector2(s.x * 0.068, s.y * 0.245)
-		brand.size = Vector2(s.x * 0.44, 340)
-		brand.get_child(1).add_theme_font_size_override("font_size", 96)
-		brand.get_child(2).visible = true
-		brand.get_child(3).add_theme_font_size_override("font_size", 28)
-		brand.get_child(3).visible = true
-		brand.get_child(4).visible = true
+		brand.position = Vector2(s.x * 0.068, s.y * 0.205)
+		brand.size = Vector2(s.x * 0.44, 350)
+		brand.add_theme_constant_override("separation", 10)
+		_apply_title_layout(false, false)
+		brand.get_child(1).visible = true
+		brand_statement.add_theme_font_size_override("font_size", 24)
+		brand_statement.visible = true
+		brand_subcopy.visible = true
 		form_root.add_theme_constant_override("separation", 12)
 		form_margin.add_theme_constant_override("margin_left", 34)
 		form_margin.add_theme_constant_override("margin_top", 30)
