@@ -7,9 +7,117 @@ var focus_points: Dictionary = {}
 var camera_home := Vector3(0, 4.3, 9.2)
 var camera_target := Vector3(0, 2.0, 0)
 var time := 0.0
+var threshold_door_root: Node3D
+var threshold_door_pivot: Node3D
+var threshold_door_light: OmniLight3D
 
 func _ready() -> void:
 	set_process(true)
+
+func build_threshold_intro() -> void:
+	_clear_world()
+	_setup_world(Color("#050a10"), Color("#22384a"), 0.42)
+	camera.fov = 43.0
+	camera_home = Vector3(0.0, 2.72, 9.8)
+	camera_target = Vector3(0.0, 2.48, 0.15)
+	_place_camera(camera_home, camera_target)
+	var threshold_mobile := get_viewport().get_visible_rect().size.x < 760.0
+	var backdrop_path := "res://assets/bg/prologue-hk-door-2026-mobile-v1.png" if threshold_mobile else "res://assets/bg/prologue-hk-door-2026-v1.png"
+	_add_background(backdrop_path)
+	key_light.light_color = Color("#7697ad")
+	key_light.light_energy = 0.92
+
+	threshold_door_root = Node3D.new()
+	threshold_door_root.name = "ThresholdDoorAssembly"
+	threshold_door_root.scale = Vector3(0.70, 1.0, 0.70) if threshold_mobile else Vector3.ONE
+	add_child(threshold_door_root)
+
+	var frame_color := Color("#171c21")
+	var frame_edge := Color("#30383e")
+	_box_child(threshold_door_root, "DoorFrameLeft", Vector3(0.30, 5.35, 0.42), Vector3(-1.92, 2.58, 0.34), frame_color, 0.76, 0.34)
+	_box_child(threshold_door_root, "DoorFrameRight", Vector3(0.30, 5.35, 0.42), Vector3(1.92, 2.58, 0.34), frame_color, 0.76, 0.34)
+	_box_child(threshold_door_root, "DoorFrameTop", Vector3(4.14, 0.34, 0.44), Vector3(0.0, 5.10, 0.34), frame_edge, 0.72, 0.32)
+	_box_child(threshold_door_root, "DoorThreshold", Vector3(3.86, 0.14, 0.62), Vector3(0.0, -0.02, 0.48), Color("#343a3c"), 0.72, 0.28)
+
+	threshold_door_pivot = Node3D.new()
+	threshold_door_pivot.name = "ThresholdDoorHinge"
+	threshold_door_pivot.position = Vector3(-1.76, 2.54, 0.48)
+	threshold_door_root.add_child(threshold_door_pivot)
+
+	var door_color := Color("#2a343c")
+	_box_child(threshold_door_pivot, "DoorLeaf", Vector3(3.52, 4.94, 0.20), Vector3(1.76, 0.0, 0.0), door_color, 0.82, 0.32)
+	_box_child(threshold_door_pivot, "DoorInset", Vector3(3.12, 4.48, 0.05), Vector3(1.76, 0.0, 0.13), Color("#202a31"), 0.66, 0.38)
+	_box_child(threshold_door_pivot, "DoorKickPlate", Vector3(3.10, 0.72, 0.05), Vector3(1.76, -1.78, 0.17), Color("#4a5358"), 0.90, 0.24)
+
+	var glass := _box_child(
+		threshold_door_pivot,
+		"DoorWiredGlass",
+		Vector3(1.42, 1.22, 0.06),
+		Vector3(1.76, 0.92, 0.18),
+		Color(0.08, 0.15, 0.19, 0.92),
+		0.25,
+		0.18,
+		Color(0.08, 0.20, 0.25, 0.35)
+	)
+	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for index in 5:
+		_box_child(
+			threshold_door_pivot,
+			"GlassWireV%d" % index,
+			Vector3(0.018, 1.14, 0.015),
+			Vector3(1.28 + index * 0.24, 0.92, 0.225),
+			Color(0.55, 0.62, 0.64, 0.44),
+			0.82,
+			0.24
+		)
+	for index in 4:
+		_box_child(
+			threshold_door_pivot,
+			"GlassWireH%d" % index,
+			Vector3(1.34, 0.018, 0.015),
+			Vector3(1.76, 0.56 + index * 0.24, 0.225),
+			Color(0.55, 0.62, 0.64, 0.44),
+			0.82,
+			0.24
+		)
+
+	_box_child(threshold_door_pivot, "DoorHandleBack", Vector3(0.18, 0.72, 0.11), Vector3(2.88, -0.18, 0.24), Color("#11161a"), 0.80, 0.26)
+	_box_child(threshold_door_pivot, "DoorHandle", Vector3(0.15, 0.58, 0.15), Vector3(2.88, -0.18, 0.36), Color("#a2a09a"), 0.94, 0.18)
+	_box_child(threshold_door_pivot, "DeliverySticker", Vector3(0.58, 0.72, 0.025), Vector3(0.72, -0.62, 0.235), Color("#78322f"), 0.04, 0.66)
+	_box_child(threshold_door_pivot, "DeliveryStickerLine", Vector3(0.34, 0.035, 0.014), Vector3(0.72, -0.52, 0.255), Color("#d2b995"), 0.0, 0.72)
+	for index in 5:
+		_box_child(
+			threshold_door_pivot,
+			"DoorVent%d" % index,
+			Vector3(1.06, 0.045, 0.025),
+			Vector3(1.76, -1.05 + index * 0.13, 0.235),
+			Color("#586067"),
+			0.74,
+			0.28
+		)
+
+	_box_child(threshold_door_root, "DoorLightSeamRight", Vector3(0.055, 4.76, 0.07), Vector3(1.79, 2.54, 0.39), Color("#f1c47e"), 0.0, 0.18, Color("#f1b75f"))
+	_box_child(threshold_door_root, "DoorLightSeamBottom", Vector3(3.48, 0.055, 0.07), Vector3(0.0, 0.08, 0.39), Color("#eebc72"), 0.0, 0.18, Color("#e8a94d"))
+	_add_omni(Vector3(-1.25, 3.35, 4.55), Color("#6f94ad"), 2.35, 8.0)
+	threshold_door_light = _add_omni(Vector3(0.0, 2.5, -0.25), Color("#f3bd75"), 1.15, 5.2)
+	_box_child(threshold_door_root, "WetEntryMat", Vector3(3.58, 0.035, 1.38), Vector3(0.0, 0.04, 1.08), Color(0.04, 0.055, 0.06, 0.74), 0.12, 0.24)
+
+func open_threshold_door(reduce_motion: bool) -> void:
+	if threshold_door_pivot == null or not is_instance_valid(threshold_door_pivot):
+		return
+	if reduce_motion:
+		threshold_door_pivot.rotation_degrees.y = 82.0
+		camera.position = Vector3(0.0, 2.72, 7.25)
+		if threshold_door_light != null:
+			threshold_door_light.light_energy = 3.4
+		return
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(threshold_door_pivot, "rotation_degrees:y", 82.0, 1.35)
+	tween.tween_property(camera, "position", Vector3(0.0, 2.72, 7.25), 1.55)
+	if threshold_door_light != null:
+		tween.tween_property(threshold_door_light, "light_energy", 3.4, 0.72)
+	await tween.finished
 
 func build_modern_restaurant() -> void:
 	_clear_world()
@@ -197,6 +305,9 @@ func _clear_world() -> void:
 		child.queue_free()
 	warm_lights.clear()
 	focus_points.clear()
+	threshold_door_root = null
+	threshold_door_pivot = null
+	threshold_door_light = null
 
 func _setup_world(background: Color, ambient: Color, ambient_energy: float) -> void:
 	var world_environment := WorldEnvironment.new()
@@ -230,7 +341,9 @@ func _place_camera(position_value: Vector3, target: Vector3) -> void:
 func _add_background(texture_path: String) -> void:
 	var texture: Texture2D = load(texture_path)
 	var mesh := QuadMesh.new()
-	mesh.size = Vector2(19.2, 10.8)
+	var height := 10.8
+	var aspect := float(texture.get_width()) / float(maxi(1, texture.get_height()))
+	mesh.size = Vector2(height * aspect, height)
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.albedo_texture = texture
@@ -246,6 +359,9 @@ func _add_background(texture_path: String) -> void:
 	camera.add_child(instance)
 
 func _box(node_name: String, size_value: Vector3, position_value: Vector3, color: Color, metallic := 0.0, roughness := 0.82, emission := Color.TRANSPARENT) -> MeshInstance3D:
+	return _box_child(self, node_name, size_value, position_value, color, metallic, roughness, emission)
+
+func _box_child(parent: Node, node_name: String, size_value: Vector3, position_value: Vector3, color: Color, metallic := 0.0, roughness := 0.82, emission := Color.TRANSPARENT) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
 	mesh.size = size_value
 	var instance := MeshInstance3D.new()
@@ -253,7 +369,7 @@ func _box(node_name: String, size_value: Vector3, position_value: Vector3, color
 	instance.mesh = mesh
 	instance.position = position_value
 	instance.material_override = _material(color, metallic, roughness, emission)
-	add_child(instance)
+	parent.add_child(instance)
 	return instance
 
 func _cylinder(node_name: String, radius: float, height: float, position_value: Vector3, color: Color, metallic := 0.0, roughness := 0.82, emission := Color.TRANSPARENT) -> MeshInstance3D:

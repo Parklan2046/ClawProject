@@ -387,7 +387,7 @@
 	</div>
 	<script src="index.js"></script>
 	<script>
-	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":33149496,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":36860236,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 	const engine = new Engine(GODOT_CONFIG);
 
 	// Cache-bust the heavy Godot assets (.pck / .wasm / audio worklets) so a
@@ -622,6 +622,14 @@
 						break;
 					case "rain_focus":
 						this.noise(.48, .035, "highpass", 1700, 0, 3200);
+						break;
+					case "door_latch":
+						this.tone(102, 64, .22, .15, "square");
+						this.noise(.12, .07, "bandpass", 520, .03, 180);
+						break;
+					case "door_open":
+						this.noise(.94, .10, "lowpass", 1300, 0, 120);
+						this.tone(84, 42, .88, .09, "triangle");
 						break;
 					case "choice":
 						this.tone(430, 620, .16, .105, "triangle");

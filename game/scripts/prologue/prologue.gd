@@ -36,6 +36,19 @@ var summary_content: VBoxContainer
 var fade: ColorRect
 var top_bar: ColorRect
 var bottom_bar: ColorRect
+var threshold_layer: Control
+var threshold_veil: ColorRect
+var threshold_date: Label
+var threshold_location: Label
+var threshold_time: Label
+var threshold_story_one: Label
+var threshold_story_two: Label
+var threshold_story_three: Label
+var threshold_button: Button
+var threshold_hint: Label
+var threshold_text_nodes: Array[Control] = []
+var threshold_reveal_tween: Tween
+var threshold_opening := false
 var current_lines: Array = []
 var current_line_index := -1
 var after_lines := Callable()
@@ -77,7 +90,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_apply_layout)
 	_apply_layout()
 	GameState.reset_prologue()
-	_start_modern_intro()
+	_start_threshold_intro()
 
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
@@ -274,8 +287,92 @@ func _build_ui() -> void:
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fade.color = Color(0.96, 0.91, 0.79, 0)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fade.z_index = 100
+	fade.z_index = 300
 	ui_root.add_child(fade)
+	_build_threshold_layer()
+
+func _build_threshold_layer() -> void:
+	threshold_layer = Control.new()
+	threshold_layer.name = "ThresholdIntro"
+	threshold_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	threshold_layer.mouse_filter = Control.MOUSE_FILTER_PASS
+	threshold_layer.z_index = 200
+	threshold_layer.visible = false
+	ui_root.add_child(threshold_layer)
+
+	threshold_veil = ColorRect.new()
+	threshold_veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	threshold_veil.color = Color(0.015, 0.025, 0.036, 0.22)
+	threshold_veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	threshold_layer.add_child(threshold_veil)
+
+	threshold_date = _threshold_label("公\n元\n二\n〇\n二\n六\n年", 25, Color("#e2c98f"))
+	threshold_layer.add_child(threshold_date)
+	threshold_location = _threshold_label("香\n港\n・\n雨\n夜", 18, Color("#b9c8ce"))
+	threshold_layer.add_child(threshold_location)
+
+	threshold_time = Label.new()
+	threshold_time.text = "A.D. 2026  ·  凌晨三點十七分"
+	threshold_time.add_theme_font_override("font", serif_font)
+	threshold_time.add_theme_font_size_override("font_size", 15)
+	threshold_time.add_theme_color_override("font_color", Color("#c7b892"))
+	threshold_time.add_theme_constant_override("outline_size", 5)
+	threshold_time.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.03, 0.92))
+	threshold_time.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	threshold_layer.add_child(threshold_time)
+
+	threshold_story_one = _threshold_label("十\n二\n個\n外\n賣\n點", 22, Color("#d7d2c7"))
+	threshold_layer.add_child(threshold_story_one)
+	threshold_story_two = _threshold_label("只\n剩\n最\n後\n一\n盞\n燈", 22, Color("#e0c37e"))
+	threshold_layer.add_child(threshold_story_two)
+	threshold_story_three = _threshold_label("而\n你\n仍\n然\n唔\n肯\n走", 22, Color("#e7ded0"))
+	threshold_layer.add_child(threshold_story_three)
+
+	threshold_button = _button("推門入局", true)
+	threshold_button.name = "OpenDoorButton"
+	threshold_button.custom_minimum_size = Vector2(250, 58)
+	threshold_button.add_theme_font_override("font", serif_font)
+	threshold_button.add_theme_font_size_override("font_size", 22)
+	threshold_button.add_theme_stylebox_override("normal", _panel_style(Color(0.035, 0.043, 0.050, 0.96), Color("#d0ad65"), 3, 1))
+	threshold_button.add_theme_stylebox_override("hover", _panel_style(Color("#8f342f"), Color("#e4c47e"), 3, 1))
+	threshold_button.add_theme_stylebox_override("pressed", _panel_style(Color("#682521"), Color("#caa45d"), 3, 1))
+	threshold_button.pressed.connect(_open_threshold_door)
+	threshold_layer.add_child(threshold_button)
+
+	threshold_hint = Label.new()
+	threshold_hint.text = "門一開，舊命開始倒數。"
+	threshold_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	threshold_hint.add_theme_font_override("font", serif_font)
+	threshold_hint.add_theme_font_size_override("font_size", 15)
+	threshold_hint.add_theme_color_override("font_color", Color("#b9b3a8"))
+	threshold_hint.add_theme_constant_override("outline_size", 4)
+	threshold_hint.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.03, 0.92))
+	threshold_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	threshold_layer.add_child(threshold_hint)
+
+	threshold_text_nodes = [
+		threshold_date,
+		threshold_location,
+		threshold_time,
+		threshold_story_one,
+		threshold_story_two,
+		threshold_story_three,
+		threshold_button,
+		threshold_hint
+	]
+
+func _threshold_label(value: String, font_size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.text = value
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", serif_font)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_constant_override("line_spacing", 5)
+	label.add_theme_constant_override("outline_size", 6)
+	label.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.03, 0.94))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
 func _build_portrait_layer() -> void:
 	modern_portrait = _portrait_rect(MODERN_PORTRAIT, "ModernPlayerPortrait")
@@ -335,17 +432,88 @@ func _fade_portrait(portrait: TextureRect, target_alpha: float, active: bool) ->
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(portrait, "modulate", target_color, 0.28)
 
+func _start_threshold_intro() -> void:
+	song_era = false
+	pan_present = false
+	threshold_opening = false
+	_hide_portraits()
+	world.build_threshold_intro()
+	sfx.start_ambience("modern")
+	top_bar.visible = false
+	bottom_bar.visible = false
+	chapter_label.visible = false
+	objective_label.visible = false
+	dialogue_panel.visible = false
+	choice_panel.visible = false
+	inspect_panel.visible = false
+	repair_panel.visible = false
+	summary_panel.visible = false
+	threshold_layer.visible = true
+	threshold_layer.modulate = Color.WHITE
+	threshold_button.disabled = true
+	threshold_button.text = "推門入局"
+	for node in threshold_text_nodes:
+		node.modulate.a = 1.0 if reduce_motion else 0.0
+	if reduce_motion:
+		threshold_button.disabled = false
+		return
+	if threshold_reveal_tween and threshold_reveal_tween.is_valid():
+		threshold_reveal_tween.kill()
+	threshold_reveal_tween = create_tween()
+	threshold_reveal_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	threshold_reveal_tween.tween_interval(0.22)
+	for node in threshold_text_nodes:
+		threshold_reveal_tween.tween_property(node, "modulate:a", 1.0, 0.34)
+		if node == threshold_location or node == threshold_story_two:
+			threshold_reveal_tween.tween_interval(0.12)
+	threshold_reveal_tween.tween_callback(func() -> void: threshold_button.disabled = false)
+
+func _open_threshold_door() -> void:
+	if threshold_opening:
+		return
+	threshold_opening = true
+	threshold_button.disabled = true
+	threshold_button.text = "門鎖已開"
+	if threshold_reveal_tween and threshold_reveal_tween.is_valid():
+		threshold_reveal_tween.kill()
+	for node in threshold_text_nodes:
+		node.modulate.a = 1.0
+	sfx.play("door_latch")
+	if not reduce_motion:
+		await get_tree().create_timer(0.18).timeout
+	sfx.play("door_open")
+	music.play_track("modern", 1.35)
+	var text_fade := create_tween().set_parallel(true)
+	text_fade.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	for node in threshold_text_nodes:
+		text_fade.tween_property(node, "modulate:a", 0.0, 0.38)
+	text_fade.tween_property(threshold_veil, "color:a", 0.05, 0.65)
+	await world.open_threshold_door(reduce_motion)
+	fade.color = Color(0.012, 0.018, 0.025, 0.0)
+	var cover_duration := 0.01 if reduce_motion else 0.36
+	var cover := create_tween()
+	cover.tween_property(fade, "color:a", 1.0, cover_duration)
+	await cover.finished
+	threshold_layer.visible = false
+	_start_modern_intro()
+	var reveal_duration := 0.01 if reduce_motion else 0.72
+	var reveal := create_tween()
+	reveal.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	reveal.tween_property(fade, "color:a", 0.0, reveal_duration)
+
 func _start_modern_intro() -> void:
 	song_era = false
 	pan_present = false
 	_hide_portraits()
 	world.build_modern_restaurant()
-	music.play_track("modern", 1.5)
-	sfx.start_ambience("modern")
+	top_bar.visible = true
+	bottom_bar.visible = true
+	chapter_label.visible = true
+	objective_label.visible = true
 	chapter_label.text = "序章 00 · LAST ORDER"
 	objective_label.text = "目標｜收拾最後一夜"
 	_run_lines([
-		{"speaker": "旁白", "text": "凌晨三點十七分。最後一張訂單早已送出，捲閘落了一半，雨仍然密密打在玻璃上。"},
+		{"speaker": "旁白", "text": "捲閘落了一半，雨仍然密密打在玻璃上。最後一張訂單，早喺二十七分鐘前送到。"},
 		{"speaker": "旁白", "text": "十二個外賣點，只剩這間中央廚房未熄燈。雪櫃壓縮機偶爾低鳴，像一盤生意最後的呼吸。"},
 		{"speaker": "手機通知", "text": "[color=#df776b]平台扣款：HK$18,420。供應商催款：最後期限。合夥人帳戶：已停用。[/color]", "cue": "notification"}
 	], _modern_receipts_beat)
@@ -794,6 +962,7 @@ func _apply_layout() -> void:
 	var size_value: Vector2 = get_viewport().get_visible_rect().size
 	mobile = size_value.x < 760.0
 	compact = size_value.y < 600.0
+	_apply_threshold_layout(size_value)
 	top_bar.position = Vector2.ZERO
 	top_bar.size = Vector2(size_value.x, 28 if mobile else 30)
 	bottom_bar.position = Vector2(0, size_value.y - (24 if mobile else 26))
@@ -863,6 +1032,66 @@ func _apply_layout() -> void:
 		summary_panel.size = Vector2(summary_width, minf(620, size_value.y - 160))
 	if dialogue_panel.visible:
 		_update_portraits_for_speaker(speaker_label.text)
+
+func _apply_threshold_layout(size_value: Vector2) -> void:
+	if threshold_layer == null:
+		return
+	if mobile:
+		var edge := 16.0
+		var column_width := 40.0
+		threshold_time.position = Vector2(68, 22)
+		threshold_time.size = Vector2(size_value.x - 136, 30)
+		threshold_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		threshold_time.add_theme_font_size_override("font_size", 16)
+		threshold_date.position = Vector2(edge, 68)
+		threshold_date.size = Vector2(column_width, minf(310, size_value.y * 0.44))
+		threshold_date.add_theme_font_size_override("font_size", 19)
+		threshold_date.add_theme_constant_override("line_spacing", 3)
+		threshold_location.position = Vector2(edge + 42, 94)
+		threshold_location.size = Vector2(column_width, 224)
+		threshold_location.add_theme_font_size_override("font_size", 16)
+		threshold_location.add_theme_constant_override("line_spacing", 4)
+		threshold_story_one.position = Vector2(size_value.x - 132, 86)
+		threshold_story_two.position = Vector2(size_value.x - 92, 72)
+		threshold_story_three.position = Vector2(size_value.x - 52, 94)
+		for story_label in [threshold_story_one, threshold_story_two, threshold_story_three]:
+			story_label.size = Vector2(38, minf(332, size_value.y * 0.48))
+			story_label.add_theme_font_size_override("font_size", 17)
+			story_label.add_theme_constant_override("line_spacing", 4)
+		var button_width := minf(280, size_value.x - 54)
+		threshold_button.position = Vector2((size_value.x - button_width) * 0.5, size_value.y - 150)
+		threshold_button.size = Vector2(button_width, 58)
+		threshold_button.add_theme_font_size_override("font_size", 20)
+		threshold_hint.position = Vector2(24, size_value.y - 79)
+		threshold_hint.size = Vector2(size_value.x - 48, 28)
+		threshold_hint.add_theme_font_size_override("font_size", 16)
+	else:
+		var edge := clampf(size_value.x * 0.055, 52.0, 88.0)
+		threshold_time.position = Vector2(edge + 14, 54)
+		threshold_time.size = Vector2(330, 30)
+		threshold_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		threshold_time.add_theme_font_size_override("font_size", 15)
+		threshold_date.position = Vector2(edge, 96)
+		threshold_date.size = Vector2(52, 350)
+		threshold_date.add_theme_font_size_override("font_size", 25)
+		threshold_date.add_theme_constant_override("line_spacing", 5)
+		threshold_location.position = Vector2(edge + 70, 150)
+		threshold_location.size = Vector2(42, 250)
+		threshold_location.add_theme_font_size_override("font_size", 18)
+		threshold_location.add_theme_constant_override("line_spacing", 5)
+		threshold_story_one.position = Vector2(size_value.x - edge - 224, 116)
+		threshold_story_two.position = Vector2(size_value.x - edge - 142, 88)
+		threshold_story_three.position = Vector2(size_value.x - edge - 60, 126)
+		for story_label in [threshold_story_one, threshold_story_two, threshold_story_three]:
+			story_label.size = Vector2(52, 390)
+			story_label.add_theme_font_size_override("font_size", 22)
+			story_label.add_theme_constant_override("line_spacing", 6)
+		threshold_button.position = Vector2((size_value.x - 250) * 0.5, size_value.y - 154)
+		threshold_button.size = Vector2(250, 58)
+		threshold_button.add_theme_font_size_override("font_size", 22)
+		threshold_hint.position = Vector2((size_value.x - 340) * 0.5, size_value.y - 83)
+		threshold_hint.size = Vector2(340, 28)
+		threshold_hint.add_theme_font_size_override("font_size", 15)
 
 func _button(label: String, primary: bool) -> Button:
 	var button := Button.new()

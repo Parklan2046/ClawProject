@@ -110,6 +110,8 @@ func _build_native_streams() -> void:
 		"paper": _noise(0.24, 0.18, 0.62, 720.0),
 		"voicemail": _tone(0.42, 148.0, 132.0, 0.20, "square", 18.0),
 		"rain_focus": _noise(0.42, 0.09, 0.36, 1400.0),
+		"door_latch": _tone(0.24, 96.0, 62.0, 0.28, "square", 14.0),
+		"door_open": _noise_tone(0.92, 0.16, 82.0, 44.0),
 		"choice": _tone(0.20, 480.0, 720.0, 0.27, "triangle", 10.0),
 		"transition": _noise_tone(1.35, 0.20, 92.0, 42.0),
 		"wake": _noise_tone(0.48, 0.22, 118.0, 76.0),
@@ -227,6 +229,8 @@ func _native_volume(cue: String) -> float:
 		return -7.0
 	if cue == "rain_focus":
 		return -14.0
+	if cue in ["door_latch", "door_open"]:
+		return -8.0
 	if cue in ["gauge_start", "paper", "debt"]:
 		return -13.0
 	return -10.0

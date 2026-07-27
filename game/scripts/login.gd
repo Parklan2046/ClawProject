@@ -52,6 +52,7 @@ var success_continue_button: Button
 var success_back_button: Button
 var ost: WuxiaOST
 var session_player_name := "無名"
+var login_transitioning := false
 
 func _ready() -> void:
 	reduce_motion = _prefers_reduced_motion()
@@ -561,14 +562,27 @@ func _toggle_music() -> void:
 	await get_tree().process_frame
 	music_button.text = "音樂 · 關" if ost.is_music_paused() else "音樂 · 開"
 
-func _complete(name: String, guest: bool) -> void:
+func _complete(name: String, _guest: bool) -> void:
+	if login_transitioning:
+		return
+	login_transitioning = true
 	error_label.text = " "
 	session_player_name = name
-	success_copy.text = "遊客模式已準備好。" if guest else "少俠「%s」，你的旅程已準備好。" % name
+	GameState.player_name = session_player_name
+	enter_button.disabled = true
+	guest_button.disabled = true
+	success_content.visible = false
 	success_layer.visible = true
 	success_layer.modulate.a = 1.0 if reduce_motion else 0.0
-	if not reduce_motion:
-		create_tween().tween_property(success_layer, "modulate:a", 1.0, 0.36)
+	if reduce_motion:
+		get_tree().change_scene_to_file("res://scenes/prologue.tscn")
+		return
+	var transition := create_tween()
+	transition.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	transition.tween_property(success_layer, "modulate:a", 1.0, 0.44)
+	transition.tween_callback(func() -> void:
+		get_tree().change_scene_to_file("res://scenes/prologue.tscn")
+	)
 
 func _close_success() -> void:
 	if reduce_motion:

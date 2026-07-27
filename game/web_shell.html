@@ -623,6 +623,14 @@
 					case "rain_focus":
 						this.noise(.48, .035, "highpass", 1700, 0, 3200);
 						break;
+					case "door_latch":
+						this.tone(102, 64, .22, .15, "square");
+						this.noise(.12, .07, "bandpass", 520, .03, 180);
+						break;
+					case "door_open":
+						this.noise(.94, .10, "lowpass", 1300, 0, 120);
+						this.tone(84, 42, .88, .09, "triangle");
+						break;
 					case "choice":
 						this.tone(430, 620, .16, .105, "triangle");
 						this.tone(620, 820, .16, .075, "sine", .08);
