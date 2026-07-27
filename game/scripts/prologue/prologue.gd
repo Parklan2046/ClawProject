@@ -3,6 +3,7 @@ extends Node3D
 const WORLD_SCRIPT = preload("res://scripts/prologue/prologue_world.gd")
 const GAUGE_SCRIPT = preload("res://scripts/ui/timing_gauge.gd")
 const SFX_SCRIPT = preload("res://scripts/audio/prologue_sfx.gd")
+const MUSIC_SCRIPT = preload("res://scripts/audio/prologue_music.gd")
 const MODERN_PORTRAIT = preload("res://assets/characters/prologue/modern-player-neutral-v1.png")
 const WU_DALANG_PORTRAIT = preload("res://assets/characters/prologue/wu-dalang-neutral-v1.png")
 const PAN_JINLIAN_PORTRAIT = preload("res://assets/characters/prologue/pan-jinlian-glamorous-v2.png")
@@ -14,6 +15,7 @@ const INK := Color("#090b0f")
 
 var world: Node3D
 var sfx: Node
+var music: Node
 var ui_root: Control
 var chapter_label: Label
 var objective_label: Label
@@ -67,6 +69,9 @@ func _ready() -> void:
 	sfx = SFX_SCRIPT.new()
 	sfx.name = "PrologueSFX"
 	add_child(sfx)
+	music = MUSIC_SCRIPT.new()
+	music.name = "PrologueMusic"
+	add_child(music)
 	_build_ui()
 	WuxiaOST.stop_web_audio()
 	get_viewport().size_changed.connect(_apply_layout)
@@ -335,6 +340,7 @@ func _start_modern_intro() -> void:
 	pan_present = false
 	_hide_portraits()
 	world.build_modern_restaurant()
+	music.play_track("modern", 1.5)
 	sfx.start_ambience("modern")
 	chapter_label.text = "序章 00 · LAST ORDER"
 	objective_label.text = "目標｜收拾最後一夜"
@@ -426,6 +432,7 @@ func _select_principle(id: String) -> void:
 func _cross_to_song() -> void:
 	dialogue_panel.visible = false
 	_hide_portraits()
+	music.play_track("song", 1.8)
 	sfx.stop_ambience(0.55)
 	var duration := 0.01 if reduce_motion else 0.85
 	var tween := create_tween()
@@ -713,6 +720,8 @@ func _advance_line() -> void:
 	var cue := str(line.get("cue", ""))
 	if not cue.is_empty():
 		sfx.play(cue)
+		if cue == "transition":
+			music.duck(8.0, 1.6)
 	dialogue_body.text = str(line.get("text", ""))
 	dialogue_body.visible_ratio = 1.0 if reduce_motion else 0.0
 	continue_button.text = "繼續  ›" if current_line_index < current_lines.size() - 1 else "確認  ›"

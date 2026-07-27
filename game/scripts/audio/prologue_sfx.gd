@@ -105,7 +105,7 @@ func _build_native_streams() -> void:
 		"paper": _noise(0.24, 0.18, 0.62, 720.0),
 		"voicemail": _tone(0.42, 148.0, 132.0, 0.20, "square", 18.0),
 		"rain_focus": _noise(0.42, 0.16, 0.36, 1400.0),
-		"choice": _tone(0.20, 480.0, 720.0, 0.18, "triangle", 10.0),
+		"choice": _tone(0.20, 480.0, 720.0, 0.27, "triangle", 10.0),
 		"transition": _noise_tone(1.35, 0.34, 92.0, 42.0),
 		"wake": _noise_tone(0.48, 0.22, 118.0, 76.0),
 		"memory": _tone(0.72, 310.0, 188.0, 0.13, "sine", 5.0),
@@ -114,9 +114,9 @@ func _build_native_streams() -> void:
 		"debt": _noise(0.32, 0.18, 0.58, 640.0),
 		"stove": _noise_tone(0.38, 0.25, 104.0, 72.0),
 		"pan_enter": _tone(0.46, 390.0, 590.0, 0.14, "sine", 7.0),
-		"contract_equal": _tone(0.42, 440.0, 880.0, 0.20, "triangle", 7.0),
-		"contract_trial": _tone(0.34, 390.0, 560.0, 0.17, "triangle", 9.0),
-		"contract_refuse": _tone(0.44, 220.0, 128.0, 0.20, "triangle", 8.0),
+		"contract_equal": _tone(0.42, 440.0, 880.0, 0.29, "triangle", 7.0),
+		"contract_trial": _tone(0.34, 390.0, 560.0, 0.25, "triangle", 9.0),
+		"contract_refuse": _tone(0.44, 220.0, 128.0, 0.28, "triangle", 8.0),
 		"repair_prepare": _noise_tone(0.44, 0.18, 124.0, 96.0),
 		"gauge_start": _tone(0.12, 520.0, 520.0, 0.12, "triangle", 16.0),
 		"gauge_perfect": _tone(0.28, 740.0, 1320.0, 0.22, "sine", 10.0),
@@ -215,6 +215,8 @@ func _wav_from_samples(samples: PackedFloat32Array) -> AudioStreamWAV:
 
 func _native_volume(cue: String) -> float:
 	if cue in ["transition", "fire_master", "summary"]:
+		return -7.0
+	if cue == "choice" or cue.begins_with("contract_"):
 		return -7.0
 	if cue in ["gauge_start", "paper", "debt"]:
 		return -13.0
