@@ -10,7 +10,10 @@ var banner_nodes: Array[Node3D] = []
 var fire_nodes: Array[MeshInstance3D] = []
 var fire_lights: Array[OmniLight3D] = []
 var flame_shader: Shader
+var flame_particle_shader: Shader
 var ember_shader: Shader
+var smoke_shader: Shader
+var fire_glow_shader: Shader
 var elapsed := 0.0
 var rng := RandomNumberGenerator.new()
 
@@ -101,7 +104,6 @@ func _build_environment() -> void:
 	environment.glow_hdr_threshold = 0.90
 	environment.glow_hdr_scale = 1.40
 	environment.glow_hdr_luminance_cap = 12.0
-	environment.glow_high_quality = false
 	environment.set("glow_levels/1", 0.0)
 	environment.set("glow_levels/2", 0.35)
 	environment.set("glow_levels/3", 0.70)
@@ -413,66 +415,93 @@ func _build_fire_braziers() -> void:
 		bowl_instance.material_override = dark_wood_material
 		bowl_instance.position = position + Vector3(0.0, 0.82, 0.0)
 		world_root.add_child(bowl_instance)
-		for lobe_index in 4:
-			var flame_mesh := SphereMesh.new()
-			flame_mesh.radius = 0.18 + float(lobe_index % 2) * 0.05
-			flame_mesh.height = 0.76 + float(lobe_index) * 0.12
-			flame_mesh.radial_segments = 12
-			flame_mesh.rings = 8
-			var flame := MeshInstance3D.new()
-			flame.name = "AnimatedFireLobe"
-			flame.mesh = flame_mesh
-			var fmat := _flame_material(
-				float(i) * 7.31 + float(lobe_index) * 2.17,
-				2.2 + (0.5 if lobe_index == 0 else 0.0),
-				flame_mesh.height)
-			flame.material_override = fmat
-			var offset_x := (float(lobe_index) - 1.5) * 0.14
-			var base_y := position.y + 1.16 + float(lobe_index % 2) * 0.13
-			flame.position = Vector3(position.x + offset_x, base_y, position.z + (0.10 if lobe_index % 2 == 0 else -0.08))
-			flame.rotation_degrees.z = -16.0 + float(lobe_index) * 11.0
-			flame.set_meta("phase", float(i) * 2.9 + float(lobe_index) * 1.7)
-			flame.set_meta("base_y", base_y)
-			flame.set_meta("base_scale", Vector3(0.82, 1.0 + float(lobe_index) * 0.08, 0.82))
-			flame.set_meta("freq_a", [6.3, 7.9, 5.6, 9.1][lobe_index])
-			flame.set_meta("freq_b", [9.7, 5.2, 10.4, 6.8][lobe_index])
-			world_root.add_child(flame)
-			fire_nodes.append(flame)
+
+		# A small bed of crossed, glowing charcoal gives the flame a believable
+		# physical source instead of letting it float above the brazier.
+		var coal_material := StandardMaterial3D.new()
+		coal_material.albedo_color = Color("#160b08")
+		coal_material.roughness = 0.96
+		coal_material.emission_enabled = true
+		coal_material.emission = Color("#8b1f0d")
+		coal_material.emission_energy_multiplier = 0.72
+		for log_index in 3:
+			var log_mesh := CylinderMesh.new()
+			log_mesh.top_radius = 0.075
+			log_mesh.bottom_radius = 0.085
+			log_mesh.height = 0.82
+			log_mesh.radial_segments = 8
+			var log_instance := MeshInstance3D.new()
+			log_instance.name = "GlowingCharcoal"
+			log_instance.mesh = log_mesh
+			log_instance.material_override = coal_material
+			log_instance.position = position + Vector3(0.0, 1.01 + float(log_index) * 0.035, 0.0)
+			log_instance.rotation_degrees = Vector3(0.0, -28.0 + float(log_index) * 28.0, 90.0)
+			world_root.add_child(log_instance)
+
+		var flame_root := Node3D.new()
+		flame_root.name = "LayeredFire"
+		flame_root.position = position + Vector3(0.0, 1.02, 0.0)
+		world_root.add_child(flame_root)
+
+		# A low-opacity crossed card gives the fire a stable base volume. The
+		# individual rising wisps below provide the visible, irregular tongues.
+		_add_flame_layer(
+			flame_root, "FireVolume", Vector2(1.02, 1.34), 0.36,
+			float(i) * 7.31 + 1.2, Color("#ff9b38"), Color("#f04412"),
+			Color("#78100a"), 0.38, 0.24, 0.14)
+		_add_flame_particles(flame_root, i)
+		_add_fire_smoke(flame_root, i)
+
+		var glow_mesh := QuadMesh.new()
+		glow_mesh.size = Vector2(2.15, 2.15)
+		var glow := MeshInstance3D.new()
+		glow.name = "FireGroundGlow"
+		glow.mesh = glow_mesh
+		var glow_material := ShaderMaterial.new()
+		glow_material.shader = _fire_glow_shader()
+		glow_material.set_shader_parameter("glow_color", Color("#ff6221"))
+		glow_material.set_shader_parameter("strength", 0.48 if i == 0 else 0.38)
+		glow.material_override = glow_material
+		glow.position = position + Vector3(0.0, 0.985, 0.0)
+		glow.rotation_degrees.x = -90.0
+		world_root.add_child(glow)
+
 		var firelight := OmniLight3D.new()
 		firelight.name = "FireGlow"
-		firelight.position = position + Vector3(0.0, 1.20, 0.0)
-		firelight.light_color = Color("#ff7a2e")
-		firelight.light_energy = 5.2
-		firelight.omni_range = 8.0
+		firelight.position = position + Vector3(0.0, 1.38, 0.0)
+		firelight.light_color = Color("#ff9a55")
+		firelight.light_energy = 3.9
+		firelight.omni_range = 7.0
 		firelight.shadow_enabled = false
 		world_root.add_child(firelight)
 		fire_lights.append(firelight)
+
 		var embers := GPUParticles3D.new()
 		embers.name = "FireEmbers"
-		embers.position = position + Vector3(0.0, 1.05, 0.0)
-		embers.amount = 32 if i == 0 else 24
-		embers.lifetime = 1.6
-		embers.preprocess = 1.6
+		embers.position = position + Vector3(0.0, 1.12, 0.0)
+		embers.amount = 22 if i == 0 else 16
+		embers.lifetime = 2.15
+		embers.preprocess = 2.15
 		embers.emitting = not reduce_motion
 		embers.explosiveness = 0.0
-		embers.randomness = 0.0
+		embers.randomness = 0.58
 		embers.local_coords = true
-		embers.fixed_fps = 0
-		embers.visibility_aabb = AABB(Vector3(-0.35, 0.0, -0.35), Vector3(0.7, 2.2, 0.7))
+		embers.fixed_fps = 30
+		embers.visibility_aabb = AABB(Vector3(-0.55, -0.1, -0.55), Vector3(1.1, 2.8, 1.1))
 		world_root.add_child(embers)
 		var pm := ParticleProcessMaterial.new()
-		pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
-		pm.emission_sphere_radius = 0.10
+		pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		pm.emission_box_extents = Vector3(0.28, 0.05, 0.22)
 		pm.direction = Vector3(0.0, 1.0, 0.0)
-		pm.spread = 16.0
+		pm.spread = 12.0
 		pm.flatness = 0.0
-		pm.gravity = Vector3(0.0, -0.50, 0.0)
-		pm.initial_velocity_min = 0.9
-		pm.initial_velocity_max = 1.7
-		pm.angular_velocity_min = -2.0
-		pm.angular_velocity_max = 2.0
-		pm.scale_min = 0.020
-		pm.scale_max = 0.045
+		pm.gravity = Vector3(0.12 if i == 0 else -0.10, 0.18, 0.03)
+		pm.initial_velocity_min = 0.65
+		pm.initial_velocity_max = 1.45
+		pm.angular_velocity_min = -0.45
+		pm.angular_velocity_max = 0.45
+		pm.scale_min = 0.52
+		pm.scale_max = 1.35
 		pm.hue_variation_min = 0.0
 		pm.hue_variation_max = 0.0
 		var grad := Gradient.new()
@@ -487,15 +516,134 @@ func _build_fire_braziers() -> void:
 		ramp.gradient = grad
 		pm.color_ramp = ramp
 		embers.process_material = pm
-		var ember_mesh := SphereMesh.new()
-		ember_mesh.radius = 0.025
-		ember_mesh.height = 0.05
-		ember_mesh.radial_segments = 5
-		ember_mesh.rings = 2
+		var ember_mesh := QuadMesh.new()
+		ember_mesh.size = Vector2(0.035, 0.115)
 		embers.draw_pass_1 = ember_mesh
 		var ember_mat := ShaderMaterial.new()
 		ember_mat.shader = _ember_shader()
 		embers.material_override = ember_mat
+
+func _add_flame_layer(
+	parent: Node3D,
+	layer_name: String,
+	card_size: Vector2,
+	y_offset: float,
+	seed_value: float,
+	core_color: Color,
+	mid_color: Color,
+	tip_color: Color,
+	intensity: float,
+	opacity: float,
+	sway: float
+) -> void:
+	for card_index in 2:
+		var card_mesh := QuadMesh.new()
+		card_mesh.size = card_size
+		var card := MeshInstance3D.new()
+		card.name = layer_name
+		card.mesh = card_mesh
+		card.material_override = _flame_material(
+			seed_value + float(card_index) * 3.83,
+			intensity,
+			opacity,
+			sway,
+			core_color,
+			mid_color,
+			tip_color)
+		card.position.y = y_offset
+		card.rotation_degrees.y = -7.0 + float(card_index) * 67.0
+		parent.add_child(card)
+		fire_nodes.append(card)
+
+func _add_flame_particles(parent: Node3D, brazier_index: int) -> void:
+	var wisps := GPUParticles3D.new()
+	wisps.name = "RisingFlameWisps"
+	wisps.position = Vector3(0.0, 0.06, 0.0)
+	wisps.amount = 28 if brazier_index == 0 else 20
+	wisps.lifetime = 0.92
+	wisps.preprocess = 0.92
+	wisps.emitting = not reduce_motion
+	wisps.randomness = 0.78
+	wisps.local_coords = true
+	wisps.fixed_fps = 30
+	wisps.visibility_aabb = AABB(Vector3(-0.7, -0.1, -0.6), Vector3(1.4, 2.0, 1.2))
+	parent.add_child(wisps)
+
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	process.emission_box_extents = Vector3(0.29, 0.035, 0.22)
+	process.direction = Vector3(0.0, 1.0, 0.0)
+	process.spread = 10.0
+	process.gravity = Vector3(0.10 if brazier_index == 0 else -0.08, 0.34, 0.0)
+	process.initial_velocity_min = 0.24
+	process.initial_velocity_max = 0.76
+	process.scale_min = 0.54
+	process.scale_max = 1.18
+	process.angular_velocity_min = -0.25
+	process.angular_velocity_max = 0.25
+	var wisp_gradient := Gradient.new()
+	wisp_gradient.remove_point(1)
+	wisp_gradient.set_color(0, Color("#ffe6a0", 0.96))
+	wisp_gradient.set_offset(0, 0.0)
+	wisp_gradient.add_point(0.28, Color("#ff9b2e", 0.90))
+	wisp_gradient.add_point(0.68, Color("#e73a10", 0.62))
+	wisp_gradient.add_point(1.0, Color("#7d1008", 0.0))
+	var wisp_ramp := GradientTexture1D.new()
+	wisp_ramp.gradient = wisp_gradient
+	process.color_ramp = wisp_ramp
+	wisps.process_material = process
+
+	var wisp_quad := QuadMesh.new()
+	wisp_quad.size = Vector2(0.38, 0.72)
+	wisps.draw_pass_1 = wisp_quad
+	var wisp_material := ShaderMaterial.new()
+	wisp_material.shader = _flame_particle_shader()
+	wisps.material_override = wisp_material
+
+func _add_fire_smoke(parent: Node3D, brazier_index: int) -> void:
+	var smoke := GPUParticles3D.new()
+	smoke.name = "FireSmoke"
+	smoke.position = Vector3(0.0, 0.44, 0.04)
+	smoke.amount = 9 if brazier_index == 0 else 6
+	smoke.lifetime = 2.65
+	smoke.preprocess = 2.65
+	smoke.emitting = not reduce_motion
+	smoke.randomness = 0.86
+	smoke.local_coords = true
+	smoke.fixed_fps = 24
+	smoke.visibility_aabb = AABB(Vector3(-0.9, -0.2, -0.8), Vector3(1.8, 3.5, 1.6))
+	parent.add_child(smoke)
+
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	process.emission_box_extents = Vector3(0.20, 0.04, 0.16)
+	process.direction = Vector3(0.0, 1.0, 0.0)
+	process.spread = 14.0
+	process.gravity = Vector3(0.16 if brazier_index == 0 else -0.12, 0.10, 0.02)
+	process.initial_velocity_min = 0.26
+	process.initial_velocity_max = 0.52
+	process.scale_min = 0.42
+	process.scale_max = 0.88
+	process.angular_velocity_min = -0.34
+	process.angular_velocity_max = 0.34
+	var smoke_gradient := Gradient.new()
+	smoke_gradient.remove_point(1)
+	smoke_gradient.set_color(0, Color("#362e2b", 0.02))
+	smoke_gradient.set_offset(0, 0.0)
+	smoke_gradient.add_point(0.24, Color("#3b3d43", 0.18))
+	smoke_gradient.add_point(0.64, Color("#4d5560", 0.11))
+	smoke_gradient.add_point(1.0, Color("#68717d", 0.0))
+	var smoke_ramp := GradientTexture1D.new()
+	smoke_ramp.gradient = smoke_gradient
+	process.color_ramp = smoke_ramp
+	smoke.process_material = process
+
+	var smoke_quad := QuadMesh.new()
+	smoke_quad.size = Vector2(0.72, 0.92)
+	smoke.draw_pass_1 = smoke_quad
+	var smoke_material := ShaderMaterial.new()
+	smoke_material.shader = _smoke_shader()
+	smoke.material_override = smoke_material
 
 func _build_clouds() -> void:
 	var cloud_specs := [
@@ -578,24 +726,15 @@ func _process(delta: float) -> void:
 	for banner in banner_nodes:
 		var phase := float(banner.get_meta("phase"))
 		banner.rotation.z = sin(elapsed * 0.72 + phase) * 0.035
-	for flame in fire_nodes:
-		var phase := float(flame.get_meta("phase"))
-		var base_y := float(flame.get_meta("base_y"))
-		var base_scale: Vector3 = flame.get_meta("base_scale")
-		var freq_a := float(flame.get_meta("freq_a"))
-		var freq_b := float(flame.get_meta("freq_b"))
-		var fast := sin(elapsed * freq_a + phase) * 0.6 + sin(elapsed * freq_b + phase * 1.3) * 0.4
-		var slow := sin(elapsed * 1.6 + phase * 0.7)
-		flame.position.y = base_y + slow * 0.05 + fast * 0.012
-		flame.scale = base_scale * Vector3(
-			1.0 + fast * 0.10,
-			1.0 + fast * 0.22 - slow * 0.04,
-			1.0 + fast * 0.10)
 	for idx in fire_lights.size():
 		var light: OmniLight3D = fire_lights[idx]
 		var lp := float(idx) * 4.1
-		var f := 0.70 * sin(elapsed * 4.3 + lp) + 0.30 * sin(elapsed * 11.0 + lp * 1.7 + 1.3)
-		light.light_energy = 5.0 + f * 0.95
+		var slow_flicker := sin(elapsed * 3.2 + lp) * 0.58
+		var flame_flutter := sin(elapsed * 8.7 + lp * 1.7 + 1.3) * 0.27
+		var irregular_flicker := sin(elapsed * 13.9 + lp * 0.63) * 0.15
+		var flicker := slow_flicker + flame_flutter + irregular_flicker
+		light.light_energy = 3.75 + flicker * 0.52
+		light.omni_range = 6.85 + flicker * 0.20
 
 func _box(parent: Node, node_name: String, position: Vector3, box_size: Vector3, material: Material, rotation: Vector3 = Vector3.ZERO) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
@@ -714,62 +853,207 @@ func _flame_shader() -> Shader:
 	var s := Shader.new()
 	s.code = """
 shader_type spatial;
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never;
+render_mode unshaded, blend_mix, cull_disabled, depth_draw_never;
 
-uniform vec4 color_core : source_color = vec4(1.0, 0.949, 0.800, 1.0);
-uniform vec4 color_mid : source_color = vec4(1.0, 0.604, 0.180, 1.0);
-uniform vec4 color_tip : source_color = vec4(0.769, 0.118, 0.047, 1.0);
-uniform float intensity = 2.4;
-uniform float fresnel_power = 2.5;
-uniform float edge_fade = 0.90;
-uniform float noise_scale = 3.0;
-uniform float noise_speed = 2.2;
-uniform float wobble = 0.16;
-uniform float core_height = 0.30;
+uniform vec4 color_core : source_color = vec4(1.0, 0.98, 0.86, 1.0);
+uniform vec4 color_mid : source_color = vec4(1.0, 0.55, 0.12, 1.0);
+uniform vec4 color_tip : source_color = vec4(0.74, 0.08, 0.02, 1.0);
+uniform float intensity = 2.0;
+uniform float opacity = 0.75;
+uniform float sway = 0.12;
 uniform float seed = 0.0;
-uniform float flame_height = 1.0;
 uniform float motion = 1.0;
 
-float hash(vec2 p){
+float hash(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
 	p += dot(p, p + 45.32);
 	return fract(p.x * p.y);
 }
-float vnoise(vec2 p){
+float vnoise(vec2 p) {
 	vec2 i = floor(p);
 	vec2 f = fract(p);
 	f = f * f * (3.0 - 2.0 * f);
 	return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
 		mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
+float fbm(vec2 p) {
+	float value = 0.0;
+	float amplitude = 0.58;
+	for (int i = 0; i < 3; i++) {
+		value += vnoise(p) * amplitude;
+		p = p * 2.03 + vec2(7.1, 3.7);
+		amplitude *= 0.48;
+	}
+	return value;
+}
 
-void fragment(){
-	float t = clamp((VERTEX.y + flame_height * 0.5) / flame_height, 0.0, 1.0);
-	vec2 nuv = vec2(UV.x * noise_scale + seed, UV.y * noise_scale - TIME * noise_speed * motion);
-	float n = vnoise(nuv) * 0.5 + vnoise(nuv * 2.0 + 7.3) * 0.5;
-	float td = clamp(t + (n - 0.5) * wobble * motion * (0.4 + t), 0.0, 1.0);
-	vec3 col = color_core.rgb;
-	col = mix(col, color_mid.rgb, smoothstep(core_height * 0.5, core_height + 0.20, td));
-	col = mix(col, color_tip.rgb, smoothstep(0.55, 0.92, td));
-	float vert_alpha = smoothstep(1.0, 0.35, td) * (0.55 + n * 0.60);
-	float f = pow(clamp(1.0 - dot(NORMAL, VIEW), 0.0, 1.0), fresnel_power);
-	float rim = mix(1.0, 1.0 - f, edge_fade);
-	float a = clamp(vert_alpha * rim, 0.0, 1.0);
-	ALBEDO = col * intensity;
-	ALPHA = a;
+void vertex() {
+	float lift = smoothstep(0.04, 1.0, UV.y);
+	float t = TIME * motion;
+	float wind = sin(t * 3.7 + seed) * 0.65 + sin(t * 7.9 + seed * 1.7) * 0.35;
+	VERTEX.x += wind * sway * lift * lift;
+	VERTEX.z += sin(t * 5.1 + seed * 2.3) * sway * 0.28 * lift;
+}
+
+void fragment() {
+	float t = TIME * motion;
+	float y = UV.y;
+	float x = UV.x - 0.5;
+	float n = fbm(vec2(UV.x * 3.8 + seed, y * 4.7 - t * 1.85));
+	float fine_noise = vnoise(vec2(UV.x * 9.2 - seed, y * 8.1 - t * 3.1));
+	float center = (sin(y * 8.0 + t * 2.6 + seed) * 0.036
+		+ sin(y * 14.0 - t * 4.2 + seed * 1.9) * 0.018) * y * motion;
+	float base_shape = 1.0 - smoothstep(
+		0.76, 1.0, length(vec2(x / 0.50, (y - 0.12) / 0.24)));
+
+	float center_height = 0.76 + n * 0.20;
+	float center_progress = clamp((y - 0.06) / max(center_height - 0.06, 0.1), 0.0, 1.0);
+	float center_width = mix(0.25, 0.010, pow(center_progress, 0.82));
+	center_width *= 0.78 + n * 0.34;
+	float center_edge = abs(x - center) - center_width;
+	center_edge += sin(y * 25.0 - t * 5.2 + seed + x * 11.0) * 0.018 * y * motion;
+	float center_tongue = 1.0 - smoothstep(-0.018, 0.052, center_edge);
+	center_tongue *= 1.0 - smoothstep(center_height - 0.13, center_height, y);
+
+	float left_height = 0.48 + n * 0.18;
+	float left_width = mix(0.19, 0.010, clamp((y - 0.03) / left_height, 0.0, 1.0));
+	float left_center = -0.20 + sin(y * 11.0 + t * 3.4 + seed) * 0.025 * y * motion;
+	float left_tongue = 1.0 - smoothstep(-0.015, 0.050, abs(x - left_center) - left_width);
+	left_tongue *= 1.0 - smoothstep(left_height - 0.12, left_height, y);
+
+	float right_height = 0.34 + fine_noise * 0.20;
+	float right_width = mix(0.16, 0.008, clamp((y - 0.02) / right_height, 0.0, 1.0));
+	float right_center = 0.22 + sin(y * 14.0 - t * 4.0 + seed * 1.3) * 0.020 * y * motion;
+	float right_tongue = 1.0 - smoothstep(-0.015, 0.045, abs(x - right_center) - right_width);
+	right_tongue *= 1.0 - smoothstep(right_height - 0.10, right_height, y);
+
+	float flame = max(base_shape, max(center_tongue, max(left_tongue, right_tongue) * 0.84));
+	flame *= smoothstep(0.0, 0.075, y);
+	flame *= mix(0.74, 1.0, fine_noise);
+	float radial_core = pow(clamp(1.0 - abs(x - center) / max(center_width, 0.02), 0.0, 1.0), 1.7);
+	float core = radial_core * (1.0 - smoothstep(0.20, 0.82, y));
+
+	vec3 col = mix(color_core.rgb, color_mid.rgb, smoothstep(0.10, 0.46, y));
+	col = mix(col, color_tip.rgb, smoothstep(0.50, 0.94, y));
+	col = mix(col, color_core.rgb, core * 0.72);
+	float alpha = clamp(flame * opacity, 0.0, 1.0);
+	ALBEDO = col;
+	EMISSION = col * intensity * flame * 0.72;
+	ALPHA = alpha;
 }
 """
 	flame_shader = s
 	return s
 
-func _flame_material(p_seed: float, p_intensity: float, p_height: float) -> ShaderMaterial:
+func _flame_material(
+	p_seed: float,
+	p_intensity: float,
+	p_opacity: float,
+	p_sway: float,
+	p_core_color: Color,
+	p_mid_color: Color,
+	p_tip_color: Color
+) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = _flame_shader()
 	m.set_shader_parameter("seed", p_seed)
 	m.set_shader_parameter("intensity", p_intensity)
-	m.set_shader_parameter("flame_height", p_height)
+	m.set_shader_parameter("opacity", p_opacity)
+	m.set_shader_parameter("sway", p_sway)
+	m.set_shader_parameter("color_core", p_core_color)
+	m.set_shader_parameter("color_mid", p_mid_color)
+	m.set_shader_parameter("color_tip", p_tip_color)
 	m.set_shader_parameter("motion", 0.0 if reduce_motion else 1.0)
 	return m
+
+func _fire_glow_shader() -> Shader:
+	if fire_glow_shader != null:
+		return fire_glow_shader
+	fire_glow_shader = Shader.new()
+	fire_glow_shader.code = """
+shader_type spatial;
+render_mode unshaded, blend_add, cull_disabled, depth_draw_never;
+uniform vec4 glow_color : source_color = vec4(1.0, 0.28, 0.06, 1.0);
+uniform float strength = 0.42;
+void fragment() {
+	vec2 p = UV * 2.0 - 1.0;
+	float radial = 1.0 - smoothstep(0.0, 1.0, dot(p, p));
+	radial = radial * radial;
+	ALBEDO = glow_color.rgb;
+	EMISSION = glow_color.rgb * strength * radial;
+	ALPHA = radial * strength;
+}
+"""
+	return fire_glow_shader
+
+func _flame_particle_shader() -> Shader:
+	if flame_particle_shader != null:
+		return flame_particle_shader
+	flame_particle_shader = Shader.new()
+	flame_particle_shader.code = """
+shader_type spatial;
+render_mode unshaded, blend_mix, cull_disabled, depth_draw_never;
+void vertex() {
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(
+		INV_VIEW_MATRIX[0],
+		INV_VIEW_MATRIX[1],
+		INV_VIEW_MATRIX[2],
+		MODEL_MATRIX[3]);
+}
+void fragment() {
+	float y = UV.y;
+	float x = UV.x * 2.0 - 1.0;
+	float taper = mix(0.94, 0.08, pow(y, 0.76));
+	float flutter = sin(y * 13.0 + TIME * 7.0 + COLOR.r * 5.0) * 0.08 * y;
+	float side = abs(x + flutter);
+	float tongue = 1.0 - smoothstep(taper * 0.72, taper, side);
+	float base = smoothstep(0.0, 0.13, y);
+	float tip = 1.0 - smoothstep(0.74, 1.0, y);
+	float soft_core = pow(clamp(1.0 - side / max(taper, 0.05), 0.0, 1.0), 1.6);
+	float alpha = tongue * base * tip * COLOR.a;
+	vec3 col = mix(COLOR.rgb, vec3(1.0, 0.74, 0.29), soft_core * (1.0 - y) * 0.46);
+	ALBEDO = col;
+	EMISSION = col * alpha * 0.92;
+	ALPHA = alpha;
+}
+"""
+	return flame_particle_shader
+
+func _smoke_shader() -> Shader:
+	if smoke_shader != null:
+		return smoke_shader
+	smoke_shader = Shader.new()
+	smoke_shader.code = """
+shader_type spatial;
+render_mode unshaded, blend_mix, cull_disabled, depth_draw_never;
+float hash(vec2 p) {
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float noise(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+		mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+void vertex() {
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(
+		INV_VIEW_MATRIX[0],
+		INV_VIEW_MATRIX[1],
+		INV_VIEW_MATRIX[2],
+		MODEL_MATRIX[3]);
+}
+void fragment() {
+	vec2 p = UV * 2.0 - 1.0;
+	float cloud = 1.0 - smoothstep(0.34, 1.0, dot(p, p));
+	float breakup = noise(UV * 3.6 + vec2(TIME * 0.08, -TIME * 0.12));
+	cloud *= smoothstep(0.18, 0.68, breakup);
+	float alpha = cloud * COLOR.a;
+	ALBEDO = COLOR.rgb;
+	ALPHA = alpha;
+}
+"""
+	return smoke_shader
 
 func _ember_shader() -> Shader:
 	if ember_shader != null:
@@ -778,9 +1062,19 @@ func _ember_shader() -> Shader:
 	ember_shader.code = """
 shader_type spatial;
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never;
-void fragment(){
-	ALBEDO = COLOR.rgb * 2.4;
-	ALPHA = COLOR.a;
+void vertex() {
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(
+		INV_VIEW_MATRIX[0],
+		INV_VIEW_MATRIX[1],
+		INV_VIEW_MATRIX[2],
+		MODEL_MATRIX[3]);
+}
+void fragment() {
+	vec2 p = UV * 2.0 - 1.0;
+	float spark = 1.0 - smoothstep(0.16, 1.0, dot(p * vec2(2.5, 0.72), p * vec2(2.5, 0.72)));
+	ALBEDO = COLOR.rgb;
+	EMISSION = COLOR.rgb * 3.4 * spark;
+	ALPHA = COLOR.a * spark;
 }
 """
 	return ember_shader
