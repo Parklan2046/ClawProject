@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#090f16">
+  <meta name="description" content="《逆命大郎》— 由一張炊餅開始，改寫武大郎嘅命數。">
+  <title>{{{ PRODUCT_NAME }}}</title>
+  <link rel="icon" href="TemplateData/favicon.png">
+  <link rel="stylesheet" href="TemplateData/style.css">
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="unity-canvas" tabindex="-1" aria-label="逆命大郎 Unity 遊戲畫面"></canvas>
+
+    <section id="loading-screen" aria-live="polite" aria-busy="true">
+      <picture class="loading-art" aria-hidden="true">
+        <source media="(max-width: 700px), (orientation: portrait)" srcset="TemplateData/loading-mobile.png">
+        <img src="TemplateData/loading-desktop.png" alt="">
+      </picture>
+      <div class="ink-wash" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="embers" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <header class="loader-brand">
+        <span class="seal">武記</span>
+        <div>
+          <p>陽谷縣 · 命盤重啟</p>
+          <h1>逆命大郎</h1>
+        </div>
+      </header>
+
+      <div class="loader-copy">
+        <p class="chapter">序章</p>
+        <p class="line">一場意外，一扇門，一條本來不屬於你嘅命。</p>
+      </div>
+
+      <div class="loader-status">
+        <div class="status-row">
+          <span id="loading-label">正在打開陽谷縣⋯⋯</span>
+          <strong id="loading-percent">0%</strong>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="loading-progress"></div>
+          <span id="progress-glint"></span>
+        </div>
+        <div class="meta-row">
+          <span id="loading-stage">準備命盤</span>
+          <span id="loading-time">估計尚餘 --</span>
+        </div>
+      </div>
+
+      <button id="retry-button" type="button">重新嘗試</button>
+    </section>
+
+    <aside id="unity-warning" role="status"></aside>
+  </main>
+
+  <noscript>你的瀏覽器需要啟用 JavaScript 先可以進入江湖。</noscript>
+  <script src="TemplateData/loader-ui.js"></script>
+  <script>
+    const canvas = document.querySelector("#unity-canvas");
+    const buildUrl = "Build";
+    const loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+    const config = {
+      arguments: [],
+      dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+      frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+      codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+#if MEMORY_FILENAME
+      memoryUrl: buildUrl + "/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+      symbolsUrl: buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+#endif
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "{{{ COMPANY_NAME }}}",
+      productName: "{{{ PRODUCT_NAME }}}",
+      productVersion: "{{{ PRODUCT_VERSION }}}",
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+      showBanner: window.NimingLoader.showBanner
+    };
+
+    window.NimingLoader.start(loaderUrl, canvas, config);
+  </script>
+</body>
+</html>
